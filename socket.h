@@ -9,4 +9,5 @@ struct socket_req {
 
 
 void socket_init();
+void socket_finish();
 void socket_send(struct socket_req *req);

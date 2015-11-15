@@ -4,15 +4,114 @@
 
 #include "core.h"
 
+// busctl --user tree org.cortexd.main
+// busctl --user introspect org.cortexd.main /org/cortexd/main
+// busctl --user call org.cortexd.main /org/cortexd/main org.cortexd.main add_event ss blubber data
 
-static char * local_event_types[] = { "test" };
-static unsigned n_local_event_types = 1;
+static char * local_event_types[] = { "test", 0 };
 
+static pthread_t uthread, sthread, dthread;
+struct dbus_thread duthread, dsthread, ddthread;
 
 struct dbus_thread {
 	sd_bus *bus;
 	struct event_graph *graph;
 };
+
+
+
+
+
+
+static int sd_bus_add_event(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
+	char *type, *data;
+	int r;
+	struct event *event;
+	
+	/* Read the parameters */
+	r = sd_bus_message_read(m, "ss", &type, &data);
+	if (r < 0) {
+		fprintf(stderr, "Failed to parse parameters: %s\n", strerror(-r));
+		return r;
+	}
+	
+	printf("received %s %s\n", type, data);
+	
+	event = (struct event*) calloc(1, sizeof(struct event));
+	event->type = type;
+	event->data = data;
+	
+	add_event((struct event_graph*) userdata, event);
+	
+	return sd_bus_reply_method_return(m, "");
+}
+
+static const sd_bus_vtable cortexd_vtable[] = {
+	SD_BUS_VTABLE_START(0),
+	SD_BUS_METHOD("add_event", "ss", "", sd_bus_add_event, SD_BUS_VTABLE_UNPRIVILEGED),
+	SD_BUS_VTABLE_END
+};
+
+void *sd_bus_daemon_thread(void *data) {
+	sd_bus_slot *slot = NULL;
+	sd_bus *bus = NULL;
+	int r;
+	struct event_graph *graph;
+	struct dbus_thread *tdata;
+	
+	tdata = (struct dbus_thread*) data;
+	graph = tdata->graph;
+	
+	printf("start\n");
+	r = sd_bus_open_user(&bus); ASSERT_STR(r >=0, "Failed to connect to system bus: %s\n", strerror(-r));
+	
+	/* Install the object */
+	r = sd_bus_add_object_vtable(bus,
+						    &slot,
+						"/org/cortexd/main",  /* object path */
+						"org.cortexd.main",   /* interface name */
+						cortexd_vtable,
+						graph);
+	if (r < 0) {
+		fprintf(stderr, "Failed to issue method call: %s\n", strerror(-r));
+		goto finish;
+	}
+	
+	/* Take a well-known service name so that clients can find us */
+	r = sd_bus_request_name(bus, "org.cortexd.main", 0);
+	if (r < 0) {
+		fprintf(stderr, "Failed to acquire service name: %s\n", strerror(-r));
+		goto finish;
+	}
+	
+	for (;;) {
+		/* Process requests */
+		r = sd_bus_process(bus, NULL);
+		if (r < 0) {
+			fprintf(stderr, "Failed to process bus: %s\n", strerror(-r));
+			goto finish;
+		}
+		if (r > 0) /* we processed a request, try to process another one, right-away */
+			continue;
+		
+		/* Wait for the next request to process */
+		r = sd_bus_wait(bus, (uint64_t) -1);
+		if (r < 0) {
+			fprintf(stderr, "Failed to wait on bus: %s\n", strerror(-r));
+			goto finish;
+		}
+	}
+	
+	finish:
+	sd_bus_slot_unref(slot);
+	sd_bus_unref(bus);
+	
+	// 	return r < 0 ? EXIT_FAILURE : EXIT_SUCCESS;
+}
+
+
+
+
 
 void handle_event(struct event *event) {
 	uint8_t type;
@@ -120,11 +219,13 @@ void sd_bus_init() {
 	
 	struct event_graph *event_graph;
 	
-	for (i=0; i<n_local_event_types; i++) {
+	i=0;
+	while (local_event_types[i]) {
 		add_event_type(local_event_types[i]);
+		i++;
 	}
 	
-	new_eventgraph(&event_graph, 0);
+	new_eventgraph(&event_graph, local_event_types);
 	
 	struct event_task *etask = (struct event_task*) malloc(sizeof(struct event_task));
 	etask->handle = &handle_event;
@@ -144,8 +245,6 @@ void sd_bus_init() {
 		return;
 	}
 	
-	pthread_t uthread, sthread;
-	struct dbus_thread duthread, dsthread;
 	
 	duthread.bus = ubus;
 	duthread.graph = event_graph;
@@ -155,8 +254,16 @@ void sd_bus_init() {
 	pthread_create(&sthread, NULL, tmain, &dsthread);
 	pthread_create(&uthread, NULL, tmain, &duthread);
 	
-	pthread_join(sthread, NULL);
-	pthread_join(uthread, NULL);
+	
+	
+	
+	
+	ddthread.bus = bus;
+	ddthread.graph = cortexd_graph;
+	
+	pthread_create(&dthread, NULL, sd_bus_daemon_thread, &ddthread);
+	
+	
 	
 	// 	/* Issue the method call and store the respons message in m */
 	// 	r = sd_bus_call_method(bus,
@@ -205,6 +312,13 @@ void sd_bus_init() {
 	// 	sd_bus_unref(bus);
 	// 
 	// 	return r < 0 ? EXIT_FAILURE : EXIT_SUCCESS;
+}
+
+void sd_bus_finish() {
+	pthread_join(sthread, NULL);
+	pthread_join(uthread, NULL);
+	
+	pthread_join(dthread, NULL);
 }
 
 #ifndef STATIC_SD_BUS

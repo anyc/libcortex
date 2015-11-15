@@ -4,6 +4,8 @@ CFLAGS+=$(shell pkg-config --cflags libsystemd)
 
 CFLAGS+=-DSTATIC_SD_BUS
 
+CFLAGS+=-g
+
 LDLIBS+=$(shell pkg-config --libs libsystemd)
 LDLIBS+=-lpthread
 

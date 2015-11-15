@@ -6,15 +6,19 @@
 char ** event_types = 0;
 unsigned n_event_types = 0;
 
+struct event_graph *cortexd_graph;
+
+static char * local_event_types[] = { "cortexd_enable", 0 };
+
 #include "socket.h"
 #ifdef STATIC_SD_BUS
 #include "sd_bus.h"
 #endif
 
 struct plugin static_plugins[] = {
-	{"socket", &socket_init},
+	{"socket", &socket_init, &socket_finish},
 #ifdef STATIC_SD_BUS
-	{"sd-bus", &sd_bus_init},
+	{"sd-bus", &sd_bus_init, &sd_bus_finish},
 #endif
 	{0, 0}
 };
@@ -92,10 +96,12 @@ void new_eventgraph(struct event_graph **event_graph, char **event_types) {
 	ret = pthread_mutex_init(&graph->queue_mutex, 0); ASSERT(ret >= 0);
 	ret = pthread_cond_init(&graph->queue_cond, NULL); ASSERT(ret >= 0);
 	
-	while (event_types[graph->n_types])
-		graph->n_types++;
-	
-	graph->types = event_types;
+	if (event_types) {
+		while (event_types[graph->n_types])
+			graph->n_types++;
+		
+		graph->types = event_types;
+	}
 }
 
 void add_event_type(char *event_type) {
@@ -104,7 +110,25 @@ void add_event_type(char *event_type) {
 	event_types[n_event_types-1] = event_type;
 }
 
+void handle_cortexd_enable(struct event *event) {
+	printf("cortexd enable\n");
+}
 
-
+void init_core() {
+	unsigned int i;
+	
+	i=0;
+	while (local_event_types[i]) {
+		add_event_type(local_event_types[i]);
+		i++;
+	}
+	
+	new_eventgraph(&cortexd_graph, local_event_types);
+	
+	struct event_task *etask = (struct event_task*) malloc(sizeof(struct event_task));
+	etask->handle = &handle_cortexd_enable;
+	
+	cortexd_graph->entry_task = etask;
+}
 
 
