@@ -2,9 +2,7 @@ APP=cortexd
 
 CFLAGS+=$(shell pkg-config --cflags libsystemd)
 
-CFLAGS+=-DSTATIC_SD_BUS
-
-CFLAGS+=-g
+CFLAGS+=-DSTATIC_SD_BUS $(DEBUG_CFLAGS)
 
 LDLIBS+=$(shell pkg-config --libs libsystemd)
 LDLIBS+=-lpthread
@@ -26,3 +24,6 @@ socket_client: socket_client.o
 
 clean:
 	rm -rf *.o $(APP)
+
+debug:
+	$(MAKE) $(MAKEFILE) DEBUG_CFLAGS="-g -g3 -gdwarf-2 -DDEBUG -Werror"

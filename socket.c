@@ -15,7 +15,7 @@ static char *event_types[] = { "cortexd/enable", 0 };
 static pthread_t thread;
 struct socket_thread_args sargs;
 
-void handle_enable(struct event *event) {
+void handle_enable(struct event *event, void *userdata) {
 	
 }
 
@@ -104,7 +104,7 @@ void socket_init() {
 	
 	new_eventgraph(&event_graph, event_types);
 	
-	struct event_task *etask = (struct event_task*) malloc(sizeof(struct event_task));
+	struct event_task *etask = (struct event_task*) calloc(1, sizeof(struct event_task));
 	etask->handle = &handle_enable;
 	event_graph->entry_task = etask;
 	

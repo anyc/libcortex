@@ -17,7 +17,8 @@ struct event {
 };
 
 struct event_task {
-	void (*handle)(struct event *event);
+	void (*handle)(struct event *event, void *userdata);
+	void *userdata;
 };
 
 struct thread {
@@ -56,7 +57,11 @@ struct plugin {
 extern struct plugin static_plugins[];
 extern struct event_graph *cortexd_graph;
 
+extern struct event_graph **graphs;
+extern unsigned int n_graphs;
+
 void init_core();
-void new_eventgraph(struct event_graph **event_graph, char **event_types);
+void get_eventgraph(struct event_graph **event_graph, char **event_types, unsigned int n_event_types);
 void add_event_type(char *event_type);
+void add_raw_event(struct event *event);
 void add_event(struct event_graph *graph, struct event *event);
