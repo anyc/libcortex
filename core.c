@@ -29,6 +29,7 @@ struct plugin static_plugins[] = {
 void *graph_consumer_main(void *arg) {
 	struct thread *self = (struct thread*) arg;
 	struct event *e;
+	struct event_task *ti;
 	
 	while (!self->stop) {
 		pthread_mutex_lock(&self->graph->queue_mutex);
@@ -40,7 +41,8 @@ void *graph_consumer_main(void *arg) {
 		self->graph->equeue = self->graph->equeue->next;
 		self->graph->n_queue_entries--;
 		
-		self->graph->entry_task->handle(e, self->graph->entry_task->userdata);
+		for (ti=self->graph->tasks;ti;ti=ti->next)
+			ti->handle(e, self->graph->tasks->userdata);
 		
 		free(e);
 		
@@ -49,16 +51,31 @@ void *graph_consumer_main(void *arg) {
 }
 
 void spawn_thread(struct event_graph *graph) {
-// 	pthread_mutex_lock(&graph->mutex);
-	
 	graph->n_consumers++;
 	graph->consumers = (struct thread*) realloc(graph->consumers, sizeof(struct thread)*graph->n_consumers); ASSERT(graph->consumers);
 	
 	graph->consumers[graph->n_consumers-1].stop = 0;
 	graph->consumers[graph->n_consumers-1].graph = graph;
 	pthread_create(&graph->consumers[graph->n_consumers-1].handle, NULL, &graph_consumer_main, &graph->consumers[graph->n_consumers-1]);
+}
+
+void add_task(struct event_graph *graph, struct event_task *task, unsigned char priority) {
+	struct event_task *ti, *last;
 	
-// 	pthread_mutex_unlock(&graph->mutex);
+	last = 0;
+	for (ti=graph->tasks;ti;ti=ti->next) {
+		if (priority > ti->priority) {
+			if (last) {
+				task->next = last->next;
+				last->next = task;
+			} else {
+				task->next = graph->tasks;
+				graph->tasks = task;
+			}
+			
+			break;
+		}
+	}
 }
 
 void add_event(struct event_graph *graph, struct event *event) {
@@ -92,7 +109,7 @@ void add_raw_event(struct event *event) {
 	
 	graph = 0;
 	for (i=0; i < n_graphs && !graph; i++) {
-		for (j=0; j < graphs[i]->n_types; j++) {printf("%s %s\n", graphs[i]->types[j], event->type);
+		for (j=0; j < graphs[i]->n_types; j++) {
 			if (!strcmp(graphs[i]->types[j], event->type)) {
 				graph = graphs[i];
 				break;
@@ -147,6 +164,13 @@ void handle_cortexd_enable(struct event *event, void *userdata) {
 	printf("cortexd enable\n");
 }
 
+struct event_task *new_task() {
+	struct event_task *etask = (struct event_task*) calloc(1, sizeof(struct event_task));
+	etask->priority = 100;
+	
+	return etask;
+}
+
 void init_core() {
 	unsigned int i;
 	
@@ -158,10 +182,10 @@ void init_core() {
 	
 	new_eventgraph(&cortexd_graph, local_event_types);
 	
-	struct event_task *etask = (struct event_task*) calloc(1, sizeof(struct event_task));
+	struct event_task *etask = new_task();
 	etask->handle = &handle_cortexd_enable;
 	
-	cortexd_graph->entry_task = etask;
+	cortexd_graph->tasks = etask;
 }
 
 

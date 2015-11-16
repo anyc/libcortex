@@ -104,9 +104,9 @@ void socket_init() {
 	
 	new_eventgraph(&event_graph, event_types);
 	
-	struct event_task *etask = (struct event_task*) calloc(1, sizeof(struct event_task));
+	struct event_task *etask = new_task();
 	etask->handle = &handle_enable;
-	event_graph->entry_task = etask;
+	event_graph->tasks = etask;
 	
 	sargs.graph = event_graph;
 	sargs.stop = 0;

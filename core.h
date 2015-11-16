@@ -17,8 +17,12 @@ struct event {
 };
 
 struct event_task {
+	char priority;
+	
 	void (*handle)(struct event *event, void *userdata);
 	void *userdata;
+	
+	struct event_task *next;
 };
 
 struct thread {
@@ -35,7 +39,7 @@ struct event_graph {
 	
 	pthread_mutex_t mutex;
 	
-	struct event_task *entry_task;
+	struct event_task *tasks;
 	
 	struct thread *consumers;
 	unsigned int n_consumers;
@@ -65,3 +69,4 @@ void get_eventgraph(struct event_graph **event_graph, char **event_types, unsign
 void add_event_type(char *event_type);
 void add_raw_event(struct event *event);
 void add_event(struct event_graph *graph, struct event *event);
+struct event_task *new_task();

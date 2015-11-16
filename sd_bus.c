@@ -239,11 +239,11 @@ static int sd_bus_add_signal(sd_bus_message *m, void *userdata, sd_bus_error *re
 	event_types[1] = 0;
 	new_eventgraph(&args->graph, event_types);
 	
-	struct event_task *etask = (struct event_task*) malloc(sizeof(struct event_task));
+	struct event_task *etask = new_task();
 	etask->handle = &submit_signal;
 	etask->userdata = sign;
 	
-	args->graph->entry_task = etask;
+	args->graph->tasks = etask;
 	
 	
 	
