@@ -17,12 +17,14 @@ static char * local_event_types[] = { "cortexd_enable", 0 };
 #ifdef STATIC_SD_BUS
 #include "sd_bus.h"
 #endif
+#include "nf_queue.h"
 
 struct plugin static_plugins[] = {
 	{"socket", &socket_init, &socket_finish},
 #ifdef STATIC_SD_BUS
 	{"sd-bus", &sd_bus_init, &sd_bus_finish},
 #endif
+	{"nf-queue", &nf_queue_init, &nf_queue_finish},
 	{0, 0}
 };
 

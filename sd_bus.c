@@ -277,7 +277,10 @@ void *sd_bus_daemon_thread(void *data) {
 	graph = tdata->graph;
 	
 	printf("start\n");
-	r = sd_bus_open_user(&bus); ASSERT_STR(r >=0, "Failed to connect to system bus: %s\n", strerror(-r));
+	r = sd_bus_open_user(&bus); 
+// 	ASSERT_STR(r >=0, "Failed to connect to system bus: %s\n", strerror(-r));
+	if (r < 0)
+		return 0;
 	
 	cb_args.graph = tdata->graph;
 	cb_args.bus = bus;
