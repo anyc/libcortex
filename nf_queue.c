@@ -8,50 +8,17 @@
 #include <libnetfilter_queue/libnetfilter_queue.h>
 #include <linux/netfilter.h>
 
-#include <netinet/tcp.h>
-#include <netinet/ip.h>
-#include <arpa/inet.h>
-
 #include "core.h"
 #include "nf_queue.h"
 
 // iptables -A INPUT -p tcp --dport 631 -j NFQUEUE --queue-num 0
 
-struct nfq_thread_data {
-	struct event_graph *graph;
-};
 
-struct ev_nf_queue_packet {
-	struct nfq_q_handle *qh;
-	struct nfq_data *data;
-};
+// #define NF_QUEUE_NEW_PACKET_TYPE "nf_queue/packet"
+// struct event_graph *new_packet_graph = 0;
 
-struct ev_nf_queue_packet_msg {
-	int id;
-	u_int16_t hw_protocol;
-	
-// 	u_int8_t hw_addr;
-// 	u_int16_t hw_addrlen;
-	char *hw_addr;
-	
-	u_int32_t mark;
-	u_int32_t indev;
-	u_int32_t outdev;
-	u_int32_t physindev;
-	u_int32_t physoutdev;
-	
-	unsigned char *payload;
-	size_t payload_size;
-};
-
-static pthread_t pthread;
-struct nfq_thread_data tdata;
-
-#define NF_QUEUE_NEW_PACKET_TYPE "nf_queue/packet"
-struct event_graph *new_packet_graph = 0;
-
-#define NF_QUEUE_NEW_PACKET_MSG_TYPE "nf_queue/packet_msg"
-struct event_graph *new_packet_graph_msg = 0;
+// #define NF_QUEUE_NEW_PACKET_MSG_TYPE "nf_queue/packet_msg"
+// struct event_graph *new_packet_graph_msg = 0;
 
 
 
@@ -67,6 +34,9 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 	struct nfqnl_msg_packet_hdr *ph;
 	struct nfqnl_msg_packet_hw *hwph;
 	u_int32_t mark,ifi; 
+	
+	struct nfq_thread_data *td = (struct nfq_thread_data*) data;
+	
 // 	int ret;
 // 	char *data;
 	
@@ -114,7 +84,7 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 // 		processPacketData (data, ret);
 // 	}
 // 	fputc('\n', stdout);
-	printf("asd\n");
+// 	printf("asd\n");
 	
 	
 // 	unsigned char *payload;
@@ -157,8 +127,10 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 // 	}
 	
 	
-	if (!new_packet_graph_msg)
-		new_packet_graph_msg = get_graph_for_event_type(NF_QUEUE_NEW_PACKET_MSG_TYPE);
+// 	if (!new_packet_graph_msg)
+// 		new_packet_graph_msg = get_graph_for_event_type(NF_QUEUE_NEW_PACKET_MSG_TYPE);
+	
+	struct event_graph *new_packet_graph_msg = td->graph;
 	
 	if (new_packet_graph_msg && new_packet_graph_msg->tasks) {
 		struct ev_nf_queue_packet_msg *ev;
@@ -246,7 +218,7 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 // 		printf("%d %s\n", iph->protocol, inet_ntoa(*(struct in_addr *)&iph->saddr));
 		
 		event = new_event();
-		event->type = NF_QUEUE_NEW_PACKET_MSG_TYPE;
+		event->type = td->graph->types[0];
 		event->data = ev;
 		event->data_size = data_size;
 		
@@ -282,6 +254,8 @@ void *nfq_tmain(void *data) {
 	int fd, rv;
 	char buf[4096] __attribute__ ((aligned));
 	
+	struct nfq_thread_data *td = (struct nfq_thread_data*) data;
+	
 	h = nfq_open();
 	if (!h) {
 		fprintf(stderr, "error during nfq_open()\n");
@@ -301,7 +275,7 @@ void *nfq_tmain(void *data) {
 	}
 	
 	printf("binding this socket to queue '0'\n");
-	qh = nfq_create_queue(h,  0, &cb, NULL);
+	qh = nfq_create_queue(h, td->queue_num, &cb, td);
 	if (!qh) {
 		fprintf(stderr, "error during nfq_create_queue()\n");
 		exit(1);
@@ -325,86 +299,32 @@ void *nfq_tmain(void *data) {
 	return 0;
 }
 
-struct event_task task;
-struct event_graph *rl_graph = 0;
-
-
-void handle(struct event *event, void *userdata) {
-	struct ev_nf_queue_packet_msg *ev;
-	struct event *rl_event;
-	char *s;
-	size_t len;
+void *new_nf_queue_listener(void *options) {
+	struct nfq_thread_data *tdata;
 	
-	printf("rec size %zu\n", event->data_size);
-	if (event->data_size < sizeof(struct ev_nf_queue_packet_msg))
-		return;
+	tdata = (struct nfq_thread_data*) malloc(sizeof(struct nfq_thread_data));
+	tdata->queue_num = 0;
 	
-	ev = (struct ev_nf_queue_packet_msg*) event->data;
-	
-// 	len = ev->hw_addr?strlen(ev->hw_addr):0+3+1;
-// 	s = (char*) malloc(len);
-// 	sprintf(s, "hw %s\n", ev->hw_addr);
+	char **event_types = (char**) malloc(sizeof(char*)*2);
+	event_types[0] = "nf_queue/packet_msg";
+	event_types[1] = 0;
+	new_eventgraph(&tdata->graph, event_types);
 	
 	
+	pthread_create(&tdata->thread, NULL, nfq_tmain, tdata);
 	
-	
-	struct sockaddr_in source,dest;
-	char *ss, *sd;
-// 	unsigned short iphdrlen;
-	struct iphdr *iph = (struct iphdr*)ev->payload;
-	
-// 	iphdrlen =iph->ihl*4;
-	
-// 	memset(&source, 0, sizeof(source));
-// 	source.sin_addr.s_addr = iph->saddr;
-// 	
-// 	memset(&dest, 0, sizeof(dest));
-// 	dest.sin_addr.s_addr = iph->daddr;
-// 	
-// 	ss = inet_ntoa(source.sin_addr);
-// 	sd = inet_ntoa(dest.sin_addr);
-	
-	ss = inet_ntoa(*(struct in_addr *)&iph->saddr);
-	sd = inet_ntoa(*(struct in_addr *)&iph->daddr);
-	
-	len = 2 + strlen(ss) + 1 + strlen(sd) + 1;
-	s = (char*) malloc(len);
-	sprintf(s, "%d %s %s\n", iph->protocol, ss, sd);
-	
-	
-	rl_event = new_event();
-	rl_event->type = "readline/request";
-	rl_event->data = s;
-	rl_event->data_size = len;
-	
-	if (!rl_graph)
-		rl_graph = get_graph_for_event_type("readline/request");
-	
-	add_event(rl_graph, rl_event);
-	
-	wait_on_event(rl_event);
-	
-	printf("response: %s\n", (char*) rl_event->response);
-	
-	if (rl_event->response && !strncmp(rl_event->response, "yes", 3)) {
-		event->response = (void*) 1;
-	}
+	return tdata;
 }
 
 void nf_queue_init() {
-	tdata.graph = cortexd_graph;
-
-	char **event_types = (char**) malloc(sizeof(char*)*2);
-	event_types[0] = NF_QUEUE_NEW_PACKET_MSG_TYPE;
-	event_types[1] = 0;
-	new_eventgraph(&new_packet_graph_msg, event_types);
 	
-	task.handle = &handle;
-// 	task.userdata
-	add_task(new_packet_graph_msg, &task, 255);
+// 	task.handle = &handle;
+// // 	task.userdata
+// 	add_task(new_packet_graph_msg, &task, 255);
 	
 	
-	pthread_create(&pthread, NULL, nfq_tmain, &tdata);
+// 	tdata.graph = cortexd_graph;
+// 	pthread_create(&pthread, NULL, nfq_tmain, &tdata);
 }
 
 void nf_queue_finish() {

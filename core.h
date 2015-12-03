@@ -64,14 +64,20 @@ struct event_graph {
 	pthread_cond_t queue_cond;
 };
 
-struct plugin {
+struct listener {
+	char *id;
+	
+	void *(*create)(void *options);
+};
+
+struct module {
 	char *id;
 	
 	void (*init)();
 	void (*finish)();
 };
 
-extern struct plugin static_plugins[];
+extern struct module static_modules[];
 extern struct event_graph *cortexd_graph;
 
 extern struct event_graph **graphs;
@@ -89,3 +95,4 @@ void add_event_sync(struct event_graph *graph, struct event *event);
 struct event_graph *get_graph_for_event_type(char *event_type);
 struct event_task *new_task();
 void wait_on_event(struct event *event);
+void *create_listener(char *id, void *options);

@@ -10,10 +10,10 @@ int main(int argc, char *argv[]) {
 	init_core();
 	
 	i=0;
-	while (static_plugins[i].id) {
-		printf("initialize \"%s\"\n", static_plugins[i].id);
+	while (static_modules[i].id) {
+		printf("initialize \"%s\"\n", static_modules[i].id);
 		
-		static_plugins[i].init();
+		static_modules[i].init();
 		i++;
 	}
 	

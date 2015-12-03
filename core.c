@@ -20,16 +20,37 @@ static char * local_event_types[] = { "cortexd_enable", 0 };
 #endif
 #include "nf_queue.h"
 #include "readline.h"
+#include "plugins.h"
 
-struct plugin static_plugins[] = {
+struct module static_modules[] = {
 	{"socket", &socket_init, &socket_finish},
 #ifdef STATIC_SD_BUS
 	{"sd-bus", &sd_bus_init, &sd_bus_finish},
 #endif
 	{"nf-queue", &nf_queue_init, &nf_queue_finish},
 	{"readline", &readline_init, &readline_finish},
+	{"plugins", &plugins_init, &plugins_finish},
 	{0, 0}
 };
+
+struct listener static_listeners[] = {
+	{"nf_queue", &new_nf_queue_listener},
+	{0, 0}
+};
+
+void *create_listener(char *id, void *options) {
+	struct listener *l;
+	
+	l = static_listeners;
+	while (l->id) {
+		if (!strcmp(l->id, id)) {
+			return l->create(options);
+		}
+		l++;
+	}
+	
+	return 0;
+}
 
 void *graph_consumer_main(void *arg) {
 	struct thread *self = (struct thread*) arg;
