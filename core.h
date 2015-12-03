@@ -10,10 +10,23 @@
 
 struct event {
 	char *type;
+	struct event_graph *graph;
 	
 	void *data;
+	size_t data_size;
 	
-	struct event *next;
+	void *response;
+	size_t response_size;
+	
+	unsigned char in_n_queues;
+	pthread_mutex_t mutex;
+	pthread_cond_t cond;
+};
+
+struct queue_entry {
+	struct event *event;
+	
+	struct queue_entry *next;
 };
 
 struct event_task {
@@ -44,7 +57,7 @@ struct event_graph {
 	struct thread *consumers;
 	unsigned int n_consumers;
 	
-	struct event *equeue;
+	struct queue_entry *equeue;
 	unsigned int n_queue_entries;
 	
 	pthread_mutex_t queue_mutex;
@@ -64,9 +77,15 @@ extern struct event_graph *cortexd_graph;
 extern struct event_graph **graphs;
 extern unsigned int n_graphs;
 
+struct event *new_event();
 void init_core();
+void new_eventgraph(struct event_graph **event_graph, char **event_types);
 void get_eventgraph(struct event_graph **event_graph, char **event_types, unsigned int n_event_types);
+void add_task(struct event_graph *graph, struct event_task *task, unsigned char priority);
 void add_event_type(char *event_type);
 void add_raw_event(struct event *event);
 void add_event(struct event_graph *graph, struct event *event);
+void add_event_sync(struct event_graph *graph, struct event *event);
+struct event_graph *get_graph_for_event_type(char *event_type);
 struct event_task *new_task();
+void wait_on_event(struct event *event);

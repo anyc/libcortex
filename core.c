@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "core.h"
 
@@ -18,6 +19,7 @@ static char * local_event_types[] = { "cortexd_enable", 0 };
 #include "sd_bus.h"
 #endif
 #include "nf_queue.h"
+#include "readline.h"
 
 struct plugin static_plugins[] = {
 	{"socket", &socket_init, &socket_finish},
@@ -25,12 +27,13 @@ struct plugin static_plugins[] = {
 	{"sd-bus", &sd_bus_init, &sd_bus_finish},
 #endif
 	{"nf-queue", &nf_queue_init, &nf_queue_finish},
+	{"readline", &readline_init, &readline_finish},
 	{0, 0}
 };
 
 void *graph_consumer_main(void *arg) {
 	struct thread *self = (struct thread*) arg;
-	struct event *e;
+	struct queue_entry *qe;
 	struct event_task *ti;
 	
 	while (!self->stop) {
@@ -39,17 +42,26 @@ void *graph_consumer_main(void *arg) {
 		while (self->graph->n_queue_entries == 0)
 			pthread_cond_wait(&self->graph->queue_cond, &self->graph->queue_mutex);
 		
-		e = self->graph->equeue;
+		qe = self->graph->equeue;
 		self->graph->equeue = self->graph->equeue->next;
 		self->graph->n_queue_entries--;
 		
 		for (ti=self->graph->tasks;ti;ti=ti->next)
-			ti->handle(e, self->graph->tasks->userdata);
+			ti->handle(qe->event, self->graph->tasks->userdata);
 		
-		free(e);
+		pthread_mutex_lock(&qe->event->mutex);
+		qe->event->in_n_queues--;
+		
+		if (qe->event->in_n_queues == 0)
+			pthread_cond_signal(&qe->event->cond);
+		
+		pthread_mutex_unlock(&qe->event->mutex);
+		free(qe);
 		
 		pthread_mutex_unlock(&self->graph->queue_mutex);
 	}
+	
+	return 0;
 }
 
 void spawn_thread(struct event_graph *graph) {
@@ -64,6 +76,12 @@ void spawn_thread(struct event_graph *graph) {
 void add_task(struct event_graph *graph, struct event_task *task, unsigned char priority) {
 	struct event_task *ti, *last;
 	
+	if (!graph->tasks) {
+		graph->tasks = task;
+		task->next = 0;
+		return;
+	}
+	
 	last = 0;
 	for (ti=graph->tasks;ti;ti=ti->next) {
 		if (priority > ti->priority) {
@@ -77,11 +95,16 @@ void add_task(struct event_graph *graph, struct event_task *task, unsigned char 
 			
 			break;
 		}
+		last = ti;
+	}
+	if (!ti) {
+		task->next = last->next;
+		last->next = task;
 	}
 }
 
 void add_event(struct event_graph *graph, struct event *event) {
-	struct event *eit;
+	struct queue_entry *eit;
 	
 	pthread_mutex_lock(&graph->mutex);
 	
@@ -90,11 +113,20 @@ void add_event(struct event_graph *graph, struct event *event) {
 	for (eit=graph->equeue; eit && eit->next; eit = eit->next) {}
 	
 	if (eit) {
-		eit->next = event;
+		eit->next = (struct queue_entry*) malloc(sizeof(struct queue_entry));
+		eit = eit->next;
 	} else {
-		graph->equeue = event;
+		graph->equeue = (struct queue_entry*) malloc(sizeof(struct queue_entry));
+		eit = graph->equeue;
 	}
-	event->next = 0;
+	eit->event = event;
+	eit->next = 0;
+	
+	
+	pthread_mutex_lock(&event->mutex);
+	event->in_n_queues++;
+	pthread_mutex_unlock(&event->mutex);
+	
 	graph->n_queue_entries++;
 	
 	if (graph->n_consumers == 0)
@@ -105,19 +137,81 @@ void add_event(struct event_graph *graph, struct event *event) {
 	pthread_mutex_unlock(&graph->mutex);
 }
 
-void add_raw_event(struct event *event) {
+// void add_event_sync(struct event_graph *graph, struct event *event) {
+// 	struct event *eit;
+// 	
+// 	pthread_mutex_lock(&graph->mutex);
+// 	
+// 	printf("new event %s\n", event->type);
+// 	
+// 	for (eit=graph->equeue; eit && eit->next; eit = eit->next) {}
+// 	
+// 	if (eit) {
+// 		eit->next = event;
+// 	} else {
+// 		graph->equeue = event;
+// 	}
+// 	event->next = 0;
+// 	graph->n_queue_entries++;
+// 	
+// 	if (graph->n_consumers == 0)
+// 		spawn_thread(graph);
+// 	
+// 	pthread_cond_signal(&graph->queue_cond);
+// 	
+// 	pthread_mutex_unlock(&graph->mutex);
+// 	
+// 	
+// 	pthread_mutex_lock(&event->mutex);
+// 	
+// 	while (event->response == 0)
+// 		pthread_cond_wait(&event->cond, &event->mutex);
+// 	
+// 	pthread_mutex_unlock(&event->mutex);
+// }
+
+void wait_on_event(struct event *event) {
+	pthread_mutex_lock(&event->mutex);
+	
+	while (event->in_n_queues > 0)
+		pthread_cond_wait(&event->cond, &event->mutex);
+	
+	pthread_mutex_unlock(&event->mutex);
+}
+
+struct event *new_event() {
+	struct event *event;
+	int ret;
+	
+	event = (struct event*) calloc(1, sizeof(struct event));
+	
+	ret = pthread_mutex_init(&event->mutex, 0); ASSERT(ret >= 0);
+	ret = pthread_cond_init(&event->cond, NULL); ASSERT(ret >= 0);
+	
+	return event;
+}
+
+struct event_graph *get_graph_for_event_type(char *event_type) {
 	struct event_graph *graph;
 	unsigned int i, j;
 	
 	graph = 0;
 	for (i=0; i < n_graphs && !graph; i++) {
 		for (j=0; j < graphs[i]->n_types; j++) {
-			if (!strcmp(graphs[i]->types[j], event->type)) {
+			if (!strcmp(graphs[i]->types[j], event_type)) {
 				graph = graphs[i];
 				break;
 			}
 		}
 	}
+	
+	return graph;
+}
+
+void add_raw_event(struct event *event) {
+	struct event_graph *graph;
+	
+	graph = get_graph_for_event_type(event->type);
 	
 	if (!graph) {
 		printf("did not find graph for event type %s\n", event->type);

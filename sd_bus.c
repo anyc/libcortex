@@ -32,7 +32,6 @@ struct sd_bus_userdata {
 };
 
 void print_sd_bus_msg(sd_bus_message *m) {
-	uint8_t type;
 	const char *sig;
 	char *val;
 	
@@ -70,7 +69,7 @@ static int sd_bus_add_event(sd_bus_message *m, void *userdata, sd_bus_error *ret
 	
 	printf("received %s %s\n", type, data);
 	
-	event = (struct event*) calloc(1, sizeof(struct event));
+	event = new_event();
 	event->type = type;
 	event->data = data;
 	
@@ -99,7 +98,7 @@ static int sd_bus_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *r
 	
 	listener = (struct listener_data*) userdata;
 	
-	event = (struct event*) malloc(sizeof(struct event));
+	event = new_event();
 	event->type = listener->event_type;
 	event->data = m;
 	
@@ -130,7 +129,6 @@ static int sd_bus_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *r
 static int sd_bus_add_listener(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
 	char *path, *event_type, *buf;
 	int r, len;
-	struct event *event;
 	struct listener_data *listener;
 	struct sd_bus_userdata *args;
 	
@@ -187,8 +185,6 @@ void submit_signal(struct event *event, void *userdata) {
 static int sd_bus_add_signal(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
 	char *event_type, *buf;
 	int r, len;
-	struct event *event;
-	struct listener_data *listener;
 	struct sd_bus_userdata *args;
 	
 	args = (struct sd_bus_userdata*) userdata;
@@ -269,12 +265,10 @@ void *sd_bus_daemon_thread(void *data) {
 	sd_bus_slot *slot = NULL;
 	sd_bus *bus = NULL;
 	int r;
-	struct event_graph *graph;
 	struct dbus_thread *tdata;
 	struct sd_bus_userdata cb_args;
 	
 	tdata = (struct dbus_thread*) data;
-	graph = tdata->graph;
 	
 	printf("start\n");
 	r = sd_bus_open_user(&bus); 
@@ -327,6 +321,7 @@ finish:
 	sd_bus_unref(bus);
 	
 	// 	return r < 0 ? EXIT_FAILURE : EXIT_SUCCESS;
+	return 0;
 }
 
 
@@ -348,7 +343,7 @@ static int bus_signal_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_er
 	
 	dthread = (struct dbus_thread*) userdata;
 	
-	event = (struct event*) malloc(sizeof(struct event));
+	event = new_event();
 	event->type = local_event_types[0];
 	event->data = m;
 	
@@ -408,15 +403,12 @@ void * tmain(void *data) {
 	sd_bus_flush(bus);
 	sd_bus_error_free(&error);
 	sd_bus_unref(bus);
+	
+	return 0;
 }
 
 void sd_bus_init() {
-	sd_bus_message *m = NULL;
 	sd_bus *bus = NULL;
-	sd_bus *ubus = NULL;
-	const char *path;
-	int r;
-	unsigned int i;
 	
 // 	struct event_graph *event_graph;
 // 	

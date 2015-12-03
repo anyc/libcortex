@@ -6,12 +6,13 @@
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "core.h"
 #include "socket.h"
 
 void socket_send(struct socket_req *req) {
-	int sockfd = 0, n = 0;
+	int sockfd = 0;
 	int ret;
 	char recvBuff[1024];
 	struct sockaddr_in serv_addr;
@@ -52,7 +53,7 @@ void socket_send(struct socket_req *req) {
 	// 	} 
 }
 
-void main(int argc, char **argv) {
+int main(int argc, char **argv) {
 	struct socket_req req;
 	
 	if (argc < 3) {
@@ -67,4 +68,6 @@ void main(int argc, char **argv) {
 	req.data_length = strlen(req.data);
 	
 	socket_send(&req);
+	
+	return 0;
 }

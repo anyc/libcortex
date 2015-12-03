@@ -6,6 +6,7 @@
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "core.h"
 #include "socket.h"
@@ -82,7 +83,7 @@ void *socket_tmain(void *data) {
 			continue;
 		}
 		
-		event = (struct event*) calloc(1, sizeof(struct event));
+		event = new_event();
 		event->type = req.type;
 		event->data = req.data;
 		
@@ -95,11 +96,11 @@ void *socket_tmain(void *data) {
 		close(newsockfd);
 	}
 	close(sockfd);
+	
+	return 0;
 }
 
 void socket_init() {
-	unsigned int i;
-	
 	struct event_graph *event_graph;
 	
 	new_eventgraph(&event_graph, event_types);
