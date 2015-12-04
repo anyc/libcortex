@@ -305,4 +305,34 @@ void init_core() {
 	cortexd_graph->tasks = etask;
 }
 
+void decision_cache_task(struct event *event, void *userdata) {
+	struct decision_cache *dc = (struct decision_cache*) userdata;
+	char * key;
+	size_t i;
+	
+	key = dc->create_key(event);
+	if (!key)
+		return;
+	
+	for (i=0; i < dc->n_entries; i++) {
+		if (!strcmp(key, dc->entries[i].key)) {
+			event->response = dc->entries[i].response;
+			event->response_size = dc->entries[i].response_size;
+			
+			free(key);
+			
+			return;
+		}
+	}
+	
+	free(key);
+}
 
+struct decision_cache *create_decision_cache_task(struct event_graph *graph, create_key_cb_t create_key) {
+	struct decision_cache *dc;
+	
+	dc = (struct decision_cache*) calloc(1, sizeof(struct decision_cache));
+	dc->create_key = create_key;
+	
+	return dc;
+}

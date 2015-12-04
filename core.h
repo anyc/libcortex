@@ -77,6 +77,23 @@ struct module {
 	void (*finish)();
 };
 
+struct decision_cache_entry {
+	char *key;
+	
+	void *response;
+	size_t response_size;
+};
+
+typedef char *(*create_key_cb_t)(struct event *event);
+
+struct decision_cache {
+	struct decision_cache_entry *entries;
+	size_t n_entries;
+	
+	create_key_cb_t create_key;
+};
+
+
 extern struct module static_modules[];
 extern struct event_graph *cortexd_graph;
 

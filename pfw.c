@@ -22,13 +22,14 @@ static void handle(struct event *event, void *userdata) {
 	struct event *rl_event;
 	char *s;
 	size_t len;
-	struct nfq_thread_data *td;
+// 	struct nfq_thread_data *td;
 	
 	
-	td = (struct nfq_thread_data *) userdata;
+// 	td = (struct nfq_thread_data *) userdata;
 	
 	printf("rec size %zu\n", event->data_size);
-	if (event->data_size < sizeof(struct ev_nf_queue_packet_msg))
+// 	if (event->data_size < sizeof(struct ev_nf_queue_packet_msg))
+	if (!nfq_packet_msg_okay(event))
 		return;
 	
 	ev = (struct ev_nf_queue_packet_msg*) event->data;

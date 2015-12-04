@@ -8,6 +8,10 @@
 #include <libnetfilter_queue/libnetfilter_queue.h>
 #include <linux/netfilter.h>
 
+#include <netinet/tcp.h>
+#include <netinet/ip.h>
+#include <arpa/inet.h>
+
 #include "core.h"
 #include "nf_queue.h"
 
@@ -314,6 +318,37 @@ void *new_nf_queue_listener(void *options) {
 	pthread_create(&tdata->thread, NULL, nfq_tmain, tdata);
 	
 	return tdata;
+}
+
+char nfq_packet_msg_okay(struct event *event) {
+	if (event->data_size < sizeof(struct ev_nf_queue_packet_msg))
+		return 0;
+	
+	return 1;
+}
+
+
+char * nfq_decision_cache_create_key(struct event *event) {
+	struct ev_nf_queue_packet_msg *ev;
+	struct iphdr *iph;
+	char *ss, *sd, *s;
+	size_t len;
+	
+	if (!nfq_packet_msg_okay(event))
+		return 0;
+	
+	ev = (struct ev_nf_queue_packet_msg*) event->data;
+	
+	iph = (struct iphdr*)ev->payload;
+	
+	ss = inet_ntoa(*(struct in_addr *)&iph->saddr);
+	sd = inet_ntoa(*(struct in_addr *)&iph->daddr);
+	
+	len = 2 + strlen(ss) + 1 + strlen(sd) + 1;
+	s = (char*) malloc(len);
+	sprintf(s, "%d %s %s\n", iph->protocol, ss, sd);
+	
+	return s;
 }
 
 void nf_queue_init() {
