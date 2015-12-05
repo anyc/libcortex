@@ -7,9 +7,13 @@ CFLAGS+=-DSTATIC_SD_BUS $(DEBUG_CFLAGS)
 LDLIBS+=$(shell pkg-config --libs libsystemd libnetfilter_queue)
 LDLIBS+=-lpthread -lreadline -ldl
 
+LDFLAGS=-rdynamic
+
+PLUGINS=libcrtx_pfw.so
+
 .PHONY: clean
 
-all: $(APP) socket_client libcrtx_pfw.so
+all: $(APP) socket_client $(PLUGINS)
 
 $(APP): cortexd.o core.o sd_bus.o socket.o nf_queue.o readline.o plugins.o
 
@@ -23,10 +27,10 @@ $(APP): cortexd.o core.o sd_bus.o socket.o nf_queue.o readline.o plugins.o
 socket_client: socket_client.o
 
 libcrtx_pfw.so: pfw.c
-	$(CC) -shared -o $@ -fPIC pfw.c $(LDFLAGS)
+	$(CC) -shared -o $@ -fPIC pfw.c $(LDFLAGS) $(CFLAGS)
 
 clean:
-	rm -rf *.o $(APP)
+	rm -rf *.o $(APP) $(PLUGINS)
 
 debug:
 	$(MAKE) $(MAKEFILE) DEBUG_CFLAGS="-g -g3 -gdwarf-2 -DDEBUG -Wall" #-Werror 

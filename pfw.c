@@ -13,8 +13,7 @@
 #include "nf_queue.h"
 #include "plugins.h"
 
-struct main_cb *cbs;
-struct event_task task;
+struct event_task *task, *rp_cache;
 struct event_graph *rl_graph;
 
 static void handle(struct event *event, void *userdata) {
@@ -24,6 +23,8 @@ static void handle(struct event *event, void *userdata) {
 	size_t len;
 // 	struct nfq_thread_data *td;
 	
+	if (event->response)
+		return;
 	
 // 	td = (struct nfq_thread_data *) userdata;
 	
@@ -42,7 +43,7 @@ static void handle(struct event *event, void *userdata) {
 	
 	
 	// 	struct sockaddr_in source,dest;
-	char *ss, *sd;
+	char *ss, *sd, *proto, *msg;
 	// 	unsigned short iphdrlen;
 	struct iphdr *iph = (struct iphdr*)ev->payload;
 	
@@ -60,42 +61,48 @@ static void handle(struct event *event, void *userdata) {
 	ss = inet_ntoa(*(struct in_addr *)&iph->saddr);
 	sd = inet_ntoa(*(struct in_addr *)&iph->daddr);
 	
-	len = 2 + strlen(ss) + 1 + strlen(sd) + 1;
+	proto = nfq_proto2str(iph->protocol);
+	msg = "(yes/no)";
+	len = strlen(proto) + 1 + strlen(ss) + 1 + strlen(sd) + 1 + strlen(msg) + 1;
 	s = (char*) malloc(len);
-	sprintf(s, "%d %s %s\n", iph->protocol, ss, sd);
+	sprintf(s, "%s %s %s %s", proto, ss, sd, msg);
 	
-	
-	rl_event = cbs->new_event();
-	rl_event->type = "readline/request";
-	rl_event->data = s;
-	rl_event->data_size = len;
-	
-	if (!rl_graph)
-		rl_graph = cbs->get_graph_for_event_type("readline/request");
-	
-	cbs->add_event(rl_graph, rl_event);
-	
-	cbs->wait_on_event(rl_event);
-	
-	printf("response: %s\n", (char*) rl_event->response);
-	
-	if (rl_event->response && !strncmp(rl_event->response, "yes", 3)) {
-		event->response = (void*) 1;
-	}
+	do {
+		rl_event = new_event();
+		rl_event->type = "readline/request";
+		rl_event->data = s;
+		rl_event->data_size = len;
+		
+		if (!rl_graph)
+			rl_graph = get_graph_for_event_type("readline/request");
+		
+		add_event(rl_graph, rl_event);
+		
+		wait_on_event(rl_event);
+		
+		printf("response: %s\n", (char*) rl_event->response);
+		
+		if (rl_event->response && !strncmp(rl_event->response, "yes", 3)) {
+			event->response = (void*) 1;
+		}
+	} while (!event->response && rl_event->response && strncmp(rl_event->response, "no", 2));
 }
 
-void init(struct main_cb *main_cbs) {
+void init() {
 	struct nfq_thread_data *td;
 	
-	printf("pfw init\n");
+	td = (struct nfq_thread_data*) create_listener("nf_queue", 0);
 	
-	cbs = main_cbs;
+	rp_cache = create_response_cache_task(&nfq_decision_cache_create_key);
+	add_task(td->graph, rp_cache);
 	
-	td = (struct nfq_thread_data*) cbs->create_listener("nf_queue", 0);
+	task = new_task();
+	task->id = "pfw_handler";
+	task->handle = &handle;
+	task->userdata = td;
+	add_task(td->graph, task);
 	
-	task.handle = &handle;
-	task.userdata = td;
-	cbs->add_task(td->graph, &task, 255);
+	print_tasks(td->graph);
 }
 
 void finish() {

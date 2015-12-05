@@ -33,3 +33,6 @@ char nfq_packet_msg_okay(struct event *event);
 void *new_nf_queue_listener(void *options);
 void nf_queue_init();
 void nf_queue_finish();
+
+char * nfq_decision_cache_create_key(struct event *event);
+char *nfq_proto2str(u_int16_t protocol);

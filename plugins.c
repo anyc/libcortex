@@ -14,11 +14,11 @@ struct crtx_plugin {
 	char *basename;
 	
 	void *handle;
-	void (*init)(struct main_cb *main_cbs);
+	void (*init)();
 	void (*finish)();
 };
 
-struct main_cb main_cbs;
+// struct main_cb main_cbs;
 
 struct crtx_plugin *plugins = 0;
 unsigned int n_plugins = 0;
@@ -26,7 +26,7 @@ unsigned int n_plugins = 0;
 static void load_plugin(char *path, char *basename) {
 	struct crtx_plugin *p;
 	
-	printf("load plugin \"%s\n", basename);
+	printf("load plugin \"%s\"\n", path);
 	
 	n_plugins++;
 	plugins = (struct crtx_plugin*) realloc(plugins, sizeof(struct crtx_plugin)*n_plugins);
@@ -40,7 +40,7 @@ static void load_plugin(char *path, char *basename) {
 	p->finish = dlsym(p->handle, "finish");
 	
 	if (p->init)
-		p->init(&main_cbs);
+		p->init();
 }
 
 static void load_dir(char * directory) {
@@ -69,12 +69,12 @@ static void load_dir(char * directory) {
 }
 
 void plugins_init() {
-	main_cbs.add_task = &add_task;
-	main_cbs.create_listener = &create_listener;
-	main_cbs.wait_on_event = &wait_on_event;
-	main_cbs.add_event = &add_event;
-	main_cbs.new_event = &new_event;
-	main_cbs.get_graph_for_event_type = &get_graph_for_event_type;
+// 	main_cbs.add_task = &add_task;
+// 	main_cbs.create_listener = &create_listener;
+// 	main_cbs.wait_on_event = &wait_on_event;
+// 	main_cbs.add_event = &add_event;
+// 	main_cbs.new_event = &new_event;
+// 	main_cbs.get_graph_for_event_type = &get_graph_for_event_type;
 	
 	load_dir("/home/anyc/Projekte/cortexd/");
 }

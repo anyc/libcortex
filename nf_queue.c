@@ -24,8 +24,6 @@
 // #define NF_QUEUE_NEW_PACKET_MSG_TYPE "nf_queue/packet_msg"
 // struct event_graph *new_packet_graph_msg = 0;
 
-
-
 static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		    struct nfq_data *tb, void *data)
 {
@@ -150,7 +148,7 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		hwph = nfq_get_packet_hw(tb);
 		if (hwph) {
 			hw_addrlen = ntohs(hwph->hw_addrlen);
-			msg_size += hw_addrlen*3 + 1;
+			msg_size += hw_addrlen*sizeof(hwph->hw_addr[0]);
 		} else
 			hw_addrlen = 0;
 		
@@ -162,14 +160,16 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		ev = calloc(1, data_size);
 		
 		if (hwph) {
-			int i;
+// 			int i;
 			
 			ev->hw_addr = ((void*) ev) + sizeof(struct ev_nf_queue_packet_msg);
 			
-			for (i = 0; i < hw_addrlen-1; i++)
-				sprintf(ev->hw_addr+i*3, "%02x:", hwph->hw_addr[i]);
-			sprintf(ev->hw_addr+i*3, "%02x", hwph->hw_addr[hw_addrlen-1]);
-			printf("addr \"%s\"\n", ev->hw_addr);
+			memcpy(ev->hw_addr, hwph->hw_addr, hw_addrlen*sizeof(hwph->hw_addr[0]));
+			
+// 			for (i = 0; i < hw_addrlen-1; i++)
+// 				sprintf(ev->hw_addr+i*3, "%02x:", hwph->hw_addr[i]);
+// 			sprintf(ev->hw_addr+i*3, "%02x", hwph->hw_addr[hw_addrlen-1]);
+// 			printf("addr \"%s\"\n", ev->hw_addr);
 		}
 		
 // 		id = 0;
@@ -214,7 +214,7 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 // 		struct iphdr *iph = (struct iphdr*)payload;
 // 		printf("%d %s\n", iph->protocol, inet_ntoa(*(struct in_addr *)&iph->saddr));
 		
-		ev->payload = ((void*) ev) + sizeof(struct ev_nf_queue_packet_msg) + hw_addrlen + 1;
+		ev->payload = ((void*) ev) + sizeof(struct ev_nf_queue_packet_msg) + hw_addrlen*sizeof(hwph->hw_addr[0]);
 		ev->payload_size = payload_size;
 		memcpy(ev->payload, payload, ev->payload_size);
 		
@@ -344,11 +344,22 @@ char * nfq_decision_cache_create_key(struct event *event) {
 	ss = inet_ntoa(*(struct in_addr *)&iph->saddr);
 	sd = inet_ntoa(*(struct in_addr *)&iph->daddr);
 	
-	len = 2 + strlen(ss) + 1 + strlen(sd) + 1;
+	ASSERT(iph->protocol < 999);
+	len = 3 + 1 + strlen(ss) + 1 + strlen(sd) + 1;
 	s = (char*) malloc(len);
-	sprintf(s, "%d %s %s\n", iph->protocol, ss, sd);
+	sprintf(s, "%u %s %s", iph->protocol, ss, sd);
 	
 	return s;
+}
+
+char *nfq_proto2str(u_int16_t protocol) {
+	switch (protocol) {
+		case 1: return "ICMP"; break;
+		case 2: return "IGMP"; break;
+		case 6: return "TCP"; break;
+		case 17: return "UDP"; break;
+		default: printf("unknown proto %d\n", protocol); return "unknown"; break;
+	}
 }
 
 void nf_queue_init() {

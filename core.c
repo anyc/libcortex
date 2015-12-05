@@ -67,14 +67,22 @@ void *graph_consumer_main(void *arg) {
 		self->graph->equeue = self->graph->equeue->next;
 		self->graph->n_queue_entries--;
 		
-		for (ti=self->graph->tasks;ti;ti=ti->next)
-			ti->handle(qe->event, self->graph->tasks->userdata);
+		for (ti=self->graph->tasks;ti;ti=ti->next) {
+			if (ti->handle)
+				ti->handle(qe->event, ti->userdata);
+			if (!ti->next)
+				break;
+		}
+		
+		for (;ti;ti=ti->prev)
+			if (ti->cleanup)
+				ti->cleanup(qe->event, ti->userdata);
 		
 		pthread_mutex_lock(&qe->event->mutex);
 		qe->event->in_n_queues--;
 		
 		if (qe->event->in_n_queues == 0)
-			pthread_cond_signal(&qe->event->cond);
+			pthread_cond_broadcast(&qe->event->cond);
 		
 		pthread_mutex_unlock(&qe->event->mutex);
 		free(qe);
@@ -94,23 +102,27 @@ void spawn_thread(struct event_graph *graph) {
 	pthread_create(&graph->consumers[graph->n_consumers-1].handle, NULL, &graph_consumer_main, &graph->consumers[graph->n_consumers-1]);
 }
 
-void add_task(struct event_graph *graph, struct event_task *task, unsigned char priority) {
+void add_task(struct event_graph *graph, struct event_task *task) {
 	struct event_task *ti, *last;
 	
 	if (!graph->tasks) {
 		graph->tasks = task;
+		task->prev = 0;
 		task->next = 0;
 		return;
 	}
 	
 	last = 0;
 	for (ti=graph->tasks;ti;ti=ti->next) {
-		if (priority > ti->priority) {
+		if (task->position < ti->position) {
 			if (last) {
 				task->next = last->next;
 				last->next = task;
+				task->prev = last;
+				task->next->prev = task;
 			} else {
 				task->next = graph->tasks;
+				task->prev = 0;
 				graph->tasks = task;
 			}
 			
@@ -121,6 +133,7 @@ void add_task(struct event_graph *graph, struct event_task *task, unsigned char 
 	if (!ti) {
 		task->next = last->next;
 		last->next = task;
+		task->prev = last;
 	}
 }
 
@@ -283,7 +296,7 @@ void handle_cortexd_enable(struct event *event, void *userdata) {
 
 struct event_task *new_task() {
 	struct event_task *etask = (struct event_task*) calloc(1, sizeof(struct event_task));
-	etask->priority = 100;
+	etask->position = 100;
 	
 	return etask;
 }
@@ -305,34 +318,67 @@ void init_core() {
 	cortexd_graph->tasks = etask;
 }
 
-void decision_cache_task(struct event *event, void *userdata) {
-	struct decision_cache *dc = (struct decision_cache*) userdata;
-	char * key;
+void response_cache_task(struct event *event, void *userdata) {
+	struct response_cache *dc = (struct response_cache*) userdata;
 	size_t i;
 	
-	key = dc->create_key(event);
-	if (!key)
+	
+	printf("cache\n");
+	dc->cur = 0;
+	
+	dc->cur_key = dc->create_key(event);
+	if (!dc->cur_key)
 		return;
 	
 	for (i=0; i < dc->n_entries; i++) {
-		if (!strcmp(key, dc->entries[i].key)) {
+		if (!strcmp(dc->cur_key, dc->entries[i].key)) {
 			event->response = dc->entries[i].response;
 			event->response_size = dc->entries[i].response_size;
 			
-			free(key);
+			dc->cur = &dc->entries[i];
 			
 			return;
 		}
 	}
-	
-	free(key);
 }
 
-struct decision_cache *create_decision_cache_task(struct event_graph *graph, create_key_cb_t create_key) {
-	struct decision_cache *dc;
+void response_cache_task_cleanup(struct event *event, void *userdata) {
+	struct response_cache *dc = (struct response_cache*) userdata;
+	printf("cache clean\n");
+	if (dc->cur_key && !dc->cur && event->response) {
+		dc->n_entries++;
+		dc->entries = (struct response_cache_entry *) realloc(dc->entries, sizeof(struct response_cache_entry)*dc->n_entries);
+		
+		dc->entries[dc->n_entries-1].key = dc->cur_key;
+		dc->entries[dc->n_entries-1].response = event->response;
+		dc->entries[dc->n_entries-1].response_size = event->response_size;
+	} else {
+		free(dc->cur_key);
+	}
+}
+
+struct event_task *create_response_cache_task(create_key_cb_t create_key) {
+	struct response_cache *dc;
+	struct event_task *task;
 	
-	dc = (struct decision_cache*) calloc(1, sizeof(struct decision_cache));
+	task = new_task();
+	
+	dc = (struct response_cache*) calloc(1, sizeof(struct response_cache));
 	dc->create_key = create_key;
 	
-	return dc;
+	task->id = "response_cache";
+	task->position = 90;
+	task->userdata = dc;
+	task->handle = &response_cache_task;
+	task->cleanup = &response_cache_task_cleanup;
+	
+	return task;
+}
+
+void print_tasks(struct event_graph *graph) {
+	struct event_task *e;
+	
+	for (e=graph->tasks; e; e=e->next) {
+		printf("%u %s\n", e->position, e->id);
+	}
 }

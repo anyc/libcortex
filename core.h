@@ -14,9 +14,11 @@ struct event {
 	
 	void *data;
 	size_t data_size;
+// 	char data_is_self_contained;
 	
 	void *response;
 	size_t response_size;
+// 	char response_is_self_contained;
 	
 	unsigned char in_n_queues;
 	pthread_mutex_t mutex;
@@ -30,11 +32,14 @@ struct queue_entry {
 };
 
 struct event_task {
-	char priority;
+	char *id;
+	char position;
 	
 	void (*handle)(struct event *event, void *userdata);
+	void (*cleanup)(struct event *event, void *userdata);
 	void *userdata;
 	
+	struct event_task *prev;
 	struct event_task *next;
 };
 
@@ -77,7 +82,7 @@ struct module {
 	void (*finish)();
 };
 
-struct decision_cache_entry {
+struct response_cache_entry {
 	char *key;
 	
 	void *response;
@@ -86,9 +91,12 @@ struct decision_cache_entry {
 
 typedef char *(*create_key_cb_t)(struct event *event);
 
-struct decision_cache {
-	struct decision_cache_entry *entries;
+struct response_cache {
+	struct response_cache_entry *entries;
 	size_t n_entries;
+	
+	struct response_cache_entry *cur;
+	char *cur_key;
 	
 	create_key_cb_t create_key;
 };
@@ -104,7 +112,7 @@ struct event *new_event();
 void init_core();
 void new_eventgraph(struct event_graph **event_graph, char **event_types);
 void get_eventgraph(struct event_graph **event_graph, char **event_types, unsigned int n_event_types);
-void add_task(struct event_graph *graph, struct event_task *task, unsigned char priority);
+void add_task(struct event_graph *graph, struct event_task *task);
 void add_event_type(char *event_type);
 void add_raw_event(struct event *event);
 void add_event(struct event_graph *graph, struct event *event);
@@ -113,3 +121,6 @@ struct event_graph *get_graph_for_event_type(char *event_type);
 struct event_task *new_task();
 void wait_on_event(struct event *event);
 void *create_listener(char *id, void *options);
+
+struct event_task *create_response_cache_task(create_key_cb_t create_key);
+void print_tasks(struct event_graph *graph);
