@@ -18,45 +18,21 @@ struct event_graph *rl_graph;
 
 static void handle(struct event *event, void *userdata) {
 	struct ev_nf_queue_packet_msg *ev;
+	struct iphdr *iph;
 	struct event *rl_event;
 	char *s;
 	size_t len;
-// 	struct nfq_thread_data *td;
+	char *ss, *sd, *proto, *msg;
 	
 	if (event->response)
 		return;
 	
-// 	td = (struct nfq_thread_data *) userdata;
-	
-	printf("rec size %zu\n", event->data_size);
-// 	if (event->data_size < sizeof(struct ev_nf_queue_packet_msg))
 	if (!nfq_packet_msg_okay(event))
 		return;
 	
 	ev = (struct ev_nf_queue_packet_msg*) event->data;
 	
-	// 	len = ev->hw_addr?strlen(ev->hw_addr):0+3+1;
-	// 	s = (char*) malloc(len);
-	// 	sprintf(s, "hw %s\n", ev->hw_addr);
-	
-	
-	
-	
-	// 	struct sockaddr_in source,dest;
-	char *ss, *sd, *proto, *msg;
-	// 	unsigned short iphdrlen;
-	struct iphdr *iph = (struct iphdr*)ev->payload;
-	
-	// 	iphdrlen =iph->ihl*4;
-	
-	// 	memset(&source, 0, sizeof(source));
-	// 	source.sin_addr.s_addr = iph->saddr;
-	// 	
-	// 	memset(&dest, 0, sizeof(dest));
-	// 	dest.sin_addr.s_addr = iph->daddr;
-	// 	
-	// 	ss = inet_ntoa(source.sin_addr);
-	// 	sd = inet_ntoa(dest.sin_addr);
+	iph = (struct iphdr*)ev->payload;
 	
 	ss = inet_ntoa(*(struct in_addr *)&iph->saddr);
 	sd = inet_ntoa(*(struct in_addr *)&iph->daddr);

@@ -13,26 +13,10 @@ static char *event_types[] = { "readline/request", 0 };
 
 pthread_mutex_t stdout_mutex;
 
-// static pthread_t thread;
-// struct readline_thread_args sargs;
-
-// struct readline_thread_args {
-// 	struct event_graph *graph;
-// 	char stop;
-// };
-
 
 /* Read a string, and return a pointer to it.  Returns NULL on EOF. */
 char * readline_read() {
-// 	static char *line_read = (char *)NULL;
 	char *line_read = 0;
-	
-// 	if (line_read) {
-// 		free(line_read);
-// 		line_read = (char *)NULL;
-// 	}
-	
-// 	printf("readline %p\n", line_read);
 	
 	line_read = readline ("> ");
 	
@@ -72,11 +56,6 @@ void readline_init() {
 	struct event_task *etask = new_task();
 	etask->handle = &handle_request;
 	event_graph->tasks = etask;
-	
-// 	sargs.graph = event_graph;
-// 	sargs.stop = 0;
-	
-// 	pthread_create(&thread, NULL, readline_tmain, &sargs);
 }
 
 void readline_finish() {
