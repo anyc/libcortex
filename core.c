@@ -7,11 +7,10 @@
 char ** event_types = 0;
 unsigned n_event_types = 0;
 
-struct event_graph *cortexd_graph;
-
 struct event_graph **graphs;
 unsigned int n_graphs;
 
+struct event_graph *cortexd_graph;
 static char * local_event_types[] = { "cortexd_enable", 0 };
 
 #include "socket.h"
@@ -322,8 +321,6 @@ void response_cache_task(struct event *event, void *userdata) {
 	struct response_cache *dc = (struct response_cache*) userdata;
 	size_t i;
 	
-	
-	printf("cache\n");
 	dc->cur = 0;
 	
 	dc->cur_key = dc->create_key(event);
@@ -337,6 +334,8 @@ void response_cache_task(struct event *event, void *userdata) {
 			
 			dc->cur = &dc->entries[i];
 			
+			printf("response found in cache\n");
+			
 			return;
 		}
 	}
@@ -344,7 +343,7 @@ void response_cache_task(struct event *event, void *userdata) {
 
 void response_cache_task_cleanup(struct event *event, void *userdata) {
 	struct response_cache *dc = (struct response_cache*) userdata;
-	printf("cache clean\n");
+	
 	if (dc->cur_key && !dc->cur && event->response) {
 		dc->n_entries++;
 		dc->entries = (struct response_cache_entry *) realloc(dc->entries, sizeof(struct response_cache_entry)*dc->n_entries);
@@ -381,4 +380,13 @@ void print_tasks(struct event_graph *graph) {
 	for (e=graph->tasks; e; e=e->next) {
 		printf("%u %s\n", e->position, e->id);
 	}
+}
+
+void hexdump(unsigned char *buffer, size_t index) {
+	size_t i;
+	
+	for (i=0;i<index;i++) {
+		printf("%02x ", buffer[i]);
+	}
+	printf("\n");
 }

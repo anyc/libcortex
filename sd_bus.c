@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <systemd/sd-bus.h>
 
 #include "core.h"
+#include "sd_bus.h"
 
 // busctl --user tree org.cortexd.main
 // busctl --user introspect org.cortexd.main /org/cortexd/main
@@ -16,6 +16,8 @@ static char * local_event_types[] = { "test", 0 };
 
 static pthread_t uthread, sthread, dthread;
 struct dbus_thread duthread, dsthread, ddthread;
+
+sd_bus *sd_bus_main_bus;
 
 struct dbus_thread {
 	sd_bus *bus;
@@ -125,11 +127,30 @@ static int sd_bus_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *r
 	return 0;
 }
 
-
-static int sd_bus_add_listener(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
-	char *path, *event_type, *buf;
-	int r, len;
+void sd_bus_add_listener(sd_bus *bus, char *path, char *event_type) {
 	struct listener_data *listener;
+	char *buf;
+	int len;
+	
+	listener = (struct listener_data*) calloc(1, sizeof(struct listener_data));
+	listener->path = new_strcpy(path);
+	listener->event_type = new_strcpy(event_type);
+	
+	// 	TODO escape path
+	len = strlen(path);
+	buf = (char*) malloc(strlen("type='signal',path='")+len+2);
+	sprintf(buf, "type='signal',path='%s'", path);
+	
+	printf("sd_bus will listen on %s\n", path);
+	
+	sd_bus_add_match(bus, NULL, buf, sd_bus_listener_cb, listener);
+	
+	free(buf);
+}
+
+static int sd_bus_add_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
+	char *path, *event_type;
+	int r;
 	struct sd_bus_userdata *args;
 	
 	args = (struct sd_bus_userdata*) userdata;
@@ -141,23 +162,11 @@ static int sd_bus_add_listener(sd_bus_message *m, void *userdata, sd_bus_error *
 		return r;
 	}
 	
-	listener = (struct listener_data*) calloc(1, sizeof(struct listener_data));
-	listener->path = new_strcpy(path);
-	listener->event_type = new_strcpy(event_type);
-	
-// 	TODO escape path
-	len = strlen(path);
-	buf = (char*) malloc(strlen("type='signal',path='")+len+2);
-	sprintf(buf, "type='signal',path='%s'", path);
-	
-	printf("sd_bus will listen on %s\n", path);
-	
-	sd_bus_add_match(args->bus, NULL, buf, sd_bus_listener_cb, listener);
-	
-	free(buf);
+	sd_bus_add_listener(args->bus, path, event_type);
 	
 	return sd_bus_reply_method_return(m, "");
 }
+
 
 
 struct sd_bus_signal {
@@ -256,7 +265,7 @@ static int sd_bus_add_signal(sd_bus_message *m, void *userdata, sd_bus_error *re
 static const sd_bus_vtable cortexd_vtable[] = {
 	SD_BUS_VTABLE_START(0),
 	SD_BUS_METHOD("add_event", "ss", "", sd_bus_add_event, SD_BUS_VTABLE_UNPRIVILEGED),
-	SD_BUS_METHOD("add_listener", "ss", "", sd_bus_add_listener, SD_BUS_VTABLE_UNPRIVILEGED),
+	SD_BUS_METHOD("add_listener", "ss", "", sd_bus_add_listener_cb, SD_BUS_VTABLE_UNPRIVILEGED),
 	SD_BUS_METHOD("add_signal", "s", "", sd_bus_add_signal, SD_BUS_VTABLE_UNPRIVILEGED),
 	SD_BUS_VTABLE_END
 };
@@ -271,10 +280,12 @@ void *sd_bus_daemon_thread(void *data) {
 	tdata = (struct dbus_thread*) data;
 	
 	printf("start\n");
-	r = sd_bus_open_user(&bus); 
+	r = sd_bus_open_user(&bus);
 // 	ASSERT_STR(r >=0, "Failed to connect to system bus: %s\n", strerror(-r));
 	if (r < 0)
 		return 0;
+	
+	sd_bus_main_bus = bus;
 	
 	cb_args.graph = tdata->graph;
 	cb_args.bus = bus;
@@ -327,7 +338,7 @@ finish:
 
 
 
-void handle_event(struct event *event) {
+void sd_bus_print_event_task(struct event *event, void *userdata) {
 	sd_bus_message *m = (sd_bus_message *) event->data;
 	
 	print_sd_bus_msg(m);
@@ -408,7 +419,7 @@ void * tmain(void *data) {
 }
 
 void sd_bus_init() {
-	sd_bus *bus = NULL;
+// 	sd_bus *bus = NULL;
 	
 // 	struct event_graph *event_graph;
 // 	
@@ -450,8 +461,8 @@ void sd_bus_init() {
 	
 	
 	
-	
-	ddthread.bus = bus;
+// 	main_bus = bus;
+// 	ddthread.bus = bus;
 	ddthread.graph = cortexd_graph;
 	
 	pthread_create(&dthread, NULL, sd_bus_daemon_thread, &ddthread);
@@ -519,3 +530,27 @@ void init() {
 	sd_bus_init();
 }
 #endif
+
+// void sd_bus_call_method(sd_bus *bus, char *dest, char *path, char *interface, char *member, char *sign) {
+// 	int r;
+// 	sd_bus_error error = SD_BUS_ERROR_NULL;
+// 	sd_bus_message *m = NULL;
+// 	
+// 	r = sd_bus_call_method(bus,
+// 				"org.freedesktop.systemd1",           /* service to contact */
+// 				"/org/freedesktop/systemd1",          /* object path */
+// 				"org.freedesktop.systemd1.Manager",   /* interface name */
+// 				"StartUnit",                          /* method name */
+// 				&error,                               /* object to return error in */
+// 				&m,                                   /* return message on success */
+// 				"ss",                                 /* input signature */
+// 				"cups.service",                       /* first argument */
+// 				"replace");                           /* second argument */
+// 	if (r < 0) {
+// 		fprintf(stderr, "Failed to issue method call: %s\n", error.message);
+// 		goto finish;
+// 	}
+// 	
+// 	
+// 	r = sd_bus_message_new_method_call(bus, &m, dest, path, interface, member);
+// }

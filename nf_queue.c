@@ -18,6 +18,9 @@
 // iptables -A INPUT -p tcp --dport 631 -j NFQUEUE --queue-num 0
 // iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW  -j NFQUEUE --queue-num 0
 
+// iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW  -m mark --mark 0 -j NFQUEUE --queue-num 0
+// iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW -m mark --mark 1 -j REJECT
+
 static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		    struct nfq_data *tb, void *data)
 {
@@ -74,33 +77,39 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		mark = nfq_get_nfmark(tb);
 		if (mark) {
-			printf("mark=%u ", mark);
+// 			printf("mark=%u ", mark);
 			ev->mark = mark;
 		}
 		
 		ifi = nfq_get_indev(tb);
 		if (ifi) {
-			printf("indev=%u ", ifi);
+// 			printf("indev=%u ", ifi);
 			ev->indev = ifi;
 		}
 		
 		ifi = nfq_get_outdev(tb);
 		if (ifi) {
-			printf("outdev=%u ", ifi);
+// 			printf("outdev=%u ", ifi);
 			ev->outdev = ifi;
 		}
 		
 		ifi = nfq_get_physindev(tb);
 		if (ifi) {
-			printf("physindev=%u ", ifi);
+// 			printf("physindev=%u ", ifi);
 			ev->physindev = ifi;
 		}
 		
 		ifi = nfq_get_physoutdev(tb);
 		if (ifi) {
-			printf("physoutdev=%u ", ifi);
+// 			printf("physoutdev=%u ", ifi);
 			ev->physoutdev = ifi;
 		}
+		
+// 		struct iphdr *iph = (struct iphdr *) payload;
+// 		printf("rec: %s %s ", nfq_proto2str(iph->protocol),
+// 				inet_ntoa(*(struct in_addr *)&iph->saddr));
+// 		printf("%s\n", inet_ntoa(*(struct in_addr *)&iph->daddr));
+		
 		
 		ev->payload = ((void*) ev) + sizeof(struct ev_nf_queue_packet_msg) + hw_addrlen*sizeof(hwph->hw_addr[0]);
 		ev->payload_size = payload_size;
@@ -115,8 +124,8 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		wait_on_event(event);
 		
-		printf("packet: %s\n", event->response? "accept":"drop");
-		return nfq_set_verdict(qh, ev->id, event->response? NF_ACCEPT : NF_DROP, 0, NULL);
+		printf("packet mark: %lu\n", (long) event->response);
+		return nfq_set_verdict2(qh, ev->id, NF_REPEAT, (long) event->response, 0, NULL);
 	} else {
 		int id;
 		struct nfqnl_msg_packet_hdr *ph;
@@ -146,38 +155,37 @@ void *nfq_tmain(void *data) {
 	h = nfq_open();
 	if (!h) {
 		fprintf(stderr, "error during nfq_open()\n");
-		exit(1);
+		return 0;
 	}
 	
 	printf("unbinding existing nf_queue handler for AF_INET (if any)\n");
 	if (nfq_unbind_pf(h, AF_INET) < 0) {
 		fprintf(stderr, "error during nfq_unbind_pf()\n");
-		exit(1);
+		return 0;
 	}
 	
 	printf("binding nfnetlink_queue as nf_queue handler for AF_INET\n");
 	if (nfq_bind_pf(h, AF_INET) < 0) {
 		fprintf(stderr, "error during nfq_bind_pf()\n");
-		exit(1);
+		return 0;
 	}
 	
 	printf("binding this socket to queue '0'\n");
 	qh = nfq_create_queue(h, td->queue_num, &cb, td);
 	if (!qh) {
 		fprintf(stderr, "error during nfq_create_queue()\n");
-		exit(1);
+		return 0;
 	}
 	
 	printf("setting copy_packet mode\n");
 	if (nfq_set_mode(qh, NFQNL_COPY_PACKET, 0xffff) < 0) {
 		fprintf(stderr, "can't set packet_copy mode\n");
-		exit(1);
+		return 0;
 	}
 	
 	fd = nfq_fd(h);
 	
 	while ((rv = recv(fd, buf, sizeof(buf), 0)) >= 0) {
-		printf("pkt received\n");
 		nfq_handle_packet(h, buf, rv);
 	}
 	

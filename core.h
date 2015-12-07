@@ -124,3 +124,4 @@ void *create_listener(char *id, void *options);
 
 struct event_task *create_response_cache_task(create_key_cb_t create_key);
 void print_tasks(struct event_graph *graph);
+void hexdump(unsigned char *buffer, size_t index);
