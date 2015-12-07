@@ -33,7 +33,7 @@ struct sd_bus_userdata {
 	struct event_graph *graph;
 };
 
-void print_sd_bus_msg(sd_bus_message *m) {
+void sd_bus_print_msg(sd_bus_message *m) {
 	const char *sig;
 	char *val;
 	
@@ -104,7 +104,7 @@ static int sd_bus_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *r
 	event->type = listener->event_type;
 	event->data = m;
 	
-	print_sd_bus_msg(m);
+	sd_bus_print_msg(m);
 	
 	// 	sig = sd_bus_message_get_signature(m, 1);
 	// 	
@@ -179,7 +179,7 @@ struct sd_bus_signal {
 struct sd_bus_signal *signals = 0;
 unsigned int n_signals = 0;
 
-void submit_signal(struct event *event, void *userdata) {
+void submit_signal(struct event *event, void *userdata, void **sessiondata) {
 // 	sd_bus_message *m = (sd_bus_message *) event->data;
 	
 // 	print_sd_bus_msg(m);
@@ -341,7 +341,7 @@ finish:
 void sd_bus_print_event_task(struct event *event, void *userdata) {
 	sd_bus_message *m = (sd_bus_message *) event->data;
 	
-	print_sd_bus_msg(m);
+	sd_bus_print_msg(m);
 }
 
 // static int bus_signal_cb(sd_bus *bus, int ret, sd_bus_message *m, void *user_data)

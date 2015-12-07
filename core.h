@@ -35,8 +35,8 @@ struct event_task {
 	char *id;
 	char position;
 	
-	void (*handle)(struct event *event, void *userdata);
-	void (*cleanup)(struct event *event, void *userdata);
+	void (*handle)(struct event *event, void *userdata, void **sessiondata);
+	void (*cleanup)(struct event *event, void *userdata, void *sessiondata);
 	void *userdata;
 	
 	struct event_task *prev;
@@ -84,6 +84,7 @@ struct module {
 
 struct response_cache_entry {
 	char *key;
+	char type;
 	
 	void *response;
 	size_t response_size;

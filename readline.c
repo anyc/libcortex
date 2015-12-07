@@ -31,7 +31,7 @@ void *readline_tmain(void *data) {
 	return 0;
 }
 
-void handle_request(struct event *event, void *userdata) {
+void handle_request(struct event *event, void *userdata, void **sessiondata) {
 	char *input;
 	
 	pthread_mutex_lock(&stdout_mutex);

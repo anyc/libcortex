@@ -16,7 +16,7 @@ static char *event_types[] = { "cortexd/enable", 0 };
 static pthread_t thread;
 struct socket_thread_args sargs;
 
-void handle_enable(struct event *event, void *userdata) {
+void handle_enable(struct event *event, void *userdata, void **sessiondata) {
 	
 }
 

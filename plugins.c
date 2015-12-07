@@ -9,6 +9,10 @@
 #include "core.h"
 #include "plugins.h"
 
+#ifndef PLUGINDIR
+#define PLUGINDIR "/usr/lib/"
+#endif
+
 struct crtx_plugin {
 	char *path;
 	char *basename;
@@ -76,7 +80,7 @@ void plugins_init() {
 // 	main_cbs.new_event = &new_event;
 // 	main_cbs.get_graph_for_event_type = &get_graph_for_event_type;
 	
-	load_dir("/home/anyc/Projekte/cortexd/");
+	load_dir(PLUGINDIR);
 }
 
 void plugins_finish() {

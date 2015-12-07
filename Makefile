@@ -1,3 +1,7 @@
+
+local_mk ?= Makefile.local
+-include $(local_mk)
+
 APP=cortexd
 
 CFLAGS+=$(shell pkg-config --cflags libsystemd libnetfilter_queue)

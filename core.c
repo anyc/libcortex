@@ -11,7 +11,7 @@ struct event_graph **graphs;
 unsigned int n_graphs;
 
 struct event_graph *cortexd_graph;
-static char * local_event_types[] = { "cortexd_enable", 0 };
+static char * local_event_types[] = { "cortexd/module_initialized", 0 };
 
 #include "socket.h"
 #ifdef STATIC_SD_BUS
@@ -51,10 +51,22 @@ void *create_listener(char *id, void *options) {
 	return 0;
 }
 
+void traverse_graph_r(struct event_task *ti, struct event *event) {
+	void *sessiondata;
+	
+	if (ti->handle)
+		ti->handle(event, ti->userdata, &sessiondata);
+	
+	traverse_graph_r(ti->next, event);
+	
+	if (ti->cleanup)
+		ti->cleanup(event, ti->userdata, sessiondata);
+}
+
 void *graph_consumer_main(void *arg) {
 	struct thread *self = (struct thread*) arg;
 	struct queue_entry *qe;
-	struct event_task *ti;
+// 	struct event_task *ti;
 	
 	while (!self->stop) {
 		pthread_mutex_lock(&self->graph->queue_mutex);
@@ -66,16 +78,18 @@ void *graph_consumer_main(void *arg) {
 		self->graph->equeue = self->graph->equeue->next;
 		self->graph->n_queue_entries--;
 		
-		for (ti=self->graph->tasks;ti;ti=ti->next) {
-			if (ti->handle)
-				ti->handle(qe->event, ti->userdata);
-			if (!ti->next)
-				break;
-		}
+// 		for (ti=self->graph->tasks;ti;ti=ti->next) {
+// 			if (ti->handle)
+// 				ti->handle(qe->event, ti->userdata);
+// 			if (!ti->next)
+// 				break;
+// 		}
+// 		
+// 		for (;ti;ti=ti->prev)
+// 			if (ti->cleanup)
+// 				ti->cleanup(qe->event, ti->userdata);
 		
-		for (;ti;ti=ti->prev)
-			if (ti->cleanup)
-				ti->cleanup(qe->event, ti->userdata);
+		traverse_graph_r(self->graph->tasks, qe->event);
 		
 		pthread_mutex_lock(&qe->event->mutex);
 		qe->event->in_n_queues--;
@@ -289,10 +303,6 @@ void add_event_type(char *event_type) {
 	event_types[n_event_types-1] = event_type;
 }
 
-void handle_cortexd_enable(struct event *event, void *userdata) {
-	printf("cortexd enable\n");
-}
-
 struct event_task *new_task() {
 	struct event_task *etask = (struct event_task*) calloc(1, sizeof(struct event_task));
 	etask->position = 100;
@@ -311,17 +321,14 @@ void init_core() {
 	
 	new_eventgraph(&cortexd_graph, local_event_types);
 	
-	struct event_task *etask = new_task();
-	etask->handle = &handle_cortexd_enable;
-	
-	cortexd_graph->tasks = etask;
+// 	cortexd_graph->tasks = etask;
 }
 
-void response_cache_task(struct event *event, void *userdata) {
+void response_cache_task(struct event *event, void *userdata, void **sessiondata) {
 	struct response_cache *dc = (struct response_cache*) userdata;
 	size_t i;
 	
-	dc->cur = 0;
+// 	dc->cur = 0;
 	
 	dc->cur_key = dc->create_key(event);
 	if (!dc->cur_key)
@@ -332,7 +339,7 @@ void response_cache_task(struct event *event, void *userdata) {
 			event->response = dc->entries[i].response;
 			event->response_size = dc->entries[i].response_size;
 			
-			dc->cur = &dc->entries[i];
+			*sessiondata = &dc->entries[i];
 			
 			printf("response found in cache\n");
 			
@@ -341,10 +348,10 @@ void response_cache_task(struct event *event, void *userdata) {
 	}
 }
 
-void response_cache_task_cleanup(struct event *event, void *userdata) {
+void response_cache_task_cleanup(struct event *event, void *userdata, void *sessiondata) {
 	struct response_cache *dc = (struct response_cache*) userdata;
 	
-	if (dc->cur_key && !dc->cur && event->response) {
+	if (dc->cur_key && !sessiondata && event->response) {
 		dc->n_entries++;
 		dc->entries = (struct response_cache_entry *) realloc(dc->entries, sizeof(struct response_cache_entry)*dc->n_entries);
 		
@@ -389,4 +396,58 @@ void hexdump(unsigned char *buffer, size_t index) {
 		printf("%02x ", buffer[i]);
 	}
 	printf("\n");
+}
+
+typedef char (*event_notifier_filter)(struct event *event);
+typedef void (*event_notifier_cb)(struct event *event);
+struct event_notifier {
+	event_notifier_filter filter;
+	event_notifier_cb callback;
+	
+	pthread_mutex_t mutex;
+	pthread_cond_t cond;
+};
+
+void event_notifier_task(struct event *event, void *userdata, void **sessiondata) {
+	struct event_notifier *en = (struct event_notifier*) userdata;
+	
+	if (en->filter(event)) {
+		en->callback(event);
+		
+		pthread_mutex_lock(&en->mutex);
+		pthread_cond_broadcast(&en->cond);
+		pthread_mutex_unlock(&en->mutex);
+	}
+}
+
+void wait_on_notifier(struct event_notifier *en) {
+	pthread_mutex_lock(&en->mutex);
+	
+	pthread_cond_wait(&en->cond, &en->mutex);
+	
+	pthread_mutex_unlock(&en->mutex);
+}
+
+
+struct event_task *new_event_notifier(struct event_graph *graph, event_notifier_filter filter, event_notifier_cb callback) {
+	struct event_task *task;
+	struct event_notifier *en;
+	int ret;
+	
+	en = (struct event_notifier*) calloc(1, sizeof(struct event_notifier));
+	en->filter = filter;
+	en->callback = callback;
+	
+	ret = pthread_mutex_init(&en->mutex, 0); ASSERT(ret >= 0);
+	ret = pthread_cond_init(&en->cond, NULL); ASSERT(ret >= 0);
+	
+	task = new_task();
+	task->id = "event_notifier";
+	task->position = 110;
+	task->userdata = en;
+	task->handle = &event_notifier_task;
+	
+	add_task(graph, task);
+	
+	return task;
 }
