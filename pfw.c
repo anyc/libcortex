@@ -5,6 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include <regex.h>
+#include <ctype.h>
 
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
@@ -30,8 +31,9 @@ struct event_graph *rl_graph, *newp_graph, *newp_raw_graph;
 // iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW  -m mark --mark 0 -j NFQUEUE --queue-num 0
 // iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW -m mark --mark 1 -j REJECT
 // iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW -m mark --mark 2 -j ACCEPT
+// iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW -m mark --mark 3 -j
 
-#define PFW_DEFAULT 2
+#define PFW_DEFAULT 3
 #define PFW_ACCEPT 2
 #define PFW_REJECT 1
 
@@ -75,8 +77,67 @@ struct filter_set ip_blacklist;
 struct filter_set host_whitelist;
 struct filter_set host_blacklist;
 
+struct filter_set resolvelist;
 
+void print_filter_set(struct filter_set *fset, char *name) {
+	size_t i;
+	
+	printf("%s:\n", name);
+	
+	for (i=0; i<fset->length; i++) {
+		printf("  %s\n", fset->list[i]);
+	}
+	printf("\n");
+}
 
+void add_ips_to_list(struct filter_set *fset, char *hostname) {
+	struct addrinfo* result;
+	struct addrinfo* res;
+	int error, ret;
+	size_t i;
+	
+	error = getaddrinfo(hostname, NULL, NULL, &result);
+	if (error != 0) {
+		if (error == EAI_SYSTEM) {
+			perror("getaddrinfo");
+		} else {
+			fprintf(stderr, "error in getaddrinfo(%s): %s\n", hostname, gai_strerror(error));
+		}
+		return;
+	}
+	
+	for (res = result; res != NULL; res = res->ai_next) {
+		if (res->ai_family != AF_INET)
+			continue;
+		
+		struct sockaddr_in* saddr = (struct sockaddr_in*)res->ai_addr;
+// 		printf("hostname: %s\n", inet_ntoa(saddr->sin_addr));
+		
+		char cont = 0;
+		for (i=0; i<fset->length; i++) {
+			if (!strcmp(fset->list[i], inet_ntoa(saddr->sin_addr))) {
+				cont = 1;
+				break;
+			}
+		}
+		if (cont)
+			continue;
+		printf("add %s %s\n", inet_ntoa(saddr->sin_addr), hostname);
+		fset->length++;
+		fset->list = (char**) realloc(fset->list, sizeof(char*)*fset->length);
+		fset->rlist = (regex_t*) realloc(fset->rlist, sizeof(regex_t)*fset->length);
+		fset->list[fset->length-1] = stracpy(inet_ntoa(saddr->sin_addr), 0);
+		
+		ret = regcomp(&fset->rlist[fset->length-1], fset->list[fset->length-1], 0);
+		if (ret) {
+			fprintf(stderr, "Could not compile regex %s\n", fset->list[fset->length-1]);
+// 			exit(1);
+		}
+	}
+	
+	freeaddrinfo(result);
+	return;
+}
 
 static void pfw_main_handler(struct event *event, void *userdata, void **sessiondata) {
 	struct event *newp_raw_event, *newp_event;
@@ -321,28 +382,101 @@ static void readline_handler(struct event *event, void *userdata, void **session
 	}
 }
 
-char * pfw_rcache_create_key(struct event *event) {
-	struct ev_nf_queue_packet_msg *ev;
-	struct iphdr *iph;
-	char *ss, *sd, *s;
-	size_t len;
+char pfw_is_ip_local(char *ip) {
+	struct ip_ll *iit;
 	
-	if (!nfq_packet_msg_okay(event))
-		return 0;
+	for (iit=local_ips; iit; iit=iit->next) {
+		if (!strcmp(iit->ip, ip))
+			return 1;
+	}
 	
-	ev = (struct ev_nf_queue_packet_msg*) event->data;
+	return 0;
+}
+
+
+void pfw_get_remote_data(struct data_struct *ds, char **remote_ip, char **remote_host) {
+	char src_local, dst_local;
+	unsigned int i_remote_ip, i_remote_host;
 	
-	iph = (struct iphdr*)ev->payload;
+	if (strcmp(ds->signature, PFW_NEWPACKET_SIGNATURE)) {
+		printf("error, signature mismatch: %s %s\n", ds->signature, PFW_NEWPACKET_SIGNATURE);
+		return;
+	}
 	
-	ss = inet_ntoa(*(struct in_addr *)&iph->saddr);
-	sd = inet_ntoa(*(struct in_addr *)&iph->daddr);
 	
-	ASSERT(iph->protocol < 999);
-	len = 3 + 1 + strlen(ss) + 1 + strlen(sd) + 1;
-	s = (char*) malloc(len);
-	sprintf(s, "%u %s %s", iph->protocol, ss, sd);
+	if (pfw_is_ip_local(ds->items[PFW_NEWP_SRC_IP].string)) {
+		src_local = 1;
+	} else {
+		src_local = 0;
+		if (pfw_is_ip_local(ds->items[PFW_NEWP_DST_IP].string))
+			dst_local = 1;
+		else
+			dst_local = 0;
+	}
 	
-	return s;
+	if (!src_local && !dst_local) {
+		i_remote_ip = PFW_NEWP_SRC_IP;
+		i_remote_host = PFW_NEWP_SRC_HOST;
+	} else {
+		if (src_local) {
+			i_remote_ip = PFW_NEWP_DST_IP;
+			i_remote_host = PFW_NEWP_DST_HOST;
+		} else {
+			i_remote_ip = PFW_NEWP_SRC_IP;
+			i_remote_host = PFW_NEWP_SRC_HOST;
+		}
+	}
+	
+	*remote_host = ds->items[i_remote_host].string;
+	*remote_ip = ds->items[i_remote_ip].string;
+}
+
+
+// char * pfw_rcache_create_key(struct event *event) {
+// 	struct ev_nf_queue_packet_msg *ev;
+// 	struct iphdr *iph;
+// 	char *ss, *sd, *s;
+// 	size_t len;
+// 	
+// 	if (!nfq_packet_msg_okay(event))
+// 		return 0;
+// 	
+// 	ev = (struct ev_nf_queue_packet_msg*) event->data;
+// 	
+// 	iph = (struct iphdr*)ev->payload;
+// 	
+// 	ss = inet_ntoa(*(struct in_addr *)&iph->saddr);
+// 	sd = inet_ntoa(*(struct in_addr *)&iph->daddr);
+// 	
+// 	ASSERT(iph->protocol < 999);
+// 	len = 3 + 1 + strlen(ss) + 1 + strlen(sd) + 1;
+// 	s = (char*) malloc(len);
+// 	sprintf(s, "%u %s %s", iph->protocol, ss, sd);
+// 	
+// 	return s;
+// }
+
+
+char * pfw_rcache_create_key_ip(struct event *event) {
+	struct data_struct *ds;
+	char *remote_ip, *remote_host;
+	
+	ds = (struct data_struct *) event->data;
+	
+	pfw_get_remote_data(ds, &remote_ip, &remote_host);
+	
+	return remote_ip;
+}
+
+char * pfw_rcache_create_key_host(struct event *event) {
+	struct data_struct *ds;
+	char *remote_ip, *remote_host;
+	
+	ds = (struct data_struct *) event->data;
+	
+	pfw_get_remote_data(ds, &remote_ip, &remote_host);
+	
+	return remote_host;
 }
 
 // struct data_item *get_data_item(struct data_struct *ds, char *key) {
@@ -370,17 +504,6 @@ struct data_item *get_data_item(struct data_struct *ds, char *key) {
 			return di;
 		
 		di++;
-	}
-	
-	return 0;
-}
-
-char pfw_is_ip_local(char *ip) {
-	struct ip_ll *iit;
-	
-	for (iit=local_ips; iit; iit=iit->next) {
-		if (!strcmp(iit->ip, ip))
-			return 1;
 	}
 	
 	return 0;
@@ -447,6 +570,7 @@ void load_list(struct filter_set *fset, char *file) {
 	FILE *f;
 	int ret;
 	char buf[1024];
+	char *c;
 	
 	f = fopen(file, "r");
 	
@@ -454,6 +578,13 @@ void load_list(struct filter_set *fset, char *file) {
 		return;
 	
 	while (fgets(buf, sizeof(buf), f)) {
+		c=buf;
+		while (*c && isspace(*c))
+			c++;
+		
+		if (! *c)
+			continue;
+		
 		fset->length++;
 		fset->list = (char**) realloc(fset->list, sizeof(char*)*fset->length);
 		fset->rlist = (regex_t*) realloc(fset->rlist, sizeof(regex_t)*fset->length);
@@ -480,6 +611,7 @@ static char match_regexp_list(char *input, struct filter_set *fset) {
 	char msgbuf[128];
 	
 	for (i=0; i<fset->length; i++) {
+// 		printf("match %s %s\n", input, fset->list[i]);
 		ret = regexec(&fset->rlist[i], input, 0, NULL, 0);
 		if (!ret) {
 			return 1;
@@ -496,56 +628,29 @@ static char match_regexp_list(char *input, struct filter_set *fset) {
 
 static void pfw_rules_filter(struct event *event, void *userdata, void **sessiondata) {
 	struct data_struct *ds;
-	char src_local, dst_local;
-	unsigned int remote_ip, remote_host;
+	char *remote_ip, *remote_host;
 	
 	ds = (struct data_struct *) event->data;
 	
-	if (strcmp(ds->signature, PFW_NEWPACKET_SIGNATURE)) {
-		printf("error, signature mismatch: %s %s\n", ds->signature, PFW_NEWPACKET_SIGNATURE);
-		return;
-	}
+	pfw_get_remote_data(ds, &remote_ip, &remote_host);
 	
-	if (pfw_is_ip_local(ds->items[PFW_NEWP_SRC_IP].string)) {
-		src_local = 1;
-	} else {
-		src_local = 0;
-		if (pfw_is_ip_local(ds->items[PFW_NEWP_DST_IP].string))
-			dst_local = 1;
-		else
-			dst_local = 0;
-	}
-	
-	if (!src_local && !dst_local) {
-		remote_ip = PFW_NEWP_SRC_IP;
-		remote_host = PFW_NEWP_SRC_HOST;
-	} else {
-		if (src_local) {
-			remote_ip = PFW_NEWP_DST_IP;
-			remote_host = PFW_NEWP_DST_HOST;
-		} else {
-			remote_ip = PFW_NEWP_SRC_IP;
-			remote_host = PFW_NEWP_SRC_HOST;
-		}
-	}
-	
-	if (match_regexp_list(ds->items[remote_host].string, &host_blacklist)) {
+	if (match_regexp_list(remote_host, &host_blacklist)) {
 		event->response = (void *) PFW_REJECT;
 		return;
 	}
 	
-	if (match_regexp_list(ds->items[remote_ip].string, &ip_blacklist)) {
+	if (match_regexp_list(remote_ip, &ip_blacklist)) {
 		event->response = (void *) PFW_REJECT;
 		return;
 	}
 	
-	if (match_regexp_list(ds->items[remote_host].string, &host_whitelist)) {
-		event->response = (void *) PFW_REJECT;
+	if (match_regexp_list(remote_host, &host_whitelist)) {
+		event->response = (void *) PFW_ACCEPT;
 		return;
 	}
 	
-	if (match_regexp_list(ds->items[remote_ip].string, &ip_whitelist)) {
-		event->response = (void *) PFW_REJECT;
+	if (match_regexp_list(remote_ip, &ip_whitelist)) {
+		event->response = (void *) PFW_ACCEPT;
 		return;
 	}
 	
@@ -556,8 +661,8 @@ void init() {
 	
 	td = (struct nfq_thread_data*) create_listener("nf_queue", 0);
 	
-	rp_cache = create_response_cache_task(&nfq_decision_cache_create_key);
-	add_task(td->graph, rp_cache);
+// 	rp_cache = create_response_cache_task(&nfq_decision_cache_create_key);
+// 	add_task(td->graph, rp_cache);
 	
 	new_eventgraph(&newp_graph, newp_event_types);
 // 	new_eventgraph(&newp_raw_graph, newp_raw_event_types);
@@ -609,41 +714,54 @@ void init() {
 // 	add_task(newp_graph, readline_handle_task);
 // 	
 	
-// 	int i;
-// 	
-// 	for (i=0; i < n_host_blacklist; i++) {
-// 		reti = regcomp(&rhost_blacklist[i], host_blacklist[i], 0);
-// 		if (reti) {
-// 			fprintf(stderr, "Could not compile regex %s\n", host_blacklist[i]);
-// 			exit(1);
-// 		}
-// 	}
-// 	
-// 	for (i=0; i < n_host_whitelist; i++) {
-// 		reti = regcomp(&rhost_whitelist[i], host_whitelist[i], 0);
-// 		if (reti) {
-// 			fprintf(stderr, "Could not compile regex %s\n", host_whitelist[i]);
-// 			exit(1);
-// 		}
-// 	}
 	
 	load_list(&host_blacklist, PFW_DATA_DIR "hblack.txt");
 	load_list(&host_whitelist, PFW_DATA_DIR "hwhite.txt");
 	load_list(&ip_blacklist, PFW_DATA_DIR "ipblack.txt");
 	load_list(&ip_whitelist, PFW_DATA_DIR "ipwhite.txt");
 	
+	load_list(&resolvelist, PFW_DATA_DIR "resolvelist.txt");
+	
+	int i;
+// 	for (i=0; i<host_blacklist.length; i++) {
+// 		add_ips_to_list(&ip_blacklist, host_blacklist.list[i]);
+// 	}
+	
+// 	for (i=0; i<host_whitelist.length; i++) {
+// 		add_ips_to_list(&ip_whitelist, host_whitelist.list[i]);
+// 	}
+	for (i=0; i<resolvelist.length; i++) {
+		add_ips_to_list(&ip_whitelist, resolvelist.list[i]);
+	}
+	
+	print_filter_set(&host_blacklist, "host blacklist");
+	print_filter_set(&ip_blacklist, "ip blacklist");
+	print_filter_set(&host_whitelist, "host whitelist");
+	print_filter_set(&ip_whitelist, "ip blacklist");
+	
 	pfw_rules_task = new_task();
 	pfw_rules_task->id = "pfw_print_packet";
 	pfw_rules_task->handle = &pfw_print_packet;
 	add_task(newp_graph, pfw_rules_task);
 	
+	
 	struct event_task *rcache;
 	
-	rcache = create_response_cache_task(pfw_rcache_create_key);
+	rcache = create_response_cache_task("su", pfw_rcache_create_key_host);
 	((struct response_cache*) rcache->userdata)->match_event = &rcache_match_cb_t_regex;
+	rcache->id = "rcache_host";
 	
-	prefill_rcache( ((struct response_cache*) rcache->userdata), PFW_DATA_DIR "rcache.txt");
+// 	prefill_rcache( ((struct response_cache*) rcache->userdata), PFW_DATA_DIR "rcache_host.txt");
 	add_task(newp_graph, rcache);
+	
+	
+	rcache = create_response_cache_task("su", pfw_rcache_create_key_ip);
+	((struct response_cache*) rcache->userdata)->match_event = &rcache_match_cb_t_regex;
+	rcache->id = "rcache_ip";
+	
+// 	prefill_rcache( ((struct response_cache*) rcache->userdata), PFW_DATA_DIR "rcache_ip.txt");
+	add_task(newp_graph, rcache);
+	
 	
 	pfw_rules_task = new_task();
 	pfw_rules_task->id = "pfw_rules_filter";

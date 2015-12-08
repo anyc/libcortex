@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <regex.h>
+#include <stddef.h>
+#include <inttypes.h>
 
 #include "core.h"
 
@@ -76,7 +78,9 @@ void traverse_graph_r(struct event_task *ti, struct event *event) {
 	if (ti->handle)
 		ti->handle(event, ti->userdata, &sessiondata);
 	
-	if (ti->next)
+	printf("execute task %s\n", ti->id);
+	
+	if (!event->response && ti->next)
 		traverse_graph_r(ti->next, event);
 	
 	if (ti->cleanup)
@@ -358,6 +362,7 @@ char rcache_match_cb_t_regex(struct response_cache *rc, struct event *event, str
 			fprintf(stderr, "Could not compile regex %s\n", (char*) c_entry->key);
 			exit(1);
 		}
+		c_entry->regex_initialized = 1;
 	}
 	
 	ret = regexec( &c_entry->key_regex, (char *) rc->cur_key, 0, NULL, 0);
@@ -389,7 +394,10 @@ void response_cache_task(struct event *event, void *userdata, void **sessiondata
 			
 			*sessiondata = &dc->entries[i];
 			
-			printf("response found in cache\n");
+			printf("response found in cache: ");
+			if (dc->signature[0] == 's')
+				printf("key %s ", (char*) dc->entries[i].key);
+			printf("\n");
 			
 			return;
 		}
@@ -411,9 +419,43 @@ void response_cache_task_cleanup(struct event *event, void *userdata, void *sess
 	}
 }
 
+// char * crtx_get_trim_copy(char * str, unsigned int maxlen) {
+// 	char * s, *ret;
+// 	unsigned int i, len;
+// 	
+// 	if (!str || maxlen == 0)
+// 		return 0;
+// 	
+// 	i=0;
+// 	// get start and reduce maxlen
+// 	while (isspace(*str) && i < maxlen) {str++;i++;}
+// 	maxlen -= i;
+// 	
+// 	// goto end, and move backwards
+// 	s = str + (strlen(str) < maxlen? strlen(str) : maxlen) - 1;
+// 	while (s > str && isspace(*s)) {s--;}
+// 	
+// 	len = (s-str + 1 < maxlen?s-str + 1:maxlen);
+// 	if (len == 0)
+// 		return 0;
+// 	
+// 	ret = (char*) dls_malloc( len + 1 );
+// 	strncpy(ret, str, len);
+// 	ret[len] = 0;
+// 	
+// 	return ret;
+// }
+
 void prefill_rcache(struct response_cache *rcache, char *file) {
 	FILE *f;
 	char buf[1024];
+	char *indent;
+	size_t slen;
+	
+// 	if (strcmp(rcache->signature, "ss")) {
+// 		printf("rcache signature %s != ss\n", rcache->signature);
+// 		return;
+// 	}
 	
 	f = fopen(file, "r");
 	
@@ -421,11 +463,37 @@ void prefill_rcache(struct response_cache *rcache, char *file) {
 		return;
 	
 	while (fgets(buf, sizeof(buf), f)) {
+		if (buf[0] == '#')
+			continue;
+		
+		indent = strchr(buf, '\t');
+		
+		if (!indent)
+			continue;
+		
 		rcache->n_entries++;
 		rcache->entries = (struct response_cache_entry *) realloc(rcache->entries, sizeof(struct response_cache_entry)*rcache->n_entries);
+		memset(&rcache->entries[rcache->n_entries-1], 0, sizeof(struct response_cache_entry));
 		
-		size_t slen = strlen(buf)-1; // don't copy newline
+		slen = indent - buf;
 		rcache->entries[rcache->n_entries-1].key = stracpy(buf, &slen);
+// 		printf("asd %s\n", (char*)rcache->entries[rcache->n_entries-1].key);
+		if (rcache->signature[1] == 's') {
+			slen = strlen(buf) - slen - 1;
+			if (buf[strlen(buf)-1] == '\n')
+				slen--;
+			rcache->entries[rcache->n_entries-1].response = stracpy(indent+1, &slen);;
+			rcache->entries[rcache->n_entries-1].response_size = slen;
+// 			printf("asd %s\n", (char*)rcache->entries[rcache->n_entries-1].response);
+		} else
+		if (rcache->signature[1] == 'u') {
+			uint32_t uint;
+			rcache->entries[rcache->n_entries-1].response_size = strlen(buf) - slen - 2;
+			
+			sscanf(indent+1, "%"PRIu32,  &uint);
+// 			printf("%"PRIu32"\n", uint);
+			rcache->entries[rcache->n_entries-1].response = (void*)(ptrdiff_t) uint;
+		}
 	}
 	
 	if (ferror(stdin)) {
@@ -437,13 +505,14 @@ void prefill_rcache(struct response_cache *rcache, char *file) {
 }
 
 
-struct event_task *create_response_cache_task(create_key_cb_t create_key) {
+struct event_task *create_response_cache_task(char *signature, create_key_cb_t create_key) {
 	struct response_cache *dc;
 	struct event_task *task;
 	
 	task = new_task();
 	
 	dc = (struct response_cache*) calloc(1, sizeof(struct response_cache));
+	dc->signature = signature;
 	dc->create_key = create_key;
 	dc->match_event = &rcache_match_cb_t_strcmp;
 	

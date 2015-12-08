@@ -103,6 +103,8 @@ typedef char *(*create_key_cb_t)(struct event *event);
 typedef char (*match_cb_t)(struct response_cache *rc, struct event *event, struct response_cache_entry *c_entry);
 
 struct response_cache {
+	char *signature;
+	
 	struct response_cache_entry *entries;
 	size_t n_entries;
 	
@@ -163,7 +165,7 @@ struct event_task *new_task();
 void wait_on_event(struct event *event);
 void *create_listener(char *id, void *options);
 
-struct event_task *create_response_cache_task(create_key_cb_t create_key);
+struct event_task *create_response_cache_task(char *signature, create_key_cb_t create_key);
 void print_tasks(struct event_graph *graph);
 void hexdump(unsigned char *buffer, size_t index);
 
