@@ -1,6 +1,7 @@
 
 #include <stdint.h>
 #include <pthread.h>
+#include <regex.h>
 
 #define STRINGIFYB(x) #x
 #define STRINGIFY(x) STRINGIFYB(x)
@@ -84,23 +85,32 @@ struct module {
 };
 
 struct response_cache_entry {
-	char *key;
+	void *key;
+	union {
+		regex_t key_regex;
+	};
+	union {
+		char regex_initialized;
+	};
 	char type;
 	
 	void *response;
 	size_t response_size;
 };
 
+struct response_cache;
 typedef char *(*create_key_cb_t)(struct event *event);
+typedef char (*match_cb_t)(struct response_cache *rc, struct event *event, struct response_cache_entry *c_entry);
 
 struct response_cache {
 	struct response_cache_entry *entries;
 	size_t n_entries;
 	
 	struct response_cache_entry *cur;
-	char *cur_key;
+	void *cur_key;
 	
 	create_key_cb_t create_key;
+	match_cb_t match_event;
 };
 
 #define DIF_KEY_ALLOCATED 1<<0
@@ -156,3 +166,6 @@ void *create_listener(char *id, void *options);
 struct event_task *create_response_cache_task(create_key_cb_t create_key);
 void print_tasks(struct event_graph *graph);
 void hexdump(unsigned char *buffer, size_t index);
+
+void prefill_rcache(struct response_cache *rcache, char *file);
+char rcache_match_cb_t_regex(struct response_cache *rc, struct event *event, struct response_cache_entry *c_entry);

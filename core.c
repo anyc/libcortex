@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <regex.h>
 
 #include "core.h"
 
@@ -343,6 +344,34 @@ void init_core() {
 // 	cortexd_graph->tasks = etask;
 }
 
+char rcache_match_cb_t_strcmp(struct response_cache *rc, struct event *event, struct response_cache_entry *c_entry) {
+	return !strcmp( (char*) rc->cur_key, (char*) c_entry->key);
+}
+
+char rcache_match_cb_t_regex(struct response_cache *rc, struct event *event, struct response_cache_entry *c_entry) {
+	int ret;
+	char msgbuf[128];
+	
+	if (!c_entry->regex_initialized) {
+		ret = regcomp(&c_entry->key_regex, (char*) c_entry->key, 0);
+		if (ret) {
+			fprintf(stderr, "Could not compile regex %s\n", (char*) c_entry->key);
+			exit(1);
+		}
+	}
+	
+	ret = regexec( &c_entry->key_regex, (char *) rc->cur_key, 0, NULL, 0);
+	if (!ret) {
+		return 1;
+	} else if (ret == REG_NOMATCH) {
+		return 0;
+	} else {
+		regerror(ret, &c_entry->key_regex, msgbuf, sizeof(msgbuf));
+		fprintf(stderr, "Regex match failed: %s\n", msgbuf);
+		exit(1);
+	}
+}
+
 void response_cache_task(struct event *event, void *userdata, void **sessiondata) {
 	struct response_cache *dc = (struct response_cache*) userdata;
 	size_t i;
@@ -354,7 +383,7 @@ void response_cache_task(struct event *event, void *userdata, void **sessiondata
 		return;
 	
 	for (i=0; i < dc->n_entries; i++) {
-		if (!strcmp(dc->cur_key, dc->entries[i].key)) {
+		if (dc->match_event(dc, event, &dc->entries[i])) {
 			event->response = dc->entries[i].response;
 			event->response_size = dc->entries[i].response_size;
 			
@@ -382,6 +411,32 @@ void response_cache_task_cleanup(struct event *event, void *userdata, void *sess
 	}
 }
 
+void prefill_rcache(struct response_cache *rcache, char *file) {
+	FILE *f;
+	char buf[1024];
+	
+	f = fopen(file, "r");
+	
+	if (!f)
+		return;
+	
+	while (fgets(buf, sizeof(buf), f)) {
+		rcache->n_entries++;
+		rcache->entries = (struct response_cache_entry *) realloc(rcache->entries, sizeof(struct response_cache_entry)*rcache->n_entries);
+		
+		size_t slen = strlen(buf)-1; // don't copy newline
+		rcache->entries[rcache->n_entries-1].key = stracpy(buf, &slen);
+	}
+	
+	if (ferror(stdin)) {
+		fprintf(stderr,"Oops, error reading stdin\n");
+		exit(1);
+	}
+	
+	fclose(f);
+}
+
+
 struct event_task *create_response_cache_task(create_key_cb_t create_key) {
 	struct response_cache *dc;
 	struct event_task *task;
@@ -390,6 +445,7 @@ struct event_task *create_response_cache_task(create_key_cb_t create_key) {
 	
 	dc = (struct response_cache*) calloc(1, sizeof(struct response_cache));
 	dc->create_key = create_key;
+	dc->match_event = &rcache_match_cb_t_strcmp;
 	
 	task->id = "response_cache";
 	task->position = 90;

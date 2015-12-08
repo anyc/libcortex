@@ -321,7 +321,7 @@ static void readline_handler(struct event *event, void *userdata, void **session
 	}
 }
 
-char * nfq_decision_cache_create_key(struct event *event) {
+char * pfw_rcache_create_key(struct event *event) {
 	struct ev_nf_queue_packet_msg *ev;
 	struct iphdr *iph;
 	char *ss, *sd, *s;
@@ -636,6 +636,14 @@ void init() {
 	pfw_rules_task->id = "pfw_print_packet";
 	pfw_rules_task->handle = &pfw_print_packet;
 	add_task(newp_graph, pfw_rules_task);
+	
+	struct event_task *rcache;
+	
+	rcache = create_response_cache_task(pfw_rcache_create_key);
+	((struct response_cache*) rcache->userdata)->match_event = &rcache_match_cb_t_regex;
+	
+	prefill_rcache( ((struct response_cache*) rcache->userdata), PFW_DATA_DIR "rcache.txt");
+	add_task(newp_graph, rcache);
 	
 	pfw_rules_task = new_task();
 	pfw_rules_task->id = "pfw_rules_filter";
