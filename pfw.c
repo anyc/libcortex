@@ -4,13 +4,18 @@
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
+#include <regex.h>
 
 #include <netinet/tcp.h>
+#include <netinet/udp.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 
 #include <sys/socket.h>
 #include <netdb.h>
+
+#include <sys/types.h>
+#include <ifaddrs.h>
 
 
 #include "core.h"
@@ -18,17 +23,63 @@
 #include "plugins.h"
 #include "sd_bus.h"
 
-struct event_task *task, *rp_cache;
-struct event_graph *rl_graph;
+struct event_task *pfw_handle_task, *rp_cache, *readline_handle_task, *pfw_rules_task;
+struct event_graph *rl_graph, *newp_graph, *newp_raw_graph;
 
-static void handle(struct event *event, void *userdata) {
-	struct ev_nf_queue_packet_msg *ev;
-	struct iphdr *iph;
-	struct event *rl_event;
-	char *s;
-// 	size_t len;
-// 	char *proto, *msg;
-	char buf[64];
+
+// iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW  -m mark --mark 0 -j NFQUEUE --queue-num 0
+// iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW -m mark --mark 1 -j REJECT
+// iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW -m mark --mark 2 -j ACCEPT
+
+#define PFW_DEFAULT 2
+#define PFW_ACCEPT 2
+#define PFW_REJECT 1
+
+#define PFW_NEWPACKET_SIGNATURE "uststD"
+enum {PFW_NEWP_PROTOCOL=0, PFW_NEWP_SRC_IP, PFW_NEWP_SRC_HOST, PFW_NEWP_DST_IP, PFW_NEWP_DST_HOST, PFW_NEWP_PAYLOAD};
+
+#define PFW_NEWPACKET_TCP_SIGNATURE "uu"
+enum {PFW_NEWP_TCP_SPORT=0, PFW_NEWP_TCP_DPORT};
+
+#define PFW_NEWPACKET_UDP_SIGNATURE "uu"
+enum {PFW_NEWP_UDP_SPORT=0, PFW_NEWP_UDP_DPORT};
+
+#define PFW_NEWPACKET_ETYPE "pfw/newpacket"
+char *newp_event_types[] = { PFW_NEWPACKET_ETYPE, 0 };
+
+#define PFW_NEWPACKET_RAW_ETYPE "pfw/newpacket_raw"
+char *newp_raw_event_types[] = { PFW_NEWPACKET_RAW_ETYPE, 0 };
+
+struct ip_ll {
+	struct ip_ll *next;
+	
+	char ip[0];
+};
+
+struct ip_ll *local_ips = 0;
+
+
+struct filter_set {
+	char **list;
+	regex_t *rlist;
+	
+	size_t length;
+};
+
+#ifndef PFW_DATA_DIR
+#define PFW_DATA_DIR "/etc/cortexd/pfw/"
+#endif
+
+struct filter_set ip_whitelist;
+struct filter_set ip_blacklist;
+struct filter_set host_whitelist;
+struct filter_set host_blacklist;
+
+
+
+
+static void pfw_main_handler(struct event *event, void *userdata, void **sessiondata) {
+	struct event *newp_raw_event, *newp_event;
 	
 	if (event->response)
 		return;
@@ -36,27 +87,192 @@ static void handle(struct event *event, void *userdata) {
 	if (!nfq_packet_msg_okay(event))
 		return;
 	
-	ev = (struct ev_nf_queue_packet_msg*) event->data;
+	if (newp_raw_graph && newp_raw_graph->tasks) {
+		newp_raw_event = new_event();
+		newp_raw_event->type = PFW_NEWPACKET_ETYPE;
+		newp_raw_event->data = event->data;
+		newp_raw_event->data_size = event->data_size;
+		
+		add_event(newp_graph, newp_raw_event);
+		
+		wait_on_event(newp_raw_event);
+	}
 	
+	if (newp_graph && newp_graph->tasks) {
+		int res;
+		char host[256];
+// 		char *s;
+// 		char buf[64];
+		struct ev_nf_queue_packet_msg *ev;
+		struct iphdr *iph;
+		size_t size;
+		char *sign;
+		struct data_item *di;
+		struct data_struct *ds;
+		
+		
+		ev = (struct ev_nf_queue_packet_msg*) event->data;
+		iph = (struct iphdr*)ev->payload;
+		
+		
+		sign = PFW_NEWPACKET_SIGNATURE;
+		size = strlen(sign)*sizeof(struct data_item) + sizeof(struct data_struct);
+		ds = (struct data_struct*) malloc(size);
+		
+		ds->signature = sign;
+		
+		di = &ds->items[PFW_NEWP_PROTOCOL];
+		di->type = 'u';
+		di->size = 0;
+		di->key = "protocol";
+		di->uint32 = iph->protocol;
+// 		di->flags = DIF_DATA_UNALLOCATED;
+// 		di->string = nfq_proto2str(iph->protocol);
+// 		di->size = strlen(di->string)+1; // add one byte for terminating \0
+		
+		
+		struct sockaddr_in sa;
+		sa.sin_family = AF_INET;
+		sa.sin_addr = *(struct in_addr *)&iph->saddr;
+		res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
+		if (res) {
+			printf("getnameinfo failed %d\n", res);
+			host[0] = 0;
+		}
+		
+		di = &ds->items[PFW_NEWP_SRC_HOST];
+		di->type = 's';
+		di->size = 0;
+		di->key = "src_hostname";
+		di->string = stracpy(host, &di->size);
+		di->size += 1; // add one byte for terminating \0
+		
+		di = &ds->items[PFW_NEWP_SRC_IP];
+		di->type = 's';
+		di->size = 0;
+		di->key = "src_ip";
+		di->string = stracpy(inet_ntoa(*(struct in_addr *)&iph->saddr), &di->size);
+		di->size += 1; // add one byte for terminating \0
+		
+		sa.sin_addr = *(struct in_addr *)&iph->daddr;
+		res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
+		if (res) {
+			printf("getnameinfo failed %d\n", res);
+			host[0] = 0;
+		}
+		
+		di = &ds->items[PFW_NEWP_DST_HOST];
+		di->type = 's';
+		di->size = 0;
+		di->key = "dst_hostname";
+		di->string = stracpy(host, &di->size);
+		di->size += 1; // add one byte for terminating \0
+		
+		di = &ds->items[PFW_NEWP_DST_IP];
+		di->type = 's';
+		di->size = 0;
+		di->key = "dst_ip";
+		di->string = stracpy(inet_ntoa(*(struct in_addr *)&iph->daddr), &di->size);
+		di->size += 1; // add one byte for terminating \0
+		
+		di = &ds->items[PFW_NEWP_PAYLOAD];
+		di->type = 'D';
+		di->key = "payload";
+		
+		ds->items[PFW_NEWP_PAYLOAD].flags = DIF_LAST;
+		
+		if (iph->protocol == 6) {
+			struct data_item *pdi;
+			size_t size;
+			char *sign;
+			
+			struct tcphdr *tcp = (struct tcphdr *) (ev->payload + (iph->ihl << 2));
+			
+			sign = PFW_NEWPACKET_TCP_SIGNATURE;
+			size = strlen(sign)*sizeof(struct data_item) + sizeof(struct data_struct);
+			di->ds = (struct data_struct*) malloc(size);
+			
+			di->ds->signature = sign;
+			
+			pdi = &di->ds->items[PFW_NEWP_TCP_SPORT];
+			pdi->type = 'u';
+			pdi->key = "src_port";
+			pdi->uint32 = ntohs(tcp->source);
+			
+			pdi = &di->ds->items[PFW_NEWP_TCP_DPORT];
+			pdi->type = 'u';
+			pdi->key = "dst_port";
+			pdi->uint32 = ntohs(tcp->dest);
+			
+			di->ds->items[PFW_NEWP_TCP_DPORT].flags = DIF_LAST;
+			
+// 			fprintf(stdout, "TCP{sport=%u; dport=%u; seq=%u; ack_seq=%u; flags=u%ua%up%ur%us%uf%u; window=%u; urg=%u}\n",
+// 				   ntohs(tcp->source), ntohs(tcp->dest), ntohl(tcp->seq), ntohl(tcp->ack_seq)
+// 				   ,tcp->urg, tcp->ack, tcp->psh, tcp->rst, tcp->syn, tcp->fin, ntohs(tcp->window), tcp->urg_ptr);
+		}
+		
+		if (iph->protocol == 17) {
+			struct data_item *pdi;
+			size_t size;
+			char *sign;
+			
+			struct udphdr *udp = (struct udphdr *) (ev->payload + (iph->ihl << 2));
+			
+			sign = PFW_NEWPACKET_UDP_SIGNATURE;
+			size = strlen(sign)*sizeof(struct data_item) + sizeof(struct data_struct);
+			di->ds = (struct data_struct*) malloc(size);
+			
+			di->ds->signature = sign;
+			
+			pdi = &di->ds->items[PFW_NEWP_UDP_SPORT];
+			pdi->type = 'u';
+			pdi->key = "src_port";
+			pdi->uint32 = ntohs(udp->source);
+			
+			pdi = &di->ds->items[PFW_NEWP_UDP_DPORT];
+			pdi->type = 'u';
+			pdi->key = "dst_port";
+			pdi->uint32 = ntohs(udp->dest);
+			
+			di->ds->items[PFW_NEWP_UDP_DPORT].flags = DIF_LAST;
+			
+			// 			fprintf(stdout,"UDP{sport=%u; dport=%u; len=%u}\n",
+			// 				   ntohs(udp->source), ntohs(udp->dest), udp->len);
+		}
+		
+		
+		newp_event = new_event();
+		newp_event->type = PFW_NEWPACKET_ETYPE;
+		newp_event->data = ds;
+		newp_event->data_size = size;
+		
+		add_event(newp_graph, newp_event);
+		
+		wait_on_event(newp_event);
+		
+		if (newp_event->response)
+			event->response = newp_event->response;
+	}
+	
+	if (!event->response) {
+		printf("set to %d\n", PFW_DEFAULT);
+		event->response = (void*) PFW_DEFAULT;
+	}
+}
+
+static void readline_handler(struct event *event, void *userdata, void **sessiondata) {
+	struct event *rl_event;
+	int res;
+	char host[64];
+	char *s;
+	char buf[64];
+	struct ev_nf_queue_packet_msg *ev;
+	struct iphdr *iph;
+	
+	
+	ev = (struct ev_nf_queue_packet_msg*) event->data;
 	iph = (struct iphdr*)ev->payload;
 	
-// 	ss = inet_ntoa(*(struct in_addr *)&iph->saddr);
-// 	sd = inet_ntoa(*(struct in_addr *)&iph->daddr);
-// 	
-// 	proto = nfq_proto2str(iph->protocol);
-// 	msg = "(yes/no)";
-// 	len = strlen(proto) + 1 + strlen(ss) + 1 + strlen(sd) + 1 + strlen(msg) + 1;
-// 	s = (char*) malloc(len);
-// 	sprintf(s, "%s %s %s %s", proto, ss, sd, msg);
-	
-	int res;
-// 	struct sockaddr_in sa;
-	char host[64];
-	
-// 	memset(&sa, 0, sizeof(struct sockaddr));
-	
-// 	sa.sin_addr.s_addr = iph->saddr;
-// 	struct sockaddr_in sa = { .sin_family = AF_INET, .sin_addr = &iph->saddr };
 	struct sockaddr_in sa;
 	sa.sin_family = AF_INET;
 	sa.sin_addr = *(struct in_addr *)&iph->saddr;
@@ -68,8 +284,8 @@ static void handle(struct event *event, void *userdata) {
 	
 	s = buf;
 	s += sprintf(s, "%s %s (%s) ", nfq_proto2str(iph->protocol),
-				host,
-				inet_ntoa(*(struct in_addr *)&iph->saddr));
+			   host,
+		    inet_ntoa(*(struct in_addr *)&iph->saddr));
 	
 	sa.sin_addr = *(struct in_addr *)&iph->daddr;
 	res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
@@ -79,8 +295,8 @@ static void handle(struct event *event, void *userdata) {
 	}
 	
 	s += sprintf(s, "%s (%s) (yes/no)",
-				host,
-				inet_ntoa(*(struct in_addr *)&iph->daddr));
+			   host,
+		    inet_ntoa(*(struct in_addr *)&iph->daddr));
 	
 	
 	while (!event->response) {
@@ -97,134 +313,245 @@ static void handle(struct event *event, void *userdata) {
 		wait_on_event(rl_event);
 		
 		if (rl_event->response && !strncmp(rl_event->response, "yes", 3)) {
-			event->response = (void*) 1;
+			event->response = (void*) PFW_ACCEPT;
 		}
 		if (rl_event->response && !strncmp(rl_event->response, "no", 2)) {
-			event->response = (void*) 2;
+			event->response = (void*) PFW_REJECT;
 		}
 	}
 }
 
-u_int32_t send_notification(char *icon, char *title, char *text, char **actions) {
-	int r;
-	sd_bus_error error = SD_BUS_ERROR_NULL;
-	sd_bus_message *m = NULL, *reply = NULL;
-	char **ait;
-	sd_bus *bus;
-
-	r = sd_bus_open_user(&bus);
-	if (r < 0) {
-		printf("Failed to connect to system bus: %s\n", strerror(-r));
+char * nfq_decision_cache_create_key(struct event *event) {
+	struct ev_nf_queue_packet_msg *ev;
+	struct iphdr *iph;
+	char *ss, *sd, *s;
+	size_t len;
+	
+	if (!nfq_packet_msg_okay(event))
 		return 0;
+	
+	ev = (struct ev_nf_queue_packet_msg*) event->data;
+	
+	iph = (struct iphdr*)ev->payload;
+	
+	ss = inet_ntoa(*(struct in_addr *)&iph->saddr);
+	sd = inet_ntoa(*(struct in_addr *)&iph->daddr);
+	
+	ASSERT(iph->protocol < 999);
+	len = 3 + 1 + strlen(ss) + 1 + strlen(sd) + 1;
+	s = (char*) malloc(len);
+	sprintf(s, "%u %s %s", iph->protocol, ss, sd);
+	
+	return s;
+}
+
+// struct data_item *get_data_item(struct data_struct *ds, char *key) {
+// 	struct data_item *di;
+// 	char *c;
+// 	
+// 	c = ds->signature;
+// 	di = ds->items;
+// 	while (c && *c) {
+// 		if (!strcmp(di->key, key))
+// 			return di;
+// 		c++;
+// 		di++;
+// 	}
+// 	
+// 	return 0;
+// }
+
+struct data_item *get_data_item(struct data_struct *ds, char *key) {
+	struct data_item *di;
+	
+	di = ds->items;
+	while (di && DIF_IS_LAST_ITEM(di)) {
+		if (!strcmp(di->key, key))
+			return di;
+		
+		di++;
 	}
 	
-	// 	r = sd_bus_message_new_method_call(bus, &m, dest, path, interface, member);
-	r = sd_bus_message_new_method_call(bus,
-								&m,
-								"org.freedesktop.Notifications",           /* service to contact */
-								"/org/freedesktop/Notifications",          /* object path */
-								"org.freedesktop.Notifications",   /* interface name */
-								"Notify"                         /* method name */
-							);
-	if (r < 0) {
-		fprintf(stderr, "Failed to issue method call: %s %s\n", error.name, error.message);
-		return 0;
+	return 0;
+}
+
+char pfw_is_ip_local(char *ip) {
+	struct ip_ll *iit;
+	
+	for (iit=local_ips; iit; iit=iit->next) {
+		if (!strcmp(iit->ip, ip))
+			return 1;
 	}
+	
+	return 0;
+}
 
-	#define SDCHECK(r) { if (r < 0) {printf("err %d %s (%d %d) %d\n", r, strerror(r), EINVAL, EPERM,  __LINE__);} }
-	r = sd_bus_message_append_basic(m, 's', "cortexd"); SDCHECK(r)
-	int32_t id = 0;
-	r = sd_bus_message_append_basic(m, 'u', &id); SDCHECK(r)
-	r = sd_bus_message_append_basic(m, 's', icon); SDCHECK(r)
-	r = sd_bus_message_append_basic(m, 's', title); SDCHECK(r)
-	r = sd_bus_message_append_basic(m, 's', text); SDCHECK(r)
-
-	r = sd_bus_message_open_container(m, 'a', "s"); SDCHECK(r)
-	if (actions) {
-		ait = actions;
-		while (*ait) {
-			r = sd_bus_message_append_basic(m, 's', *ait); SDCHECK(r)
-			ait++;
-		}
+static void pfw_print_packet(struct event *event, void *userdata, void **sessiondata) {
+	struct data_struct *ds, *pds;
+	char src_local, dst_local;
+	
+	ds = (struct data_struct *) event->data;
+	
+	if (strcmp(ds->signature, PFW_NEWPACKET_SIGNATURE)) {
+		printf("error, signature mismatch: %s %s\n", ds->signature, PFW_NEWPACKET_SIGNATURE);
+		return;
+	}
+	
+	if (pfw_is_ip_local(ds->items[PFW_NEWP_SRC_IP].string)) {
+		src_local = 1;
 	} else {
-		r = sd_bus_message_append_basic(m, 's', ""); SDCHECK(r)
-	}
-	r = sd_bus_message_close_container(m); SDCHECK(r)
-
-	r = sd_bus_message_open_container(m, 'a', "{sv}"); SDCHECK(r)
-	r = sd_bus_message_open_container(m, 'e', "sv"); SDCHECK(r)
-	r = sd_bus_message_append_basic(m, 's', ""); SDCHECK(r)
-
-	r = sd_bus_message_open_container(m, 'v', "s"); SDCHECK(r)
-	r = sd_bus_message_append_basic(m, 's', ""); SDCHECK(r)
-	r = sd_bus_message_close_container(m); SDCHECK(r)
-	r = sd_bus_message_close_container(m); SDCHECK(r)
-	r = sd_bus_message_close_container(m); SDCHECK(r)
-
-	int32_t time = 0;
-	r = sd_bus_message_append_basic(m, 'i', &time); SDCHECK(r)
-
-	r = sd_bus_call(bus, m, -1, &error, &reply); SDCHECK(r)
-
-	u_int32_t res;
-	r = sd_bus_message_read(reply, "u", &res);
-	if (r < 0) {
-		fprintf(stderr, "Failed to parse response message: %s\n", strerror(-r));
+		src_local = 0;
+		if (pfw_is_ip_local(ds->items[PFW_NEWP_DST_IP].string))
+			dst_local = 1;
+		else
+			dst_local = 0;
 	}
 	
-	return res;
-}
-
-void handle_notification_response(struct event *event, void *userdata, void **sessiondata) {
-	sd_bus_message *m = (sd_bus_message *) event->data;
+	printf("%s ", nfq_proto2str(ds->items[PFW_NEWP_PROTOCOL].uint32));
 	
-	sd_bus_print_msg(m);
-}
-
-
-void handle_cortexd_module_initialized(struct event *event, void *userdata, void *sessiondata) {
-	printf("handle_cortexd_module_initialized\n");
-}
-
-
-#define EV_NOTIF_AC_INVOKED "sd-bus.org.freedesktop.Notifications.ActionInvoked"
-char *notif_event_types[] = { EV_NOTIF_AC_INVOKED, 0 };
-
-void send_query(char *icon, char *title, char *text, char **actions, char**chosen_action) {
-	u_int32_t id;
-	
-	id = send_notification(icon, title, text, actions);
-	
-	struct event_graph *graph;
-	
-	graph = get_graph_for_event_type(EV_NOTIF_AC_INVOKED);
-	if (!graph) {
-		new_eventgraph(&graph, notif_event_types);
+	if (!src_local && !dst_local) {
+		printf("brd %s %s ", ds->items[PFW_NEWP_SRC_IP].string, ds->items[PFW_NEWP_SRC_HOST].string);
+	} else {
+		if (src_local) {
+			printf("dst %s %s ", ds->items[PFW_NEWP_DST_IP].string, ds->items[PFW_NEWP_DST_HOST].string);
+		} else {
+			printf("src %s %s ", ds->items[PFW_NEWP_SRC_IP].string, ds->items[PFW_NEWP_SRC_HOST].string);
+		}
 	}
 	
-	sd_bus_add_listener(sd_bus_main_bus, "/org/freedesktop/Notifications", EV_NOTIF_AC_INVOKED);
+	if (ds->items[PFW_NEWP_PROTOCOL].uint32 == 6) {
+		pds = ds->items[PFW_NEWP_PAYLOAD].ds;
+		
+		if (strcmp(pds->signature, PFW_NEWPACKET_TCP_SIGNATURE)) {
+			printf("error, signature mismatch: %s %s\n", pds->signature, PFW_NEWPACKET_TCP_SIGNATURE);
+			return;
+		}
+		
+		printf("%u %u ", pds->items[PFW_NEWP_TCP_SPORT].uint32, pds->items[PFW_NEWP_TCP_DPORT].uint32);
+	} else
+	if (ds->items[PFW_NEWP_PROTOCOL].uint32 == 17) {
+		pds = ds->items[PFW_NEWP_PAYLOAD].ds;
+		
+		if (strcmp(pds->signature, PFW_NEWPACKET_UDP_SIGNATURE)) {
+			printf("error, signature mismatch: %s %s\n", pds->signature, PFW_NEWPACKET_UDP_SIGNATURE);
+			return;
+		}
+		
+		printf("%u %u ", pds->items[PFW_NEWP_UDP_SPORT].uint32, pds->items[PFW_NEWP_UDP_DPORT].uint32);
+	}
+	printf("\n");
+}
+
+
+void load_list(struct filter_set *fset, char *file) {
+	FILE *f;
+	int ret;
+	char buf[1024];
 	
-	struct event_task *task2;
-	task2 = new_task();
-	task2->id = "notif_handler";
-	task2->handle = &handle_notification_response;
-	task2->userdata = 0;
-	add_task(graph, task2);
+	f = fopen(file, "r");
 	
+	if (!f)
+		return;
 	
+	while (fgets(buf, sizeof(buf), f)) {
+		fset->length++;
+		fset->list = (char**) realloc(fset->list, sizeof(char*)*fset->length);
+		fset->rlist = (regex_t*) realloc(fset->rlist, sizeof(regex_t)*fset->length);
+		size_t slen = strlen(buf)-1; // don't copy newline
+		fset->list[fset->length-1] = stracpy(buf, &slen);
+		
+		ret = regcomp(&fset->rlist[fset->length-1], fset->list[fset->length-1], 0);
+		if (ret) {
+			fprintf(stderr, "Could not compile regex %s\n", fset->list[fset->length-1]);
+			exit(1);
+		}
+	}
 	
-// 	struct event_task *etask = new_task();
-// 	etask->handle = &handle_cortexd_enable;
+	if (ferror(stdin)) {
+		fprintf(stderr,"Oops, error reading stdin\n");
+		exit(1);
+	}
+	
+	fclose(f);
+}
+
+static char match_regexp_list(char *input, struct filter_set *fset) {
+	int i, ret;
+	char msgbuf[128];
+	
+	for (i=0; i<fset->length; i++) {
+		ret = regexec(&fset->rlist[i], input, 0, NULL, 0);
+		if (!ret) {
+			return 1;
+		} else if (ret == REG_NOMATCH) {
+			
+		} else {
+			regerror(ret, &fset->rlist[i], msgbuf, sizeof(msgbuf));
+			fprintf(stderr, "Regex match failed: %s\n", msgbuf);
+			exit(1);
+		}
+	}
+	return 0;
+}
+
+static void pfw_rules_filter(struct event *event, void *userdata, void **sessiondata) {
+	struct data_struct *ds;
+	char src_local, dst_local;
+	unsigned int remote_ip, remote_host;
+	
+	ds = (struct data_struct *) event->data;
+	
+	if (strcmp(ds->signature, PFW_NEWPACKET_SIGNATURE)) {
+		printf("error, signature mismatch: %s %s\n", ds->signature, PFW_NEWPACKET_SIGNATURE);
+		return;
+	}
+	
+	if (pfw_is_ip_local(ds->items[PFW_NEWP_SRC_IP].string)) {
+		src_local = 1;
+	} else {
+		src_local = 0;
+		if (pfw_is_ip_local(ds->items[PFW_NEWP_DST_IP].string))
+			dst_local = 1;
+		else
+			dst_local = 0;
+	}
+	
+	if (!src_local && !dst_local) {
+		remote_ip = PFW_NEWP_SRC_IP;
+		remote_host = PFW_NEWP_SRC_HOST;
+	} else {
+		if (src_local) {
+			remote_ip = PFW_NEWP_DST_IP;
+			remote_host = PFW_NEWP_DST_HOST;
+		} else {
+			remote_ip = PFW_NEWP_SRC_IP;
+			remote_host = PFW_NEWP_SRC_HOST;
+		}
+	}
+	
+	if (match_regexp_list(ds->items[remote_host].string, &host_blacklist)) {
+		event->response = (void *) PFW_REJECT;
+		return;
+	}
+	
+	if (match_regexp_list(ds->items[remote_ip].string, &ip_blacklist)) {
+		event->response = (void *) PFW_REJECT;
+		return;
+	}
+	
+	if (match_regexp_list(ds->items[remote_host].string, &host_whitelist)) {
+		event->response = (void *) PFW_REJECT;
+		return;
+	}
+	
+	if (match_regexp_list(ds->items[remote_ip].string, &ip_whitelist)) {
+		event->response = (void *) PFW_REJECT;
+		return;
+	}
 	
 }
 
 void init() {
-	char *actions[] = { "test1", "test2", "test3", "test4", 0 };
-	printf("send\n");
-	send_notification("asd", "title", "text", actions);
-	
-	return;
-	
 	struct nfq_thread_data *td;
 	
 	td = (struct nfq_thread_data*) create_listener("nf_queue", 0);
@@ -232,33 +559,90 @@ void init() {
 	rp_cache = create_response_cache_task(&nfq_decision_cache_create_key);
 	add_task(td->graph, rp_cache);
 	
-	task = new_task();
-	task->id = "pfw_handler";
-	task->handle = &handle;
-	task->userdata = td;
-	add_task(td->graph, task);
+	new_eventgraph(&newp_graph, newp_event_types);
+// 	new_eventgraph(&newp_raw_graph, newp_raw_event_types);
 	
-// 	print_tasks(td->graph);
+	pfw_handle_task = new_task();
+	pfw_handle_task->id = "pfw_handler";
+	pfw_handle_task->handle = &pfw_main_handler;
+	pfw_handle_task->userdata = td;
+	add_task(td->graph, pfw_handle_task);
 	
-// 	sleep(1);
+	
+	struct ifaddrs *addrs, *tmp;
+	struct ip_ll *iit;
+	char *s;
+	
+	getifaddrs(&addrs);
+	tmp = addrs;
+	
+	while (tmp) {
+		if (tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET)
+		{
+			struct sockaddr_in *pAddr = (struct sockaddr_in *)tmp->ifa_addr;
+			
+			s = inet_ntoa(pAddr->sin_addr);
+			
+			for (iit=local_ips; iit && iit->next; iit=iit->next) {}
+			if (!iit) {
+				local_ips = (struct ip_ll *) malloc(sizeof(struct ip_ll)+strlen(s)+1);
+				iit = local_ips;
+			} else {
+				iit->next = (struct ip_ll *) malloc(sizeof(struct ip_ll)+strlen(s)+1);
+				iit = iit->next;
+			}
+			iit->next = 0;
+			
+			strcpy(iit->ip, s);
+// 			printf("%s\n", iit->ip);
+// 			printf("%s: %s\n", tmp->ifa_name, inet_ntoa(pAddr->sin_addr));
+		}
+		
+		tmp = tmp->ifa_next;
+	}
+	
+	freeifaddrs(addrs);
+	
+// 	readline_handle_task = new_task();
+// 	readline_handle_task->id = "readline_handler";
+// 	readline_handle_task->handle = &readline_handler;
+// 	add_task(newp_graph, readline_handle_task);
 // 	
-// 	struct event_graph *graph;
-// 	char *event_types[] = { "sd-bus.org.freedesktop.Notifications.ActionInvoked", 0 };
-// 	new_eventgraph(&graph, event_types);
-// 	
-// 	// 	 "org.freedesktop.Notifications.ActionInvoked"
-// 	sd_bus_add_listener(sd_bus_main_bus, "/org/freedesktop/Notifications", "sd-bus.org.freedesktop.Notifications.ActionInvoked");
-// 	
-// 	struct event_task *task2;
-// 	task2 = new_task();
-// 	task2->id = "pfw_handler";
-// 	task2->handle = &sd_bus_print_event_task;
-// 	task2->userdata = td;
-// 	add_task(graph, task2);
 	
+// 	int i;
+// 	
+// 	for (i=0; i < n_host_blacklist; i++) {
+// 		reti = regcomp(&rhost_blacklist[i], host_blacklist[i], 0);
+// 		if (reti) {
+// 			fprintf(stderr, "Could not compile regex %s\n", host_blacklist[i]);
+// 			exit(1);
+// 		}
+// 	}
+// 	
+// 	for (i=0; i < n_host_whitelist; i++) {
+// 		reti = regcomp(&rhost_whitelist[i], host_whitelist[i], 0);
+// 		if (reti) {
+// 			fprintf(stderr, "Could not compile regex %s\n", host_whitelist[i]);
+// 			exit(1);
+// 		}
+// 	}
 	
+	load_list(&host_blacklist, PFW_DATA_DIR "hblack.txt");
+	load_list(&host_whitelist, PFW_DATA_DIR "hwhite.txt");
+	load_list(&ip_blacklist, PFW_DATA_DIR "ipblack.txt");
+	load_list(&ip_whitelist, PFW_DATA_DIR "ipwhite.txt");
+	
+	pfw_rules_task = new_task();
+	pfw_rules_task->id = "pfw_print_packet";
+	pfw_rules_task->handle = &pfw_print_packet;
+	add_task(newp_graph, pfw_rules_task);
+	
+	pfw_rules_task = new_task();
+	pfw_rules_task->id = "pfw_rules_filter";
+	pfw_rules_task->handle = &pfw_rules_filter;
+	add_task(newp_graph, pfw_rules_task);
 }
 
 void finish() {
-	
+// 	regfree(&regex);
 }

@@ -15,11 +15,7 @@
 #include "core.h"
 #include "nf_queue.h"
 
-// iptables -A INPUT -p tcp --dport 631 -j NFQUEUE --queue-num 0
-// iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW  -j NFQUEUE --queue-num 0
-
 // iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW  -m mark --mark 0 -j NFQUEUE --queue-num 0
-// iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW -m mark --mark 1 -j REJECT
 
 static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		    struct nfq_data *tb, void *data)
@@ -216,31 +212,6 @@ char nfq_packet_msg_okay(struct event *event) {
 		return 0;
 	
 	return 1;
-}
-
-
-char * nfq_decision_cache_create_key(struct event *event) {
-	struct ev_nf_queue_packet_msg *ev;
-	struct iphdr *iph;
-	char *ss, *sd, *s;
-	size_t len;
-	
-	if (!nfq_packet_msg_okay(event))
-		return 0;
-	
-	ev = (struct ev_nf_queue_packet_msg*) event->data;
-	
-	iph = (struct iphdr*)ev->payload;
-	
-	ss = inet_ntoa(*(struct in_addr *)&iph->saddr);
-	sd = inet_ntoa(*(struct in_addr *)&iph->daddr);
-	
-	ASSERT(iph->protocol < 999);
-	len = 3 + 1 + strlen(ss) + 1 + strlen(sd) + 1;
-	s = (char*) malloc(len);
-	sprintf(s, "%u %s %s", iph->protocol, ss, sd);
-	
-	return s;
 }
 
 char *nfq_proto2str(u_int16_t protocol) {

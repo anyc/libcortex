@@ -1,4 +1,5 @@
 
+#include <stdint.h>
 #include <pthread.h>
 
 #define STRINGIFYB(x) #x
@@ -102,6 +103,34 @@ struct response_cache {
 	create_key_cb_t create_key;
 };
 
+#define DIF_KEY_ALLOCATED 1<<0
+#define DIF_DATA_UNALLOCATED 1<<1
+#define DIF_LAST 1<<7
+
+#define DIF_IS_LAST_ITEM(di) ( ((di)->flags & DIF_LAST) == 1 )
+
+struct data_item {
+	char type;
+	size_t size;
+	char *key;
+	
+	char flags;
+	
+	union {
+		char *string;
+		uint32_t uint32;
+		int32_t int32;
+		void *structure;
+		struct data_struct *ds;
+	};
+};
+
+struct data_struct {
+	char *signature;
+	
+	struct data_item items[0];
+};
+
 
 extern struct module static_modules[];
 extern struct event_graph *cortexd_graph;
@@ -109,6 +138,7 @@ extern struct event_graph *cortexd_graph;
 extern struct event_graph **graphs;
 extern unsigned int n_graphs;
 
+char *stracpy(char *str, size_t *str_length);
 struct event *new_event();
 void init_core();
 void new_eventgraph(struct event_graph **event_graph, char **event_types);

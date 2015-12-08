@@ -37,6 +37,24 @@ struct listener static_listeners[] = {
 	{0, 0}
 };
 
+char *stracpy(char *str, size_t *str_length) {
+	char *r;
+	size_t length;
+	
+	if (!str_length || *str_length == 0) {
+		length = strlen(str);
+		if (str_length && *str_length == 0)
+			*str_length = length;
+	} else {
+		length = *str_length;
+	}
+	
+	r = (char*) malloc(length+1);
+	snprintf(r, length+1, "%s", str);
+	
+	return r;
+}
+
 void *create_listener(char *id, void *options) {
 	struct listener *l;
 	
@@ -57,7 +75,8 @@ void traverse_graph_r(struct event_task *ti, struct event *event) {
 	if (ti->handle)
 		ti->handle(event, ti->userdata, &sessiondata);
 	
-	traverse_graph_r(ti->next, event);
+	if (ti->next)
+		traverse_graph_r(ti->next, event);
 	
 	if (ti->cleanup)
 		ti->cleanup(event, ti->userdata, sessiondata);
