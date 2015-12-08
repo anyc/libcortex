@@ -22,8 +22,6 @@ struct crtx_plugin {
 	void (*finish)();
 };
 
-// struct main_cb main_cbs;
-
 struct crtx_plugin *plugins = 0;
 unsigned int n_plugins = 0;
 
@@ -84,5 +82,9 @@ void plugins_init() {
 }
 
 void plugins_finish() {
+	size_t i;
 	
+	for (i=0; i<n_plugins; i++) {
+		plugins[i].finish();
+	}
 }

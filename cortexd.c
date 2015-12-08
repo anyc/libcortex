@@ -5,19 +5,14 @@
 #include "core.h"
 
 int main(int argc, char *argv[]) {
-	unsigned int i;
+	cortex_init();
 	
-	init_core();
+	sleep(10);
+// 	while (1) {
+// 		sleep(1);
+// 	}
 	
-	i=0;
-	while (static_modules[i].id) {
-		printf("initialize \"%s\"\n", static_modules[i].id);
-		
-		static_modules[i].init();
-		i++;
-	}
+	cortex_finish();
 	
-	while (1) {
-		sleep(1);
-	}
+	return 0;
 }

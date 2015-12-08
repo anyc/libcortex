@@ -15,6 +15,9 @@
 #include "core.h"
 #include "nf_queue.h"
 
+#define NFQ_PACKET_MSG_ETYPE "nf_queue/packet_msg"
+char *nfq_packet_msg_etype[] = { NFQ_PACKET_MSG_ETYPE, 0 };
+
 // iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW  -m mark --mark 0 -j NFQUEUE --queue-num 0
 
 static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
@@ -121,7 +124,13 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		wait_on_event(event);
 		
 		printf("packet mark: %lu\n", (long) event->response);
-		return nfq_set_verdict2(qh, ev->id, NF_REPEAT, (long) event->response, 0, NULL);
+		
+		int ret = nfq_set_verdict2(qh, ev->id, NF_REPEAT, (long) event->response, 0, NULL);
+		
+		free(ev);
+		free_event(event);
+		
+		return ret;
 	} else {
 		int id;
 		struct nfqnl_msg_packet_hdr *ph;
@@ -196,15 +205,25 @@ void *new_nf_queue_listener(void *options) {
 	tdata = (struct nfq_thread_data*) malloc(sizeof(struct nfq_thread_data));
 	tdata->queue_num = 0;
 	
-	char **event_types = (char**) malloc(sizeof(char*)*2);
-	event_types[0] = "nf_queue/packet_msg";
-	event_types[1] = 0;
-	new_eventgraph(&tdata->graph, event_types);
+// 	char **event_types = (char**) malloc(sizeof(char*)*2);
+// 	event_types[0] = "nf_queue/packet_msg";
+// 	event_types[1] = 0;
+	new_eventgraph(&tdata->graph, nfq_packet_msg_etype);
 	
 	
 	pthread_create(&tdata->thread, NULL, nfq_tmain, tdata);
 	
 	return tdata;
+}
+
+void free_nf_queue_listener(void *data) {
+	struct nfq_thread_data *tdata = (struct nfq_thread_data *) data;
+	
+	free_eventgraph(tdata->graph);
+	
+// 	pthread_join(tdata->thread, 0);
+	
+	free(tdata);
 }
 
 char nfq_packet_msg_okay(struct event *event) {

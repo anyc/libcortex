@@ -14,7 +14,7 @@
 
 static char * local_event_types[] = { "test", 0 };
 
-static pthread_t uthread, sthread, dthread;
+static pthread_t dthread;
 struct dbus_thread duthread, dsthread, ddthread;
 
 sd_bus *sd_bus_main_bus;
@@ -519,8 +519,8 @@ void sd_bus_init() {
 }
 
 void sd_bus_finish() {
-	pthread_join(sthread, NULL);
-	pthread_join(uthread, NULL);
+// 	pthread_join(sthread, NULL);
+// 	pthread_join(uthread, NULL);
 	
 	pthread_join(dthread, NULL);
 }

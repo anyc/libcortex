@@ -24,8 +24,10 @@
 #include "plugins.h"
 #include "sd_bus.h"
 
+struct nfq_thread_data *td;
 struct event_task *pfw_handle_task, *rp_cache, *readline_handle_task, *pfw_rules_task;
 struct event_graph *rl_graph, *newp_graph, *newp_raw_graph;
+struct event_task *rcache_host, *rcache_ip;
 
 
 // iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW  -m mark --mark 0 -j NFQUEUE --queue-num 0
@@ -157,6 +159,8 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 		add_event(newp_graph, newp_raw_event);
 		
 		wait_on_event(newp_raw_event);
+		
+		free_event(newp_raw_event);
 	}
 	
 	if (newp_graph && newp_graph->tasks) {
@@ -185,6 +189,7 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 		di = &ds->items[PFW_NEWP_PROTOCOL];
 		di->type = 'u';
 		di->size = 0;
+		di->flags = 0;
 		di->key = "protocol";
 		di->uint32 = iph->protocol;
 // 		di->flags = DIF_DATA_UNALLOCATED;
@@ -204,6 +209,7 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 		di = &ds->items[PFW_NEWP_SRC_HOST];
 		di->type = 's';
 		di->size = 0;
+		di->flags = 0;
 		di->key = "src_hostname";
 		di->string = stracpy(host, &di->size);
 		di->size += 1; // add one byte for terminating \0
@@ -211,6 +217,7 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 		di = &ds->items[PFW_NEWP_SRC_IP];
 		di->type = 's';
 		di->size = 0;
+		di->flags = 0;
 		di->key = "src_ip";
 		di->string = stracpy(inet_ntoa(*(struct in_addr *)&iph->saddr), &di->size);
 		di->size += 1; // add one byte for terminating \0
@@ -225,6 +232,7 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 		di = &ds->items[PFW_NEWP_DST_HOST];
 		di->type = 's';
 		di->size = 0;
+		di->flags = 0;
 		di->key = "dst_hostname";
 		di->string = stracpy(host, &di->size);
 		di->size += 1; // add one byte for terminating \0
@@ -232,13 +240,16 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 		di = &ds->items[PFW_NEWP_DST_IP];
 		di->type = 's';
 		di->size = 0;
+		di->flags = 0;
 		di->key = "dst_ip";
 		di->string = stracpy(inet_ntoa(*(struct in_addr *)&iph->daddr), &di->size);
 		di->size += 1; // add one byte for terminating \0
 		
 		di = &ds->items[PFW_NEWP_PAYLOAD];
 		di->type = 'D';
+		di->flags = 0;
 		di->key = "payload";
+		di->ds = 0;
 		
 		ds->items[PFW_NEWP_PAYLOAD].flags = DIF_LAST;
 		
@@ -257,11 +268,13 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 			
 			pdi = &di->ds->items[PFW_NEWP_TCP_SPORT];
 			pdi->type = 'u';
+			pdi->flags = 0;
 			pdi->key = "src_port";
 			pdi->uint32 = ntohs(tcp->source);
 			
 			pdi = &di->ds->items[PFW_NEWP_TCP_DPORT];
 			pdi->type = 'u';
+			pdi->flags = 0;
 			pdi->key = "dst_port";
 			pdi->uint32 = ntohs(tcp->dest);
 			
@@ -270,8 +283,7 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 // 			fprintf(stdout, "TCP{sport=%u; dport=%u; seq=%u; ack_seq=%u; flags=u%ua%up%ur%us%uf%u; window=%u; urg=%u}\n",
 // 				   ntohs(tcp->source), ntohs(tcp->dest), ntohl(tcp->seq), ntohl(tcp->ack_seq)
 // 				   ,tcp->urg, tcp->ack, tcp->psh, tcp->rst, tcp->syn, tcp->fin, ntohs(tcp->window), tcp->urg_ptr);
-		}
-		
+		} else
 		if (iph->protocol == 17) {
 			struct data_item *pdi;
 			size_t size;
@@ -287,11 +299,13 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 			
 			pdi = &di->ds->items[PFW_NEWP_UDP_SPORT];
 			pdi->type = 'u';
+			pdi->flags = 0;
 			pdi->key = "src_port";
 			pdi->uint32 = ntohs(udp->source);
 			
 			pdi = &di->ds->items[PFW_NEWP_UDP_DPORT];
 			pdi->type = 'u';
+			pdi->flags = 0;
 			pdi->key = "dst_port";
 			pdi->uint32 = ntohs(udp->dest);
 			
@@ -313,6 +327,10 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 		
 		if (newp_event->response)
 			event->response = newp_event->response;
+		
+		free_data_struct(ds);
+		
+		free_event(newp_event);
 	}
 	
 	if (!event->response) {
@@ -321,66 +339,66 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 	}
 }
 
-static void readline_handler(struct event *event, void *userdata, void **sessiondata) {
-	struct event *rl_event;
-	int res;
-	char host[64];
-	char *s;
-	char buf[64];
-	struct ev_nf_queue_packet_msg *ev;
-	struct iphdr *iph;
-	
-	
-	ev = (struct ev_nf_queue_packet_msg*) event->data;
-	iph = (struct iphdr*)ev->payload;
-	
-	struct sockaddr_in sa;
-	sa.sin_family = AF_INET;
-	sa.sin_addr = *(struct in_addr *)&iph->saddr;
-	res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
-	if (res) {
-		printf("getnameinfo failed %d\n", res);
-		host[0] = 0;
-	}
-	
-	s = buf;
-	s += sprintf(s, "%s %s (%s) ", nfq_proto2str(iph->protocol),
-			   host,
-		    inet_ntoa(*(struct in_addr *)&iph->saddr));
-	
-	sa.sin_addr = *(struct in_addr *)&iph->daddr;
-	res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
-	if (res) {
-		printf("getnameinfo failed %d\n", res);
-		host[0] = 0;
-	}
-	
-	s += sprintf(s, "%s (%s) (yes/no)",
-			   host,
-		    inet_ntoa(*(struct in_addr *)&iph->daddr));
-	
-	
-	while (!event->response) {
-		rl_event = new_event();
-		rl_event->type = "readline/request";
-		rl_event->data = buf;
-		rl_event->data_size = s-buf;
-		
-		if (!rl_graph)
-			rl_graph = get_graph_for_event_type("readline/request");
-		
-		add_event(rl_graph, rl_event);
-		
-		wait_on_event(rl_event);
-		
-		if (rl_event->response && !strncmp(rl_event->response, "yes", 3)) {
-			event->response = (void*) PFW_ACCEPT;
-		}
-		if (rl_event->response && !strncmp(rl_event->response, "no", 2)) {
-			event->response = (void*) PFW_REJECT;
-		}
-	}
-}
+// static void readline_handler(struct event *event, void *userdata, void **sessiondata) {
+// 	struct event *rl_event;
+// 	int res;
+// 	char host[64];
+// 	char *s;
+// 	char buf[64];
+// 	struct ev_nf_queue_packet_msg *ev;
+// 	struct iphdr *iph;
+// 	
+// 	
+// 	ev = (struct ev_nf_queue_packet_msg*) event->data;
+// 	iph = (struct iphdr*)ev->payload;
+// 	
+// 	struct sockaddr_in sa;
+// 	sa.sin_family = AF_INET;
+// 	sa.sin_addr = *(struct in_addr *)&iph->saddr;
+// 	res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
+// 	if (res) {
+// 		printf("getnameinfo failed %d\n", res);
+// 		host[0] = 0;
+// 	}
+// 	
+// 	s = buf;
+// 	s += sprintf(s, "%s %s (%s) ", nfq_proto2str(iph->protocol),
+// 			   host,
+// 		    inet_ntoa(*(struct in_addr *)&iph->saddr));
+// 	
+// 	sa.sin_addr = *(struct in_addr *)&iph->daddr;
+// 	res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
+// 	if (res) {
+// 		printf("getnameinfo failed %d\n", res);
+// 		host[0] = 0;
+// 	}
+// 	
+// 	s += sprintf(s, "%s (%s) (yes/no)",
+// 			   host,
+// 		    inet_ntoa(*(struct in_addr *)&iph->daddr));
+// 	
+// 	
+// 	while (!event->response) {
+// 		rl_event = new_event();
+// 		rl_event->type = "readline/request";
+// 		rl_event->data = buf;
+// 		rl_event->data_size = s-buf;
+// 		
+// 		if (!rl_graph)
+// 			rl_graph = get_graph_for_event_type("readline/request");
+// 		
+// 		add_event(rl_graph, rl_event);
+// 		
+// 		wait_on_event(rl_event);
+// 		
+// 		if (rl_event->response && !strncmp(rl_event->response, "yes", 3)) {
+// 			event->response = (void*) PFW_ACCEPT;
+// 		}
+// 		if (rl_event->response && !strncmp(rl_event->response, "no", 2)) {
+// 			event->response = (void*) PFW_REJECT;
+// 		}
+// 	}
+// }
 
 char pfw_is_ip_local(char *ip) {
 	struct ip_ll *iit;
@@ -465,7 +483,7 @@ char * pfw_rcache_create_key_ip(struct event *event) {
 	
 	pfw_get_remote_data(ds, &remote_ip, &remote_host);
 	
-	return remote_ip;
+	return stracpy(remote_ip, 0);
 }
 
 char * pfw_rcache_create_key_host(struct event *event) {
@@ -476,7 +494,7 @@ char * pfw_rcache_create_key_host(struct event *event) {
 	
 	pfw_get_remote_data(ds, &remote_ip, &remote_host);
 	
-	return remote_host;
+	return stracpy(remote_host, 0);
 }
 
 // struct data_item *get_data_item(struct data_struct *ds, char *key) {
@@ -499,9 +517,12 @@ struct data_item *get_data_item(struct data_struct *ds, char *key) {
 	struct data_item *di;
 	
 	di = ds->items;
-	while (di && DIF_IS_LAST_ITEM(di)) {
+	while (di) {
 		if (!strcmp(di->key, key))
 			return di;
+		
+		if (!DIF_IS_LAST(di))
+			break;
 		
 		di++;
 	}
@@ -565,6 +586,16 @@ static void pfw_print_packet(struct event *event, void *userdata, void **session
 	printf("\n");
 }
 
+void free_list(struct filter_set *fset) {
+	size_t i;
+	
+	for (i=0; i<fset->length; i++) {
+		free(fset->list[i]);
+		regfree(&fset->rlist[i]);
+	}
+	free(fset->list);
+	free(fset->rlist);
+}
 
 void load_list(struct filter_set *fset, char *file) {
 	FILE *f;
@@ -657,12 +688,7 @@ static void pfw_rules_filter(struct event *event, void *userdata, void **session
 }
 
 void init() {
-	struct nfq_thread_data *td;
-	
 	td = (struct nfq_thread_data*) create_listener("nf_queue", 0);
-	
-// 	rp_cache = create_response_cache_task(&nfq_decision_cache_create_key);
-// 	add_task(td->graph, rp_cache);
 	
 	new_eventgraph(&newp_graph, newp_event_types);
 // 	new_eventgraph(&newp_raw_graph, newp_raw_event_types);
@@ -672,7 +698,6 @@ void init() {
 	pfw_handle_task->handle = &pfw_main_handler;
 	pfw_handle_task->userdata = td;
 	add_task(td->graph, pfw_handle_task);
-	
 	
 	struct ifaddrs *addrs, *tmp;
 	struct ip_ll *iit;
@@ -745,22 +770,22 @@ void init() {
 	add_task(newp_graph, pfw_rules_task);
 	
 	
-	struct event_task *rcache;
-	
-	rcache = create_response_cache_task("su", pfw_rcache_create_key_host);
-	((struct response_cache*) rcache->userdata)->match_event = &rcache_match_cb_t_regex;
-	rcache->id = "rcache_host";
-	
-// 	prefill_rcache( ((struct response_cache*) rcache->userdata), PFW_DATA_DIR "rcache_host.txt");
-	add_task(newp_graph, rcache);
 	
 	
-	rcache = create_response_cache_task("su", pfw_rcache_create_key_ip);
-	((struct response_cache*) rcache->userdata)->match_event = &rcache_match_cb_t_regex;
-	rcache->id = "rcache_ip";
+	rcache_host = create_response_cache_task("su", pfw_rcache_create_key_host);
+	((struct response_cache*) rcache_host->userdata)->match_event = &rcache_match_cb_t_regex;
+	rcache_host->id = "rcache_host";
 	
-// 	prefill_rcache( ((struct response_cache*) rcache->userdata), PFW_DATA_DIR "rcache_ip.txt");
-	add_task(newp_graph, rcache);
+// 	prefill_rcache( ((struct response_cache*) rcache_host->userdata), PFW_DATA_DIR "rcache_host.txt");
+	add_task(newp_graph, rcache_host);
+	
+	
+	rcache_ip = create_response_cache_task("su", pfw_rcache_create_key_ip);
+	((struct response_cache*) rcache_ip->userdata)->match_event = &rcache_match_cb_t_regex;
+	rcache_ip->id = "rcache_ip";
+	
+// 	prefill_rcache( ((struct response_cache*) rcache_ip->userdata), PFW_DATA_DIR "rcache_ip.txt");
+	add_task(newp_graph, rcache_ip);
 	
 	
 	pfw_rules_task = new_task();
@@ -770,5 +795,30 @@ void init() {
 }
 
 void finish() {
+	struct ip_ll *ipi, *ipin;
+	
+	free_task(pfw_rules_task);
+	
+	free_response_cache(((struct response_cache*) rcache_host->userdata));
+	free_response_cache(((struct response_cache*) rcache_ip->userdata));
+	free_task(rcache_host);
+	free_task(rcache_ip);
+	
+	free_list(&host_blacklist);
+	free_list(&host_whitelist);
+	free_list(&ip_blacklist);
+	free_list(&ip_whitelist);
+	free_list(&resolvelist);
+	
+	for (ipi = local_ips; ipi; ipi=ipin) {
+		ipin=ipi->next;
+		free(ipi);
+	}
+	
+	free_task(pfw_handle_task);
+	
+	free_eventgraph(newp_graph);
+	
+	free_nf_queue_listener(td);
 // 	regfree(&regex);
 }

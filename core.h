@@ -33,9 +33,11 @@ struct queue_entry {
 	struct queue_entry *next;
 };
 
+struct event_graph;
 struct event_task {
 	char *id;
 	char position;
+	struct event_graph *graph;
 	
 	void (*handle)(struct event *event, void *userdata, void **sessiondata);
 	void (*cleanup)(struct event *event, void *userdata, void *sessiondata);
@@ -75,6 +77,7 @@ struct listener {
 	char *id;
 	
 	void *(*create)(void *options);
+	void (*del)(void *data);
 };
 
 struct module {
@@ -119,7 +122,7 @@ struct response_cache {
 #define DIF_DATA_UNALLOCATED 1<<1
 #define DIF_LAST 1<<7
 
-#define DIF_IS_LAST_ITEM(di) ( ((di)->flags & DIF_LAST) == 1 )
+#define DIF_IS_LAST(di) ( ((di)->flags & DIF_LAST) != 0 )
 
 struct data_item {
 	char type;
@@ -152,8 +155,11 @@ extern unsigned int n_graphs;
 
 char *stracpy(char *str, size_t *str_length);
 struct event *new_event();
-void init_core();
+void free_event(struct event *event);
+void cortex_init();
+void cortex_finish();
 void new_eventgraph(struct event_graph **event_graph, char **event_types);
+void free_eventgraph(struct event_graph *egraph);
 void get_eventgraph(struct event_graph **event_graph, char **event_types, unsigned int n_event_types);
 void add_task(struct event_graph *graph, struct event_task *task);
 void add_event_type(char *event_type);
@@ -162,6 +168,7 @@ void add_event(struct event_graph *graph, struct event *event);
 void add_event_sync(struct event_graph *graph, struct event *event);
 struct event_graph *get_graph_for_event_type(char *event_type);
 struct event_task *new_task();
+void free_task(struct event_task *task);
 void wait_on_event(struct event *event);
 void *create_listener(char *id, void *options);
 
@@ -169,5 +176,8 @@ struct event_task *create_response_cache_task(char *signature, create_key_cb_t c
 void print_tasks(struct event_graph *graph);
 void hexdump(unsigned char *buffer, size_t index);
 
+void free_data_struct(struct data_struct *ds);
+
+void free_response_cache(struct response_cache *dc);
 void prefill_rcache(struct response_cache *rcache, char *file);
 char rcache_match_cb_t_regex(struct response_cache *rc, struct event *event, struct response_cache_entry *c_entry);

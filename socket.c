@@ -116,6 +116,6 @@ void socket_init() {
 }
 
 void socket_finish() {
-	pthread_join(thread, NULL);
+// 	pthread_join(thread, NULL);
 }
 

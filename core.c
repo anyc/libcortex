@@ -7,8 +7,8 @@
 
 #include "core.h"
 
-char ** event_types = 0;
-unsigned n_event_types = 0;
+// char ** event_types = 0;
+// unsigned n_event_types = 0;
 
 struct event_graph **graphs;
 unsigned int n_graphs;
@@ -36,7 +36,7 @@ struct module static_modules[] = {
 };
 
 struct listener static_listeners[] = {
-	{"nf_queue", &new_nf_queue_listener},
+	{"nf_queue", &new_nf_queue_listener, &free_nf_queue_listener},
 	{0, 0}
 };
 
@@ -73,7 +73,7 @@ void *create_listener(char *id, void *options) {
 }
 
 void traverse_graph_r(struct event_task *ti, struct event *event) {
-	void *sessiondata;
+	void *sessiondata = 0;
 	
 	if (ti->handle)
 		ti->handle(event, ti->userdata, &sessiondata);
@@ -141,6 +141,8 @@ void spawn_thread(struct event_graph *graph) {
 
 void add_task(struct event_graph *graph, struct event_task *task) {
 	struct event_task *ti, *last;
+	
+	task->graph = graph;
 	
 	if (!graph->tasks) {
 		graph->tasks = task;
@@ -262,6 +264,10 @@ struct event *new_event() {
 	return event;
 }
 
+void free_event(struct event *event) {
+	free(event);
+}
+
 struct event_graph *get_graph_for_event_type(char *event_type) {
 	struct event_graph *graph;
 	unsigned int i, j;
@@ -321,11 +327,42 @@ void new_eventgraph(struct event_graph **event_graph, char **event_types) {
 	graphs[n_graphs-1] = graph;
 }
 
-void add_event_type(char *event_type) {
-	n_event_types++;
-	event_types = (char**) realloc(event_types, sizeof(char*)*n_event_types);
-	event_types[n_event_types-1] = event_type;
+void free_eventgraph(struct event_graph *egraph) {
+	size_t i;
+	struct event_task *t, *tnext;
+	struct queue_entry *qe, *qe_next;
+	
+	for (qe = egraph->equeue; qe; qe=qe_next) {
+		free_event(qe->event);
+		qe_next = qe->next;
+		free(qe);
+	}
+	
+// 	for (i=0; i<egraph->n_consumers; i++) {
+// 		pthread_join(egraph->consumers[i].handle, 0);
+// 	}
+	free(egraph->consumers);
+	
+	for (t = egraph->tasks; t; t=tnext) {
+		tnext = t->next;
+		free_task(t);
+	}
+	
+	for (i=0; i < n_graphs; i++) {
+		if (graphs[i] == egraph) {
+			graphs[i] = 0;
+			break;
+		}
+	}
+	
+	free(egraph);
 }
+
+// void add_event_type(char *event_type) {
+// 	n_event_types++;
+// 	event_types = (char**) realloc(event_types, sizeof(char*)*n_event_types);
+// 	event_types[n_event_types-1] = event_type;
+// }
 
 struct event_task *new_task() {
 	struct event_task *etask = (struct event_task*) calloc(1, sizeof(struct event_task));
@@ -334,18 +371,58 @@ struct event_task *new_task() {
 	return etask;
 }
 
-void init_core() {
+void free_task(struct event_task *task) {
+	struct event_task *t, *prev;
+	
+	prev=0;
+// 	if (task->graph) {
+		for (t = task->graph->tasks; t; t=t->next) {
+			if (t == task) {
+				if (prev) {
+					prev->next = t->next;
+				} else {
+					task->graph->tasks = t->next;
+				}
+			}
+			prev = t;
+		}
+// 	}
+	
+	free(task);
+}
+
+void cortex_init() {
 	unsigned int i;
 	
-	i=0;
-	while (local_event_types[i]) {
-		add_event_type(local_event_types[i]);
-		i++;
-	}
+// 	i=0;
+// 	while (local_event_types[i]) {
+// 		add_event_type(local_event_types[i]);
+// 		i++;
+// 	}
 	
 	new_eventgraph(&cortexd_graph, local_event_types);
 	
+	i=0;
+	while (static_modules[i].id) {
+		printf("initialize \"%s\"\n", static_modules[i].id);
+		
+		static_modules[i].init();
+		i++;
+	}
+	
 // 	cortexd_graph->tasks = etask;
+}
+
+void cortex_finish() {
+	unsigned int i;
+	
+	i=0;
+	while (static_modules[i].id) {
+		printf("finish \"%s\"\n", static_modules[i].id);
+		
+		static_modules[i].finish();
+		i++;
+	}
 }
 
 char rcache_match_cb_t_strcmp(struct response_cache *rc, struct event *event, struct response_cache_entry *c_entry) {
@@ -411,6 +488,7 @@ void response_cache_task_cleanup(struct event *event, void *userdata, void *sess
 		dc->n_entries++;
 		dc->entries = (struct response_cache_entry *) realloc(dc->entries, sizeof(struct response_cache_entry)*dc->n_entries);
 		
+		memset(&dc->entries[dc->n_entries-1], 0, sizeof(struct response_cache_entry));
 		dc->entries[dc->n_entries-1].key = dc->cur_key;
 		dc->entries[dc->n_entries-1].response = event->response;
 		dc->entries[dc->n_entries-1].response_size = event->response_size;
@@ -525,6 +603,22 @@ struct event_task *create_response_cache_task(char *signature, create_key_cb_t c
 	return task;
 }
 
+void free_response_cache(struct response_cache *dc) {
+	size_t i;
+	
+	for (i=0; i<dc->n_entries; i++) {
+		free(dc->entries[i].key);
+		if (dc->entries[i].response_size > 0)
+			free(dc->entries[i].response);
+		
+		if (dc->entries[i].regex_initialized)
+			regfree(&dc->entries[i].key_regex);
+	}
+	
+	free(dc->entries);
+	free(dc);
+}
+
 void print_tasks(struct event_graph *graph) {
 	struct event_task *e;
 	
@@ -594,4 +688,34 @@ struct event_task *new_event_notifier(struct event_graph *graph, event_notifier_
 	add_task(graph, task);
 	
 	return task;
+}
+
+void free_data_struct(struct data_struct *ds) {
+	struct data_item *di;
+	
+	if (!ds)
+		return;
+	
+	di = ds->items;
+	while (1) {
+		if (di->flags & DIF_KEY_ALLOCATED)
+			free(di->key);
+		
+		switch (di->type) {
+			case 's':
+				if (!(di->flags & DIF_DATA_UNALLOCATED))
+					free(di->string);
+				break;
+			case 'D':
+				free_data_struct(di->ds);
+				break;
+		}
+		
+		if (DIF_IS_LAST(di))
+			break;
+		
+		di++;
+	}
+	
+	free(ds);
 }
