@@ -689,6 +689,10 @@ static void pfw_rules_filter(struct event *event, void *userdata, void **session
 
 void init() {
 	td = (struct nfq_thread_data*) create_listener("nf_queue", 0);
+	if (!td) {
+		printf("cannot create nq_queue listener\n");
+		return;
+	}
 	
 	new_eventgraph(&newp_graph, newp_event_types);
 // 	new_eventgraph(&newp_raw_graph, newp_raw_event_types);

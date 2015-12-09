@@ -20,7 +20,9 @@ static char * local_event_types[] = { "cortexd/module_initialized", 0 };
 #ifdef STATIC_SD_BUS
 #include "sd_bus.h"
 #endif
+#ifdef STATIC_NF_QUEUE
 #include "nf_queue.h"
+#endif
 #include "readline.h"
 #include "plugins.h"
 
@@ -29,14 +31,18 @@ struct module static_modules[] = {
 #ifdef STATIC_SD_BUS
 	{"sd-bus", &sd_bus_init, &sd_bus_finish},
 #endif
+#ifdef STATIC_NF_QUEUE
 	{"nf-queue", &nf_queue_init, &nf_queue_finish},
+#endif
 	{"readline", &readline_init, &readline_finish},
 	{"plugins", &plugins_init, &plugins_finish},
 	{0, 0}
 };
 
 struct listener static_listeners[] = {
+#ifdef STATIC_NF_QUEUE
 	{"nf_queue", &new_nf_queue_listener, &free_nf_queue_listener},
+#endif
 	{0, 0}
 };
 

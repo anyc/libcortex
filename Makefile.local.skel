@@ -1,0 +1,10 @@
+
+CFLAGS+=-DSTATIC_SD_BUS
+OBJS+=sd_bus.o
+CFLAGS+=$(shell pkg-config --cflags libsystemd)
+LDLIBS+=$(shell pkg-config --libs libsystemd)
+
+CFLAGS+=-DSTATIC_NF_QUEUE
+OBJS+=nf_queue.o
+CFLAGS+=$(shell pkg-config --cflags libnetfilter_queue)
+LDLIBS+=$(shell pkg-config --libs libnetfilter_queue)

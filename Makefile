@@ -4,11 +4,10 @@ local_mk ?= Makefile.local
 
 APP=cortexd
 
-CFLAGS+=$(shell pkg-config --cflags libsystemd libnetfilter_queue)
+OBJS+=cortexd.o core.o socket.o readline.o plugins.o
 
-CFLAGS+=-DSTATIC_SD_BUS $(DEBUG_CFLAGS)
+CFLAGS+=$(DEBUG_CFLAGS)
 
-LDLIBS+=$(shell pkg-config --libs libsystemd libnetfilter_queue)
 LDLIBS+=-lpthread -lreadline -ldl
 
 LDFLAGS=-rdynamic
@@ -17,9 +16,12 @@ PLUGINS=libcrtx_pfw.so
 
 .PHONY: clean
 
-all: $(APP) socket_client $(PLUGINS)
+all: $(local_mk) $(APP) socket_client $(PLUGINS)
 
-$(APP): cortexd.o core.o sd_bus.o socket.o nf_queue.o readline.o plugins.o
+$(local_mk):
+	cp $(local_mk).skel $(local_mk)
+
+$(APP): $(OBJS)
 
 # $(APP)-client:
 # 	$(MAKE) $(MAKEFILE) CFLAGS_SOCKET_CLIENT="-DSOCKET_CLIENT" $(APP)-client-int
