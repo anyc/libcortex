@@ -22,7 +22,6 @@
 #include "core.h"
 #include "nf_queue.h"
 #include "plugins.h"
-#include "sd_bus.h"
 
 struct nfq_thread_data *td;
 struct event_task *pfw_handle_task, *rp_cache, *readline_handle_task, *pfw_rules_task;
@@ -701,7 +700,7 @@ void init() {
 	pfw_handle_task->id = "pfw_handler";
 	pfw_handle_task->handle = &pfw_main_handler;
 	pfw_handle_task->userdata = td;
-	add_task(td->graph, pfw_handle_task);
+	add_task(td->parent.graph, pfw_handle_task);
 	
 	struct ifaddrs *addrs, *tmp;
 	struct ip_ll *iit;

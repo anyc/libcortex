@@ -1,9 +1,11 @@
 
 struct nfq_thread_data {
+	struct listener parent;
+	
 	pthread_t thread;
 	
 	u_int16_t queue_num;
-	struct event_graph *graph;
+// 	struct event_graph *graph;
 };
 
 struct ev_nf_queue_packet {
@@ -30,7 +32,7 @@ struct ev_nf_queue_packet_msg {
 };
 
 char nfq_packet_msg_okay(struct event *event);
-void *new_nf_queue_listener(void *options);
+struct listener *new_nf_queue_listener(void *options);
 void free_nf_queue_listener(void *data);
 void nf_queue_init();
 void nf_queue_finish();

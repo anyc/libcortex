@@ -1,10 +1,11 @@
 
 local_mk ?= Makefile.local
+local_mk_rules ?= Makefile.local_rules
 -include $(local_mk)
 
 APP=cortexd
 
-OBJS+=cortexd.o core.o socket.o readline.o plugins.o
+OBJS+=cortexd.o core.o socket.o readline.o plugins.o fanotify.o inotify.o
 
 CFLAGS+=$(DEBUG_CFLAGS)
 
@@ -12,7 +13,7 @@ LDLIBS+=-lpthread -lreadline -ldl
 
 LDFLAGS=-rdynamic
 
-PLUGINS=libcrtx_pfw.so
+PLUGINS+=
 
 .PHONY: clean
 
@@ -40,3 +41,5 @@ clean:
 
 debug:
 	$(MAKE) $(MAKEFILE) DEBUG_CFLAGS="-g -g3 -gdwarf-2 -DDEBUG -Wall" #-Werror 
+
+-include $(local_mk_rules)

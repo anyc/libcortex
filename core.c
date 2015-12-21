@@ -25,6 +25,8 @@ static char * local_event_types[] = { "cortexd/module_initialized", 0 };
 #endif
 #include "readline.h"
 #include "plugins.h"
+#include "fanotify.h"
+#include "inotify.h"
 
 struct module static_modules[] = {
 	{"socket", &socket_init, &socket_finish},
@@ -36,13 +38,17 @@ struct module static_modules[] = {
 #endif
 	{"readline", &readline_init, &readline_finish},
 	{"plugins", &plugins_init, &plugins_finish},
+	{"fanotify", &crtx_fanotify_init, &crtx_fanotify_finish},
+	{"inotify", &crtx_inotify_init, &crtx_inotify_finish},
 	{0, 0}
 };
 
-struct listener static_listeners[] = {
+struct listener_factory listener_factory[] = {
 #ifdef STATIC_NF_QUEUE
-	{"nf_queue", &new_nf_queue_listener, &free_nf_queue_listener},
+	{"nf_queue", &new_nf_queue_listener},
 #endif
+	{"fanotify", &new_fanotify_listener},
+	{"inotify", &new_inotify_listener},
 	{0, 0}
 };
 
@@ -64,10 +70,10 @@ char *stracpy(char *str, size_t *str_length) {
 	return r;
 }
 
-void *create_listener(char *id, void *options) {
-	struct listener *l;
+struct listener *create_listener(char *id, void *options) {
+	struct listener_factory *l;
 	
-	l = static_listeners;
+	l = listener_factory;
 	while (l->id) {
 		if (!strcmp(l->id, id)) {
 			return l->create(options);
@@ -75,7 +81,14 @@ void *create_listener(char *id, void *options) {
 		l++;
 	}
 	
+	printf("listener \"%s\" not found\n", id);
+	
 	return 0;
+}
+
+void free_listener(struct listener *listener) {
+	if (listener->free)
+		listener->free(listener);
 }
 
 void traverse_graph_r(struct event_task *ti, struct event *event) {

@@ -73,11 +73,16 @@ struct event_graph {
 	pthread_cond_t queue_cond;
 };
 
-struct listener {
+struct listener_factory {
 	char *id;
 	
-	void *(*create)(void *options);
-	void (*del)(void *data);
+	struct listener *(*create)(void *options);
+};
+
+struct listener {
+	void (*free)(void *data);
+	
+	struct event_graph *graph;
 };
 
 struct module {
@@ -146,7 +151,6 @@ struct data_struct {
 	struct data_item items[0];
 };
 
-
 extern struct module static_modules[];
 extern struct event_graph *cortexd_graph;
 
@@ -170,7 +174,8 @@ struct event_graph *get_graph_for_event_type(char *event_type);
 struct event_task *new_task();
 void free_task(struct event_task *task);
 void wait_on_event(struct event *event);
-void *create_listener(char *id, void *options);
+struct listener *create_listener(char *id, void *options);
+void free_listener(struct listener *listener);
 
 struct event_task *create_response_cache_task(char *signature, create_key_cb_t create_key);
 void print_tasks(struct event_graph *graph);
