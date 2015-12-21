@@ -5,7 +5,7 @@ local_mk_rules ?= Makefile.local_rules
 
 APP=cortexd
 
-OBJS+=cortexd.o core.o socket.o readline.o plugins.o fanotify.o inotify.o
+OBJS+=cortexd.o core.o socket.o readline.o controls.o fanotify.o inotify.o
 
 CFLAGS+=$(DEBUG_CFLAGS)
 
@@ -13,11 +13,11 @@ LDLIBS+=-lpthread -lreadline -ldl
 
 LDFLAGS=-rdynamic
 
-PLUGINS+=
+CONTROLS+=$(patsubst examples/control_%.c,libcrtx_%.so,$(wildcard examples/*.c))
 
 .PHONY: clean
 
-all: $(local_mk) $(APP) socket_client $(PLUGINS)
+all: $(local_mk) $(APP) socket_client $(CONTROLS)
 
 $(local_mk):
 	cp $(local_mk).skel $(local_mk)
@@ -33,13 +33,13 @@ $(APP): $(OBJS)
 # TODO filter flags
 socket_client: socket_client.o
 
-libcrtx_pfw.so: pfw.c
-	$(CC) -shared -o $@ -fPIC pfw.c $(LDFLAGS) $(CFLAGS)
-
 clean:
-	rm -rf *.o $(APP) $(PLUGINS)
+	rm -rf *.o $(APP) $(CONTROLS)
 
 debug:
 	$(MAKE) $(MAKEFILE) DEBUG_CFLAGS="-g -g3 -gdwarf-2 -DDEBUG -Wall" #-Werror 
+
+libcrtx_%.so: examples/control_%.c
+	$(CC) -shared -o $@ -fPIC $< $(LDFLAGS) $(CFLAGS) -I.
 
 -include $(local_mk_rules)

@@ -24,7 +24,7 @@ static char * local_event_types[] = { "cortexd/module_initialized", 0 };
 #include "nf_queue.h"
 #endif
 #include "readline.h"
-#include "plugins.h"
+#include "controls.h"
 #include "fanotify.h"
 #include "inotify.h"
 
@@ -37,7 +37,7 @@ struct module static_modules[] = {
 	{"nf-queue", &nf_queue_init, &nf_queue_finish},
 #endif
 	{"readline", &readline_init, &readline_finish},
-	{"plugins", &plugins_init, &plugins_finish},
+	{"controls", &controls_init, &controls_finish},
 	{"fanotify", &crtx_fanotify_init, &crtx_fanotify_finish},
 	{"inotify", &crtx_inotify_init, &crtx_inotify_finish},
 	{0, 0}

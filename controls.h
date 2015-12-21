@@ -8,5 +8,5 @@
 // 	struct event_graph *(*get_graph_for_event_type)(char *event_type);
 // };
 
-void plugins_init();
-void plugins_finish();
+void controls_init();
+void controls_finish();

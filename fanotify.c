@@ -86,16 +86,13 @@ struct listener *new_fanotify_listener(void *options) {
 	
 	falist = (struct fanotify_listener *) options;
 	
-// 	if (falist->fanotify_fd == -1) {
-		falist->fanotify_fd = fanotify_init(
-					falist->init_flags, falist->event_f_flags);
-// 					FAN_CLASS_NOTIF, O_RDONLY);
+	falist->fanotify_fd = fanotify_init(
+			falist->init_flags, falist->event_f_flags);
 		
-		if (falist->fanotify_fd == -1) {
-			printf("fanotify initialization failed\n");
-			return 0;
-		}
-// 	}
+	if (falist->fanotify_fd == -1) {
+		printf("fanotify initialization failed\n");
+		return 0;
+	}
 	
 	ret = fanotify_mark(falist->fanotify_fd,
 				falist->mark_flags, // FAN_MARK_ADD | FAN_MARK_MOUNT,
@@ -107,7 +104,6 @@ struct listener *new_fanotify_listener(void *options) {
 		return 0;
 	}
 	
-// 	falist = (struct fanotify_listener*) malloc(sizeof(struct fanotify_listener));
 	falist->parent.free = &free_fanotify_listener;
 	
 	new_eventgraph(&falist->parent.graph, fanotify_msg_etype);

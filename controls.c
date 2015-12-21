@@ -7,13 +7,13 @@
 #include <dlfcn.h>
 
 #include "core.h"
-#include "plugins.h"
+#include "controls.h"
 
-#ifndef PLUGINDIR
-#define PLUGINDIR "/usr/lib/"
+#ifndef CONTROLDIR
+#define CONTROLDIR "/usr/lib/"
 #endif
 
-struct crtx_plugin {
+struct crtx_control {
 	char *path;
 	char *basename;
 	
@@ -22,17 +22,17 @@ struct crtx_plugin {
 	void (*finish)();
 };
 
-struct crtx_plugin *plugins = 0;
-unsigned int n_plugins = 0;
+struct crtx_control *controls = 0;
+unsigned int n_controls = 0;
 
-static void load_plugin(char *path, char *basename) {
-	struct crtx_plugin *p;
+static void load_control(char *path, char *basename) {
+	struct crtx_control *p;
 	
-	printf("load plugin \"%s\"\n", path);
+	printf("load control \"%s\"\n", path);
 	
-	n_plugins++;
-	plugins = (struct crtx_plugin*) realloc(plugins, sizeof(struct crtx_plugin)*n_plugins);
-	p = &plugins[n_plugins-1];
+	n_controls++;
+	controls = (struct crtx_control*) realloc(controls, sizeof(struct crtx_control)*n_controls);
+	p = &controls[n_controls-1];
 	
 	p->path = path;
 	p->basename = basename;
@@ -59,18 +59,18 @@ static void load_dir(char * directory) {
 				char * fullname = (char*) malloc(strlen(directory)+strlen(dent->d_name)+2);
 				sprintf(fullname, "%s/%s", directory, dent->d_name);
 				
-				load_plugin(fullname, dent->d_name);
+				load_control(fullname, dent->d_name);
 			}
 		}
 		closedir (dhandle);
 	} else {
-		printf("cannot open plugin directory \"%s\"\n", directory);
+		printf("cannot open control directory \"%s\"\n", directory);
 	}
 	
 	return;
 }
 
-void plugins_init() {
+void controls_init() {
 // 	main_cbs.add_task = &add_task;
 // 	main_cbs.create_listener = &create_listener;
 // 	main_cbs.wait_on_event = &wait_on_event;
@@ -81,10 +81,10 @@ void plugins_init() {
 	load_dir(PLUGINDIR);
 }
 
-void plugins_finish() {
+void controls_finish() {
 	size_t i;
 	
-	for (i=0; i<n_plugins; i++) {
-		plugins[i].finish();
+	for (i=0; i<n_controls; i++) {
+		controls[i].finish();
 	}
 }

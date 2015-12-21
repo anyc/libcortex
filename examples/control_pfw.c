@@ -21,7 +21,7 @@
 
 #include "core.h"
 #include "nf_queue.h"
-#include "plugins.h"
+#include "controls.h"
 
 struct nfq_thread_data *td;
 struct event_task *pfw_handle_task, *rp_cache, *readline_handle_task, *pfw_rules_task;
