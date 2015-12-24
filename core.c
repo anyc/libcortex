@@ -37,9 +37,9 @@ struct module static_modules[] = {
 	{"nf-queue", &nf_queue_init, &nf_queue_finish},
 #endif
 	{"readline", &readline_init, &readline_finish},
-	{"controls", &controls_init, &controls_finish},
 	{"fanotify", &crtx_fanotify_init, &crtx_fanotify_finish},
 	{"inotify", &crtx_inotify_init, &crtx_inotify_finish},
+	{"controls", &controls_init, &controls_finish},
 	{0, 0}
 };
 
@@ -49,6 +49,7 @@ struct listener_factory listener_factory[] = {
 #endif
 	{"fanotify", &new_fanotify_listener},
 	{"inotify", &new_inotify_listener},
+	{"socket", &new_socket_listener},
 	{0, 0}
 };
 
@@ -261,6 +262,54 @@ void add_event(struct event_graph *graph, struct event *event) {
 // 	
 // 	pthread_mutex_unlock(&event->mutex);
 // }
+
+void init_signal(struct signal *signal) {
+	int ret;
+	
+	ret = pthread_mutex_init(&signal->mutex, 0); ASSERT(ret >= 0);
+	ret = pthread_cond_init(&signal->cond, NULL); ASSERT(ret >= 0);
+	
+	signal->local_condition = 0;
+	signal->condition = &signal->local_condition;
+}
+
+struct signal *new_signal() {
+	struct signal *signal;
+	
+	signal = (struct signal*) calloc(1, sizeof(struct signal));
+	
+	init_signal(signal);
+	
+	return signal;
+}
+
+void wait_on_signal(struct signal *signal) {
+	pthread_mutex_lock(&signal->mutex);
+	
+	while (!*signal->condition)
+		pthread_cond_wait(&signal->cond, &signal->mutex);
+	
+	pthread_mutex_unlock(&signal->mutex);
+}
+
+void send_signal(struct signal *s, char brdcst) {
+	pthread_mutex_lock(&s->mutex);
+	
+	if (!*s->condition)
+		*s->condition = 1;
+	
+	if (brdcst)
+		pthread_cond_broadcast(&s->cond);
+	else
+		pthread_cond_signal(&s->cond);
+	
+	pthread_mutex_unlock(&s->mutex);
+}
+
+void free_signal(struct signal *s) {
+	free(s);
+}
+
 
 void wait_on_event(struct event *event) {
 	pthread_mutex_lock(&event->mutex);

@@ -1,6 +1,6 @@
 
 CFLAGS+=-DSTATIC_SD_BUS
-OBJS+=sd_bus.o
+OBJS+=sd_bus.o sd_bus_notifications.o
 CFLAGS+=$(shell pkg-config --cflags libsystemd)
 LDLIBS+=$(shell pkg-config --libs libsystemd)
 

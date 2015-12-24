@@ -1,15 +1,33 @@
 
+#include <stdio.h>
+#include <stdlib.h>
 
-u_int32_t send_notification(char *icon, char *title, char *text, char **actions) {
+#include "core.h"
+#include "sd_bus.h"
+#include "sd_bus_notifications.h"
+
+#define EV_NOTIF_AC_INVOKED "sd-bus.org.freedesktop.Notifications.ActionInvoked"
+char *notif_event_types[] = { EV_NOTIF_AC_INVOKED, 0 };
+
+static char initialized = 0;
+static struct event_graph *graph;
+
+static u_int32_t *notif_ids = 0;
+static size_t n_notif_ids = 0;
+static struct signal *signals = 0;
+pthread_mutex_t notif_mutex;
+
+
+static u_int32_t sd_bus_send_notification(char *icon, char *title, char *text, char **actions) {
 	int r;
 	sd_bus_error error = SD_BUS_ERROR_NULL;
 	sd_bus_message *m = NULL, *reply = NULL;
 	char **ait;
 	sd_bus *bus;
 	
-	r = sd_bus_open_user(&bus);
+	r = sd_bus_default(&bus);
 	if (r < 0) {
-		printf("Failed to connect to system bus: %s\n", strerror(-r));
+		printf("Failed to connect to bus: %s\n", strerror(-r));
 		return 0;
 	}
 	
@@ -26,7 +44,7 @@ u_int32_t send_notification(char *icon, char *title, char *text, char **actions)
 		return 0;
 	}
 	
-	#define SDCHECK(r) { if (r < 0) {printf("err %d %s (%d %d) %d\n", r, strerror(r), EINVAL, EPERM,  __LINE__);} }
+	#define SDCHECK(r) { if (r < 0) {printf("err %d %s %d\n", r, strerror(r), __LINE__);} }
 	r = sd_bus_message_append_basic(m, 's', "cortexd"); SDCHECK(r)
 	int32_t id = 0;
 	r = sd_bus_message_append_basic(m, 'u', &id); SDCHECK(r)
@@ -72,41 +90,56 @@ u_int32_t send_notification(char *icon, char *title, char *text, char **actions)
 
 void handle_notification_response(struct event *event, void *userdata, void **sessiondata) {
 	sd_bus_message *m = (sd_bus_message *) event->data;
+	size_t i;
 	
 	sd_bus_print_msg(m);
+	
+	pthread_mutex_lock(&notif_mutex);
+	for (i=0; i<n_notif_ids; i++) {
+// 		if (notif_ids[i] == 
+	}
+	pthread_mutex_unlock(&notif_mutex);
 }
 
-
-void handle_cortexd_module_initialized(struct event *event, void *userdata, void *sessiondata) {
-	printf("handle_cortexd_module_initialized\n");
-}
-
-
-#define EV_NOTIF_AC_INVOKED "sd-bus.org.freedesktop.Notifications.ActionInvoked"
-char *notif_event_types[] = { EV_NOTIF_AC_INVOKED, 0 };
-
-void send_query(char *icon, char *title, char *text, char **actions, char**chosen_action) {
-	u_int32_t id;
+void send_notification(char *icon, char *title, char *text, char **actions, char**chosen_action) {
 	
-	id = send_notification(icon, title, text, actions);
-	
-	struct event_graph *graph;
-	
-	graph = get_graph_for_event_type(EV_NOTIF_AC_INVOKED);
-	if (!graph) {
-		new_eventgraph(&graph, notif_event_types);
+	if (!initialized) {
+		int ret;
+		
+		ret = pthread_mutex_init(&notif_mutex, 0); ASSERT(ret >= 0);
+		
+		graph = get_graph_for_event_type(EV_NOTIF_AC_INVOKED);
+		if (!graph) {
+			new_eventgraph(&graph, notif_event_types);
+		}
+		
+		sd_bus_add_listener(sd_bus_main_bus, "/org/freedesktop/Notifications", EV_NOTIF_AC_INVOKED);
+		
+		struct event_task *task2;
+		task2 = new_task();
+		task2->id = "notif_handler";
+		task2->handle = &handle_notification_response;
+		task2->userdata = 0;
+		add_task(graph, task2);
+		
+		initialized = 1;
 	}
 	
-	sd_bus_add_listener(sd_bus_main_bus, "/org/freedesktop/Notifications", EV_NOTIF_AC_INVOKED);
-	
-	struct event_task *task2;
-	task2 = new_task();
-	task2->id = "notif_handler";
-	task2->handle = &handle_notification_response;
-	task2->userdata = 0;
-	add_task(graph, task2);
-	
-	
+	if (actions) {
+		pthread_mutex_lock(&notif_mutex);
+		
+		n_notif_ids++;
+		notif_ids = (u_int32_t*) realloc(signals, sizeof(u_int32_t)*n_notif_ids);
+		signals = (struct signal*) realloc(signals, sizeof(struct signal)*n_notif_ids);
+		init_signal(&signals[n_notif_ids-1]);
+		pthread_mutex_unlock(&notif_mutex);
+		
+		notif_ids[n_notif_ids-1] = sd_bus_send_notification(icon, title, text, actions);
+		
+		wait_on_signal(&signals[n_notif_ids-1]);
+	} else {
+		sd_bus_send_notification(icon, title, text, actions);
+	}
 	
 	// 	struct event_task *etask = new_task();
 	// 	etask->handle = &handle_cortexd_enable;

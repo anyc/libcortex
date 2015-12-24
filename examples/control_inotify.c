@@ -4,29 +4,39 @@
 
 #include "core.h"
 #include "inotify.h"
+#include "sd_bus_notifications.h"
 
 struct listener *fa;
 struct inotify_listener listener;
 
 static void inotify_event_handler(struct event *event, void *userdata, void **sessiondata) {
 	struct inotify_event *in_event;
+	char buf[1024];
 	
 	in_event = (struct inotify_event *) event->data;
 	if (in_event->len) {
-		if ( in_event->mask & IN_CREATE ) {
-			if ( in_event->mask & IN_ISDIR ) {
-				printf( "New directory %s created.\n", in_event->name );
+		if (in_event->mask & IN_CREATE) {
+			if (in_event->mask & IN_ISDIR) {
+				printf("New directory %s created\n", in_event->name);
+				snprintf(buf, 1024, "New directory %s created", in_event->name);
+				send_notification("", "Inotify", buf, 0, 0);
 			}
 			else {
-				printf( "New file %s created.\n", in_event->name );
+				printf("New file %s created\n", in_event->name);
+				snprintf(buf, 1024, "New file %s created", in_event->name);
+				send_notification("", "Inotify", buf, 0, 0);
 			}
-		}
-		else if ( in_event->mask & IN_DELETE ) {
-			if ( in_event->mask & IN_ISDIR ) {
-				printf( "Directory %s deleted.\n", in_event->name );
+		} else
+		if (in_event->mask & IN_DELETE) {
+			if (in_event->mask & IN_ISDIR) {
+				printf("Directory %s deleted\n", in_event->name);
+				snprintf(buf, 1024, "Directory %s deleted", in_event->name);
+				send_notification("", "Inotify", buf, 0, 0);
 			}
 			else {
-				printf( "File %s deleted.\n", in_event->name );
+				printf("File %s deleted\n", in_event->name);
+				snprintf(buf, 1024, "File %s deleted", in_event->name);
+				send_notification("", "Inotify", buf, 0, 0);
 			}
 		}
 	}

@@ -10,6 +10,14 @@
 
 #define ASSERT_STR(x, msg, ...) { if (!(x)) { printf(__FILE__ ":" STRINGIFY(__LINE__) " " msg " " #x "failed\n", __VA_ARGS__); exit(1); } }
 
+struct signal {
+	char *condition;
+	char local_condition;
+	
+	pthread_mutex_t mutex;
+	pthread_cond_t cond;
+};
+
 struct event {
 	char *type;
 	struct event_graph *graph;
@@ -182,6 +190,12 @@ void print_tasks(struct event_graph *graph);
 void hexdump(unsigned char *buffer, size_t index);
 
 void free_data_struct(struct data_struct *ds);
+
+struct signal *new_signal();
+void init_signal(struct signal *signal);
+void wait_on_signal(struct signal *s);
+void send_signal(struct signal *s, char brdcst);
+void free_signal(struct signal *s);
 
 void free_response_cache(struct response_cache *dc);
 void prefill_rcache(struct response_cache *rcache, char *file);

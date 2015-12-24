@@ -279,11 +279,12 @@ void *sd_bus_daemon_thread(void *data) {
 	
 	tdata = (struct dbus_thread*) data;
 	
-	printf("start\n");
 	r = sd_bus_open_user(&bus);
 // 	ASSERT_STR(r >=0, "Failed to connect to system bus: %s\n", strerror(-r));
-	if (r < 0)
+	if (r < 0) {
+		printf("sd_bus: failed to open bus: %s\n", strerror(-r));
 		return 0;
+	}
 	
 	sd_bus_main_bus = bus;
 	

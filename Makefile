@@ -7,13 +7,13 @@ APP=cortexd
 
 OBJS+=cortexd.o core.o socket.o readline.o controls.o fanotify.o inotify.o
 
-CFLAGS+=$(DEBUG_CFLAGS)
+CFLAGS+=$(DEBUG_CFLAGS) -D_FILE_OFFSET_BITS=64
 
 LDLIBS+=-lpthread -lreadline -ldl
 
 LDFLAGS=-rdynamic
 
-CONTROLS+=$(patsubst examples/control_%.c,libcrtx_%.so,$(wildcard examples/*.c))
+CONTROLS+=$(patsubst examples/control_%.c,examples/libcrtx_%.so,$(wildcard examples/*.c))
 
 .PHONY: clean
 
@@ -39,7 +39,7 @@ clean:
 debug:
 	$(MAKE) $(MAKEFILE) DEBUG_CFLAGS="-g -g3 -gdwarf-2 -DDEBUG -Wall" #-Werror 
 
-libcrtx_%.so: examples/control_%.c
+examples/libcrtx_%.so: examples/control_%.c
 	$(CC) -shared -o $@ -fPIC $< $(LDFLAGS) $(CFLAGS) -I.
 
 -include $(local_mk_rules)

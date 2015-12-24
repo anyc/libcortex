@@ -3,16 +3,19 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
+#include <string.h>
+#include <errno.h>
 
 #include "core.h"
 #include "fanotify.h"
 
 char *fanotify_msg_etype[] = { FANOTIFY_MSG_ETYPE, 0 };
 
-void fanotify_get_path(int fd, char **path, size_t *length) {
+void fanotify_get_path(int fd, char **path, size_t *length, char *format) {
 	char fdpath[32];
 	char buf[PATH_MAX];
 	ssize_t linklen;
+	size_t slen;
 	
 	sprintf(fdpath, "/proc/self/fd/%d", fd);
 	
@@ -24,11 +27,19 @@ void fanotify_get_path(int fd, char **path, size_t *length) {
 	}
 	buf[linklen] = '\0';
 	
-	*path = (char*) malloc(linklen+1);
-	sprintf(*path, "%s", buf);
+	if (!format) {
+		*path = (char*) malloc(linklen+1);
+		sprintf(*path, "%s", buf);
+		
+		slen = linklen;
+	} else {
+		slen = strlen(format)+linklen;
+		*path = (char*) malloc(slen+1);
+		snprintf(*path, slen+1, format, buf);
+	}
 	
 	if (length)
-		*length = linklen;
+		*length = slen;
 }
 
 void *fanotify_tmain(void *data) {
@@ -86,9 +97,8 @@ struct listener *new_fanotify_listener(void *options) {
 	
 	falist = (struct fanotify_listener *) options;
 	
-	falist->fanotify_fd = fanotify_init(
-			falist->init_flags, falist->event_f_flags);
-		
+	falist->fanotify_fd = fanotify_init(falist->init_flags, falist->event_f_flags);
+	
 	if (falist->fanotify_fd == -1) {
 		printf("fanotify initialization failed\n");
 		return 0;
@@ -100,7 +110,7 @@ struct listener *new_fanotify_listener(void *options) {
 				falist->dirfd, // AT_FDCWD, 
 				falist->path); // (char*) options);
 	if (ret != 0) {
-		printf("fanotify_mark failed\n");
+		printf("fanotify_mark failed: %d %s\n", errno, strerror(errno));
 		return 0;
 	}
 	

@@ -46,25 +46,6 @@ void *inotify_tmain(void *data) {
 			
 			wait_on_event(event);
 			
-			
-// 			if (in_event->len) {
-// 				if ( in_event->mask & IN_CREATE ) {
-// 					if ( in_event->mask & IN_ISDIR ) {
-// 						printf( "New directory %s created.\n", in_event->name );
-// 					}
-// 					else {
-// 						printf( "New file %s created.\n", in_event->name );
-// 					}
-// 				}
-// 				else if ( in_event->mask & IN_DELETE ) {
-// 					if ( in_event->mask & IN_ISDIR ) {
-// 						printf( "Directory %s deleted.\n", in_event->name );
-// 					}
-// 					else {
-// 						printf( "File %s deleted.\n", in_event->name );
-// 					}
-// 				}
-// 			}
 			i += sizeof(struct inotify_event) + in_event->len;
 		}
 	}
@@ -80,7 +61,7 @@ void free_inotify_listener(void *data) {
 	
 	free_eventgraph(inlist->parent.graph);
 	
-	// 	pthread_join(inlist->thread, 0);
+// 	pthread_join(inlist->thread, 0);
 	
 	free(inlist);
 }

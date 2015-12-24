@@ -22,7 +22,7 @@ struct fanotify_listener {
 	pthread_t thread;
 };
 
-void fanotify_get_path(int fd, char **path, size_t *length);
+void fanotify_get_path(int fd, char **path, size_t *length, char *format);
 
 struct listener *new_fanotify_listener(void *options);
 void free_fanotify_listener(void *data);
