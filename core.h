@@ -22,12 +22,14 @@ struct event {
 	char *type;
 	struct event_graph *graph;
 	
+	struct event_graph *response_graph;
+	
 	void *data;
 	size_t data_size;
 // 	char data_is_self_contained;
 	
-	void *response;
-	size_t response_size;
+// 	void *response;
+// 	size_t response_size;
 // 	char response_is_self_contained;
 	
 	unsigned char in_n_queues;

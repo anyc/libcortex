@@ -10,14 +10,11 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-
 #include "core.h"
 #include "socket.h"
 
-static char *event_types[] = { "cortexd/enable", 0 };
-
-void *socket_tmain(void *data) {
-	int sockfd, newsockfd;
+void *socket_server_tmain(void *data) {
+	int newsockfd;
 // 	socklen_t clilen;
 	struct socket_req req;
 // 	struct sockaddr_in serv_addr, cli_addr;
@@ -53,17 +50,17 @@ void *socket_tmain(void *data) {
 // 	ret = bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)); ASSERT(ret >= 0);
 	
 	do {
-		sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+		listeners->sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
 		
-		if (sockfd < 0)
+		if (listeners->sockfd < 0)
 			continue;
 		
 // 		setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 		
-		if (bind(sockfd, result->ai_addr, result->ai_addrlen)==0)
+		if (bind(listeners->sockfd, result->ai_addr, result->ai_addrlen) == 0)
 			break;
 		
-		close(sockfd);
+		close(listeners->sockfd);
 	} while ((result=result->ai_next) != NULL);
 	
 	if (result == 0) {
@@ -71,7 +68,7 @@ void *socket_tmain(void *data) {
 		return 0;
 	}
 	
-	listen(sockfd, 5);
+	listen(listeners->sockfd, 5);
 	
 	addrlen=result->ai_addrlen;
 	
@@ -82,7 +79,7 @@ void *socket_tmain(void *data) {
 	while (!listeners->stop) {
 // 		clilen = sizeof(cli_addr);
 // 		newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen); ASSERT(newsockfd >= 0);
-		newsockfd = accept(sockfd, cliaddr, &addrlen); ASSERT(newsockfd >= 0);
+		newsockfd = accept(listeners->sockfd, cliaddr, &addrlen); ASSERT(newsockfd >= 0);
 		
 		n = read(newsockfd, &req, sizeof(struct socket_req));
 		if (n != sizeof(struct socket_req)) {
@@ -115,8 +112,12 @@ void *socket_tmain(void *data) {
 		event = new_event();
 		event->type = req.type;
 		event->data = req.data;
+		event->response_graph = listeners->response_graph;
 		
-		add_event(listeners->graph, event);
+		if (listeners->parent.graph)
+			add_event(listeners->parent.graph, event);
+		else
+			add_raw_event(event);
 		
 	// 	printf("Here is the message: %s\n",buffer);
 	// 	n = write(newsockfd,"I got your message",18);
@@ -124,87 +125,167 @@ void *socket_tmain(void *data) {
 		
 		close(newsockfd);
 	}
-	close(sockfd);
+	close(listeners->sockfd);
 	
 	return 0;
 }
 
-void free_socket_listener(void *data) {
-	struct socket_listener *slistener = (struct socket_listener *) slistener;
+void *socket_client_tmain(void *data) {
+	struct socket_req req;
+	int n, ret;
+	struct socket_listener *listeners;
+	struct event *event;
+	struct addrinfo hints, *result, *resbkp;
 	
-	free_eventgraph(slistener->parent.graph);
+	listeners = (struct socket_listener*) data;
 	
-// 	pthread_join(slistener->thread, 0);
+	bzero(&hints, sizeof(struct addrinfo));
+// 	hints.ai_flags=AI_PASSIVE;
+	hints.ai_family=listeners->ai_family;
+	hints.ai_socktype=listeners->type;
+	hints.ai_protocol=listeners->protocol;
 	
-	free(slistener);
+	ret = getaddrinfo(listeners->host, listeners->service, &hints, &result);
+	if (ret !=0) {
+		printf("getaddrinfo error %s %s: %s", listeners->host, listeners->service, gai_strerror(ret));
+		return 0;
+	}
+	
+	resbkp = result;
+	
+	do {
+		listeners->sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+		
+		if (listeners->sockfd < 0)
+			continue;
+		
+		if (connect(listeners->sockfd, result->ai_addr, result->ai_addrlen) == 0) {
+// 			doit(sockfd,iobuf);
+// 			printf("connection ok!\n"); /* success*/
+			break;
+		} else {
+// 			printf("connection failed");
+		}
+		
+		close(listeners->sockfd);
+	} while ((result=result->ai_next) != NULL);
+	
+	if (result == 0) {
+		printf("error in socket client main thread\n");
+		return 0;
+	}
+	
+	freeaddrinfo(resbkp);
+	
+	while (!listeners->stop) {
+		n = read(listeners->sockfd, &req, sizeof(struct socket_req));
+		if (n != sizeof(struct socket_req)) {
+			printf("invalid data received\n");
+			close(listeners->sockfd);
+			continue;
+		}
+		
+		req.type = (char*) calloc(1, req.type_length);
+		
+		n = read(listeners->sockfd, req.type, req.type_length);
+		if (n != req.type_length) {
+			printf("invalid data received\n");
+			free(req.type);
+			close(listeners->sockfd);
+			continue;
+		}
+		
+		req.data = (char*) calloc(1, req.data_length);
+		
+		n = read(listeners->sockfd, req.data, req.data_length);
+		if (n != req.data_length) {
+			printf("invalid data received\n");
+			free(req.type);
+			free(req.data);
+			close(listeners->sockfd);
+			continue;
+		}
+		
+		event = new_event();
+		event->type = req.type;
+		event->data = req.data;
+		event->response_graph = listeners->response_graph;
+		
+		if (listeners->parent.graph)
+			add_event(listeners->parent.graph, event);
+		else
+			add_raw_event(event);
+	}
+	close(listeners->sockfd);
+	
+	return 0;
 }
 
-struct listener *new_socket_listener(void *options) {
-// 	struct inotify_listener *inlist;
-// 	
-// 	inlist = (struct inotify_listener*) options;
-// 	
-// 	if (inotify_fd == -1) {
-// 		inotify_fd = inotify_init();
-// 		
-// 		if (inotify_fd == -1) {
-// 			printf("inotify initialization failed\n");
-// 			return 0;
-// 		}
-// 	}
-// 	
-// 	inlist->wd = inotify_add_watch(inotify_fd, inlist->path, inlist->mask);
-// 	if (inlist->wd == -1) {
-// 		printf("inotify_add_watch(\"%s\") failed with %d: %s\n", (char*) options, errno, strerror(errno));
-// 		return 0;
-// 	}
-// 	
-// 	inlist->parent.free = &free_inotify_listener;
-// 	
-// 	new_eventgraph(&inlist->parent.graph, inotify_msg_etype);
-// 	
-// 	pthread_create(&inlist->thread, NULL, inotify_tmain, inlist);
+static void return_event_handler(struct event *event, void *userdata, void **sessiondata) {
+	struct socket_req req;
+	struct socket_listener *slistener;
+	int ret;
 	
+	slistener = (struct socket_listener *) userdata;
+	
+	req.type = event->type;
+	req.type_length = strlen(event->type);
+	
+	req.data = event->data;
+	req.data_length = event->data_size;
+	
+	ret = write(slistener->sockfd, &req, sizeof(struct socket_req)); ASSERT(ret >= 0);
+	
+	ret = write(slistener->sockfd, req.type, req.type_length); ASSERT(ret >= 0);
+	
+	ret = write(slistener->sockfd, req.data, req.data_length); ASSERT(ret >= 0);
+}
+
+struct listener *new_socket_server_listener(void *options) {
 	struct socket_listener *slistener;
 	
 	slistener = (struct socket_listener *) options;
 	
-	slistener->parent.free = &free_socket_listener;
+// 	slistener->parent.graph = 0;
 	
-	new_eventgraph(&slistener->parent.graph, event_types);
+	new_eventgraph(&slistener->response_graph, 0);
 	
-	pthread_create(&slistener->thread, NULL, socket_tmain, slistener);
+	struct event_task * return_event;
+	return_event = new_task();
+	return_event->id = "return_event";
+	return_event->handle = &return_event_handler;
+	return_event->userdata = slistener;
+	add_task(slistener->response_graph, return_event);
 	
-// 	new_eventgraph(&event_graph, event_types);
+	pthread_create(&slistener->thread, NULL, socket_server_tmain, slistener);
 	
-// 	struct event_task *etask = new_task();
-// 	etask->handle = &handle_enable;
-// 	event_graph->tasks = etask;
+	return &slistener->parent;
+}
+
+struct listener *new_socket_client_listener(void *options) {
+	struct socket_listener *slistener;
 	
-// 	sargs.graph = event_graph;
-// 	sargs.stop = 0;
+	slistener = (struct socket_listener *) options;
 	
-// 	pthread_create(&thread, NULL, socket_tmain, &sargs);
+// 	slistener->parent.graph = 0;
+	
+	new_eventgraph(&slistener->response_graph, 0);
+	
+	struct event_task * return_event;
+	return_event = new_task();
+	return_event->id = "return_event";
+	return_event->handle = &return_event_handler;
+	return_event->userdata = slistener;
+	add_task(slistener->response_graph, return_event);
+	
+	pthread_create(&slistener->thread, NULL, socket_client_tmain, slistener);
 	
 	return &slistener->parent;
 }
 
 void socket_init() {
-// 	struct event_graph *event_graph;
-// 	
-// 	new_eventgraph(&event_graph, event_types);
-// 	
-// 	struct event_task *etask = new_task();
-// 	etask->handle = &handle_enable;
-// 	event_graph->tasks = etask;
-// 	
-// 	sargs.graph = event_graph;
-// 	sargs.stop = 0;
-// 	
-// 	pthread_create(&thread, NULL, socket_tmain, &sargs);
 }
 
 void socket_finish() {
-// 	pthread_join(thread, NULL);
 }
 

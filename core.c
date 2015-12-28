@@ -49,7 +49,8 @@ struct listener_factory listener_factory[] = {
 #endif
 	{"fanotify", &new_fanotify_listener},
 	{"inotify", &new_inotify_listener},
-	{"socket", &new_socket_listener},
+	{"socket_server", &new_socket_server_listener},
+	{"socket_client", &new_socket_client_listener},
 	{0, 0}
 };
 
@@ -88,8 +89,16 @@ struct listener *create_listener(char *id, void *options) {
 }
 
 void free_listener(struct listener *listener) {
-	if (listener->free)
+	if (listener->free) {
 		listener->free(listener);
+	} else {
+		if (listener->graph)
+			free_eventgraph(listener->graph);
+		
+// 		pthread_join(slistener->thread, 0);
+		
+		free(listener);
+	}
 }
 
 void traverse_graph_r(struct event_task *ti, struct event *event) {

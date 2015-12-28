@@ -10,7 +10,14 @@ struct socket_listener {
 	char *host;
 	char *service;
 	
-	struct event_graph *graph;
+	int sockfd;
+	
+// 	struct event_graph *graph;
+// 	struct event_graph *inbound;
+// 	struct event_graph *outbound;
+// 	void (*return_event)(struct event *event);
+	struct event_graph *response_graph;
+	
 	pthread_t thread;
 	char stop;
 };
@@ -26,4 +33,5 @@ struct socket_req {
 void socket_init();
 void socket_finish();
 void socket_send(struct socket_req *req);
-struct listener *new_socket_listener(void *options);
+struct listener *new_socket_server_listener(void *options);
+struct listener *new_socket_client_listener(void *options);
