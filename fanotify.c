@@ -100,7 +100,7 @@ struct listener *new_fanotify_listener(void *options) {
 	falist->fanotify_fd = fanotify_init(falist->init_flags, falist->event_f_flags);
 	
 	if (falist->fanotify_fd == -1) {
-		printf("fanotify initialization failed\n");
+		printf("fanotify initialization failed: %s\n", strerror(errno));
 		return 0;
 	}
 	

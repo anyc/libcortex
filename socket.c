@@ -55,7 +55,10 @@ void *socket_server_tmain(void *data) {
 		if (listeners->sockfd < 0)
 			continue;
 		
-// 		setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+		int enable = 1;
+		if (setsockopt(listeners->sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+			printf("setsockopt(SO_REUSEADDR) failed");
+		}
 		
 		if (bind(listeners->sockfd, result->ai_addr, result->ai_addrlen) == 0)
 			break;
@@ -81,49 +84,71 @@ void *socket_server_tmain(void *data) {
 // 		newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen); ASSERT(newsockfd >= 0);
 		newsockfd = accept(listeners->sockfd, cliaddr, &addrlen); ASSERT(newsockfd >= 0);
 		
-		n = read(newsockfd, &req, sizeof(struct socket_req));
-		if (n != sizeof(struct socket_req)) {
-			printf("invalid data received\n");
-			close(newsockfd);
-			continue;
+		while (1) {
+			n = read(newsockfd, &req, sizeof(struct socket_req));
+			if (n == 0) {
+				break;
+			} else
+			if (n < 0) {
+				printf("error %d while reading from socket\n", n);
+				break;
+			} else
+			if (n != sizeof(struct socket_req)) {
+				printf("invalid request received\n");
+				close(newsockfd);
+				break;
+			}
+			
+			req.type = (char*) calloc(1, req.type_length);
+			
+			n = read(newsockfd, req.type, req.type_length);
+			if (n == 0) {
+				break;
+			} else
+			if (n < 0) {
+				printf("error %d while reading from socket\n", n);
+				break;
+			} else
+			if (n != req.type_length) {
+				printf("invalid req type received\n");
+				free(req.type);
+				close(newsockfd);
+				break;
+			}
+			
+			req.data = (char*) calloc(1, req.data_length);
+			
+			n = read(newsockfd, req.data, req.data_length);
+			if (n == 0) {
+				break;
+			} else
+			if (n < 0) {
+				printf("error %d while reading from socket\n", n);
+				break;
+			} else
+			if (n != req.data_length) {
+				printf("invalid req data received\n");
+				free(req.type);
+				free(req.data);
+				close(newsockfd);
+				break;
+			}
+			
+			event = new_event();
+			event->type = req.type;
+			event->data = req.data;
+			event->response_graph = listeners->response_graph;
+			
+			if (listeners->parent.graph)
+				add_event(listeners->parent.graph, event);
+			else
+				add_raw_event(event);
 		}
-		
-		req.type = (char*) calloc(1, req.type_length);
-		
-		n = read(newsockfd, req.type, req.type_length);
-		if (n != req.type_length) {
-			printf("invalid data received\n");
-			free(req.type);
-			close(newsockfd);
-			continue;
-		}
-		
-		req.data = (char*) calloc(1, req.data_length);
-		
-		n = read(newsockfd, req.data, req.data_length);
-		if (n != req.data_length) {
-			printf("invalid data received\n");
-			free(req.type);
-			free(req.data);
-			close(newsockfd);
-			continue;
-		}
-		
-		event = new_event();
-		event->type = req.type;
-		event->data = req.data;
-		event->response_graph = listeners->response_graph;
-		
-		if (listeners->parent.graph)
-			add_event(listeners->parent.graph, event);
-		else
-			add_raw_event(event);
-		
-	// 	printf("Here is the message: %s\n",buffer);
-	// 	n = write(newsockfd,"I got your message",18);
-	// 	if (n < 0) error("ERROR writing to socket");
-		
-		close(newsockfd);
+		// 	printf("Here is the message: %s\n",buffer);
+		// 	n = write(newsockfd,"I got your message",18);
+		// 	if (n < 0) error("ERROR writing to socket");
+			
+// 			close(newsockfd);
 	}
 	close(listeners->sockfd);
 	
@@ -179,31 +204,52 @@ void *socket_client_tmain(void *data) {
 	
 	while (!listeners->stop) {
 		n = read(listeners->sockfd, &req, sizeof(struct socket_req));
+		if (n == 0) {
+			break;
+		} else
+		if (n < 0) {
+			printf("error %d while reading from socket\n", n);
+			break;
+		} else
 		if (n != sizeof(struct socket_req)) {
-			printf("invalid data received\n");
+			printf("invalid request received\n");
 			close(listeners->sockfd);
-			continue;
+			break;
 		}
 		
 		req.type = (char*) calloc(1, req.type_length);
 		
 		n = read(listeners->sockfd, req.type, req.type_length);
+		if (n == 0) {
+			break;
+		} else
+		if (n < 0) {
+			printf("error %d while reading from socket\n", n);
+			break;
+		} else
 		if (n != req.type_length) {
-			printf("invalid data received\n");
+			printf("invalid req type received\n");
 			free(req.type);
 			close(listeners->sockfd);
-			continue;
+			break;
 		}
 		
 		req.data = (char*) calloc(1, req.data_length);
 		
 		n = read(listeners->sockfd, req.data, req.data_length);
+		if (n == 0) {
+			break;
+		} else
+		if (n < 0) {
+			printf("error %d while reading from socket\n", n);
+			break;
+		} else
 		if (n != req.data_length) {
-			printf("invalid data received\n");
+			printf("invalid req data received\n");
 			free(req.type);
 			free(req.data);
 			close(listeners->sockfd);
-			continue;
+			break;
 		}
 		
 		event = new_event();
@@ -221,12 +267,9 @@ void *socket_client_tmain(void *data) {
 	return 0;
 }
 
-static void return_event_handler(struct event *event, void *userdata, void **sessiondata) {
+void send_event(struct socket_listener *slistener, struct event *event) {
 	struct socket_req req;
-	struct socket_listener *slistener;
 	int ret;
-	
-	slistener = (struct socket_listener *) userdata;
 	
 	req.type = event->type;
 	req.type_length = strlen(event->type);
@@ -239,6 +282,14 @@ static void return_event_handler(struct event *event, void *userdata, void **ses
 	ret = write(slistener->sockfd, req.type, req.type_length); ASSERT(ret >= 0);
 	
 	ret = write(slistener->sockfd, req.data, req.data_length); ASSERT(ret >= 0);
+}
+
+static void return_event_handler(struct event *event, void *userdata, void **sessiondata) {
+	struct socket_listener *slistener;
+	
+	slistener = (struct socket_listener *) userdata;
+	
+	send_event(slistener, event);
 }
 
 struct listener *new_socket_server_listener(void *options) {

@@ -1,4 +1,5 @@
 
+#include <arpa/inet.h>
 
 struct socket_listener {
 	struct listener parent;
@@ -35,3 +36,5 @@ void socket_finish();
 void socket_send(struct socket_req *req);
 struct listener *new_socket_server_listener(void *options);
 struct listener *new_socket_client_listener(void *options);
+
+void send_event(struct socket_listener *slistener, struct event *event);

@@ -27,6 +27,7 @@ static char * local_event_types[] = { "cortexd/module_initialized", 0 };
 #include "controls.h"
 #include "fanotify.h"
 #include "inotify.h"
+#include "sd_bus_notifications.h"
 
 struct module static_modules[] = {
 	{"socket", &socket_init, &socket_finish},
@@ -51,6 +52,7 @@ struct listener_factory listener_factory[] = {
 	{"inotify", &new_inotify_listener},
 	{"socket_server", &new_socket_server_listener},
 	{"socket_client", &new_socket_client_listener},
+	{"sd_bus_notification", &new_sd_bus_notification_listener},
 	{0, 0}
 };
 

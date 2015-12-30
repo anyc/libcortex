@@ -89,16 +89,16 @@ static u_int32_t sd_bus_send_notification(char *icon, char *title, char *text, c
 }
 
 void handle_notification_response(struct event *event, void *userdata, void **sessiondata) {
-	sd_bus_message *m = (sd_bus_message *) event->data;
-	size_t i;
-	
-	sd_bus_print_msg(m);
-	
-	pthread_mutex_lock(&notif_mutex);
-	for (i=0; i<n_notif_ids; i++) {
-// 		if (notif_ids[i] == 
-	}
-	pthread_mutex_unlock(&notif_mutex);
+// 	sd_bus_message *m = (sd_bus_message *) event->data;
+// 	size_t i;
+// 	
+// 	sd_bus_print_msg(m);
+// 	
+// 	pthread_mutex_lock(&notif_mutex);
+// 	for (i=0; i<n_notif_ids; i++) {
+// // 		if (notif_ids[i] == 
+// 	}
+// 	pthread_mutex_unlock(&notif_mutex);
 }
 
 void send_notification(char *icon, char *title, char *text, char **actions, char**chosen_action) {
@@ -146,3 +146,27 @@ void send_notification(char *icon, char *title, char *text, char **actions, char
 	
 }
 
+static void notify_task_handler(struct event *event, void *userdata, void **sessiondata) {
+// 	struct sd_bus_notifications_listener *slistener;
+	
+// 	slistener = (struct sd_bus_notifications_listener *) userdata;
+	
+	send_notification("", "test", (char*) event->data, 0, 0);
+}
+
+struct listener *new_sd_bus_notification_listener(void *options) {
+	struct sd_bus_notifications_listener *slistener;
+	
+	slistener = (struct sd_bus_notifications_listener *) options;
+	
+	new_eventgraph(&slistener->parent.graph, notif_event_types);
+	
+	struct event_task * notify_task;
+	notify_task = new_task();
+	notify_task->id = "notify_task";
+	notify_task->handle = &notify_task_handler;
+	notify_task->userdata = slistener;
+	add_task(slistener->parent.graph, notify_task);
+	
+	return &slistener->parent;
+}
