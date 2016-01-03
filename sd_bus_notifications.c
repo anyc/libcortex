@@ -105,7 +105,7 @@ void send_notification(char *icon, char *title, char *text, char **actions, char
 	
 	if (!initialized) {
 		int ret;
-		
+		printf("initialize\n");
 		ret = pthread_mutex_init(&notif_mutex, 0); ASSERT(ret >= 0);
 		
 		graph = get_graph_for_event_type(EV_NOTIF_AC_INVOKED);
@@ -159,7 +159,10 @@ struct listener *new_sd_bus_notification_listener(void *options) {
 	
 	slistener = (struct sd_bus_notifications_listener *) options;
 	
-	new_eventgraph(&slistener->parent.graph, notif_event_types);
+	slistener->parent.graph = get_graph_for_event_type(EV_NOTIF_AC_INVOKED);
+	if (!slistener->parent.graph) {
+		new_eventgraph(&slistener->parent.graph, notif_event_types);
+	}
 	
 	struct event_task * notify_task;
 	notify_task = new_task();

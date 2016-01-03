@@ -41,7 +41,7 @@ static void fanotify_event_handler(struct event *event, void *userdata, void **s
 		notif_event = new_event();
 		notif_event->type = "sd-bus.org.freedesktop.Notifications.ActionInvoked";
 		notif_event->data = msg;
-		notif_event->data_size = strlen(msg);
+		notif_event->data_size = strlen(msg)+1;
 		
 		send_event(&sock_listener, notif_event);
 		

@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -99,7 +100,7 @@ void *socket_server_tmain(void *data) {
 				break;
 			}
 			
-			req.type = (char*) calloc(1, req.type_length);
+			req.type = (char*) calloc(1, req.type_length+1);
 			
 			n = read(newsockfd, req.type, req.type_length);
 			if (n == 0) {
@@ -115,6 +116,7 @@ void *socket_server_tmain(void *data) {
 				close(newsockfd);
 				break;
 			}
+			req.type[req.type_length] = 0;
 			
 			req.data = (char*) calloc(1, req.data_length);
 			
@@ -217,7 +219,7 @@ void *socket_client_tmain(void *data) {
 			break;
 		}
 		
-		req.type = (char*) calloc(1, req.type_length);
+		req.type = (char*) calloc(1, req.type_length+1);
 		
 		n = read(listeners->sockfd, req.type, req.type_length);
 		if (n == 0) {
@@ -233,6 +235,7 @@ void *socket_client_tmain(void *data) {
 			close(listeners->sockfd);
 			break;
 		}
+		req.type[req.type_length] = 0;
 		
 		req.data = (char*) calloc(1, req.data_length);
 		
@@ -277,11 +280,23 @@ void send_event(struct socket_listener *slistener, struct event *event) {
 	req.data = event->data;
 	req.data_length = event->data_size;
 	
-	ret = write(slistener->sockfd, &req, sizeof(struct socket_req)); ASSERT(ret >= 0);
+	ret = write(slistener->sockfd, &req, sizeof(struct socket_req));
+	if (ret < 0) {
+		printf("sending event failed: %s\n", strerror(errno));
+		return;
+	}
 	
-	ret = write(slistener->sockfd, req.type, req.type_length); ASSERT(ret >= 0);
+	ret = write(slistener->sockfd, req.type, req.type_length);
+	if (ret < 0) {
+		printf("sending event failed: %s\n", strerror(errno));
+		return;
+	}
 	
-	ret = write(slistener->sockfd, req.data, req.data_length); ASSERT(ret >= 0);
+	ret = write(slistener->sockfd, req.data, req.data_length);
+	if (ret < 0) {
+		printf("sending event failed: %s\n", strerror(errno));
+		return;
+	}
 }
 
 static void return_event_handler(struct event *event, void *userdata, void **sessiondata) {
