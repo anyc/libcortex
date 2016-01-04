@@ -108,10 +108,11 @@ void send_notification(char *icon, char *title, char *text, char **actions, char
 		printf("initialize\n");
 		ret = pthread_mutex_init(&notif_mutex, 0); ASSERT(ret >= 0);
 		
-		graph = get_graph_for_event_type(EV_NOTIF_AC_INVOKED);
-		if (!graph) {
-			new_eventgraph(&graph, notif_event_types);
-		}
+// 		graph = get_graph_for_event_type(EV_NOTIF_AC_INVOKED);
+// 		if (!graph) {
+// 			new_eventgraph(&graph, notif_event_types);
+// 		}
+		graph = get_graph_for_event_type(EV_NOTIF_AC_INVOKED, notif_event_types);
 		
 		sd_bus_add_listener(sd_bus_main_bus, "/org/freedesktop/Notifications", EV_NOTIF_AC_INVOKED);
 		
@@ -147,29 +148,44 @@ void send_notification(char *icon, char *title, char *text, char **actions, char
 }
 
 static void notify_task_handler(struct event *event, void *userdata, void **sessiondata) {
-// 	struct sd_bus_notifications_listener *slistener;
+	char *title, *msg;
+	char ret;
 	
-// 	slistener = (struct sd_bus_notifications_listener *) userdata;
+	ret = crtx_get_value(event->data_struct, "title", &title, sizeof(void*));
+	if (!ret) {
+		printf("error parsing event\n");
+		return;
+	}
 	
-	send_notification("", "test", (char*) event->data, 0, 0);
+	ret = crtx_get_value(event->data_struct, "message", &msg, sizeof(void*));
+	if (!ret) {
+		printf("error parsing event\n");
+		return;
+	}
+	
+	send_notification("", title, msg, 0, 0);
 }
 
 struct listener *new_sd_bus_notification_listener(void *options) {
 	struct sd_bus_notifications_listener *slistener;
+	struct event_graph *graph;
 	
 	slistener = (struct sd_bus_notifications_listener *) options;
 	
-	slistener->parent.graph = get_graph_for_event_type(EV_NOTIF_AC_INVOKED);
-	if (!slistener->parent.graph) {
-		new_eventgraph(&slistener->parent.graph, notif_event_types);
-	}
+// 	slistener->parent.graph = get_graph_for_event_type(EV_NOTIF_AC_INVOKED);
+// 	if (!slistener->parent.graph) {
+// 		new_eventgraph(&slistener->parent.graph, notif_event_types);
+// 	}
+	slistener->parent.graph = get_graph_for_event_type(EV_NOTIF_AC_INVOKED, notif_event_types);
+	
+	graph = get_graph_for_event_type(CRTX_EVT_NOTIFICATION, crtx_evt_notification);
 	
 	struct event_task * notify_task;
 	notify_task = new_task();
 	notify_task->id = "notify_task";
 	notify_task->handle = &notify_task_handler;
 	notify_task->userdata = slistener;
-	add_task(slistener->parent.graph, notify_task);
+	add_task(graph, notify_task);
 	
 	return &slistener->parent;
 }

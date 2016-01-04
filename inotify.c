@@ -37,10 +37,11 @@ void *inotify_tmain(void *data) {
 		while (i < length) {
 			in_event = (struct inotify_event *) &buffer[i];
 			
-			event = new_event();
-			event->type = fal->parent.graph->types[0];
-			event->data = in_event;
-			event->data_size = sizeof(struct inotify_event) + in_event->len;
+// 			event = new_event();
+// 			event->type = fal->parent.graph->types[0];
+// 			event->data = in_event;
+// 			event->data_size = sizeof(struct inotify_event) + in_event->len;
+			event = create_event(fal->parent.graph->types[0], in_event, sizeof(struct inotify_event) + in_event->len);
 			
 			add_event(fal->parent.graph, event);
 			

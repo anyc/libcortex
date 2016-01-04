@@ -71,9 +71,10 @@ static int sd_bus_add_event(sd_bus_message *m, void *userdata, sd_bus_error *ret
 	
 	printf("received %s %s\n", type, data);
 	
-	event = new_event();
-	event->type = type;
-	event->data = data;
+// 	event = new_event();
+// 	event->type = type;
+// 	event->data = data;
+	event = create_event(type, data, strlen(data)+1);
 	
 	add_event(args->graph, event);
 	
@@ -100,9 +101,10 @@ static int sd_bus_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *r
 	
 	listener = (struct listener_data*) userdata;
 	
-	event = new_event();
-	event->type = listener->event_type;
-	event->data = m;
+// 	event = new_event();
+// 	event->type = listener->event_type;
+// 	event->data = m;
+	event = create_event(listener->event_type, m, 0);
 	
 	sd_bus_print_msg(m);
 	
@@ -340,7 +342,7 @@ finish:
 
 
 void sd_bus_print_event_task(struct event *event, void *userdata) {
-	sd_bus_message *m = (sd_bus_message *) event->data;
+	sd_bus_message *m = (sd_bus_message *) event->raw_data;
 	
 	sd_bus_print_msg(m);
 }
@@ -355,9 +357,11 @@ static int bus_signal_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_er
 	
 	dthread = (struct dbus_thread*) userdata;
 	
-	event = new_event();
-	event->type = local_event_types[0];
-	event->data = m;
+// 	event = new_event();
+// 	event->type = local_event_types[0];
+// 	event->data = m;
+	event = create_event(local_event_types[0], m, 0);
+
 	
 	// 	sig = sd_bus_message_get_signature(m, 1);
 	// 	

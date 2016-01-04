@@ -4,6 +4,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <unistd.h>
+#include <stdarg.h>
 
 #include "core.h"
 #include "socket.h"
@@ -17,14 +18,17 @@ struct socket_listener sock_listener;
 
 // static char *actions[] = { "Yes", "yes", "No", "no" };
 
+
 static void fanotify_event_handler(struct event *event, void *userdata, void **sessiondata) {
 	struct fanotify_event_metadata *metadata;
-	char *buf, *chosen_action;
+	char *buf; // *chosen_action;
 	char title[32];
 	char msg[1024];
 	struct event *notif_event;
+	struct data_struct *data;
+	size_t title_len, buf_len;
 	
-	metadata = (struct fanotify_event_metadata *) event->data;
+	metadata = (struct fanotify_event_metadata *) event->raw_data;
 	
 // 	if (metadata->mask & FAN_OPEN_PERM) {
 	if (metadata->mask & FAN_OPEN) {
@@ -38,13 +42,20 @@ static void fanotify_event_handler(struct event *event, void *userdata, void **s
 // 		printf("chosen %s\n", chosen_action);
 		snprintf(msg, 1024, "%s %s", title, buf);
 		
-		notif_event = new_event();
-		notif_event->type = "sd-bus.org.freedesktop.Notifications.ActionInvoked";
-		notif_event->data = msg;
-		notif_event->data_size = strlen(msg)+1;
+		title_len = strlen(title);
+		buf_len = strlen(buf);
+	#define CRTX_DICT_NOTIF "ss"
+		data = crtx_create_dict(CRTX_DICT_NOTIF, 
+			"title", stracpy(title, &title_len), title_len, 0,
+			"message", stracpy(buf, &buf_len), buf_len, 0
+			);
 		
-		send_event(&sock_listener, notif_event);
+// 		notif_event = create_event(CRTX_EVT_NOTIFICATION, msg, strlen(msg)+1);
+		notif_event = create_event(CRTX_EVT_NOTIFICATION, 0, 0);
+		notif_event->data_struct = data;
 		
+// 		send_event(&sock_listener, notif_event);
+		add_event(sock_listener.outbox, notif_event);
 		
 // 		access.fd = metadata->fd;
 // 		
@@ -68,6 +79,11 @@ void init() {
 	sock_listener.protocol = IPPROTO_TCP;
 	sock_listener.host = "localhost";
 	sock_listener.service = "1234";
+	
+	char *sendtypes[2] = { "cortex.socket.outbox", 0 };
+	char *recvtypes[2] = { "cortex.socket.inbox", 0 };
+	sock_listener.send_types = sendtypes;
+	sock_listener.recv_types = recvtypes;
 	
 	sock_list = create_listener("socket_client", &sock_listener);
 	if (!sock_list) {

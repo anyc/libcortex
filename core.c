@@ -56,6 +56,10 @@ struct listener_factory listener_factory[] = {
 	{0, 0}
 };
 
+char *crtx_evt_notification[] = { CRTX_EVT_NOTIFICATION, 0 };
+char *crtx_evt_inbox[] = { CRTX_EVT_INBOX, 0 };
+
+
 char *stracpy(char *str, size_t *str_length) {
 	char *r;
 	size_t length;
@@ -144,7 +148,10 @@ void *graph_consumer_main(void *arg) {
 // 			if (ti->cleanup)
 // 				ti->cleanup(qe->event, ti->userdata);
 		
-		traverse_graph_r(self->graph->tasks, qe->event);
+		if (self->graph->tasks)
+			traverse_graph_r(self->graph->tasks, qe->event);
+		else
+			printf("no task in graph %s\n", self->graph->types[0]);
 		
 		pthread_mutex_lock(&qe->event->mutex);
 		qe->event->in_n_queues--;
@@ -274,6 +281,17 @@ void add_event(struct event_graph *graph, struct event *event) {
 // 	pthread_mutex_unlock(&event->mutex);
 // }
 
+struct event *create_event(char *type, void *data, size_t data_size) {
+	struct event *event;
+	
+	event = new_event();
+	event->type = type;
+	event->raw_data = data;
+	event->raw_data_size = data_size;
+	
+	return event;
+}
+
 void init_signal(struct signal *signal) {
 	int ret;
 	
@@ -347,7 +365,7 @@ void free_event(struct event *event) {
 	free(event);
 }
 
-struct event_graph *get_graph_for_event_type(char *event_type) {
+struct event_graph *find_graph_for_event_type(char *event_type) {
 	struct event_graph *graph;
 	unsigned int i, j;
 	
@@ -364,10 +382,21 @@ struct event_graph *get_graph_for_event_type(char *event_type) {
 	return graph;
 }
 
+struct event_graph *get_graph_for_event_type(char *event_type, char **event_types) {
+	struct event_graph *graph;
+	
+	graph = find_graph_for_event_type(event_type);
+	if (!graph) {
+		new_eventgraph(&graph, event_types);
+	}
+	
+	return graph;
+}
+
 void add_raw_event(struct event *event) {
 	struct event_graph *graph;
 	
-	graph = get_graph_for_event_type(event->type);
+	graph = find_graph_for_event_type(event->type);
 	
 	if (!graph) {
 		printf("did not find graph for event type %s\n", event->type);
@@ -769,14 +798,66 @@ struct event_task *new_event_notifier(struct event_graph *graph, event_notifier_
 	return task;
 }
 
-void free_data_struct(struct data_struct *ds) {
+struct data_struct * crtx_create_dict(char *signature, ...) {
+	struct data_struct *ds;
 	struct data_item *di;
+	char *s;
+	size_t size;
+	va_list va;
+	
+	size = strlen(signature) * sizeof(struct data_item) + sizeof(struct data_struct);
+	ds = (struct data_struct*) malloc(size);
+	ds->signature = signature;
+	ds->size = size;
+	
+	va_start(va, signature);
+	
+	s = signature;
+	di = ds->items;
+	while (*s) {
+		di->type = *s;
+		di->key = va_arg(va, char*);
+		
+		switch (*s) {
+			case 'u':
+				di->uint32 = va_arg(va, uint32_t);
+				break;
+			case 's':
+				di->string = va_arg(va, char*);
+				break;
+			case 'D':
+				di->ds = va_arg(va, struct data_struct*);
+				break;
+			default:
+				printf("unknown literal '%c' in signature \"%s\"\n", *s, signature);
+				return 0;
+		}
+		
+		di->size = va_arg(va, size_t);
+		di->flags = va_arg(va, int);
+		
+		di++;
+		s++;
+	}
+	di--;
+	di->flags |= DIF_LAST;
+	
+	va_end(va);
+	
+	return ds;
+}
+
+
+void free_dict(struct data_struct *ds) {
+	struct data_item *di;
+	char *s;
 	
 	if (!ds)
 		return;
 	
+	s = ds->signature;
 	di = ds->items;
-	while (1) {
+	while (*s) {
 		if (di->flags & DIF_KEY_ALLOCATED)
 			free(di->key);
 		
@@ -786,7 +867,7 @@ void free_data_struct(struct data_struct *ds) {
 					free(di->string);
 				break;
 			case 'D':
-				free_data_struct(di->ds);
+				free_dict(di->ds);
 				break;
 		}
 		
@@ -794,7 +875,90 @@ void free_data_struct(struct data_struct *ds) {
 			break;
 		
 		di++;
+		s++;
 	}
 	
+	free(ds->signature);
 	free(ds);
+}
+
+static void inbox_handler(struct event *event, void *userdata, void **sessiondata) {
+	add_raw_event(event);
+}
+
+void create_in_out_box() {
+	struct event_task *task;
+	struct event_graph *graph;
+	
+	graph = get_graph_for_event_type(CRTX_EVT_INBOX, crtx_evt_inbox);
+	
+	task = new_task();
+	task->id = "inbox_handler";
+	task->handle = &inbox_handler;
+	task->userdata = 0;
+	task->position = 200;
+	add_task(graph, task);
+	
+// 	get_graph_for_event_type(CRTX_EVT_OUTBOX, crtx_evt_outbox);
+}
+
+void crtx_print_dict(struct data_struct *ds) {
+	char *s;
+	struct data_item *di;
+	uint8_t i;
+	
+	printf("sign: %s (%zu==%u)\n", ds->signature, strlen(ds->signature), ds->signature_length);
+	
+	i=0;
+	s = ds->signature;
+	di = ds->items;
+	while (*s) {
+		printf("%u: %s = ", i, di->key);
+		
+		if (*s != di->type)
+			printf("error type %c != %c\n", *s, di->type);
+		
+		switch (di->type) {
+			case 'u': printf("(uint32_t) %d\n", di->uint32); break;
+			case 'i': printf("(int32_t) %d\n", di->int32); break;
+			case 's': printf("(char*) %s\n", di->string); break;
+			case 'D': printf("(dict) TODO\n");
+		}
+		
+		s++;
+		di++;
+		i++;
+	}
+}
+
+char crtx_get_value(struct data_struct *ds, char *key, void *buffer, size_t buffer_size) {
+	char *s;
+	struct data_item *di;
+	
+	s = ds->signature;
+	di = ds->items;
+	while (*s) {
+		if (!strcmp(di->key, key)) {
+			switch (di->type) {
+				case 'u':
+				case 'i':
+					if (buffer_size == sizeof(uint32_t)) {
+						memcpy(buffer, &di->uint32, buffer_size);
+						return 1;
+					}
+				case 's':
+				case 'D':
+					if (buffer_size == sizeof(void*)) {
+						memcpy(buffer, &di->pointer, buffer_size);
+						return 1;
+					}
+					break;
+			}
+		}
+		
+		s++;
+		di++;
+	}
+	
+	return 0;
 }

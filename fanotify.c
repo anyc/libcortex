@@ -63,10 +63,11 @@ void *fanotify_tmain(void *data) {
 				continue;
 			}
 			
-			event = new_event();
-			event->type = fal->parent.graph->types[0];
-			event->data = metadata;
-			event->data_size = sizeof(struct fanotify_event_metadata);
+// 			event = new_event();
+// 			event->type = fal->parent.graph->types[0];
+// 			event->raw_data = metadata;
+// 			event->raw_data_size = sizeof(struct fanotify_event_metadata);
+			event = create_event(fal->parent.graph->types[0], metadata, sizeof(struct fanotify_event_metadata));
 			
 			add_event(fal->parent.graph, event);
 			

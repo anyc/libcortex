@@ -5,7 +5,7 @@ local_mk_rules ?= Makefile.local_rules
 
 APP=cortexd
 
-OBJS+=cortexd.o core.o socket.o readline.o controls.o fanotify.o inotify.o
+OBJS+=cortexd.o core.o socket.o readline.o controls.o fanotify.o inotify.o event_comm.o
 
 CFLAGS+=$(DEBUG_CFLAGS) -D_FILE_OFFSET_BITS=64
 
@@ -17,7 +17,7 @@ CONTROLS+=$(patsubst examples/control_%.c,examples/libcrtx_%.so,$(wildcard examp
 
 .PHONY: clean
 
-all: $(local_mk) $(APP) socket_client $(CONTROLS)
+all: $(local_mk) $(APP) $(CONTROLS)
 
 $(local_mk):
 	cp $(local_mk).skel $(local_mk)
@@ -29,9 +29,6 @@ $(APP): $(OBJS)
 
 # $(APP)-client-int: socket.o
 # 	$(CC) $(LDFLAGS) socket.o $(LOADLIBES) $(LDLIBS)
-
-# TODO filter flags
-socket_client: socket_client.o
 
 clean:
 	rm -rf *.o $(APP) $(CONTROLS)

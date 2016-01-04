@@ -114,10 +114,11 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		ev->payload_size = payload_size;
 		memcpy(ev->payload, payload, ev->payload_size);
 		
-		event = new_event();
-		event->type = td->parent.graph->types[0];
-		event->data = ev;
-		event->data_size = data_size;
+// 		event = new_event();
+// 		event->type = td->parent.graph->types[0];
+// 		event->data = ev;
+// 		event->data_size = data_size;
+		event = create_event(td->parent.graph->types[0], ev, data_size);
 		
 		add_event(new_packet_graph_msg, event);
 		
@@ -228,7 +229,7 @@ void free_nf_queue_listener(void *data) {
 }
 
 char nfq_packet_msg_okay(struct event *event) {
-	if (event->data_size < sizeof(struct ev_nf_queue_packet_msg))
+	if (event->raw_data_size < sizeof(struct ev_nf_queue_packet_msg))
 		return 0;
 	
 	return 1;

@@ -10,6 +10,11 @@
 
 #define ASSERT_STR(x, msg, ...) { if (!(x)) { printf(__FILE__ ":" STRINGIFY(__LINE__) " " msg " " #x "failed\n", __VA_ARGS__); exit(1); } }
 
+#define CRTX_EVT_NOTIFICATION "cortexd/notification"
+extern char *crtx_evt_notification[];
+#define CRTX_EVT_INBOX "cortexd/inbox"
+extern char *crtx_evt_inbox[];
+
 struct signal {
 	char *condition;
 	char local_condition;
@@ -20,13 +25,16 @@ struct signal {
 
 struct event {
 	char *type;
-	struct event_graph *graph;
+// 	struct event_graph *graph;
 	
-	void *data;
-	size_t data_size;
-// 	char data_is_self_contained;
+	void *raw_data;
+	size_t raw_data_size;
+	char raw_data_is_self_contained;
 	
-	struct event_graph *response_graph;
+	struct data_struct *data_struct;
+	void (*raw_to_struct)(struct event *event);
+	
+// 	struct event_graph *response_graph;
 	void *response;
 	size_t response_size;
 // 	char response_is_self_contained;
@@ -139,23 +147,26 @@ struct response_cache {
 #define DIF_IS_LAST(di) ( ((di)->flags & DIF_LAST) != 0 )
 
 struct data_item {
-	char type;
-	size_t size;
 	char *key;
+	unsigned long size;
 	
+	char type;
 	char flags;
 	
 	union {
-		char *string;
-		uint32_t uint32;
-		int32_t int32;
-		void *structure;
-		struct data_struct *ds;
+		char *string; // s
+		uint32_t uint32; // u
+		int32_t int32; // i
+		void *pointer;
+		struct data_struct *ds; // D
+// 		char payload[0]; // P
 	};
 };
 
 struct data_struct {
 	char *signature;
+	unsigned char signature_length;
+	unsigned long size;
 	
 	struct data_item items[0];
 };
@@ -166,6 +177,9 @@ extern struct event_graph *cortexd_graph;
 extern struct event_graph **graphs;
 extern unsigned int n_graphs;
 
+
+
+
 char *stracpy(char *str, size_t *str_length);
 struct event *new_event();
 void free_event(struct event *event);
@@ -173,24 +187,31 @@ void cortex_init();
 void cortex_finish();
 void new_eventgraph(struct event_graph **event_graph, char **event_types);
 void free_eventgraph(struct event_graph *egraph);
-void get_eventgraph(struct event_graph **event_graph, char **event_types, unsigned int n_event_types);
+// void get_eventgraph(struct event_graph **event_graph, char **event_types, unsigned int n_event_types);
 void add_task(struct event_graph *graph, struct event_task *task);
 void add_event_type(char *event_type);
 void add_raw_event(struct event *event);
 void add_event(struct event_graph *graph, struct event *event);
 void add_event_sync(struct event_graph *graph, struct event *event);
-struct event_graph *get_graph_for_event_type(char *event_type);
+struct event_graph *find_graph_for_event_type(char *event_type);
+struct event_graph *get_graph_for_event_type(char *event_type, char **event_types);
 struct event_task *new_task();
 void free_task(struct event_task *task);
 void wait_on_event(struct event *event);
 struct listener *create_listener(char *id, void *options);
 void free_listener(struct listener *listener);
+struct event *create_event(char *type, void *data, size_t data_size);
 
 struct event_task *create_response_cache_task(char *signature, create_key_cb_t create_key);
 void print_tasks(struct event_graph *graph);
 void hexdump(unsigned char *buffer, size_t index);
 
-void free_data_struct(struct data_struct *ds);
+struct data_struct * crtx_create_dict(char *signature, ...);
+void free_dict(struct data_struct *ds);
+char crtx_get_value(struct data_struct *ds, char *key, void *buffer, size_t buffer_size);
+void crtx_print_dict(struct data_struct *ds);
+
+void create_in_out_box();
 
 struct signal *new_signal();
 void init_signal(struct signal *signal);

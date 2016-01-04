@@ -150,10 +150,11 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 		return;
 	
 	if (newp_raw_graph && newp_raw_graph->tasks) {
-		newp_raw_event = new_event();
-		newp_raw_event->type = PFW_NEWPACKET_ETYPE;
-		newp_raw_event->data = event->data;
-		newp_raw_event->data_size = event->data_size;
+// 		newp_raw_event = new_event();
+// 		newp_raw_event->type = PFW_NEWPACKET_ETYPE;
+// 		newp_raw_event->data = event->data;
+// 		newp_raw_event->data_size = event->data_size;
+		newp_raw_event = create_event(PFW_NEWPACKET_ETYPE, event->raw_data, event->raw_data_size);
 		
 		add_event(newp_graph, newp_raw_event);
 		
@@ -175,7 +176,7 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 		struct data_struct *ds;
 		
 		
-		ev = (struct ev_nf_queue_packet_msg*) event->data;
+		ev = (struct ev_nf_queue_packet_msg*) event->raw_data;
 		iph = (struct iphdr*)ev->payload;
 		
 		
@@ -315,10 +316,12 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 		}
 		
 		
-		newp_event = new_event();
-		newp_event->type = PFW_NEWPACKET_ETYPE;
-		newp_event->data = ds;
-		newp_event->data_size = size;
+// 		newp_event = new_event();
+// 		newp_event->type = PFW_NEWPACKET_ETYPE;
+// 		newp_event->data = ds;
+// 		newp_event->data_size = size;
+		newp_event = create_event(PFW_NEWPACKET_ETYPE, 0, 0);
+		newp_event->data_struct = ds;
 		
 		add_event(newp_graph, newp_event);
 		
@@ -327,7 +330,7 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 		if (newp_event->response)
 			event->response = newp_event->response;
 		
-		free_data_struct(ds);
+		free_dict(ds);
 		
 		free_event(newp_event);
 	}
@@ -478,7 +481,8 @@ char * pfw_rcache_create_key_ip(struct event *event) {
 	struct data_struct *ds;
 	char *remote_ip, *remote_host;
 	
-	ds = (struct data_struct *) event->data;
+// 	ds = (struct data_struct *) event->data;
+	ds = event->data_struct;
 	
 	pfw_get_remote_data(ds, &remote_ip, &remote_host);
 	
@@ -489,7 +493,8 @@ char * pfw_rcache_create_key_host(struct event *event) {
 	struct data_struct *ds;
 	char *remote_ip, *remote_host;
 	
-	ds = (struct data_struct *) event->data;
+// 	ds = (struct data_struct *) event->data;
+	ds = event->data_struct;
 	
 	pfw_get_remote_data(ds, &remote_ip, &remote_host);
 	
@@ -533,7 +538,8 @@ static void pfw_print_packet(struct event *event, void *userdata, void **session
 	struct data_struct *ds, *pds;
 	char src_local, dst_local;
 	
-	ds = (struct data_struct *) event->data;
+// 	ds = (struct data_struct *) event->data;
+	ds = event->data_struct;
 	
 	if (strcmp(ds->signature, PFW_NEWPACKET_SIGNATURE)) {
 		printf("error, signature mismatch: %s %s\n", ds->signature, PFW_NEWPACKET_SIGNATURE);
@@ -660,7 +666,8 @@ static void pfw_rules_filter(struct event *event, void *userdata, void **session
 	struct data_struct *ds;
 	char *remote_ip, *remote_host;
 	
-	ds = (struct data_struct *) event->data;
+// 	ds = (struct data_struct *) event->data;
+	ds = event->data_struct;
 	
 	pfw_get_remote_data(ds, &remote_ip, &remote_host);
 	
