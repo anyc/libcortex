@@ -113,7 +113,7 @@ void handle_notification_response(struct event *event, void *userdata, void **se
 	pthread_mutex_lock(&notif_mutex);
 	for (it=wait_list; it; it = it->next) {
 		if (it->id == uint32) {
-			it->answer = s;
+			it->answer = stracpy(s, 0);
 			send_signal(&it->barrier, 1);
 			break;
 		}

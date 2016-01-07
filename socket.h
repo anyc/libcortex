@@ -15,6 +15,7 @@ struct socket_listener {
 	char *service;
 	
 	int sockfd;
+	int server_sockfd;
 	
 	struct event_graph *outbox;
 	struct event_graph *crtx_inbox;

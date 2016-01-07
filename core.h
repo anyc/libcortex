@@ -14,7 +14,7 @@
 extern char *crtx_evt_notification[];
 #define CRTX_EVT_INBOX "cortexd/inbox"
 extern char *crtx_evt_inbox[];
-#define CRTX_EVT_INBOX "cortexd/outbox"
+#define CRTX_EVT_OUTBOX "cortexd/outbox"
 extern char *crtx_evt_outbox[];
 
 struct signal {
@@ -36,6 +36,7 @@ struct event {
 	struct data_struct *data_dict;
 	void (*raw_to_dict)(struct event *event);
 	
+	char expect_response;
 // 	struct event_graph *response_graph;
 	void *response;
 	size_t response_size;
@@ -50,9 +51,11 @@ struct event {
 	
 // 	struct listener *origin;
 	
-	unsigned char in_n_queues;
+	unsigned char refs_before_response;
+	unsigned char refs_before_release;
 	pthread_mutex_t mutex;
-	pthread_cond_t cond;
+	pthread_cond_t response_cond;
+	pthread_cond_t release_cond;
 };
 
 struct queue_entry {
@@ -64,7 +67,7 @@ struct queue_entry {
 struct event_graph;
 struct event_task {
 	char *id;
-	char position;
+	unsigned char position;
 	struct event_graph *graph;
 	
 	void (*handle)(struct event *event, void *userdata, void **sessiondata);
@@ -118,37 +121,6 @@ struct module {
 	
 	void (*init)();
 	void (*finish)();
-};
-
-struct response_cache_entry {
-	void *key;
-	union {
-		regex_t key_regex;
-	};
-	union {
-		char regex_initialized;
-	};
-	char type;
-	
-	void *response;
-	size_t response_size;
-};
-
-struct response_cache;
-typedef char *(*create_key_cb_t)(struct event *event);
-typedef char (*match_cb_t)(struct response_cache *rc, struct event *event, struct response_cache_entry *c_entry);
-
-struct response_cache {
-	char *signature;
-	
-	struct response_cache_entry *entries;
-	size_t n_entries;
-	
-	struct response_cache_entry *cur;
-	void *cur_key;
-	
-	create_key_cb_t create_key;
-	match_cb_t match_event;
 };
 
 #define DIF_KEY_ALLOCATED 1<<0
@@ -215,7 +187,6 @@ void free_listener(struct listener *listener);
 struct event *create_event(char *type, void *data, size_t data_size);
 // struct event *create_response(struct event *event, void *data, size_t data_size);
 
-struct event_task *create_response_cache_task(char *signature, create_key_cb_t create_key);
 void print_tasks(struct event_graph *graph);
 void hexdump(unsigned char *buffer, size_t index);
 
@@ -230,8 +201,8 @@ void wait_on_signal(struct signal *s);
 void send_signal(struct signal *s, char brdcst);
 void free_signal(struct signal *s);
 
-void event_ll_add(struct queue_entry **list, struct event *event);
+void crtx_traverse_graph(struct event_graph *graph, struct event *event);
+void reference_event_response(struct event *event);
+void dereference_event_response(struct event *event);
 
-void free_response_cache(struct response_cache *dc);
-void prefill_rcache(struct response_cache *rcache, char *file);
-char rcache_match_cb_t_regex(struct response_cache *rc, struct event *event, struct response_cache_entry *c_entry);
+void event_ll_add(struct queue_entry **list, struct event *event);

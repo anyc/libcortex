@@ -15,6 +15,13 @@
 #include "socket.h"
 #include "event_comm.h"
 
+struct socket_connection_tmain_args {
+	pthread_t thread;
+	
+	struct socket_listener *slistener;
+	int sockfd;
+};
+
 int socket_recv(void *conn_id, void *data, size_t data_size) {
 	return read(*(int*) conn_id, data, data_size);
 }
@@ -32,15 +39,88 @@ void event_respond_cb(struct event *event, void *response, size_t response_size,
 	resp_event = create_event("cortex/socket/response", response, response_size);
 	resp_event->data_dict = response_dict;
 	resp_event->original_event = event;
+	resp_event->id = event->id;
 	
 	add_event(slist->outbox, resp_event);
 }
 
+static void send_event_handler(struct event *event, void *userdata, void **sessiondata) {
+	struct socket_listener *slistener;
+	
+	slistener = (struct socket_listener *) userdata;
+	
+	if (!slistener->crtx_outbox)
+		slistener->crtx_outbox = get_graph_for_event_type(CRTX_EVT_OUTBOX, crtx_evt_outbox);
+	
+	crtx_traverse_graph(slistener->crtx_outbox, event);
+	
+	send_event_as_dict(event, socket_send, &slistener->sockfd);
+}
+
+static void recv_event_handler(struct event *event, void *userdata, void **sessiondata) {
+	struct socket_listener *slistener;
+	
+	slistener = (struct socket_listener *) userdata;
+	
+	if (!slistener->crtx_inbox)
+		slistener->crtx_inbox = get_graph_for_event_type(CRTX_EVT_INBOX, crtx_evt_inbox);
+	
+	add_event(slistener->crtx_inbox, event);
+}
+
+void *socket_connection_tmain(void *data) {
+	struct socket_listener slist;
+	struct event *event;
+	struct socket_connection_tmain_args *args;
+	
+	
+	args = (struct socket_connection_tmain_args*) data;
+	
+	memcpy(&slist, args->slistener, sizeof(struct socket_listener));
+	
+	new_eventgraph(&slist.parent.graph, slist.recv_types);
+	new_eventgraph(&slist.outbox, slist.send_types);
+	
+	slist.sockfd = args->sockfd;
+	
+	struct event_task * recv_event;
+	recv_event = new_task();
+	recv_event->id = "recv_event";
+	recv_event->handle = &recv_event_handler;
+	recv_event->userdata = &slist;
+	recv_event->position = 200;
+	add_task(slist.parent.graph, recv_event);
+	
+	struct event_task * task;
+	task = new_task();
+	task->id = "send_event";
+	task->handle = &send_event_handler;
+	task->userdata = &slist;
+	task->position = 200;
+	add_task(slist.outbox, task);
+	
+	while (1) {
+		event = recv_event_as_dict(&socket_recv, &args->sockfd);
+		if (!event)
+			break;
+		
+		event->origin_data = &slist;
+		event->respond = &event_respond_cb;
+		printf("received complete event\n");
+		if (slist.parent.graph)
+			add_event(slist.parent.graph, event);
+		else
+			add_raw_event(event);
+	}
+	
+	close(args->sockfd);
+	
+	return 0;
+}
+
 void *socket_server_tmain(void *data) {
-	int newsockfd;
 	int ret;
 	struct socket_listener *listeners;
-	struct event *event;
 	struct addrinfo hints, *result, *resbkp;
 	socklen_t addrlen;
 	struct sockaddr *cliaddr;
@@ -92,22 +172,14 @@ void *socket_server_tmain(void *data) {
 	cliaddr = malloc(addrlen);
 	
 	while (!listeners->stop) {
-		newsockfd = accept(listeners->sockfd, cliaddr, &addrlen); ASSERT(newsockfd >= 0);
+		struct socket_connection_tmain_args *args;
 		
-		while (1) {
-			event = recv_event_as_dict(&socket_recv, &newsockfd);
-			if (!event) {
-				close(newsockfd);
-				break;
-			}
-			event->origin_data = listeners;
-			event->respond = &event_respond_cb;
-			
-			if (listeners->parent.graph)
-				add_event(listeners->parent.graph, event);
-			else
-				add_raw_event(event);
-		}
+		args = (struct socket_connection_tmain_args *) malloc(sizeof(struct socket_connection_tmain_args));
+		
+		args->slistener = listeners;
+		args->sockfd = accept(listeners->sockfd, cliaddr, &addrlen); ASSERT(args->sockfd >= 0);
+		
+		pthread_create(&args->thread, NULL, socket_connection_tmain, args);
 	}
 	close(listeners->sockfd);
 	
@@ -179,30 +251,6 @@ void *socket_client_tmain(void *data) {
 	return 0;
 }
 
-static void send_event_handler(struct event *event, void *userdata, void **sessiondata) {
-	struct socket_listener *slistener;
-	
-	slistener = (struct socket_listener *) userdata;
-	
-	if (!slistener->crtx_outbox)
-		slistener->crtx_outbox = get_graph_for_event_type(CRTX_EVT_OUTBOX, crtx_evt_outbox);
-	
-	crtx_traverse_graph(crtx
-	
-	send_event_as_dict(event, socket_send, &slistener->sockfd);
-}
-
-static void recv_event_handler(struct event *event, void *userdata, void **sessiondata) {
-	struct socket_listener *slistener;
-	
-	slistener = (struct socket_listener *) userdata;
-	
-	if (!slistener->crtx_inbox)
-		slistener->crtx_inbox = get_graph_for_event_type(CRTX_EVT_INBOX, crtx_evt_inbox);
-	
-	add_event(slistener->crtx_inbox, event);
-}
-
 struct listener *new_socket_server_listener(void *options) {
 	struct socket_listener *slistener;
 	
@@ -210,24 +258,24 @@ struct listener *new_socket_server_listener(void *options) {
 	
 	create_in_out_box();
 	
-	new_eventgraph(&slistener->parent.graph, slistener->recv_types);
-	new_eventgraph(&slistener->outbox, slistener->send_types);
-	
-	struct event_task * recv_event;
-	recv_event = new_task();
-	recv_event->id = "recv_event";
-	recv_event->handle = &recv_event_handler;
-	recv_event->userdata = slistener;
-	recv_event->position = 200;
-	add_task(slistener->parent.graph, recv_event);
-	
-	struct event_task * task;
-	task = new_task();
-	task->id = "send_event";
-	task->handle = &send_event_handler;
-	task->userdata = slistener;
-	task->position = 200;
-	add_task(slistener->outbox, task);
+// 	new_eventgraph(&slistener->parent.graph, slistener->recv_types);
+// 	new_eventgraph(&slistener->outbox, slistener->send_types);
+// 	
+// 	struct event_task * recv_event;
+// 	recv_event = new_task();
+// 	recv_event->id = "recv_event";
+// 	recv_event->handle = &recv_event_handler;
+// 	recv_event->userdata = slistener;
+// 	recv_event->position = 200;
+// 	add_task(slistener->parent.graph, recv_event);
+// 	
+// 	struct event_task * task;
+// 	task = new_task();
+// 	task->id = "send_event";
+// 	task->handle = &send_event_handler;
+// 	task->userdata = slistener;
+// 	task->position = 200;
+// 	add_task(slistener->outbox, task);
 	
 	pthread_create(&slistener->thread, NULL, socket_server_tmain, slistener);
 	
@@ -244,13 +292,6 @@ struct listener *new_socket_client_listener(void *options) {
 	
 	new_eventgraph(&slistener->parent.graph, slistener->recv_types);
 	new_eventgraph(&slistener->outbox, slistener->send_types);
-	
-	task = new_task();
-	task->id = "response_handler";
-	task->handle = &response_handler;
-	task->userdata = slistener;
-	task->position = 10;
-	add_task(slistener->parent.graph, task);
 	
 	struct event_task * recv_event;
 	recv_event = new_task();

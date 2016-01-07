@@ -20,6 +20,7 @@
 
 
 #include "core.h"
+#include "cache.h"
 #include "nf_queue.h"
 #include "controls.h"
 
@@ -783,7 +784,7 @@ void init() {
 	
 	
 	rcache_host = create_response_cache_task("su", pfw_rcache_create_key_host);
-	((struct response_cache*) rcache_host->userdata)->match_event = &rcache_match_cb_t_regex;
+	((struct response_cache_task*) rcache_host->userdata)->match_event = &rcache_match_cb_t_regex;
 	rcache_host->id = "rcache_host";
 	
 // 	prefill_rcache( ((struct response_cache*) rcache_host->userdata), PFW_DATA_DIR "rcache_host.txt");
@@ -791,7 +792,7 @@ void init() {
 	
 	
 	rcache_ip = create_response_cache_task("su", pfw_rcache_create_key_ip);
-	((struct response_cache*) rcache_ip->userdata)->match_event = &rcache_match_cb_t_regex;
+	((struct response_cache_task*) rcache_ip->userdata)->match_event = &rcache_match_cb_t_regex;
 	rcache_ip->id = "rcache_ip";
 	
 // 	prefill_rcache( ((struct response_cache*) rcache_ip->userdata), PFW_DATA_DIR "rcache_ip.txt");

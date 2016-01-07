@@ -58,6 +58,7 @@ struct listener_factory listener_factory[] = {
 
 char *crtx_evt_notification[] = { CRTX_EVT_NOTIFICATION, 0 };
 char *crtx_evt_inbox[] = { CRTX_EVT_INBOX, 0 };
+char *crtx_evt_outbox[] = { CRTX_EVT_OUTBOX, 0 };
 
 
 char *stracpy(char *str, size_t *str_length) {
@@ -110,16 +111,20 @@ void free_listener(struct listener *listener) {
 void traverse_graph_r(struct event_task *ti, struct event *event) {
 	void *sessiondata = 0;
 	
+	printf("execute task %s\n", ti->id);
+	
 	if (ti->handle)
 		ti->handle(event, ti->userdata, &sessiondata);
-	
-	printf("execute task %s\n", ti->id);
 	
 	if (!event->response && ti->next)
 		traverse_graph_r(ti->next, event);
 	
 	if (ti->cleanup)
 		ti->cleanup(event, ti->userdata, sessiondata);
+}
+
+void crtx_traverse_graph(struct event_graph *graph, struct event *event) {
+	traverse_graph_r(graph->tasks, event);
 }
 
 void *graph_consumer_main(void *arg) {
@@ -154,10 +159,10 @@ void *graph_consumer_main(void *arg) {
 			printf("no task in graph %s\n", self->graph->types[0]);
 		
 		pthread_mutex_lock(&qe->event->mutex);
-		qe->event->in_n_queues--;
+		qe->event->refs_before_response--;
 		
-		if (qe->event->in_n_queues == 0)
-			pthread_cond_broadcast(&qe->event->cond);
+		if (qe->event->refs_before_response == 0)
+			pthread_cond_broadcast(&qe->event->response_cond);
 		
 		pthread_mutex_unlock(&qe->event->mutex);
 		free(qe);
@@ -239,7 +244,7 @@ void add_event(struct event_graph *graph, struct event *event) {
 	event_ll_add(&graph->equeue, event);
 	
 	pthread_mutex_lock(&event->mutex);
-	event->in_n_queues++;
+	event->refs_before_response++;
 	pthread_mutex_unlock(&event->mutex);
 	
 	graph->n_queue_entries++;
@@ -352,12 +357,27 @@ void free_signal(struct signal *s) {
 	free(s);
 }
 
+void reference_event_response(struct event *event) {
+	pthread_mutex_lock(&event->mutex);
+	event->refs_before_response++;
+	pthread_mutex_unlock(&event->mutex);
+}
+
+void dereference_event_response(struct event *event) {
+	pthread_mutex_lock(&event->mutex);
+	event->refs_before_response--;
+	
+	if (event->refs_before_response == 0)
+		pthread_cond_broadcast(&event->response_cond);
+	
+	pthread_mutex_unlock(&event->mutex);
+}
 
 void wait_on_event(struct event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
-	while (event->in_n_queues > 0)
-		pthread_cond_wait(&event->cond, &event->mutex);
+	while (event->refs_before_response > 0)
+		pthread_cond_wait(&event->response_cond, &event->mutex);
 	
 	pthread_mutex_unlock(&event->mutex);
 }
@@ -367,9 +387,11 @@ struct event *new_event() {
 	int ret;
 	
 	event = (struct event*) calloc(1, sizeof(struct event));
+	event->id = (uint64_t) (uintptr_t) event;
 	
 	ret = pthread_mutex_init(&event->mutex, 0); ASSERT(ret >= 0);
-	ret = pthread_cond_init(&event->cond, NULL); ASSERT(ret >= 0);
+	ret = pthread_cond_init(&event->response_cond, NULL); ASSERT(ret >= 0);
+	ret = pthread_cond_init(&event->release_cond, NULL); ASSERT(ret >= 0);
 	
 	return event;
 }
@@ -546,200 +568,6 @@ void cortex_finish() {
 	}
 }
 
-char rcache_match_cb_t_strcmp(struct response_cache *rc, struct event *event, struct response_cache_entry *c_entry) {
-	return !strcmp( (char*) rc->cur_key, (char*) c_entry->key);
-}
-
-char rcache_match_cb_t_regex(struct response_cache *rc, struct event *event, struct response_cache_entry *c_entry) {
-	int ret;
-	char msgbuf[128];
-	
-	if (!c_entry->regex_initialized) {
-		ret = regcomp(&c_entry->key_regex, (char*) c_entry->key, 0);
-		if (ret) {
-			fprintf(stderr, "Could not compile regex %s\n", (char*) c_entry->key);
-			exit(1);
-		}
-		c_entry->regex_initialized = 1;
-	}
-	
-	ret = regexec( &c_entry->key_regex, (char *) rc->cur_key, 0, NULL, 0);
-	if (!ret) {
-		return 1;
-	} else if (ret == REG_NOMATCH) {
-		return 0;
-	} else {
-		regerror(ret, &c_entry->key_regex, msgbuf, sizeof(msgbuf));
-		fprintf(stderr, "Regex match failed: %s\n", msgbuf);
-		exit(1);
-	}
-}
-
-void response_cache_task(struct event *event, void *userdata, void **sessiondata) {
-	struct response_cache *dc = (struct response_cache*) userdata;
-	size_t i;
-	
-// 	dc->cur = 0;
-	
-	dc->cur_key = dc->create_key(event);
-	if (!dc->cur_key)
-		return;
-	
-	for (i=0; i < dc->n_entries; i++) {
-		if (dc->match_event(dc, event, &dc->entries[i])) {
-			event->response = dc->entries[i].response;
-			event->response_size = dc->entries[i].response_size;
-			
-			*sessiondata = &dc->entries[i];
-			
-			printf("response found in cache: ");
-			if (dc->signature[0] == 's')
-				printf("key %s ", (char*) dc->entries[i].key);
-			printf("\n");
-			
-			return;
-		}
-	}
-}
-
-void response_cache_task_cleanup(struct event *event, void *userdata, void *sessiondata) {
-	struct response_cache *dc = (struct response_cache*) userdata;
-	
-	if (dc->cur_key && !sessiondata && event->response) {
-		dc->n_entries++;
-		dc->entries = (struct response_cache_entry *) realloc(dc->entries, sizeof(struct response_cache_entry)*dc->n_entries);
-		
-		memset(&dc->entries[dc->n_entries-1], 0, sizeof(struct response_cache_entry));
-		dc->entries[dc->n_entries-1].key = dc->cur_key;
-		dc->entries[dc->n_entries-1].response = event->response;
-		dc->entries[dc->n_entries-1].response_size = event->response_size;
-	} else {
-		free(dc->cur_key);
-	}
-}
-
-// char * crtx_get_trim_copy(char * str, unsigned int maxlen) {
-// 	char * s, *ret;
-// 	unsigned int i, len;
-// 	
-// 	if (!str || maxlen == 0)
-// 		return 0;
-// 	
-// 	i=0;
-// 	// get start and reduce maxlen
-// 	while (isspace(*str) && i < maxlen) {str++;i++;}
-// 	maxlen -= i;
-// 	
-// 	// goto end, and move backwards
-// 	s = str + (strlen(str) < maxlen? strlen(str) : maxlen) - 1;
-// 	while (s > str && isspace(*s)) {s--;}
-// 	
-// 	len = (s-str + 1 < maxlen?s-str + 1:maxlen);
-// 	if (len == 0)
-// 		return 0;
-// 	
-// 	ret = (char*) dls_malloc( len + 1 );
-// 	strncpy(ret, str, len);
-// 	ret[len] = 0;
-// 	
-// 	return ret;
-// }
-
-void prefill_rcache(struct response_cache *rcache, char *file) {
-	FILE *f;
-	char buf[1024];
-	char *indent;
-	size_t slen;
-	
-// 	if (strcmp(rcache->signature, "ss")) {
-// 		printf("rcache signature %s != ss\n", rcache->signature);
-// 		return;
-// 	}
-	
-	f = fopen(file, "r");
-	
-	if (!f)
-		return;
-	
-	while (fgets(buf, sizeof(buf), f)) {
-		if (buf[0] == '#')
-			continue;
-		
-		indent = strchr(buf, '\t');
-		
-		if (!indent)
-			continue;
-		
-		rcache->n_entries++;
-		rcache->entries = (struct response_cache_entry *) realloc(rcache->entries, sizeof(struct response_cache_entry)*rcache->n_entries);
-		memset(&rcache->entries[rcache->n_entries-1], 0, sizeof(struct response_cache_entry));
-		
-		slen = indent - buf;
-		rcache->entries[rcache->n_entries-1].key = stracpy(buf, &slen);
-// 		printf("asd %s\n", (char*)rcache->entries[rcache->n_entries-1].key);
-		if (rcache->signature[1] == 's') {
-			slen = strlen(buf) - slen - 1;
-			if (buf[strlen(buf)-1] == '\n')
-				slen--;
-			rcache->entries[rcache->n_entries-1].response = stracpy(indent+1, &slen);;
-			rcache->entries[rcache->n_entries-1].response_size = slen;
-// 			printf("asd %s\n", (char*)rcache->entries[rcache->n_entries-1].response);
-		} else
-		if (rcache->signature[1] == 'u') {
-			uint32_t uint;
-			rcache->entries[rcache->n_entries-1].response_size = strlen(buf) - slen - 2;
-			
-			sscanf(indent+1, "%"PRIu32,  &uint);
-// 			printf("%"PRIu32"\n", uint);
-			rcache->entries[rcache->n_entries-1].response = (void*)(ptrdiff_t) uint;
-		}
-	}
-	
-	if (ferror(stdin)) {
-		fprintf(stderr,"Oops, error reading stdin\n");
-		exit(1);
-	}
-	
-	fclose(f);
-}
-
-
-struct event_task *create_response_cache_task(char *signature, create_key_cb_t create_key) {
-	struct response_cache *dc;
-	struct event_task *task;
-	
-	task = new_task();
-	
-	dc = (struct response_cache*) calloc(1, sizeof(struct response_cache));
-	dc->signature = signature;
-	dc->create_key = create_key;
-	dc->match_event = &rcache_match_cb_t_strcmp;
-	
-	task->id = "response_cache";
-	task->position = 90;
-	task->userdata = dc;
-	task->handle = &response_cache_task;
-	task->cleanup = &response_cache_task_cleanup;
-	
-	return task;
-}
-
-void free_response_cache(struct response_cache *dc) {
-	size_t i;
-	
-	for (i=0; i<dc->n_entries; i++) {
-		free(dc->entries[i].key);
-		if (dc->entries[i].response_size > 0)
-			free(dc->entries[i].response);
-		
-		if (dc->entries[i].regex_initialized)
-			regfree(&dc->entries[i].key_regex);
-	}
-	
-	free(dc->entries);
-	free(dc);
-}
-
 void print_tasks(struct event_graph *graph) {
 	struct event_task *e;
 	
@@ -822,6 +650,7 @@ struct data_struct * crtx_create_dict(char *signature, ...) {
 	ds = (struct data_struct*) malloc(size);
 	ds->signature = signature;
 	ds->size = size;
+	ds->signature_length = 0;
 	
 	va_start(va, signature);
 	
@@ -851,6 +680,7 @@ struct data_struct * crtx_create_dict(char *signature, ...) {
 		
 		di++;
 		s++;
+		ds->signature_length++;
 	}
 	di--;
 	di->flags |= DIF_LAST;
@@ -930,7 +760,7 @@ char crtx_get_value(struct data_struct *ds, char *key, void *buffer, size_t buff
 	
 	s = ds->signature;
 	di = ds->items;
-	while (*s) {
+	while (*s) {printf("%s %s %c %c\n", di->key, key, *s, di->type);
 		if (!strcmp(di->key, key)) {
 			switch (di->type) {
 				case 'u':
@@ -944,8 +774,11 @@ char crtx_get_value(struct data_struct *ds, char *key, void *buffer, size_t buff
 					if (buffer_size == sizeof(void*)) {
 						memcpy(buffer, &di->pointer, buffer_size);
 						return 1;
-					}
+					} else
+						printf("error, size does not match type: %zu != %zu\n", buffer_size, sizeof(void*));
 					break;
+				default:
+					printf("error, unimplemented value type %c\n", di->type);
 			}
 		}
 		
