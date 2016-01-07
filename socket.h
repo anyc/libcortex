@@ -18,6 +18,9 @@ struct socket_listener {
 	
 	struct event_graph *outbox;
 	struct event_graph *crtx_inbox;
+	struct event_graph *crtx_outbox;
+	
+	struct queue_event *sent_events;
 	
 	pthread_t thread;
 	char stop;

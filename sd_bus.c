@@ -126,6 +126,8 @@ static int sd_bus_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *r
 	
 	add_raw_event(event);
 	
+	wait_on_event(event);
+	
 	return 0;
 }
 

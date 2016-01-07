@@ -14,6 +14,8 @@
 extern char *crtx_evt_notification[];
 #define CRTX_EVT_INBOX "cortexd/inbox"
 extern char *crtx_evt_inbox[];
+#define CRTX_EVT_INBOX "cortexd/outbox"
+extern char *crtx_evt_outbox[];
 
 struct signal {
 	char *condition;
@@ -31,13 +33,22 @@ struct event {
 	size_t raw_data_size;
 	char raw_data_is_self_contained;
 	
-	struct data_struct *data_struct;
-	void (*raw_to_struct)(struct event *event);
+	struct data_struct *data_dict;
+	void (*raw_to_dict)(struct event *event);
 	
 // 	struct event_graph *response_graph;
 	void *response;
 	size_t response_size;
 // 	char response_is_self_contained;
+	
+	struct data_struct *response_dict;
+	
+	void (*respond)(struct event *event, void *response, size_t response_size, struct data_struct *response_dict);
+	void *origin_data;
+	uint64_t id;
+	struct event *original_event;
+	
+// 	struct listener *origin;
 	
 	unsigned char in_n_queues;
 	pthread_mutex_t mutex;
@@ -157,7 +168,8 @@ struct data_item {
 		char *string; // s
 		uint32_t uint32; // u
 		int32_t int32; // i
-		void *pointer;
+		uint64_t uint64; // z
+		void *pointer; // p
 		struct data_struct *ds; // D
 // 		char payload[0]; // P
 	};
@@ -201,6 +213,7 @@ void wait_on_event(struct event *event);
 struct listener *create_listener(char *id, void *options);
 void free_listener(struct listener *listener);
 struct event *create_event(char *type, void *data, size_t data_size);
+// struct event *create_response(struct event *event, void *data, size_t data_size);
 
 struct event_task *create_response_cache_task(char *signature, create_key_cb_t create_key);
 void print_tasks(struct event_graph *graph);
@@ -211,13 +224,13 @@ void free_dict(struct data_struct *ds);
 char crtx_get_value(struct data_struct *ds, char *key, void *buffer, size_t buffer_size);
 void crtx_print_dict(struct data_struct *ds);
 
-void create_in_out_box();
-
 struct signal *new_signal();
 void init_signal(struct signal *signal);
 void wait_on_signal(struct signal *s);
 void send_signal(struct signal *s, char brdcst);
 void free_signal(struct signal *s);
+
+void event_ll_add(struct queue_entry **list, struct event *event);
 
 void free_response_cache(struct response_cache *dc);
 void prefill_rcache(struct response_cache *rcache, char *file);

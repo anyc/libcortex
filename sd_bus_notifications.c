@@ -12,10 +12,23 @@ char *notif_event_types[] = { EV_NOTIF_AC_INVOKED, 0 };
 static char initialized = 0;
 static struct event_graph *graph;
 
-static u_int32_t *notif_ids = 0;
-static size_t n_notif_ids = 0;
-static struct signal *signals = 0;
+struct sd_bus_notifications_item {
+	u_int32_t id;
+	char *answer;
+	struct signal barrier;
+	
+	struct sd_bus_notifications_item *prev;
+	struct sd_bus_notifications_item *next;
+};
+
+// static u_int32_t *notif_ids = 0;
+// static size_t n_notif_ids = 0;
+// static struct signal *signals = 0;
+// static char **answers = 0;
+struct sd_bus_notifications_item *wait_list = 0;
 pthread_mutex_t notif_mutex;
+
+
 
 
 static u_int32_t sd_bus_send_notification(char *icon, char *title, char *text, char **actions) {
@@ -89,20 +102,34 @@ static u_int32_t sd_bus_send_notification(char *icon, char *title, char *text, c
 }
 
 void handle_notification_response(struct event *event, void *userdata, void **sessiondata) {
-// 	sd_bus_message *m = (sd_bus_message *) event->data;
-// 	size_t i;
-// 	
-// 	sd_bus_print_msg(m);
-// 	
-// 	pthread_mutex_lock(&notif_mutex);
+	sd_bus_message *m = (sd_bus_message *) event->raw_data;
+	struct sd_bus_notifications_item *it;
+	char *s;
+	uint32_t uint32;
+	
+	sd_bus_message_read_basic(m, 'u', &uint32);
+	sd_bus_message_read_basic(m, 's', &s);
+	
+	pthread_mutex_lock(&notif_mutex);
+	for (it=wait_list; it; it = it->next) {
+		if (it->id == uint32) {
+			it->answer = s;
+			send_signal(&it->barrier, 1);
+			break;
+		}
+	}
 // 	for (i=0; i<n_notif_ids; i++) {
-// // 		if (notif_ids[i] == 
+// 		if (notif_ids[i] == uint32) {
+// 			answers[i] = s;
+// 			send_signal(&signals[i], 1);
+// 			break;
+// 		}
 // 	}
-// 	pthread_mutex_unlock(&notif_mutex);
+	pthread_mutex_unlock(&notif_mutex);
 }
 
+
 void send_notification(char *icon, char *title, char *text, char **actions, char**chosen_action) {
-	
 	if (!initialized) {
 		int ret;
 		printf("initialize\n");
@@ -127,43 +154,95 @@ void send_notification(char *icon, char *title, char *text, char **actions, char
 	}
 	
 	if (actions) {
+// 		unsigned int id;
+		struct sd_bus_notifications_item *it;
+		
 		pthread_mutex_lock(&notif_mutex);
 		
-		n_notif_ids++;
-		notif_ids = (u_int32_t*) realloc(signals, sizeof(u_int32_t)*n_notif_ids);
-		signals = (struct signal*) realloc(signals, sizeof(struct signal)*n_notif_ids);
-		init_signal(&signals[n_notif_ids-1]);
+// 		n_notif_ids++;
+// 		notif_ids = (u_int32_t*) realloc(notif_ids, sizeof(u_int32_t)*n_notif_ids);
+// 		signals = (struct signal*) realloc(signals, sizeof(struct signal)*n_notif_ids);
+// 		answers = (char **) realloc(answers, sizeof(char*)*n_notif_ids);
+		for (it = wait_list; it && it->next; it = it->next) {}
+		if (it) {
+			it->next = (struct sd_bus_notifications_item *) malloc(sizeof(struct sd_bus_notifications_item));
+			it->next->prev = it;
+			it = it->next;
+		} else {
+			wait_list = (struct sd_bus_notifications_item *) malloc(sizeof(struct sd_bus_notifications_item));
+			it = wait_list;
+			it->prev = 0;
+		}
+		it->next = 0;
 		pthread_mutex_unlock(&notif_mutex);
 		
-		notif_ids[n_notif_ids-1] = sd_bus_send_notification(icon, title, text, actions);
+// 		init_signal(&signals[n_notif_ids-1]);
+		init_signal(&it->barrier);
 		
-		wait_on_signal(&signals[n_notif_ids-1]);
+// 		id = n_notif_ids-1;
+// 		notif_ids[id] = 0;
+		
+		it->id = sd_bus_send_notification(icon, title, text, actions);
+		
+		printf("notification id %u\n", it->id);
+		
+		wait_on_signal(&it->barrier);
+		
+		*chosen_action = it->answer;
+		
+		pthread_mutex_lock(&notif_mutex);
+		if (it->prev)
+			it->prev->next = it->next;
+		else
+			wait_list = it->next;
+		if (it->next)
+			it->next->prev = it->prev;
+		pthread_mutex_unlock(&notif_mutex);
+		
+		free(it);
 	} else {
 		sd_bus_send_notification(icon, title, text, actions);
 	}
-	
-	// 	struct event_task *etask = new_task();
-	// 	etask->handle = &handle_cortexd_enable;
-	
 }
 
+char *test[5] = { "yes", "YES", "no", "NO", 0 };
 static void notify_task_handler(struct event *event, void *userdata, void **sessiondata) {
-	char *title, *msg;
+	char *title, *msg, *answer;
 	char ret;
+	size_t answer_length;
+	struct data_struct *data;
+// 	struct event *response;
 	
-	ret = crtx_get_value(event->data_struct, "title", &title, sizeof(void*));
+	ret = crtx_get_value(event->data_dict, "title", &title, sizeof(void*));
 	if (!ret) {
 		printf("error parsing event\n");
 		return;
 	}
 	
-	ret = crtx_get_value(event->data_struct, "message", &msg, sizeof(void*));
+	ret = crtx_get_value(event->data_dict, "message", &msg, sizeof(void*));
 	if (!ret) {
 		printf("error parsing event\n");
 		return;
 	}
 	
-	send_notification("", title, msg, 0, 0);
+	send_notification("", title, msg, test, &answer);
+	
+	answer_length = strlen(answer);
+	data = crtx_create_dict("s",
+				"action", answer, answer_length, 0
+				);
+	
+// 	event->response = data;
+// 	response = create_response(event, 0, 0);
+	
+	if (event->respond)
+		event->respond(event, 0, 0, data);
+	else
+		event->response_dict = data;
+	
+// 	return_event(response);
+	
+// 	printf("ans %s\n", answer);
 }
 
 struct listener *new_sd_bus_notification_listener(void *options) {
@@ -172,10 +251,6 @@ struct listener *new_sd_bus_notification_listener(void *options) {
 	
 	slistener = (struct sd_bus_notifications_listener *) options;
 	
-// 	slistener->parent.graph = get_graph_for_event_type(EV_NOTIF_AC_INVOKED);
-// 	if (!slistener->parent.graph) {
-// 		new_eventgraph(&slistener->parent.graph, notif_event_types);
-// 	}
 	slistener->parent.graph = get_graph_for_event_type(EV_NOTIF_AC_INVOKED, notif_event_types);
 	
 	graph = get_graph_for_event_type(CRTX_EVT_NOTIFICATION, crtx_evt_notification);

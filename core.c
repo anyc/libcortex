@@ -214,25 +214,29 @@ void add_task(struct event_graph *graph, struct event_task *task) {
 	}
 }
 
-void add_event(struct event_graph *graph, struct event *event) {
+void event_ll_add(struct queue_entry **list, struct event *event) {
 	struct queue_entry *eit;
 	
-	pthread_mutex_lock(&graph->mutex);
-	
-	printf("new event %s\n", event->type);
-	
-	for (eit=graph->equeue; eit && eit->next; eit = eit->next) {}
+	for (eit=*list; eit && eit->next; eit = eit->next) {}
 	
 	if (eit) {
 		eit->next = (struct queue_entry*) malloc(sizeof(struct queue_entry));
 		eit = eit->next;
 	} else {
-		graph->equeue = (struct queue_entry*) malloc(sizeof(struct queue_entry));
-		eit = graph->equeue;
+		*list = (struct queue_entry*) malloc(sizeof(struct queue_entry));
+		eit = *list;
 	}
 	eit->event = event;
 	eit->next = 0;
+}
+
+void add_event(struct event_graph *graph, struct event *event) {
 	
+	pthread_mutex_lock(&graph->mutex);
+	
+	printf("new event %s\n", event->type);
+	
+	event_ll_add(&graph->equeue, event);
 	
 	pthread_mutex_lock(&event->mutex);
 	event->in_n_queues++;
@@ -291,6 +295,15 @@ struct event *create_event(char *type, void *data, size_t data_size) {
 	
 	return event;
 }
+
+// struct event *create_response(struct event *event, void *data, size_t data_size) {
+// 	struct event *response;
+// 	
+// 	response = create_event(event->type, data, data_size);
+// 	response->original_event = event;
+// 	
+// 	return response;
+// }
 
 void init_signal(struct signal *signal) {
 	int ret;
@@ -880,26 +893,6 @@ void free_dict(struct data_struct *ds) {
 	
 	free(ds->signature);
 	free(ds);
-}
-
-static void inbox_handler(struct event *event, void *userdata, void **sessiondata) {
-	add_raw_event(event);
-}
-
-void create_in_out_box() {
-	struct event_task *task;
-	struct event_graph *graph;
-	
-	graph = get_graph_for_event_type(CRTX_EVT_INBOX, crtx_evt_inbox);
-	
-	task = new_task();
-	task->id = "inbox_handler";
-	task->handle = &inbox_handler;
-	task->userdata = 0;
-	task->position = 200;
-	add_task(graph, task);
-	
-// 	get_graph_for_event_type(CRTX_EVT_OUTBOX, crtx_evt_outbox);
 }
 
 void crtx_print_dict(struct data_struct *ds) {

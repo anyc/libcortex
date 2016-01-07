@@ -52,7 +52,7 @@ static void fanotify_event_handler(struct event *event, void *userdata, void **s
 		
 // 		notif_event = create_event(CRTX_EVT_NOTIFICATION, msg, strlen(msg)+1);
 		notif_event = create_event(CRTX_EVT_NOTIFICATION, 0, 0);
-		notif_event->data_struct = data;
+		notif_event->data_dict = data;
 		
 // 		send_event(&sock_listener, notif_event);
 		add_event(sock_listener.outbox, notif_event);
