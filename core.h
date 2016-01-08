@@ -38,38 +38,23 @@ struct event_data {
 
 struct event {
 	char *type;
-// 	struct event_graph *graph;
-	
-// 	void *raw_data;
-// 	size_t raw_data_size;
-// 	char raw_data_is_self_contained;
-	
-// 	struct data_struct *data_dict;
-	
-	char expect_response;
 	
 	struct event_data data;
+	
+	char response_expected;
 	struct event_data response;
 	
-// 	struct event_graph *response_graph;
-// 	void *response;
-// 	size_t response_size;
-// 	char response_is_self_contained;
-	
-// 	struct data_struct *response_dict;
-	
-// 	void (*respond)(struct event *event, void *response, size_t response_size, struct data_struct *response_dict);
-	void (*respond)(struct event *to_event, struct event_data *ev);
-	void *respond_cb_payload;
-	uint64_t id;
-	struct event *original_event;
-	
-// 	struct listener *origin;
+// 	void (*respond)(struct event *to_event, struct event_data *ev);
+// 	void *respond_cb_payload;
+	uint64_t original_event_id;
+// 	struct event *original_event;
 	
 	unsigned char refs_before_response;
 	unsigned char refs_before_release;
 	pthread_cond_t response_cond;
-	pthread_cond_t release_cond;
+// 	pthread_cond_t release_cond;
+	void (*cb_before_release)(struct event *event);
+	void *cb_before_release_data;
 	
 	pthread_mutex_t mutex;
 };
@@ -220,5 +205,7 @@ void free_signal(struct signal *s);
 void crtx_traverse_graph(struct event_graph *graph, struct event *event);
 void reference_event_response(struct event *event);
 void dereference_event_response(struct event *event);
+void reference_event_release(struct event *event);
+void dereference_event_release(struct event *event);
 
 void event_ll_add(struct queue_entry **list, struct event *event);

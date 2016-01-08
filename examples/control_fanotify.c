@@ -56,7 +56,9 @@ static void fanotify_event_handler(struct event *event, void *userdata, void **s
 		notif_event = create_event(CRTX_EVT_NOTIFICATION, 0, 0);
 		notif_event->data.dict = data;
 		
-		notif_event->expect_response = 1;
+		reference_event_release(notif_event);
+		
+		notif_event->response_expected = 1;
 		
 // 		send_event(&sock_listener, notif_event);
 		add_event(sock_listener.outbox, notif_event);
@@ -78,6 +80,8 @@ static void fanotify_event_handler(struct event *event, void *userdata, void **s
 			access.response = FAN_ALLOW;
 		else
 			access.response = FAN_DENY;
+		
+		dereference_event_release(notif_event);
 		
 		/* Write response in the fanotify fd! */
 		write(listener.fanotify_fd, &access, sizeof(access));

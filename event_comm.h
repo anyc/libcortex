@@ -18,8 +18,7 @@ struct serialized_dict {
 	uint8_t signature_length;
 };
 
-// #define CRTX_SREQ_RAW 1<<0
-// #define CRTX_SREQ_DICT 1<<1
+#define CRTX_SEREV_FLAG_EXPECT_RESPONSE 1<<0
 
 struct serialized_event {
 	uint8_t version;

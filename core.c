@@ -158,13 +158,17 @@ void *graph_consumer_main(void *arg) {
 		else
 			printf("no task in graph %s\n", self->graph->types[0]);
 		
-		pthread_mutex_lock(&qe->event->mutex);
-		qe->event->refs_before_response--;
+// 		pthread_mutex_lock(&qe->event->mutex);
+// 		qe->event->refs_before_response--;
+// 		
+// 		if (qe->event->refs_before_response == 0)
+// 			pthread_cond_broadcast(&qe->event->response_cond);
+// 		
+// 		pthread_mutex_unlock(&qe->event->mutex);
+		dereference_event_response(qe->event);
 		
-		if (qe->event->refs_before_response == 0)
-			pthread_cond_broadcast(&qe->event->response_cond);
+		dereference_event_release(qe->event);
 		
-		pthread_mutex_unlock(&qe->event->mutex);
 		free(qe);
 		
 		pthread_mutex_unlock(&self->graph->queue_mutex);
@@ -237,15 +241,18 @@ void event_ll_add(struct queue_entry **list, struct event *event) {
 
 void add_event(struct event_graph *graph, struct event *event) {
 	
+	reference_event_release(event);
+	reference_event_response(event);
+	
 	pthread_mutex_lock(&graph->mutex);
 	
 	printf("new event %s\n", event->type);
 	
 	event_ll_add(&graph->equeue, event);
 	
-	pthread_mutex_lock(&event->mutex);
-	event->refs_before_response++;
-	pthread_mutex_unlock(&event->mutex);
+// 	pthread_mutex_lock(&event->mutex);
+// 	event->refs_before_response++;
+// 	pthread_mutex_unlock(&event->mutex);
 	
 	graph->n_queue_entries++;
 	
@@ -357,6 +364,27 @@ void free_signal(struct signal *s) {
 	free(s);
 }
 
+void reference_event_release(struct event *event) {
+	pthread_mutex_lock(&event->mutex);
+	event->refs_before_release++;
+	pthread_mutex_unlock(&event->mutex);
+}
+
+void dereference_event_release(struct event *event) {
+	pthread_mutex_lock(&event->mutex);
+	printf("deref release %d %s\n", event->refs_before_release, event->type);
+	if (event->refs_before_release > 0)
+		event->refs_before_release--;
+	
+	if (event->refs_before_release == 0) {
+// 		pthread_cond_broadcast(&event->release_cond);
+		free_event(event);
+		return;
+	}
+	
+	pthread_mutex_unlock(&event->mutex);
+}
+
 void reference_event_response(struct event *event) {
 	pthread_mutex_lock(&event->mutex);
 	event->refs_before_response++;
@@ -365,7 +393,9 @@ void reference_event_response(struct event *event) {
 
 void dereference_event_response(struct event *event) {
 	pthread_mutex_lock(&event->mutex);
-	event->refs_before_response--;
+	
+	if (event->refs_before_response > 0)
+		event->refs_before_response--;
 	
 	if (event->refs_before_response == 0)
 		pthread_cond_broadcast(&event->response_cond);
@@ -387,16 +417,31 @@ struct event *new_event() {
 	int ret;
 	
 	event = (struct event*) calloc(1, sizeof(struct event));
-	event->id = (uint64_t) (uintptr_t) event;
+// 	event->id = (uint64_t) (uintptr_t) event;
 	
 	ret = pthread_mutex_init(&event->mutex, 0); ASSERT(ret >= 0);
 	ret = pthread_cond_init(&event->response_cond, NULL); ASSERT(ret >= 0);
-	ret = pthread_cond_init(&event->release_cond, NULL); ASSERT(ret >= 0);
+// 	ret = pthread_cond_init(&event->release_cond, NULL); ASSERT(ret >= 0);
 	
 	return event;
 }
 
+void free_event_data(struct event_data *ed) {
+	if (ed->raw)
+		free(ed->raw);
+	if (ed->dict)
+		free_dict(ed->dict);
+}
+
 void free_event(struct event *event) {
+	printf("free %s\n", event->type);
+	
+	if (event->cb_before_release)
+		event->cb_before_release(event);
+	
+	free_event_data(&event->data);
+	free_event_data(&event->response);
+	
 	free(event);
 }
 
@@ -721,7 +766,7 @@ void free_dict(struct data_struct *ds) {
 		s++;
 	}
 	
-	free(ds->signature);
+// 	free(ds->signature);
 	free(ds);
 }
 

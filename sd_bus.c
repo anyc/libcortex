@@ -124,9 +124,15 @@ static int sd_bus_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *r
 	// 		printf("\tval %s\n", val);
 	// 	}
 	
+	reference_event_release(event);
+	
 	add_raw_event(event);
 	
 	wait_on_event(event);
+	
+	event->data.raw = 0;
+	
+	dereference_event_release(event);
 	
 	return 0;
 }

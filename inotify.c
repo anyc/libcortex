@@ -43,9 +43,15 @@ void *inotify_tmain(void *data) {
 // 			event->data_size = sizeof(struct inotify_event) + in_event->len;
 			event = create_event(fal->parent.graph->types[0], in_event, sizeof(struct inotify_event) + in_event->len);
 			
+			reference_event_release(event);
+			
 			add_event(fal->parent.graph, event);
 			
 			wait_on_event(event);
+			
+			event->data.raw = 0;
+			
+			dereference_event_release(event);
 			
 			i += sizeof(struct inotify_event) + in_event->len;
 		}

@@ -30,17 +30,21 @@ int socket_send(void *conn_id, void *data, size_t data_size) {
 	return write(*(int*) conn_id, data, data_size);
 }
 
-// void event_respond_cb(struct event *event, void *response, size_t response_size, struct data_struct *response_dict) {
-void event_respond_cb(struct event *event, struct event_data *ed) {
+void event_before_release(struct event *event) {
+// void event_respond_cb(struct event *event, struct event_data *ed) {
 	struct socket_listener *slist;
 	struct event *resp_event;
 	
-	slist = (struct socket_listener*) event->respond_cb_payload;
+	slist = (struct socket_listener*) event->cb_before_release_data;
+	printf("before release\n");
+	resp_event = create_event("cortex/socket/response", event->response.raw, event->response.raw_size);
+	resp_event->data.dict = event->response.dict;
+// 	resp_event->original_event = event;
+// 	resp_event->original_event_id = (uint64_t) (uintptr_t) event;
+	resp_event->original_event_id = event->original_event_id;
 	
-	resp_event = create_event("cortex/socket/response", ed->raw, ed->raw_size);
-	resp_event->data.dict = ed->dict;
-	resp_event->original_event = event;
-	resp_event->id = event->id;
+	event->response.raw = 0;
+	event->response.dict = 0;
 	
 	add_event(slist->outbox, resp_event);
 }
@@ -105,14 +109,22 @@ void *socket_connection_tmain(void *data) {
 		if (!event)
 			break;
 		
-		event->respond_cb_payload = &slist;
-		event->respond = &event_respond_cb;
-		printf("received complete event\n");
+// 		event->respond_cb_payload = &slist;
+// 		event->respond = &event_respond_cb;
+// 		if (event->refs_before_release > 0) {
+		if (event->response_expected) {
+			event->cb_before_release = &event_before_release;
+			event->cb_before_release_data = &slist;
+		}
+		
+		
 		if (slist.parent.graph)
 			add_event(slist.parent.graph, event);
 		else
 			add_raw_event(event);
 	}
+	
+	// TODO handle aborted connection if events are still processed
 	
 	close(args->sockfd);
 	
@@ -239,8 +251,12 @@ void *socket_client_tmain(void *data) {
 			close(listeners->sockfd);
 			break;
 		}
-		event->respond_cb_payload = listeners;
-		event->respond = &event_respond_cb;
+		
+// 		if (event->refs_before_release > 0) {
+		if (event->response_expected) {
+			event->cb_before_release = &event_before_release;
+			event->cb_before_release_data = &listeners;
+		}
 		
 		if (listeners->parent.graph)
 			add_event(listeners->parent.graph, event);

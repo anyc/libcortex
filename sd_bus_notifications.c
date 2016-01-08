@@ -211,7 +211,7 @@ static void notify_task_handler(struct event *event, void *userdata, void **sess
 	char ret;
 	size_t answer_length;
 	struct data_struct *data;
-	struct event_data ed;
+// 	struct event_data ed;
 	
 	ret = crtx_get_value(event->data.dict, "title", &title, sizeof(void*));
 	if (!ret) {
@@ -235,13 +235,13 @@ static void notify_task_handler(struct event *event, void *userdata, void **sess
 // 	event->response = data;
 // 	response = create_response(event, 0, 0);
 	
-	memset(&ed, 0, sizeof(struct event_data));
-	ed.dict = data;
+// 	memset(&ed, 0, sizeof(struct event_data));
+// 	ed.dict = data;
 	
-	if (event->respond)
-		event->respond(event, &ed);
-	else
-		event->response.dict = data;
+// 	if (event->respond)
+// 		event->respond(event, &ed);
+// 	else
+	event->response.dict = data;
 	
 // 	return_event(response);
 	

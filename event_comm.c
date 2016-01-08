@@ -43,11 +43,21 @@ void send_event_as_dict(struct event *event, send_fct send, void *conn_id) {
 	#endif
 	
 	sev.version = 0;
-	sev.id = event->id;
-	
 // 	sev.flags = CRTX_SREQ_DICT;
 	sev.type_length = strlen(event->type);
 	sev.flags = 0;
+	sev.id = 0;
+	
+	if (event->response_expected) {
+		sev.flags |= CRTX_SEREV_FLAG_EXPECT_RESPONSE;
+		sev.id = (uint64_t) (uintptr_t) event;
+	} else {
+		if (event->original_event_id)
+			sev.id = event->original_event_id;
+// 		else
+// 			sev.id = (uint64_t) (uintptr_t) event;
+		
+	}
 	
 	ret = send(conn_id, &sev, sizeof(struct serialized_event));
 	if (ret < 0) {
@@ -181,7 +191,11 @@ struct event *recv_event_as_dict(recv_fct recv, void *conn_id) {
 	
 // 	event = (struct event*) calloc(1, sizeof(struct event));
 	event = new_event();
-	event->id = sev.id;
+	event->original_event_id = sev.id;
+	
+	if ((sev.flags & CRTX_SEREV_FLAG_EXPECT_RESPONSE) != 0)
+		event->response_expected = 1;
+// 		reference_event_release(event);
 	
 	event->type = (char*) malloc(sev.type_length+1);
 	ret = my_recv(recv, conn_id, event->type, sev.type_length);
@@ -304,13 +318,16 @@ static void inbox_dispatch_handler(struct event *event, void *userdata, void **s
 // typedef char (*match_cb_t)(struct response_cache *rc, struct event *event, struct response_cache_entry *c_entry);
 
 static char *in_create_key_cb(struct event *event) {
-	char *key;
+	char *key = 0;
 	
-	key = (char*) malloc(sizeof(uint64_t)*2+1);
+	
 // 	if (event->original_event)
 // 		snprintf(key, sizeof(uint64_t)*2+1, "%" PRIu64, (uint64_t) (uintptr_t) event->original_event->id);
 // 	else
-	snprintf(key, sizeof(uint64_t)*2+1, "%" PRIu64, (uint64_t) (uintptr_t) event->id);
+	if (event->original_event_id) {
+		key = (char*) malloc(sizeof(uint64_t)*2+1);
+		snprintf(key, sizeof(uint64_t)*2+1, "%" PRIu64, (uint64_t) (uintptr_t) event->original_event_id);
+	}
 	
 	return key;
 }
@@ -333,10 +350,8 @@ static void out_cache_on_miss(struct response_cache_task *ct, void **key, struct
 	
 	printf("add event outlist\n");
 	
-	if (event->original_event)
-		return;
-	
-	if (!event->expect_response)
+	// is somebody interested in a response to this event?
+	if (event->refs_before_release == 0)
 		return;
 	
 	reference_event_response(event);
@@ -365,6 +380,7 @@ static void in_cache_on_hit(struct response_cache_task *ct, void **key, struct e
 		orig_event = (struct event*) c_entry->value;
 		
 		orig_event->response.dict = event->data.dict;
+		event->data.dict = 0;
 		
 		dereference_event_response(orig_event);
 	}
