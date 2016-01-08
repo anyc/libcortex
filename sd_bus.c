@@ -344,7 +344,7 @@ finish:
 
 
 void sd_bus_print_event_task(struct event *event, void *userdata) {
-	sd_bus_message *m = (sd_bus_message *) event->raw_data;
+	sd_bus_message *m = (sd_bus_message *) event->data.raw;
 	
 	sd_bus_print_msg(m);
 }

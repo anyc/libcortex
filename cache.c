@@ -40,8 +40,8 @@ char rcache_match_cb_t_regex(struct response_cache *rc, void *key, struct event 
 void response_cache_on_hit(struct response_cache_task *rc, void **key, struct event *event, struct response_cache_entry *c_entry) {
 	struct response_cache *dc = rc->cache;
 	
-	event->response = c_entry->value;
-	event->response_size = c_entry->value_size;
+	event->response.raw = c_entry->value;
+	event->response.raw_size = c_entry->value_size;
 	
 	printf("value found in cache: ");
 	if (dc->signature[0] == 's')
@@ -94,7 +94,7 @@ void response_cache_task_cleanup(struct event *event, void *userdata, void *sess
 		return;
 	}
 	
-	if (!sessiondata && event->response) {
+	if (!sessiondata && event->response.raw) {
 		pthread_mutex_lock(&dc->mutex);
 		
 		dc->n_entries++;
@@ -102,8 +102,8 @@ void response_cache_task_cleanup(struct event *event, void *userdata, void *sess
 		
 		memset(&dc->entries[dc->n_entries-1], 0, sizeof(struct response_cache_entry));
 		dc->entries[dc->n_entries-1].key = key;
-		dc->entries[dc->n_entries-1].value = event->response;
-		dc->entries[dc->n_entries-1].value_size = event->response_size;
+		dc->entries[dc->n_entries-1].value = event->response.raw;
+		dc->entries[dc->n_entries-1].value_size = event->response.raw_size;
 		
 		pthread_mutex_unlock(&dc->mutex);
 	} else {

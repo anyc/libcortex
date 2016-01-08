@@ -19,22 +19,22 @@ void send_event_as_dict(struct event *event, send_fct send, void *conn_id) {
 	char *s;
 	int ret;
 	
-	if (!event->data_dict) {
-		if (!event->raw_to_dict) {
+	if (!event->data.dict) {
+		if (!event->data.raw_to_dict) {
 			printf("cannot prepare this event of type \"%s\" for transmission\n", event->type);
 			return;
 		}
 		
-		event->raw_to_dict(event);
+		event->data.raw_to_dict(event);
 		
-		if (!event->data_dict) {
+		if (!event->data.dict) {
 			printf("cannot prepare this event of type \"%s\" for transmission\n", event->type);
 			return;
 		}
 	}
 	
 // 	req.data_length = event->data_struct->size + event->data_struct->payload_size;
-	ds = event->data_dict;
+	ds = event->data.dict;
 	
 	#ifdef DEBUG
 	// suppress valgrind warning
@@ -205,13 +205,13 @@ struct event *recv_event_as_dict(recv_fct recv, void *conn_id) {
 		return 0;
 	}
 	
-	event->data_dict = (struct data_struct*) calloc(1, sizeof(struct data_struct) + sizeof(struct data_item)*sdict.signature_length);
-	ds = event->data_dict;
+	event->data.dict = (struct data_struct*) calloc(1, sizeof(struct data_struct) + sizeof(struct data_item)*sdict.signature_length);
+	ds = event->data.dict;
 	
 	ds->signature = (char*) malloc(sdict.signature_length+1);
 	ret = my_recv(recv, conn_id, ds->signature, sdict.signature_length);
 	if (!ret) {
-		FREE_DICT(event->data_dict);
+		FREE_DICT(event->data.dict);
 		FREE_EVENT(event);
 		return 0;
 	}
@@ -223,7 +223,7 @@ struct event *recv_event_as_dict(recv_fct recv, void *conn_id) {
 	while (*s) {
 		ret = my_recv(recv, conn_id, &sdi, sizeof(struct serialized_dict_item));
 		if (!ret) {
-			FREE_DICT(event->data_dict);
+			FREE_DICT(event->data.dict);
 			FREE_EVENT(event);
 			return 0;
 		}
@@ -234,7 +234,7 @@ struct event *recv_event_as_dict(recv_fct recv, void *conn_id) {
 		di->key = (char*) malloc(sdi.key_length+1);
 		ret = my_recv(recv, conn_id, di->key, sdi.key_length);
 		if (!ret) {
-			FREE_DICT(event->data_dict);
+			FREE_DICT(event->data.dict);
 			FREE_EVENT(event);
 			return 0;
 		}
@@ -244,14 +244,14 @@ struct event *recv_event_as_dict(recv_fct recv, void *conn_id) {
 			case 'u':
 			case 'i':
 				if (sdi.payload_size != sizeof(uint32_t)) {
-					FREE_DICT(event->data_dict);
+					FREE_DICT(event->data.dict);
 					FREE_EVENT(event);
 					return 0;
 				}
 				
 				ret = my_recv(recv, conn_id, &di->uint32, sdi.payload_size);
 				if (!ret) {
-					FREE_DICT(event->data_dict);
+					FREE_DICT(event->data.dict);
 					FREE_EVENT(event);
 					return 0;
 				}
@@ -260,7 +260,7 @@ struct event *recv_event_as_dict(recv_fct recv, void *conn_id) {
 				di->string = (char*) malloc(sdi.payload_size+1);
 				ret = my_recv(recv, conn_id, di->string, sdi.payload_size);
 				if (!ret) {
-					FREE_DICT(event->data_dict);
+					FREE_DICT(event->data.dict);
 					FREE_EVENT(event);
 					return 0;
 				}
@@ -364,7 +364,7 @@ static void in_cache_on_hit(struct response_cache_task *ct, void **key, struct e
 		// find entry, pass/drop
 		orig_event = (struct event*) c_entry->value;
 		
-		orig_event->response_dict = event->data_dict;
+		orig_event->response.dict = event->data.dict;
 		
 		dereference_event_response(orig_event);
 	}

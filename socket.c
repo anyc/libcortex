@@ -30,14 +30,15 @@ int socket_send(void *conn_id, void *data, size_t data_size) {
 	return write(*(int*) conn_id, data, data_size);
 }
 
-void event_respond_cb(struct event *event, void *response, size_t response_size, struct data_struct *response_dict) {
+// void event_respond_cb(struct event *event, void *response, size_t response_size, struct data_struct *response_dict) {
+void event_respond_cb(struct event *event, struct event_data *ed) {
 	struct socket_listener *slist;
 	struct event *resp_event;
 	
-	slist = (struct socket_listener*) event->origin_data;
+	slist = (struct socket_listener*) event->respond_cb_payload;
 	
-	resp_event = create_event("cortex/socket/response", response, response_size);
-	resp_event->data_dict = response_dict;
+	resp_event = create_event("cortex/socket/response", ed->raw, ed->raw_size);
+	resp_event->data.dict = ed->dict;
 	resp_event->original_event = event;
 	resp_event->id = event->id;
 	
@@ -104,7 +105,7 @@ void *socket_connection_tmain(void *data) {
 		if (!event)
 			break;
 		
-		event->origin_data = &slist;
+		event->respond_cb_payload = &slist;
 		event->respond = &event_respond_cb;
 		printf("received complete event\n");
 		if (slist.parent.graph)
@@ -238,7 +239,7 @@ void *socket_client_tmain(void *data) {
 			close(listeners->sockfd);
 			break;
 		}
-		event->origin_data = listeners;
+		event->respond_cb_payload = listeners;
 		event->respond = &event_respond_cb;
 		
 		if (listeners->parent.graph)

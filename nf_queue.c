@@ -124,9 +124,9 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		wait_on_event(event);
 		
-		printf("packet mark: %lu\n", (long) event->response);
+		printf("packet mark: %lu\n", (long) event->response.raw);
 		
-		int ret = nfq_set_verdict2(qh, ev->id, NF_REPEAT, (long) event->response, 0, NULL);
+		int ret = nfq_set_verdict2(qh, ev->id, NF_REPEAT, (long) event->response.raw, 0, NULL);
 		
 		free(ev);
 		free_event(event);
@@ -229,7 +229,7 @@ void free_nf_queue_listener(void *data) {
 }
 
 char nfq_packet_msg_okay(struct event *event) {
-	if (event->raw_data_size < sizeof(struct ev_nf_queue_packet_msg))
+	if (event->data.raw_size < sizeof(struct ev_nf_queue_packet_msg))
 		return 0;
 	
 	return 1;

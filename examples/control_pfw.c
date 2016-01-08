@@ -144,7 +144,7 @@ void add_ips_to_list(struct filter_set *fset, char *hostname) {
 static void pfw_main_handler(struct event *event, void *userdata, void **sessiondata) {
 	struct event *newp_raw_event, *newp_event;
 	
-	if (event->response)
+	if (event->response.raw)
 		return;
 	
 	if (!nfq_packet_msg_okay(event))
@@ -155,7 +155,7 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 // 		newp_raw_event->type = PFW_NEWPACKET_ETYPE;
 // 		newp_raw_event->data = event->data;
 // 		newp_raw_event->data_size = event->data_size;
-		newp_raw_event = create_event(PFW_NEWPACKET_ETYPE, event->raw_data, event->raw_data_size);
+		newp_raw_event = create_event(PFW_NEWPACKET_ETYPE, event->data.raw, event->data.raw_size);
 		
 		add_event(newp_graph, newp_raw_event);
 		
@@ -177,7 +177,7 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 		struct data_struct *ds;
 		
 		
-		ev = (struct ev_nf_queue_packet_msg*) event->raw_data;
+		ev = (struct ev_nf_queue_packet_msg*) event->data.raw;
 		iph = (struct iphdr*)ev->payload;
 		
 		
@@ -322,23 +322,23 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 // 		newp_event->data = ds;
 // 		newp_event->data_size = size;
 		newp_event = create_event(PFW_NEWPACKET_ETYPE, 0, 0);
-		newp_event->data_dict = ds;
+		newp_event->data.dict = ds;
 		
 		add_event(newp_graph, newp_event);
 		
 		wait_on_event(newp_event);
 		
-		if (newp_event->response)
-			event->response = newp_event->response;
+		if (newp_event->response.raw)
+			event->response.raw = newp_event->response.raw;
 		
 		free_dict(ds);
 		
 		free_event(newp_event);
 	}
 	
-	if (!event->response) {
+	if (!event->response.raw) {
 		printf("set to %d\n", PFW_DEFAULT);
-		event->response = (void*) PFW_DEFAULT;
+		event->response.raw = (void*) PFW_DEFAULT;
 	}
 }
 
@@ -483,7 +483,7 @@ char * pfw_rcache_create_key_ip(struct event *event) {
 	char *remote_ip, *remote_host;
 	
 // 	ds = (struct data_struct *) event->data;
-	ds = event->data_dict;
+	ds = event->data.dict;
 	
 	pfw_get_remote_data(ds, &remote_ip, &remote_host);
 	
@@ -495,7 +495,7 @@ char * pfw_rcache_create_key_host(struct event *event) {
 	char *remote_ip, *remote_host;
 	
 // 	ds = (struct data_struct *) event->data;
-	ds = event->data_dict;
+	ds = event->data.dict;
 	
 	pfw_get_remote_data(ds, &remote_ip, &remote_host);
 	
@@ -540,7 +540,7 @@ static void pfw_print_packet(struct event *event, void *userdata, void **session
 	char src_local, dst_local;
 	
 // 	ds = (struct data_struct *) event->data;
-	ds = event->data_dict;
+	ds = event->data.dict;
 	
 	if (strcmp(ds->signature, PFW_NEWPACKET_SIGNATURE)) {
 		printf("error, signature mismatch: %s %s\n", ds->signature, PFW_NEWPACKET_SIGNATURE);
@@ -668,27 +668,27 @@ static void pfw_rules_filter(struct event *event, void *userdata, void **session
 	char *remote_ip, *remote_host;
 	
 // 	ds = (struct data_struct *) event->data;
-	ds = event->data_dict;
+	ds = event->data.dict;
 	
 	pfw_get_remote_data(ds, &remote_ip, &remote_host);
 	
 	if (match_regexp_list(remote_host, &host_blacklist)) {
-		event->response = (void *) PFW_REJECT;
+		event->response.raw = (void *) PFW_REJECT;
 		return;
 	}
 	
 	if (match_regexp_list(remote_ip, &ip_blacklist)) {
-		event->response = (void *) PFW_REJECT;
+		event->response.raw = (void *) PFW_REJECT;
 		return;
 	}
 	
 	if (match_regexp_list(remote_host, &host_whitelist)) {
-		event->response = (void *) PFW_ACCEPT;
+		event->response.raw = (void *) PFW_ACCEPT;
 		return;
 	}
 	
 	if (match_regexp_list(remote_ip, &ip_whitelist)) {
-		event->response = (void *) PFW_ACCEPT;
+		event->response.raw = (void *) PFW_ACCEPT;
 		return;
 	}
 	

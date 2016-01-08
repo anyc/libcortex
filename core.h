@@ -17,6 +17,8 @@ extern char *crtx_evt_inbox[];
 #define CRTX_EVT_OUTBOX "cortexd/outbox"
 extern char *crtx_evt_outbox[];
 
+struct event;
+
 struct signal {
 	char *condition;
 	char local_condition;
@@ -25,27 +27,40 @@ struct signal {
 	pthread_cond_t cond;
 };
 
+struct event_data {
+	void *raw;
+	size_t raw_size;
+	
+	void (*raw_to_dict)(struct event *event);
+	
+	struct data_struct *dict;
+};
+
 struct event {
 	char *type;
 // 	struct event_graph *graph;
 	
-	void *raw_data;
-	size_t raw_data_size;
-	char raw_data_is_self_contained;
+// 	void *raw_data;
+// 	size_t raw_data_size;
+// 	char raw_data_is_self_contained;
 	
-	struct data_struct *data_dict;
-	void (*raw_to_dict)(struct event *event);
+// 	struct data_struct *data_dict;
 	
 	char expect_response;
+	
+	struct event_data data;
+	struct event_data response;
+	
 // 	struct event_graph *response_graph;
-	void *response;
-	size_t response_size;
+// 	void *response;
+// 	size_t response_size;
 // 	char response_is_self_contained;
 	
-	struct data_struct *response_dict;
+// 	struct data_struct *response_dict;
 	
-	void (*respond)(struct event *event, void *response, size_t response_size, struct data_struct *response_dict);
-	void *origin_data;
+// 	void (*respond)(struct event *event, void *response, size_t response_size, struct data_struct *response_dict);
+	void (*respond)(struct event *to_event, struct event_data *ev);
+	void *respond_cb_payload;
 	uint64_t id;
 	struct event *original_event;
 	
@@ -53,9 +68,10 @@ struct event {
 	
 	unsigned char refs_before_response;
 	unsigned char refs_before_release;
-	pthread_mutex_t mutex;
 	pthread_cond_t response_cond;
 	pthread_cond_t release_cond;
+	
+	pthread_mutex_t mutex;
 };
 
 struct queue_entry {

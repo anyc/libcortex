@@ -13,7 +13,7 @@ static void inotify_event_handler(struct event *event, void *userdata, void **se
 	struct inotify_event *in_event;
 	char buf[1024];
 	
-	in_event = (struct inotify_event *) event->raw_data;
+	in_event = (struct inotify_event *) event->data.raw;
 	if (in_event->len) {
 		if (in_event->mask & IN_CREATE) {
 			if (in_event->mask & IN_ISDIR) {

@@ -36,11 +36,11 @@ void handle_request(struct event *event, void *userdata, void **sessiondata) {
 	
 	pthread_mutex_lock(&stdout_mutex);
 	
-	printf("event: %s\n", (char*) event->raw_data);
+	printf("event: %s\n", (char*) event->data.raw);
 	
 	input = readline_read();
 	
-	event->response = input;
+	event->response.raw = input;
 	
 	pthread_mutex_unlock(&stdout_mutex);
 }

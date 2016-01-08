@@ -102,7 +102,7 @@ static u_int32_t sd_bus_send_notification(char *icon, char *title, char *text, c
 }
 
 void handle_notification_response(struct event *event, void *userdata, void **sessiondata) {
-	sd_bus_message *m = (sd_bus_message *) event->raw_data;
+	sd_bus_message *m = (sd_bus_message *) event->data.raw;
 	struct sd_bus_notifications_item *it;
 	char *s;
 	uint32_t uint32;
@@ -211,15 +211,15 @@ static void notify_task_handler(struct event *event, void *userdata, void **sess
 	char ret;
 	size_t answer_length;
 	struct data_struct *data;
-// 	struct event *response;
+	struct event_data ed;
 	
-	ret = crtx_get_value(event->data_dict, "title", &title, sizeof(void*));
+	ret = crtx_get_value(event->data.dict, "title", &title, sizeof(void*));
 	if (!ret) {
 		printf("error parsing event\n");
 		return;
 	}
 	
-	ret = crtx_get_value(event->data_dict, "message", &msg, sizeof(void*));
+	ret = crtx_get_value(event->data.dict, "message", &msg, sizeof(void*));
 	if (!ret) {
 		printf("error parsing event\n");
 		return;
@@ -235,10 +235,13 @@ static void notify_task_handler(struct event *event, void *userdata, void **sess
 // 	event->response = data;
 // 	response = create_response(event, 0, 0);
 	
+	memset(&ed, 0, sizeof(struct event_data));
+	ed.dict = data;
+	
 	if (event->respond)
-		event->respond(event, 0, 0, data);
+		event->respond(event, &ed);
 	else
-		event->response_dict = data;
+		event->response.dict = data;
 	
 // 	return_event(response);
 	

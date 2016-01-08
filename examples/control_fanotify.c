@@ -30,7 +30,7 @@ static void fanotify_event_handler(struct event *event, void *userdata, void **s
 	struct data_struct *data;
 	size_t title_len, buf_len;
 	
-	metadata = (struct fanotify_event_metadata *) event->raw_data;
+	metadata = (struct fanotify_event_metadata *) event->data.raw;
 	
 	if (metadata->mask & FAN_OPEN_PERM) {
 // 	if (metadata->mask & FAN_OPEN) {
@@ -54,7 +54,7 @@ static void fanotify_event_handler(struct event *event, void *userdata, void **s
 		
 // 		notif_event = create_event(CRTX_EVT_NOTIFICATION, msg, strlen(msg)+1);
 		notif_event = create_event(CRTX_EVT_NOTIFICATION, 0, 0);
-		notif_event->data_dict = data;
+		notif_event->data.dict = data;
 		
 		notif_event->expect_response = 1;
 		
@@ -64,9 +64,9 @@ static void fanotify_event_handler(struct event *event, void *userdata, void **s
 		printf("wait for response\n");
 		wait_on_event(notif_event);
 		
-		if (!crtx_get_value(notif_event->response_dict, "action", &chosen_action, sizeof(chosen_action))) {
+		if (!crtx_get_value(notif_event->response.dict, "action", &chosen_action, sizeof(chosen_action))) {
 			printf("received invalid response\n");
-			crtx_print_dict(notif_event->response_dict);
+			crtx_print_dict(notif_event->response.dict);
 			
 			free(buf);
 			return;

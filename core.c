@@ -116,7 +116,7 @@ void traverse_graph_r(struct event_task *ti, struct event *event) {
 	if (ti->handle)
 		ti->handle(event, ti->userdata, &sessiondata);
 	
-	if (!event->response && ti->next)
+	if (!event->response.raw && ti->next)
 		traverse_graph_r(ti->next, event);
 	
 	if (ti->cleanup)
@@ -295,8 +295,8 @@ struct event *create_event(char *type, void *data, size_t data_size) {
 	
 	event = new_event();
 	event->type = type;
-	event->raw_data = data;
-	event->raw_data_size = data_size;
+	event->data.raw = data;
+	event->data.raw_size = data_size;
 	
 	return event;
 }
