@@ -784,18 +784,18 @@ void init() {
 	
 	
 	rcache_host = create_response_cache_task("su", pfw_rcache_create_key_host);
-	((struct response_cache_task*) rcache_host->userdata)->match_event = &rcache_match_cb_t_regex;
+	((struct crtx_cache_task*) rcache_host->userdata)->match_event = &rcache_match_cb_t_regex;
 	rcache_host->id = "rcache_host";
 	
-// 	prefill_rcache( ((struct response_cache*) rcache_host->userdata), PFW_DATA_DIR "rcache_host.txt");
+// 	prefill_rcache( ((struct crtx_cache*) rcache_host->userdata), PFW_DATA_DIR "rcache_host.txt");
 	add_task(newp_graph, rcache_host);
 	
 	
 	rcache_ip = create_response_cache_task("su", pfw_rcache_create_key_ip);
-	((struct response_cache_task*) rcache_ip->userdata)->match_event = &rcache_match_cb_t_regex;
+	((struct crtx_cache_task*) rcache_ip->userdata)->match_event = &rcache_match_cb_t_regex;
 	rcache_ip->id = "rcache_ip";
 	
-// 	prefill_rcache( ((struct response_cache*) rcache_ip->userdata), PFW_DATA_DIR "rcache_ip.txt");
+// 	prefill_rcache( ((struct crtx_cache*) rcache_ip->userdata), PFW_DATA_DIR "rcache_ip.txt");
 	add_task(newp_graph, rcache_ip);
 	
 	
@@ -810,8 +810,8 @@ void finish() {
 	
 	free_task(pfw_rules_task);
 	
-	free_response_cache(((struct response_cache*) rcache_host->userdata));
-	free_response_cache(((struct response_cache*) rcache_ip->userdata));
+	free_response_cache(((struct crtx_cache*) rcache_host->userdata));
+	free_response_cache(((struct crtx_cache*) rcache_ip->userdata));
 	free_task(rcache_host);
 	free_task(rcache_ip);
 	

@@ -41,18 +41,15 @@ struct crtx_event {
 	
 	struct crtx_event_data data;
 	
-	char response_expected;
 	struct crtx_event_data response;
+	char response_expected;
 	
-// 	void (*respond)(struct crtx_event *to_event, struct crtx_event_data *ev);
-// 	void *respond_cb_payload;
 	uint64_t original_event_id;
-// 	struct crtx_event *original_event;
 	
 	unsigned char refs_before_response;
 	unsigned char refs_before_release;
 	pthread_cond_t response_cond;
-// 	pthread_cond_t release_cond;
+	
 	void (*cb_before_release)(struct crtx_event *event);
 	void *cb_before_release_data;
 	

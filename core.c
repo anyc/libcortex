@@ -7,9 +7,6 @@
 
 #include "core.h"
 
-// char ** event_types = 0;
-// unsigned n_event_types = 0;
-
 struct crtx_graph **graphs;
 unsigned int n_graphs;
 

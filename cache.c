@@ -7,12 +7,12 @@
 #include "core.h"
 #include "cache.h"
 
-char rcache_match_cb_t_strcmp(struct response_cache *rc, void *key, struct crtx_event *event, struct response_cache_entry *c_entry) {
+char rcache_match_cb_t_strcmp(struct crtx_cache *rc, void *key, struct crtx_event *event, struct crtx_cache_entry *c_entry) {
 	printf("asd %s %s\n", (char*) key, (char*) c_entry->key);
 	return !strcmp( (char*) key, (char*) c_entry->key);
 }
 
-char rcache_match_cb_t_regex(struct response_cache *rc, void *key, struct crtx_event *event, struct response_cache_entry *c_entry) {
+char rcache_match_cb_t_regex(struct crtx_cache *rc, void *key, struct crtx_event *event, struct crtx_cache_entry *c_entry) {
 	int ret;
 	char msgbuf[128];
 	
@@ -37,8 +37,8 @@ char rcache_match_cb_t_regex(struct response_cache *rc, void *key, struct crtx_e
 	}
 }
 
-void response_cache_on_hit(struct response_cache_task *rc, void **key, struct crtx_event *event, struct response_cache_entry *c_entry) {
-	struct response_cache *dc = rc->cache;
+void response_cache_on_hit(struct crtx_cache_task *rc, void **key, struct crtx_event *event, struct crtx_cache_entry *c_entry) {
+	struct crtx_cache *dc = rc->cache;
 	
 	event->response.raw = c_entry->value;
 	event->response.raw_size = c_entry->value_size;
@@ -50,7 +50,7 @@ void response_cache_on_hit(struct response_cache_task *rc, void **key, struct cr
 }
 
 void response_cache_task(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct response_cache_task *ct = (struct response_cache_task*) userdata;
+	struct crtx_cache_task *ct = (struct crtx_cache_task*) userdata;
 	size_t i;
 	void *key;
 	
@@ -84,8 +84,8 @@ void response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 }
 
 void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void *sessiondata) {
-	struct response_cache_task *ct = (struct response_cache_task*) userdata;
-	struct response_cache *dc = ct->cache;
+	struct crtx_cache_task *ct = (struct crtx_cache_task*) userdata;
+	struct crtx_cache *dc = ct->cache;
 	void *key;
 	
 	key = ct->create_key(event);
@@ -98,9 +98,9 @@ void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void 
 		pthread_mutex_lock(&dc->mutex);
 		
 		dc->n_entries++;
-		dc->entries = (struct response_cache_entry *) realloc(dc->entries, sizeof(struct response_cache_entry)*dc->n_entries);
+		dc->entries = (struct crtx_cache_entry *) realloc(dc->entries, sizeof(struct crtx_cache_entry)*dc->n_entries);
 		
-		memset(&dc->entries[dc->n_entries-1], 0, sizeof(struct response_cache_entry));
+		memset(&dc->entries[dc->n_entries-1], 0, sizeof(struct crtx_cache_entry));
 		dc->entries[dc->n_entries-1].key = key;
 		dc->entries[dc->n_entries-1].value = event->response.raw;
 		dc->entries[dc->n_entries-1].value_size = event->response.raw_size;
@@ -138,7 +138,7 @@ void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void 
 // 	return ret;
 // }
 
-void prefill_rcache(struct response_cache *rcache, char *file) {
+void prefill_rcache(struct crtx_cache *rcache, char *file) {
 	FILE *f;
 	char buf[1024];
 	char *indent;
@@ -164,8 +164,8 @@ void prefill_rcache(struct response_cache *rcache, char *file) {
 			continue;
 		
 		rcache->n_entries++;
-		rcache->entries = (struct response_cache_entry *) realloc(rcache->entries, sizeof(struct response_cache_entry)*rcache->n_entries);
-		memset(&rcache->entries[rcache->n_entries-1], 0, sizeof(struct response_cache_entry));
+		rcache->entries = (struct crtx_cache_entry *) realloc(rcache->entries, sizeof(struct crtx_cache_entry)*rcache->n_entries);
+		memset(&rcache->entries[rcache->n_entries-1], 0, sizeof(struct crtx_cache_entry));
 		
 		slen = indent - buf;
 		rcache->entries[rcache->n_entries-1].key = stracpy(buf, &slen);
@@ -198,20 +198,20 @@ void prefill_rcache(struct response_cache *rcache, char *file) {
 
 
 struct crtx_task *create_response_cache_task(char *signature, create_key_cb_t create_key) {
-	struct response_cache *dc;
-	struct response_cache_task *ct;
+	struct crtx_cache *dc;
+	struct crtx_cache_task *ct;
 	struct crtx_task *task;
 	int ret;
 	
 	task = new_task();
 	
-	dc = (struct response_cache*) calloc(1, sizeof(struct response_cache));
+	dc = (struct crtx_cache*) calloc(1, sizeof(struct crtx_cache));
 	dc->signature = signature;
 	
 	ret = pthread_mutex_init(&dc->mutex, 0); ASSERT(ret >= 0);
 	
 	
-	ct = (struct response_cache_task*) calloc(1, sizeof(struct response_cache_task));
+	ct = (struct crtx_cache_task*) calloc(1, sizeof(struct crtx_cache_task));
 	ct->create_key = create_key;
 	ct->match_event = &rcache_match_cb_t_strcmp;
 	ct->on_hit = &response_cache_on_hit;
@@ -226,7 +226,7 @@ struct crtx_task *create_response_cache_task(char *signature, create_key_cb_t cr
 	return task;
 }
 
-void free_response_cache(struct response_cache *dc) {
+void free_response_cache(struct crtx_cache *dc) {
 	size_t i;
 	
 	for (i=0; i<dc->n_entries; i++) {

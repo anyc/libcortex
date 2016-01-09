@@ -505,7 +505,7 @@ static void inbox_dispatch_handler(struct crtx_event *event, void *userdata, voi
 // }
 
 // typedef char *(*create_key_cb_t)(struct crtx_event *event);
-// typedef char (*match_cb_t)(struct response_cache *rc, struct crtx_event *event, struct response_cache_entry *c_entry);
+// typedef char (*match_cb_t)(struct crtx_cache *rc, struct crtx_event *event, struct crtx_cache_entry *c_entry);
 
 static char *in_create_key_cb(struct crtx_event *event) {
 	char *key = 0;
@@ -531,12 +531,12 @@ static char *out_create_key_cb(struct crtx_event *event) {
 	return key;
 }
 
-static void out_cache_on_hit(struct response_cache_task *ct, void **key, struct crtx_event *event, struct response_cache_entry *c_entry) {
+static void out_cache_on_hit(struct crtx_cache_task *ct, void **key, struct crtx_event *event, struct crtx_cache_entry *c_entry) {
 	printf("ERROR duplicate event ID\n");
 }
 
-static void out_cache_on_miss(struct response_cache_task *ct, void **key, struct crtx_event *event) {
-	struct response_cache *dc = ct->cache;
+static void out_cache_on_miss(struct crtx_cache_task *ct, void **key, struct crtx_event *event) {
+	struct crtx_cache *dc = ct->cache;
 	
 	printf("add event outlist\n");
 	
@@ -549,9 +549,9 @@ static void out_cache_on_miss(struct response_cache_task *ct, void **key, struct
 	pthread_mutex_lock(&dc->mutex);
 	
 	dc->n_entries++;
-	dc->entries = (struct response_cache_entry *) realloc(dc->entries, sizeof(struct response_cache_entry)*dc->n_entries);
+	dc->entries = (struct crtx_cache_entry *) realloc(dc->entries, sizeof(struct crtx_cache_entry)*dc->n_entries);
 	
-	memset(&dc->entries[dc->n_entries-1], 0, sizeof(struct response_cache_entry));
+	memset(&dc->entries[dc->n_entries-1], 0, sizeof(struct crtx_cache_entry));
 	dc->entries[dc->n_entries-1].key = *key;
 	dc->entries[dc->n_entries-1].value = event;
 	dc->entries[dc->n_entries-1].value_size = sizeof(void*);
@@ -561,7 +561,7 @@ static void out_cache_on_miss(struct response_cache_task *ct, void **key, struct
 	*key = 0;
 }
 
-static void in_cache_on_hit(struct response_cache_task *ct, void **key, struct crtx_event *event, struct response_cache_entry *c_entry) {
+static void in_cache_on_hit(struct crtx_cache_task *ct, void **key, struct crtx_event *event, struct crtx_cache_entry *c_entry) {
 	struct crtx_event *orig_event;
 	
 	printf("in_cache_on_hit\n");
@@ -576,7 +576,7 @@ static void in_cache_on_hit(struct response_cache_task *ct, void **key, struct c
 	}
 }
 
-static void in_cache_on_miss(struct response_cache_task *ct, void **key, struct crtx_event *event) {
+static void in_cache_on_miss(struct crtx_cache_task *ct, void **key, struct crtx_event *event) {
 	if (!strcmp(event->type, "cortex/socket/response")) {
 		// drop response
 	}printf("in_cache_on_miss\n");
@@ -585,17 +585,17 @@ static void in_cache_on_miss(struct response_cache_task *ct, void **key, struct 
 void create_in_out_box() {
 	struct crtx_task *task;
 	struct crtx_graph *graph;
-	struct response_cache *dc;
-	struct response_cache_task *ct_out, *ct_in;
+	struct crtx_cache *dc;
+	struct crtx_cache_task *ct_out, *ct_in;
 	
 	
-	dc = (struct response_cache*) calloc(1, sizeof(struct response_cache));
+	dc = (struct crtx_cache*) calloc(1, sizeof(struct crtx_cache));
 	dc->signature = "zp";
 	
 	
 	graph = get_graph_for_event_type(CRTX_EVT_INBOX, crtx_evt_inbox);
 	
-	ct_in = (struct response_cache_task*) calloc(1, sizeof(struct response_cache_task));
+	ct_in = (struct crtx_cache_task*) calloc(1, sizeof(struct crtx_cache_task));
 	ct_in->cache = dc;
 	ct_in->on_hit = &in_cache_on_hit;
 	ct_in->on_miss = &in_cache_on_miss;
@@ -625,7 +625,7 @@ void create_in_out_box() {
 // 	task->position = 10;
 // 	add_task(graph, task);
 	
-	ct_out = (struct response_cache_task*) calloc(1, sizeof(struct response_cache_task));
+	ct_out = (struct crtx_cache_task*) calloc(1, sizeof(struct crtx_cache_task));
 	ct_out->cache = dc;
 	ct_out->on_hit = &out_cache_on_hit;
 	ct_out->on_miss = &out_cache_on_miss;
