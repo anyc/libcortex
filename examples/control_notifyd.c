@@ -8,7 +8,7 @@
 #include "socket.h"
 #include "sd_bus_notifications.h"
 
-struct listener *fa;
+struct crtx_listener_base *fa;
 struct socket_listener sock_listener;
 struct sd_bus_notifications_listener notify_listener;
 

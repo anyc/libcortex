@@ -59,10 +59,10 @@ struct crtx_event {
 	pthread_mutex_t mutex;
 };
 
-struct queue_entry {
+struct crtx_event_ll {
 	struct crtx_event *event;
 	
-	struct queue_entry *next;
+	struct crtx_event_ll *next;
 };
 
 struct crtx_graph;
@@ -98,26 +98,26 @@ struct crtx_graph {
 	struct crtx_thread *consumers;
 	unsigned int n_consumers;
 	
-	struct queue_entry *equeue;
+	struct crtx_event_ll *equeue;
 	unsigned int n_queue_entries;
 	
 	pthread_mutex_t queue_mutex;
 	pthread_cond_t queue_cond;
 };
 
-struct listener_factory {
+struct crtx_listener_repository {
 	char *id;
 	
-	struct listener *(*create)(void *options);
+	struct crtx_listener_base *(*create)(void *options);
 };
 
-struct listener {
+struct crtx_listener_base {
 	void (*free)(void *data);
 	
 	struct crtx_graph *graph;
 };
 
-struct module {
+struct crtx_module {
 	char *id;
 	
 	void (*init)();
@@ -156,7 +156,7 @@ struct crtx_dict {
 	struct crtx_dict_item items[0];
 };
 
-extern struct module static_modules[];
+extern struct crtx_module static_modules[];
 extern struct crtx_graph *cortexd_graph;
 
 extern struct crtx_graph **graphs;
@@ -183,8 +183,8 @@ struct crtx_graph *get_graph_for_event_type(char *event_type, char **event_types
 struct crtx_task *new_task();
 void free_task(struct crtx_task *task);
 void wait_on_event(struct crtx_event *event);
-struct listener *create_listener(char *id, void *options);
-void free_listener(struct listener *listener);
+struct crtx_listener_base *create_listener(char *id, void *options);
+void free_listener(struct crtx_listener_base *listener);
 struct crtx_event *create_event(char *type, void *data, size_t data_size);
 // struct crtx_event *create_response(struct crtx_event *event, void *data, size_t data_size);
 
@@ -211,4 +211,4 @@ void dereference_event_response(struct crtx_event *event);
 void reference_event_release(struct crtx_event *event);
 void dereference_event_release(struct crtx_event *event);
 
-void event_ll_add(struct queue_entry **list, struct crtx_event *event);
+void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event);

@@ -278,7 +278,7 @@ static void notify_task_handler(struct crtx_event *event, void *userdata, void *
 // 	printf("ans %s\n", answer);
 }
 
-struct listener *new_sd_bus_notification_listener(void *options) {
+struct crtx_listener_base *new_sd_bus_notification_listener(void *options) {
 	struct sd_bus_notifications_listener *slistener;
 	struct crtx_graph *graph;
 	

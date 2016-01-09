@@ -2,7 +2,7 @@
 #include <arpa/inet.h>
 
 struct socket_listener {
-	struct listener parent;
+	struct crtx_listener_base parent;
 	
 	char **recv_types;
 	char **send_types;
@@ -30,7 +30,7 @@ struct socket_listener {
 
 void socket_init();
 void socket_finish();
-struct listener *new_socket_server_listener(void *options);
-struct listener *new_socket_client_listener(void *options);
+struct crtx_listener_base *new_socket_server_listener(void *options);
+struct crtx_listener_base *new_socket_client_listener(void *options);
 
 // void send_event(struct socket_listener *slistener, struct crtx_event *event);

@@ -11,8 +11,8 @@
 #include "fanotify.h"
 #include "sd_bus_notifications.h"
 
-struct listener *fa;
-struct listener *sock_list;
+struct crtx_listener_base *fa;
+struct crtx_listener_base *sock_list;
 struct fanotify_listener listener;
 struct socket_listener sock_listener;
 

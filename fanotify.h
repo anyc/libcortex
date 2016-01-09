@@ -9,7 +9,7 @@
 extern char *fanotify_msg_etype[];
 
 struct fanotify_listener {
-	struct listener parent;
+	struct crtx_listener_base parent;
 	
 	int fanotify_fd;
 	unsigned int init_flags;
@@ -24,7 +24,7 @@ struct fanotify_listener {
 
 void fanotify_get_path(int fd, char **path, size_t *length, char *format);
 
-struct listener *new_fanotify_listener(void *options);
+struct crtx_listener_base *new_fanotify_listener(void *options);
 void free_fanotify_listener(void *data);
 
 void crtx_fanotify_init();

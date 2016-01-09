@@ -8,7 +8,7 @@
 extern char *inotify_msg_etype[];
 
 struct inotify_listener {
-	struct listener parent;
+	struct crtx_listener_base parent;
 	
 	int wd;
 	uint32_t mask;
@@ -17,7 +17,7 @@ struct inotify_listener {
 	pthread_t thread;
 };
 
-struct listener *new_inotify_listener(void *options);
+struct crtx_listener_base *new_inotify_listener(void *options);
 
 void crtx_inotify_init();
 void crtx_inotify_finish();

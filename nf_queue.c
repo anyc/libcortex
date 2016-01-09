@@ -200,7 +200,7 @@ void *nfq_tmain(void *data) {
 	return 0;
 }
 
-struct listener *new_nf_queue_listener(void *options) {
+struct crtx_listener_base *new_nf_queue_listener(void *options) {
 	struct nfq_thread_data *tdata;
 	
 	tdata = (struct nfq_thread_data*) malloc(sizeof(struct nfq_thread_data));

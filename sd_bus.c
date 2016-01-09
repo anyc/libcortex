@@ -81,12 +81,12 @@ static int sd_bus_add_event(sd_bus_message *m, void *userdata, sd_bus_error *ret
 	return sd_bus_reply_method_return(m, "");
 }
 
-struct listener_data {
+struct crtx_listener_base_data {
 	char *path;
 	char *event_type;
 };
 
-struct listener_data **listeners = 0;
+struct crtx_listener_base_data **listeners = 0;
 unsigned int n_listeners = 0;
 
 char * new_strcpy(char *input) {
@@ -96,10 +96,10 @@ char * new_strcpy(char *input) {
 }
 
 static int sd_bus_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
-	struct listener_data *listener;
+	struct crtx_listener_base_data *listener;
 	struct crtx_event *event;
 	
-	listener = (struct listener_data*) userdata;
+	listener = (struct crtx_listener_base_data*) userdata;
 	
 // 	event = new_event();
 // 	event->type = listener->event_type;
@@ -138,11 +138,11 @@ static int sd_bus_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *r
 }
 
 void sd_bus_add_listener(sd_bus *bus, char *path, char *event_type) {
-	struct listener_data *listener;
+	struct crtx_listener_base_data *listener;
 	char *buf;
 	int len;
 	
-	listener = (struct listener_data*) calloc(1, sizeof(struct listener_data));
+	listener = (struct crtx_listener_base_data*) calloc(1, sizeof(struct crtx_listener_base_data));
 	listener->path = new_strcpy(path);
 	listener->event_type = new_strcpy(event_type);
 	

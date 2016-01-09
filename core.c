@@ -29,7 +29,7 @@ static char * local_event_types[] = { "cortexd/module_initialized", 0 };
 #include "inotify.h"
 #include "sd_bus_notifications.h"
 
-struct module static_modules[] = {
+struct crtx_module static_modules[] = {
 	{"socket", &socket_init, &socket_finish},
 #ifdef STATIC_SD_BUS
 	{"sd-bus", &sd_bus_init, &sd_bus_finish},
@@ -44,7 +44,7 @@ struct module static_modules[] = {
 	{0, 0}
 };
 
-struct listener_factory listener_factory[] = {
+struct crtx_listener_repository listener_factory[] = {
 #ifdef STATIC_NF_QUEUE
 	{"nf_queue", &new_nf_queue_listener},
 #endif
@@ -79,8 +79,8 @@ char *stracpy(char *str, size_t *str_length) {
 	return r;
 }
 
-struct listener *create_listener(char *id, void *options) {
-	struct listener_factory *l;
+struct crtx_listener_base *create_listener(char *id, void *options) {
+	struct crtx_listener_repository *l;
 	
 	l = listener_factory;
 	while (l->id) {
@@ -95,7 +95,7 @@ struct listener *create_listener(char *id, void *options) {
 	return 0;
 }
 
-void free_listener(struct listener *listener) {
+void free_listener(struct crtx_listener_base *listener) {
 	if (listener->free) {
 		listener->free(listener);
 	} else {
@@ -129,7 +129,7 @@ void crtx_traverse_graph(struct crtx_graph *graph, struct crtx_event *event) {
 
 void *graph_consumer_main(void *arg) {
 	struct crtx_thread *self = (struct crtx_thread*) arg;
-	struct queue_entry *qe;
+	struct crtx_event_ll *qe;
 // 	struct crtx_task *ti;
 	
 	while (!self->stop) {
@@ -223,16 +223,16 @@ void add_task(struct crtx_graph *graph, struct crtx_task *task) {
 	}
 }
 
-void event_ll_add(struct queue_entry **list, struct crtx_event *event) {
-	struct queue_entry *eit;
+void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event) {
+	struct crtx_event_ll *eit;
 	
 	for (eit=*list; eit && eit->next; eit = eit->next) {}
 	
 	if (eit) {
-		eit->next = (struct queue_entry*) malloc(sizeof(struct queue_entry));
+		eit->next = (struct crtx_event_ll*) malloc(sizeof(struct crtx_event_ll));
 		eit = eit->next;
 	} else {
-		*list = (struct queue_entry*) malloc(sizeof(struct queue_entry));
+		*list = (struct crtx_event_ll*) malloc(sizeof(struct crtx_event_ll));
 		eit = *list;
 	}
 	eit->event = event;
@@ -518,7 +518,7 @@ void new_eventgraph(struct crtx_graph **crtx_graph, char **event_types) {
 void free_eventgraph(struct crtx_graph *egraph) {
 	size_t i;
 	struct crtx_task *t, *tnext;
-	struct queue_entry *qe, *qe_next;
+	struct crtx_event_ll *qe, *qe_next;
 	
 	for (qe = egraph->equeue; qe; qe=qe_next) {
 		free_event(qe->event);

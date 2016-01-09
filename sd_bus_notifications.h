@@ -1,7 +1,7 @@
 
 struct sd_bus_notifications_listener {
-	struct listener parent;
+	struct crtx_listener_base parent;
 };
 
 void send_notification(char *icon, char *title, char *text, char **actions, char**chosen_action);
-struct listener *new_sd_bus_notification_listener(void *options);
+struct crtx_listener_base *new_sd_bus_notification_listener(void *options);

@@ -73,7 +73,7 @@ void free_inotify_listener(void *data) {
 	free(inlist);
 }
 
-struct listener *new_inotify_listener(void *options) {
+struct crtx_listener_base *new_inotify_listener(void *options) {
 	struct inotify_listener *inlist;
 	
 	inlist = (struct inotify_listener*) options;

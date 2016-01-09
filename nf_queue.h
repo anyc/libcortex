@@ -1,6 +1,6 @@
 
 struct nfq_thread_data {
-	struct listener parent;
+	struct crtx_listener_base parent;
 	
 	pthread_t thread;
 	
@@ -32,7 +32,7 @@ struct ev_nf_queue_packet_msg {
 };
 
 char nfq_packet_msg_okay(struct crtx_event *event);
-struct listener *new_nf_queue_listener(void *options);
+struct crtx_listener_base *new_nf_queue_listener(void *options);
 void free_nf_queue_listener(void *data);
 void nf_queue_init();
 void nf_queue_finish();

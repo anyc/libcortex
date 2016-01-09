@@ -6,7 +6,7 @@
 #include "inotify.h"
 #include "sd_bus_notifications.h"
 
-struct listener *fa;
+struct crtx_listener_base *fa;
 struct inotify_listener listener;
 
 static void inotify_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {

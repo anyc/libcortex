@@ -488,7 +488,7 @@ struct crtx_event *recv_event_as_dict(recv_fct recv, void *conn_id) {
 	return event;
 }
 
-// static struct queue_entry *sent_events = 0;
+// static struct crtx_event_ll *sent_events = 0;
 
 static void inbox_dispatch_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	add_raw_event(event);

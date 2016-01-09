@@ -98,7 +98,7 @@ void free_fanotify_listener(void *data) {
 	free(falist);
 }
 
-struct listener *new_fanotify_listener(void *options) {
+struct crtx_listener_base *new_fanotify_listener(void *options) {
 	struct fanotify_listener *falist;
 	int ret;
 	
