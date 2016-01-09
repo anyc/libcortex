@@ -770,17 +770,19 @@ void free_dict(struct data_struct *ds) {
 	free(ds);
 }
 
-void crtx_print_dict(struct data_struct *ds) {
+void crtx_print_dict_rec(struct data_struct *ds, unsigned char level) {
 	char *s;
 	struct data_item *di;
-	uint8_t i;
+	uint8_t i,j;
 	
+	for (j=0;j<level;j++) printf("  ");
 	printf("sign: %s (%zu==%u)\n", ds->signature, strlen(ds->signature), ds->signature_length);
 	
 	i=0;
 	s = ds->signature;
 	di = ds->items;
 	while (*s) {
+		for (j=0;j<level;j++) printf("  ");
 		printf("%u: %s = ", i, di->key);
 		
 		if (*s != di->type)
@@ -790,7 +792,7 @@ void crtx_print_dict(struct data_struct *ds) {
 			case 'u': printf("(uint32_t) %d\n", di->uint32); break;
 			case 'i': printf("(int32_t) %d\n", di->int32); break;
 			case 's': printf("(char*) %s\n", di->string); break;
-			case 'D': printf("(dict) TODO\n");
+			case 'D': printf("(dict) \n"); crtx_print_dict_rec(di->ds, level+1); break;
 		}
 		
 		s++;
@@ -799,32 +801,51 @@ void crtx_print_dict(struct data_struct *ds) {
 	}
 }
 
+void crtx_print_dict(struct data_struct *ds) {
+	crtx_print_dict_rec(ds, 0);
+}
+
+char crtx_copy_value(struct data_item *di, void *buffer, size_t buffer_size) {
+	switch (di->type) {
+		case 'u':
+		case 'i':
+			if (buffer_size == sizeof(uint32_t)) {
+				memcpy(buffer, &di->uint32, buffer_size);
+				return 1;
+			}
+		case 's':
+		case 'D':
+			if (buffer_size == sizeof(void*)) {
+				memcpy(buffer, &di->pointer, buffer_size);
+				return 1;
+			} else
+				printf("error, size does not match type: %zu != %zu\n", buffer_size, sizeof(void*));
+			break;
+		default:
+			printf("error, unimplemented value type %c\n", di->type);
+			return 0;
+	}
+	
+	return 0;
+}
+
+struct data_item *crtx_get_first_item(struct data_struct *ds) {
+	return ds->items;
+}
+
+struct data_item *crtx_get_next_item(struct data_item *di) {
+	return di+1;
+}
+
 char crtx_get_value(struct data_struct *ds, char *key, void *buffer, size_t buffer_size) {
 	char *s;
 	struct data_item *di;
 	
 	s = ds->signature;
 	di = ds->items;
-	while (*s) {printf("%s %s %c %c\n", di->key, key, *s, di->type);
+	while (*s) {
 		if (!strcmp(di->key, key)) {
-			switch (di->type) {
-				case 'u':
-				case 'i':
-					if (buffer_size == sizeof(uint32_t)) {
-						memcpy(buffer, &di->uint32, buffer_size);
-						return 1;
-					}
-				case 's':
-				case 'D':
-					if (buffer_size == sizeof(void*)) {
-						memcpy(buffer, &di->pointer, buffer_size);
-						return 1;
-					} else
-						printf("error, size does not match type: %zu != %zu\n", buffer_size, sizeof(void*));
-					break;
-				default:
-					printf("error, unimplemented value type %c\n", di->type);
-			}
+			return crtx_copy_value(di, buffer, buffer_size);
 		}
 		
 		s++;

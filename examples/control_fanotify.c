@@ -27,7 +27,7 @@ static void fanotify_event_handler(struct event *event, void *userdata, void **s
 	char title[32];
 	char msg[1024];
 	struct event *notif_event;
-	struct data_struct *data;
+	struct data_struct *data, *actions_dict;
 	size_t title_len, buf_len;
 	
 	metadata = (struct fanotify_event_metadata *) event->data.raw;
@@ -44,12 +44,19 @@ static void fanotify_event_handler(struct event *event, void *userdata, void **s
 // 		printf("chosen %s\n", chosen_action);
 		snprintf(msg, 1024, "%s %s", title, buf);
 		
+		actions_dict = crtx_create_dict("ssss",
+			"", "grant", 5, DIF_DATA_UNALLOCATED,
+			"", "Yes", 3, DIF_DATA_UNALLOCATED,
+			"", "deny", 4, DIF_DATA_UNALLOCATED,
+			"", "No", 2, DIF_DATA_UNALLOCATED
+			);
+		
 		title_len = strlen(title);
 		buf_len = strlen(buf);
-	#define CRTX_DICT_NOTIF "ss"
-		data = crtx_create_dict(CRTX_DICT_NOTIF, 
+		data = crtx_create_dict("ssD",
 			"title", stracpy(title, &title_len), title_len, 0,
-			"message", stracpy(buf, &buf_len), buf_len, 0
+			"message", stracpy(buf, &buf_len), buf_len, 0,
+			"actions", actions_dict, 0, 0
 			);
 		
 // 		notif_event = create_event(CRTX_EVT_NOTIFICATION, msg, strlen(msg)+1);
@@ -76,7 +83,7 @@ static void fanotify_event_handler(struct event *event, void *userdata, void **s
 		
 		access.fd = metadata->fd;
 		
-		if (!strcmp(chosen_action, "yes"))
+		if (!strcmp(chosen_action, "grant"))
 			access.response = FAN_ALLOW;
 		else
 			access.response = FAN_DENY;

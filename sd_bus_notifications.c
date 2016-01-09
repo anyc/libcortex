@@ -205,13 +205,13 @@ void send_notification(char *icon, char *title, char *text, char **actions, char
 	}
 }
 
-char *test[5] = { "yes", "YES", "no", "NO", 0 };
+// char *test[5] = { "yes", "YES", "no", "NO", 0 };
 static void notify_task_handler(struct event *event, void *userdata, void **sessiondata) {
 	char *title, *msg, *answer;
 	char ret;
 	size_t answer_length;
-	struct data_struct *data;
-// 	struct event_data ed;
+	struct data_struct *data, *actions_dict;
+	char **actions;
 	
 	ret = crtx_get_value(event->data.dict, "title", &title, sizeof(void*));
 	if (!ret) {
@@ -225,7 +225,37 @@ static void notify_task_handler(struct event *event, void *userdata, void **sess
 		return;
 	}
 	
-	send_notification("", title, msg, test, &answer);
+	ret = crtx_get_value(event->data.dict, "actions", &actions_dict, sizeof(void*));
+	if (ret) {
+		struct data_item *di;
+		unsigned char i;
+		
+		actions = (char**) calloc(1, sizeof(char*)*(actions_dict->signature_length+1));
+		
+		di = crtx_get_first_item(actions_dict);
+		if (!di) {
+			printf("error parsing event\n");
+			free(actions);
+			return;
+		}
+		i = 0;
+		
+		while (di && i < 4) {
+			ret = crtx_copy_value(di, &actions[i], sizeof(void*));
+			if (!ret) {
+				printf("error parsing event\n");
+				free(actions);
+				return;
+			}
+			
+			di = crtx_get_next_item(di);
+			i++;
+		}
+		actions[4] = 0;
+	} else
+		actions = 0;
+	
+	send_notification("", title, msg, actions, &answer);
 	
 	answer_length = strlen(answer);
 	data = crtx_create_dict("s",

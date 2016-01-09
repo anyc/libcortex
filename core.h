@@ -194,7 +194,10 @@ void hexdump(unsigned char *buffer, size_t index);
 struct data_struct * crtx_create_dict(char *signature, ...);
 void free_dict(struct data_struct *ds);
 char crtx_get_value(struct data_struct *ds, char *key, void *buffer, size_t buffer_size);
+char crtx_copy_value(struct data_item *di, void *buffer, size_t buffer_size);
 void crtx_print_dict(struct data_struct *ds);
+struct data_item *crtx_get_first_item(struct data_struct *ds);
+struct data_item *crtx_get_next_item(struct data_item *di);
 
 struct signal *new_signal();
 void init_signal(struct signal *signal);
