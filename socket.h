@@ -1,7 +1,7 @@
 
 #include <arpa/inet.h>
 
-struct socket_listener {
+struct crtx_socket_listener {
 	struct crtx_listener_base parent;
 	
 	char **recv_types;
@@ -32,5 +32,3 @@ void crtx_socket_init();
 void crtx_socket_finish();
 struct crtx_listener_base *crtx_new_socket_server_listener(void *options);
 struct crtx_listener_base *crtx_new_socket_client_listener(void *options);
-
-// void send_event(struct socket_listener *slistener, struct crtx_event *event);

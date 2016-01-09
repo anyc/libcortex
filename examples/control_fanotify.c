@@ -25,7 +25,7 @@
 struct crtx_listener_base *fa;
 struct crtx_listener_base *sock_list;
 struct crtx_fanotify_listener listener;
-struct socket_listener sock_listener;
+struct crtx_socket_listener sock_listener;
 
 
 static void fanotify_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -113,7 +113,7 @@ void init() {
 	 * setup a socket listener that opens a TCPv4 connection to localhost:1234
 	 */
 	
-	memset(&sock_listener, 0, sizeof(struct socket_listener));
+	memset(&sock_listener, 0, sizeof(struct crtx_socket_listener));
 	sock_listener.ai_family = AF_INET;
 	sock_listener.type = SOCK_STREAM;
 	sock_listener.protocol = IPPROTO_TCP;
