@@ -33,7 +33,7 @@ struct event_data {
 	
 	void (*raw_to_dict)(struct event *event);
 	
-	struct data_struct *dict;
+	struct crtx_dict *dict;
 };
 
 struct event {
@@ -130,7 +130,7 @@ struct module {
 
 #define DIF_IS_LAST(di) ( ((di)->flags & DIF_LAST) != 0 )
 
-struct data_item {
+struct crtx_dict_item {
 	char *key;
 	unsigned long size;
 	
@@ -143,17 +143,17 @@ struct data_item {
 		int32_t int32; // i
 		uint64_t uint64; // z
 		void *pointer; // p
-		struct data_struct *ds; // D
+		struct crtx_dict *ds; // D
 // 		char payload[0]; // P
 	};
 };
 
-struct data_struct {
+struct crtx_dict {
 	char *signature;
 	unsigned char signature_length;
 	unsigned long size;
 	
-	struct data_item items[0];
+	struct crtx_dict_item items[0];
 };
 
 extern struct module static_modules[];
@@ -191,13 +191,13 @@ struct event *create_event(char *type, void *data, size_t data_size);
 void print_tasks(struct event_graph *graph);
 void hexdump(unsigned char *buffer, size_t index);
 
-struct data_struct * crtx_create_dict(char *signature, ...);
-void free_dict(struct data_struct *ds);
-char crtx_get_value(struct data_struct *ds, char *key, void *buffer, size_t buffer_size);
-char crtx_copy_value(struct data_item *di, void *buffer, size_t buffer_size);
-void crtx_print_dict(struct data_struct *ds);
-struct data_item *crtx_get_first_item(struct data_struct *ds);
-struct data_item *crtx_get_next_item(struct data_item *di);
+struct crtx_dict * crtx_create_dict(char *signature, ...);
+void free_dict(struct crtx_dict *ds);
+char crtx_get_value(struct crtx_dict *ds, char *key, void *buffer, size_t buffer_size);
+char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size);
+void crtx_print_dict(struct crtx_dict *ds);
+struct crtx_dict_item *crtx_get_first_item(struct crtx_dict *ds);
+struct crtx_dict_item *crtx_get_next_item(struct crtx_dict_item *di);
 
 struct signal *new_signal();
 void init_signal(struct signal *signal);

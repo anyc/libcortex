@@ -684,15 +684,15 @@ struct event_task *new_event_notifier(struct event_graph *graph, event_notifier_
 	return task;
 }
 
-struct data_struct * crtx_create_dict(char *signature, ...) {
-	struct data_struct *ds;
-	struct data_item *di;
+struct crtx_dict * crtx_create_dict(char *signature, ...) {
+	struct crtx_dict *ds;
+	struct crtx_dict_item *di;
 	char *s;
 	size_t size;
 	va_list va;
 	
-	size = strlen(signature) * sizeof(struct data_item) + sizeof(struct data_struct);
-	ds = (struct data_struct*) malloc(size);
+	size = strlen(signature) * sizeof(struct crtx_dict_item) + sizeof(struct crtx_dict);
+	ds = (struct crtx_dict*) malloc(size);
 	ds->signature = signature;
 	ds->size = size;
 	ds->signature_length = 0;
@@ -713,7 +713,7 @@ struct data_struct * crtx_create_dict(char *signature, ...) {
 				di->string = va_arg(va, char*);
 				break;
 			case 'D':
-				di->ds = va_arg(va, struct data_struct*);
+				di->ds = va_arg(va, struct crtx_dict*);
 				break;
 			default:
 				printf("unknown literal '%c' in signature \"%s\"\n", *s, signature);
@@ -736,8 +736,8 @@ struct data_struct * crtx_create_dict(char *signature, ...) {
 }
 
 
-void free_dict(struct data_struct *ds) {
-	struct data_item *di;
+void free_dict(struct crtx_dict *ds) {
+	struct crtx_dict_item *di;
 	char *s;
 	
 	if (!ds)
@@ -770,9 +770,9 @@ void free_dict(struct data_struct *ds) {
 	free(ds);
 }
 
-void crtx_print_dict_rec(struct data_struct *ds, unsigned char level) {
+void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level) {
 	char *s;
-	struct data_item *di;
+	struct crtx_dict_item *di;
 	uint8_t i,j;
 	
 	for (j=0;j<level;j++) printf("  ");
@@ -801,11 +801,11 @@ void crtx_print_dict_rec(struct data_struct *ds, unsigned char level) {
 	}
 }
 
-void crtx_print_dict(struct data_struct *ds) {
+void crtx_print_dict(struct crtx_dict *ds) {
 	crtx_print_dict_rec(ds, 0);
 }
 
-char crtx_copy_value(struct data_item *di, void *buffer, size_t buffer_size) {
+char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size) {
 	switch (di->type) {
 		case 'u':
 		case 'i':
@@ -829,17 +829,17 @@ char crtx_copy_value(struct data_item *di, void *buffer, size_t buffer_size) {
 	return 0;
 }
 
-struct data_item *crtx_get_first_item(struct data_struct *ds) {
+struct crtx_dict_item *crtx_get_first_item(struct crtx_dict *ds) {
 	return ds->items;
 }
 
-struct data_item *crtx_get_next_item(struct data_item *di) {
+struct crtx_dict_item *crtx_get_next_item(struct crtx_dict_item *di) {
 	return di+1;
 }
 
-char crtx_get_value(struct data_struct *ds, char *key, void *buffer, size_t buffer_size) {
+char crtx_get_value(struct crtx_dict *ds, char *key, void *buffer, size_t buffer_size) {
 	char *s;
-	struct data_item *di;
+	struct crtx_dict_item *di;
 	
 	s = ds->signature;
 	di = ds->items;

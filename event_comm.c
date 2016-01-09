@@ -10,8 +10,8 @@
 #include "cache.h"
 #include "event_comm.h"
 
-void send_dict(send_fct send, void *conn_id, struct data_struct *ds) {
-	struct data_item *di;
+void send_dict(send_fct send, void *conn_id, struct crtx_dict *ds) {
+	struct crtx_dict_item *di;
 	struct serialized_dict sdict;
 	struct serialized_dict_item sdi;
 	char *s;
@@ -101,8 +101,8 @@ void send_dict(send_fct send, void *conn_id, struct data_struct *ds) {
 
 void send_event_as_dict(struct event *event, send_fct send, void *conn_id) {
 	struct serialized_event sev;
-// 	struct data_struct *ds;
-// 	struct data_item *di;
+// 	struct crtx_dict *ds;
+// 	struct crtx_dict_item *di;
 // 	struct serialized_dict sdict;
 // 	struct serialized_dict_item sdi;
 // 	char *s;
@@ -122,7 +122,7 @@ void send_event_as_dict(struct event *event, send_fct send, void *conn_id) {
 		}
 	}
 	
-// 	req.data_length = event->data_struct->size + event->data_struct->payload_size;
+// 	req.data_length = event->crtx_dict->size + event->crtx_dict->payload_size;
 // 	ds = event->data.dict;
 	
 	#ifdef DEBUG
@@ -253,10 +253,10 @@ char my_recv(recv_fct recv, void *conn_id, void *buffer, size_t read_bytes) {
 	return 1;
 }
 
-struct data_struct *recv_dict(recv_fct recv, void *conn_id) {
+struct crtx_dict *recv_dict(recv_fct recv, void *conn_id) {
 // 	struct serialized_event sev;
-	struct data_struct *ds;
-	struct data_item *di;
+	struct crtx_dict *ds;
+	struct crtx_dict_item *di;
 	struct serialized_dict sdict;
 	struct serialized_dict_item sdi;
 // 	struct event *event;
@@ -276,7 +276,7 @@ struct data_struct *recv_dict(recv_fct recv, void *conn_id) {
 		return 0;
 	}
 	
-	ds = (struct data_struct*) calloc(1, sizeof(struct data_struct) + sizeof(struct data_item)*sdict.signature_length);
+	ds = (struct crtx_dict*) calloc(1, sizeof(struct crtx_dict) + sizeof(struct crtx_dict_item)*sdict.signature_length);
 	
 	ds->signature = (char*) malloc(sdict.signature_length+1);
 	ret = my_recv(recv, conn_id, ds->signature, sdict.signature_length);
@@ -352,8 +352,8 @@ struct data_struct *recv_dict(recv_fct recv, void *conn_id) {
 
 struct event *recv_event_as_dict(recv_fct recv, void *conn_id) {
 	struct serialized_event sev;
-// 	struct data_struct *ds;
-// 	struct data_item *di;
+// 	struct crtx_dict *ds;
+// 	struct crtx_dict_item *di;
 // 	struct serialized_dict sdict;
 // 	struct serialized_dict_item sdi;
 	struct event *event;
@@ -410,7 +410,7 @@ struct event *recv_event_as_dict(recv_fct recv, void *conn_id) {
 // 		return 0;
 // 	}
 // 	
-// 	event->data.dict = (struct data_struct*) calloc(1, sizeof(struct data_struct) + sizeof(struct data_item)*sdict.signature_length);
+// 	event->data.dict = (struct crtx_dict*) calloc(1, sizeof(struct crtx_dict) + sizeof(struct crtx_dict_item)*sdict.signature_length);
 // 	ds = event->data.dict;
 // 	
 // 	ds->signature = (char*) malloc(sdict.signature_length+1);

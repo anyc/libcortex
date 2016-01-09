@@ -27,7 +27,7 @@ static void fanotify_event_handler(struct event *event, void *userdata, void **s
 	char title[32];
 	char msg[1024];
 	struct event *notif_event;
-	struct data_struct *data, *actions_dict;
+	struct crtx_dict *data, *actions_dict;
 	size_t title_len, buf_len;
 	
 	metadata = (struct fanotify_event_metadata *) event->data.raw;

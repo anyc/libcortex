@@ -210,7 +210,7 @@ static void notify_task_handler(struct event *event, void *userdata, void **sess
 	char *title, *msg, *answer;
 	char ret;
 	size_t answer_length;
-	struct data_struct *data, *actions_dict;
+	struct crtx_dict *data, *actions_dict;
 	char **actions;
 	
 	ret = crtx_get_value(event->data.dict, "title", &title, sizeof(void*));
@@ -227,7 +227,7 @@ static void notify_task_handler(struct event *event, void *userdata, void **sess
 	
 	ret = crtx_get_value(event->data.dict, "actions", &actions_dict, sizeof(void*));
 	if (ret) {
-		struct data_item *di;
+		struct crtx_dict_item *di;
 		unsigned char i;
 		
 		actions = (char**) calloc(1, sizeof(char*)*(actions_dict->signature_length+1));

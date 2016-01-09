@@ -173,8 +173,8 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 		struct iphdr *iph;
 		size_t size;
 		char *sign;
-		struct data_item *di;
-		struct data_struct *ds;
+		struct crtx_dict_item *di;
+		struct crtx_dict *ds;
 		
 		
 		ev = (struct ev_nf_queue_packet_msg*) event->data.raw;
@@ -182,8 +182,8 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 		
 		
 		sign = PFW_NEWPACKET_SIGNATURE;
-		size = strlen(sign)*sizeof(struct data_item) + sizeof(struct data_struct);
-		ds = (struct data_struct*) malloc(size);
+		size = strlen(sign)*sizeof(struct crtx_dict_item) + sizeof(struct crtx_dict);
+		ds = (struct crtx_dict*) malloc(size);
 		
 		ds->signature = sign;
 		
@@ -255,15 +255,15 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 		ds->items[PFW_NEWP_PAYLOAD].flags = DIF_LAST;
 		
 		if (iph->protocol == 6) {
-			struct data_item *pdi;
+			struct crtx_dict_item *pdi;
 			size_t size;
 			char *sign;
 			
 			struct tcphdr *tcp = (struct tcphdr *) (ev->payload + (iph->ihl << 2));
 			
 			sign = PFW_NEWPACKET_TCP_SIGNATURE;
-			size = strlen(sign)*sizeof(struct data_item) + sizeof(struct data_struct);
-			di->ds = (struct data_struct*) malloc(size);
+			size = strlen(sign)*sizeof(struct crtx_dict_item) + sizeof(struct crtx_dict);
+			di->ds = (struct crtx_dict*) malloc(size);
 			
 			di->ds->signature = sign;
 			
@@ -286,15 +286,15 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 // 				   ,tcp->urg, tcp->ack, tcp->psh, tcp->rst, tcp->syn, tcp->fin, ntohs(tcp->window), tcp->urg_ptr);
 		} else
 		if (iph->protocol == 17) {
-			struct data_item *pdi;
+			struct crtx_dict_item *pdi;
 			size_t size;
 			char *sign;
 			
 			struct udphdr *udp = (struct udphdr *) (ev->payload + (iph->ihl << 2));
 			
 			sign = PFW_NEWPACKET_UDP_SIGNATURE;
-			size = strlen(sign)*sizeof(struct data_item) + sizeof(struct data_struct);
-			di->ds = (struct data_struct*) malloc(size);
+			size = strlen(sign)*sizeof(struct crtx_dict_item) + sizeof(struct crtx_dict);
+			di->ds = (struct crtx_dict*) malloc(size);
 			
 			di->ds->signature = sign;
 			
@@ -415,7 +415,7 @@ char pfw_is_ip_local(char *ip) {
 }
 
 
-void pfw_get_remote_data(struct data_struct *ds, char **remote_ip, char **remote_host) {
+void pfw_get_remote_data(struct crtx_dict *ds, char **remote_ip, char **remote_host) {
 	char src_local, dst_local;
 	unsigned int i_remote_ip, i_remote_host;
 	
@@ -479,10 +479,10 @@ void pfw_get_remote_data(struct data_struct *ds, char **remote_ip, char **remote
 
 
 char * pfw_rcache_create_key_ip(struct event *event) {
-	struct data_struct *ds;
+	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
-// 	ds = (struct data_struct *) event->data;
+// 	ds = (struct crtx_dict *) event->data;
 	ds = event->data.dict;
 	
 	pfw_get_remote_data(ds, &remote_ip, &remote_host);
@@ -491,10 +491,10 @@ char * pfw_rcache_create_key_ip(struct event *event) {
 }
 
 char * pfw_rcache_create_key_host(struct event *event) {
-	struct data_struct *ds;
+	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
-// 	ds = (struct data_struct *) event->data;
+// 	ds = (struct crtx_dict *) event->data;
 	ds = event->data.dict;
 	
 	pfw_get_remote_data(ds, &remote_ip, &remote_host);
@@ -502,8 +502,8 @@ char * pfw_rcache_create_key_host(struct event *event) {
 	return stracpy(remote_host, 0);
 }
 
-// struct data_item *get_data_item(struct data_struct *ds, char *key) {
-// 	struct data_item *di;
+// struct crtx_dict_item *get_crtx_dict_item(struct crtx_dict *ds, char *key) {
+// 	struct crtx_dict_item *di;
 // 	char *c;
 // 	
 // 	c = ds->signature;
@@ -518,8 +518,8 @@ char * pfw_rcache_create_key_host(struct event *event) {
 // 	return 0;
 // }
 
-struct data_item *get_data_item(struct data_struct *ds, char *key) {
-	struct data_item *di;
+struct crtx_dict_item *get_crtx_dict_item(struct crtx_dict *ds, char *key) {
+	struct crtx_dict_item *di;
 	
 	di = ds->items;
 	while (di) {
@@ -536,10 +536,10 @@ struct data_item *get_data_item(struct data_struct *ds, char *key) {
 }
 
 static void pfw_print_packet(struct event *event, void *userdata, void **sessiondata) {
-	struct data_struct *ds, *pds;
+	struct crtx_dict *ds, *pds;
 	char src_local, dst_local;
 	
-// 	ds = (struct data_struct *) event->data;
+// 	ds = (struct crtx_dict *) event->data;
 	ds = event->data.dict;
 	
 	if (strcmp(ds->signature, PFW_NEWPACKET_SIGNATURE)) {
@@ -664,10 +664,10 @@ static char match_regexp_list(char *input, struct filter_set *fset) {
 }
 
 static void pfw_rules_filter(struct event *event, void *userdata, void **sessiondata) {
-	struct data_struct *ds;
+	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
-// 	ds = (struct data_struct *) event->data;
+// 	ds = (struct crtx_dict *) event->data;
 	ds = event->data.dict;
 	
 	pfw_get_remote_data(ds, &remote_ip, &remote_host);
