@@ -13,7 +13,7 @@
 
 struct crtx_listener_base *fa;
 struct crtx_listener_base *sock_list;
-struct fanotify_listener listener;
+struct crtx_fanotify_listener listener;
 struct socket_listener sock_listener;
 
 // static char *actions[] = { "Yes", "yes", "No", "no" };

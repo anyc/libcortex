@@ -28,9 +28,9 @@ struct socket_listener {
 };
 
 
-void socket_init();
-void socket_finish();
-struct crtx_listener_base *new_socket_server_listener(void *options);
-struct crtx_listener_base *new_socket_client_listener(void *options);
+void crtx_socket_init();
+void crtx_socket_finish();
+struct crtx_listener_base *crtx_new_socket_server_listener(void *options);
+struct crtx_listener_base *crtx_new_socket_client_listener(void *options);
 
 // void send_event(struct socket_listener *slistener, struct crtx_event *event);

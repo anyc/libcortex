@@ -7,7 +7,7 @@
 #define INOTIFY_MSG_ETYPE "inotify/event"
 extern char *inotify_msg_etype[];
 
-struct inotify_listener {
+struct crtx_inotify_listener {
 	struct crtx_listener_base parent;
 	
 	int wd;
@@ -17,7 +17,7 @@ struct inotify_listener {
 	pthread_t thread;
 };
 
-struct crtx_listener_base *new_inotify_listener(void *options);
+struct crtx_listener_base *crtx_new_inotify_listener(void *options);
 
 void crtx_inotify_init();
 void crtx_inotify_finish();

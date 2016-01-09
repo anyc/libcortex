@@ -431,7 +431,7 @@ void * tmain(void *data) {
 	return 0;
 }
 
-void sd_bus_init() {
+void crtx_sd_bus_init() {
 // 	sd_bus *bus = NULL;
 	
 // 	struct crtx_graph *crtx_graph;
@@ -531,7 +531,7 @@ void sd_bus_init() {
 	// 	return r < 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
-void sd_bus_finish() {
+void crtx_sd_bus_finish() {
 // 	pthread_join(sthread, NULL);
 // 	pthread_join(uthread, NULL);
 	

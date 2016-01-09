@@ -268,7 +268,7 @@ void *socket_client_tmain(void *data) {
 	return 0;
 }
 
-struct crtx_listener_base *new_socket_server_listener(void *options) {
+struct crtx_listener_base *crtx_new_socket_server_listener(void *options) {
 	struct socket_listener *slistener;
 	
 	slistener = (struct socket_listener *) options;
@@ -299,7 +299,7 @@ struct crtx_listener_base *new_socket_server_listener(void *options) {
 	return &slistener->parent;
 }
 
-struct crtx_listener_base *new_socket_client_listener(void *options) {
+struct crtx_listener_base *crtx_new_socket_client_listener(void *options) {
 	struct socket_listener *slistener;
 	struct crtx_task * task;
 	
@@ -330,9 +330,9 @@ struct crtx_listener_base *new_socket_client_listener(void *options) {
 	return &slistener->parent;
 }
 
-void socket_init() {
+void crtx_socket_init() {
 }
 
-void socket_finish() {
+void crtx_socket_finish() {
 }
 

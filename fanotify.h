@@ -8,7 +8,7 @@
 #define FANOTIFY_MSG_ETYPE "fanotify/event"
 extern char *fanotify_msg_etype[];
 
-struct fanotify_listener {
+struct crtx_fanotify_listener {
 	struct crtx_listener_base parent;
 	
 	int fanotify_fd;
@@ -24,8 +24,7 @@ struct fanotify_listener {
 
 void fanotify_get_path(int fd, char **path, size_t *length, char *format);
 
-struct crtx_listener_base *new_fanotify_listener(void *options);
-void free_fanotify_listener(void *data);
+struct crtx_listener_base *crtx_new_fanotify_listener(void *options);
 
 void crtx_fanotify_init();
 void crtx_fanotify_finish();

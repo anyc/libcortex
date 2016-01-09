@@ -47,9 +47,9 @@ void *fanotify_tmain(void *data) {
 	ssize_t buflen;
 	struct fanotify_event_metadata *metadata;
 	struct crtx_event *event;
-	struct fanotify_listener *fal;
+	struct crtx_fanotify_listener *fal;
 	
-	fal = (struct fanotify_listener*) data;
+	fal = (struct crtx_fanotify_listener*) data;
 	
 	while (1) {
 		buflen = read(fal->fanotify_fd, buf, sizeof(buf));
@@ -88,8 +88,8 @@ void *fanotify_tmain(void *data) {
 	return 0;
 }
 
-void free_fanotify_listener(void *data) {
-	struct fanotify_listener *falist = (struct fanotify_listener *) falist;
+void crtx_free_fanotify_listener(void *data) {
+	struct crtx_fanotify_listener *falist = (struct crtx_fanotify_listener *) falist;
 	
 	free_eventgraph(falist->parent.graph);
 	
@@ -98,11 +98,11 @@ void free_fanotify_listener(void *data) {
 	free(falist);
 }
 
-struct crtx_listener_base *new_fanotify_listener(void *options) {
-	struct fanotify_listener *falist;
+struct crtx_listener_base *crtx_new_fanotify_listener(void *options) {
+	struct crtx_fanotify_listener *falist;
 	int ret;
 	
-	falist = (struct fanotify_listener *) options;
+	falist = (struct crtx_fanotify_listener *) options;
 	
 	falist->fanotify_fd = fanotify_init(falist->init_flags, falist->event_f_flags);
 	
@@ -121,7 +121,7 @@ struct crtx_listener_base *new_fanotify_listener(void *options) {
 		return 0;
 	}
 	
-	falist->parent.free = &free_fanotify_listener;
+	falist->parent.free = &crtx_free_fanotify_listener;
 	
 	new_eventgraph(&falist->parent.graph, fanotify_msg_etype);
 	

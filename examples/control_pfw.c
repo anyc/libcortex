@@ -830,6 +830,7 @@ void finish() {
 	
 	free_eventgraph(newp_graph);
 	
-	free_nf_queue_listener(td);
+// 	free_nf_queue_listener(td);
+	free_listener(&td->parent);
 // 	regfree(&regex);
 }

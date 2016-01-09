@@ -45,7 +45,7 @@ void handle_request(struct crtx_event *event, void *userdata, void **sessiondata
 	pthread_mutex_unlock(&stdout_mutex);
 }
 
-void readline_init() {
+void crtx_readline_init() {
 	struct crtx_graph *crtx_graph;
 	int ret;
 	
@@ -58,5 +58,5 @@ void readline_init() {
 	crtx_graph->tasks = etask;
 }
 
-void readline_finish() {
+void crtx_readline_finish() {
 }

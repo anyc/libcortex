@@ -20,10 +20,10 @@ void *inotify_tmain(void *data) {
 	size_t i;
 	
 	struct crtx_event *event;
-	struct inotify_listener *fal;
+	struct crtx_inotify_listener *fal;
 	struct inotify_event *in_event;
 	
-	fal = (struct inotify_listener*) data;
+	fal = (struct crtx_inotify_listener*) data;
 	
 	while (1) {
 		length = read(inotify_fd, buffer, INOFITY_BUFLEN);
@@ -60,8 +60,8 @@ void *inotify_tmain(void *data) {
 	return 0;
 }
 
-void free_inotify_listener(void *data) {
-	struct inotify_listener *inlist = (struct inotify_listener *) inlist;
+void crtx_free_inotify_listener(void *data) {
+	struct crtx_inotify_listener *inlist = (struct crtx_inotify_listener *) inlist;
 	
 	inotify_rm_watch(inotify_fd, inlist->wd);
 	close(inotify_fd);
@@ -73,10 +73,10 @@ void free_inotify_listener(void *data) {
 	free(inlist);
 }
 
-struct crtx_listener_base *new_inotify_listener(void *options) {
-	struct inotify_listener *inlist;
+struct crtx_listener_base *crtx_new_inotify_listener(void *options) {
+	struct crtx_inotify_listener *inlist;
 	
-	inlist = (struct inotify_listener*) options;
+	inlist = (struct crtx_inotify_listener*) options;
 	
 	if (inotify_fd == -1) {
 		inotify_fd = inotify_init();
@@ -93,7 +93,7 @@ struct crtx_listener_base *new_inotify_listener(void *options) {
 		return 0;
 	}
 	
-	inlist->parent.free = &free_inotify_listener;
+	inlist->parent.free = &crtx_free_inotify_listener;
 	
 	new_eventgraph(&inlist->parent.graph, inotify_msg_etype);
 	

@@ -153,7 +153,7 @@ void send_notification(char *icon, char *title, char *text, char **actions, char
 		initialized = 1;
 	}
 	
-	if (actions) {
+	if (actions && chosen_action) {
 // 		unsigned int id;
 		struct sd_bus_notifications_item *it;
 		
@@ -205,7 +205,6 @@ void send_notification(char *icon, char *title, char *text, char **actions, char
 	}
 }
 
-// char *test[5] = { "yes", "YES", "no", "NO", 0 };
 static void notify_task_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char *title, *msg, *answer;
 	char ret;
@@ -257,10 +256,15 @@ static void notify_task_handler(struct crtx_event *event, void *userdata, void *
 	
 	send_notification("", title, msg, actions, &answer);
 	
-	answer_length = strlen(answer);
-	data = crtx_create_dict("s",
-				"action", answer, answer_length, 0
-				);
+	data = 0;
+	if (actions) {
+		if (answer) {
+			answer_length = strlen(answer);
+			data = crtx_create_dict("s",
+						"action", answer, answer_length, 0
+						);
+		}
+	}
 	
 // 	event->response = data;
 // 	response = create_response(event, 0, 0);
@@ -278,7 +282,7 @@ static void notify_task_handler(struct crtx_event *event, void *userdata, void *
 // 	printf("ans %s\n", answer);
 }
 
-struct crtx_listener_base *new_sd_bus_notification_listener(void *options) {
+struct crtx_listener_base *crtx_new_sd_bus_notification_listener(void *options) {
 	struct sd_bus_notifications_listener *slistener;
 	struct crtx_graph *graph;
 	

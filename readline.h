@@ -1,3 +1,3 @@
-void readline_init();
+void crtx_readline_init();
 
-void readline_finish();
+void crtx_readline_finish();

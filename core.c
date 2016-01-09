@@ -27,29 +27,29 @@ static char * local_event_types[] = { "cortexd/module_initialized", 0 };
 #include "sd_bus_notifications.h"
 
 struct crtx_module static_modules[] = {
-	{"socket", &socket_init, &socket_finish},
+	{"socket", &crtx_socket_init, &crtx_socket_finish},
 #ifdef STATIC_SD_BUS
-	{"sd-bus", &sd_bus_init, &sd_bus_finish},
+	{"sd-bus", &crtx_sd_bus_init, &crtx_sd_bus_finish},
 #endif
 #ifdef STATIC_NF_QUEUE
-	{"nf-queue", &nf_queue_init, &nf_queue_finish},
+	{"nf-queue", &crtx_nf_queue_init, &crtx_nf_queue_finish},
 #endif
-	{"readline", &readline_init, &readline_finish},
+	{"readline", &crtx_readline_init, &crtx_readline_finish},
 	{"fanotify", &crtx_fanotify_init, &crtx_fanotify_finish},
 	{"inotify", &crtx_inotify_init, &crtx_inotify_finish},
-	{"controls", &controls_init, &controls_finish},
+	{"controls", &crtx_controls_init, &crtx_controls_finish},
 	{0, 0}
 };
 
 struct crtx_listener_repository listener_factory[] = {
 #ifdef STATIC_NF_QUEUE
-	{"nf_queue", &new_nf_queue_listener},
+	{"nf_queue", &crtx_new_nf_queue_listener},
 #endif
-	{"fanotify", &new_fanotify_listener},
-	{"inotify", &new_inotify_listener},
-	{"socket_server", &new_socket_server_listener},
-	{"socket_client", &new_socket_client_listener},
-	{"sd_bus_notification", &new_sd_bus_notification_listener},
+	{"fanotify", &crtx_new_fanotify_listener},
+	{"inotify", &crtx_new_inotify_listener},
+	{"socket_server", &crtx_new_socket_server_listener},
+	{"socket_client", &crtx_new_socket_client_listener},
+	{"sd_bus_notification", &crtx_new_sd_bus_notification_listener},
 	{0, 0}
 };
 

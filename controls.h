@@ -1,3 +1,3 @@
 
-void controls_init();
-void controls_finish();
+void crtx_controls_init();
+void crtx_controls_finish();

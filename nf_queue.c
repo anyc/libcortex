@@ -200,24 +200,6 @@ void *nfq_tmain(void *data) {
 	return 0;
 }
 
-struct crtx_listener_base *new_nf_queue_listener(void *options) {
-	struct nfq_thread_data *tdata;
-	
-	tdata = (struct nfq_thread_data*) malloc(sizeof(struct nfq_thread_data));
-	tdata->queue_num = 0;
-	tdata->parent.free = &free_nf_queue_listener;
-	
-// 	char **event_types = (char**) malloc(sizeof(char*)*2);
-// 	event_types[0] = "nf_queue/packet_msg";
-// 	event_types[1] = 0;
-	new_eventgraph(&tdata->parent.graph, nfq_packet_msg_etype);
-	
-	
-	pthread_create(&tdata->thread, NULL, nfq_tmain, tdata);
-	
-	return &tdata->parent;
-}
-
 void free_nf_queue_listener(void *data) {
 	struct nfq_thread_data *tdata = (struct nfq_thread_data *) data;
 	
@@ -226,6 +208,24 @@ void free_nf_queue_listener(void *data) {
 // 	pthread_join(tdata->thread, 0);
 	
 	free(tdata);
+}
+
+struct crtx_listener_base *crtx_new_nf_queue_listener(void *options) {
+	struct nfq_thread_data *tdata;
+	
+	tdata = (struct nfq_thread_data*) malloc(sizeof(struct nfq_thread_data));
+	tdata->queue_num = 0;
+	tdata->parent.free = &free_nf_queue_listener;
+	
+	// 	char **event_types = (char**) malloc(sizeof(char*)*2);
+	// 	event_types[0] = "nf_queue/packet_msg";
+	// 	event_types[1] = 0;
+	new_eventgraph(&tdata->parent.graph, nfq_packet_msg_etype);
+	
+	
+	pthread_create(&tdata->thread, NULL, nfq_tmain, tdata);
+	
+	return &tdata->parent;
 }
 
 char nfq_packet_msg_okay(struct crtx_event *event) {
@@ -245,8 +245,8 @@ char *nfq_proto2str(u_int16_t protocol) {
 	}
 }
 
-void nf_queue_init() {
+void crtx_nf_queue_init() {
 }
 
-void nf_queue_finish() {
+void crtx_nf_queue_finish() {
 }

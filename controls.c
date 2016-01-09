@@ -70,7 +70,7 @@ static void load_dir(char * directory) {
 	return;
 }
 
-void controls_init() {
+void crtx_controls_init() {
 // 	main_cbs.add_task = &add_task;
 // 	main_cbs.create_listener = &create_listener;
 // 	main_cbs.wait_on_event = &wait_on_event;
@@ -81,7 +81,7 @@ void controls_init() {
 	load_dir(PLUGINDIR);
 }
 
-void controls_finish() {
+void crtx_controls_finish() {
 	size_t i;
 	
 	for (i=0; i<n_controls; i++) {

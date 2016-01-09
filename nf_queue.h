@@ -29,10 +29,9 @@ struct ev_nf_queue_packet_msg {
 };
 
 char nfq_packet_msg_okay(struct crtx_event *event);
-struct crtx_listener_base *new_nf_queue_listener(void *options);
-void free_nf_queue_listener(void *data);
-void nf_queue_init();
-void nf_queue_finish();
+struct crtx_listener_base *crtx_new_nf_queue_listener(void *options);
+void crtx_nf_queue_init();
+void crtx_nf_queue_finish();
 
 char * nfq_decision_cache_create_key(struct crtx_event *event);
 char *nfq_proto2str(u_int16_t protocol);
