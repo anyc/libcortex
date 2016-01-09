@@ -31,16 +31,13 @@ int socket_send(void *conn_id, void *data, size_t data_size) {
 }
 
 void event_before_release(struct crtx_event *event) {
-// void event_respond_cb(struct crtx_event *event, struct crtx_event_data *ed) {
 	struct socket_listener *slist;
 	struct crtx_event *resp_event;
 	
 	slist = (struct socket_listener*) event->cb_before_release_data;
-	printf("before release\n");
-	resp_event = create_event("cortex/socket/response", event->response.raw, event->response.raw_size);
+	
+	resp_event = create_event("cortex.socket.response", event->response.raw, event->response.raw_size);
 	resp_event->data.dict = event->response.dict;
-// 	resp_event->original_event = event;
-// 	resp_event->original_event_id = (uint64_t) (uintptr_t) event;
 	resp_event->original_event_id = event->original_event_id;
 	
 	event->response.raw = 0;

@@ -22,7 +22,7 @@ struct crtx_fanotify_listener {
 	pthread_t thread;
 };
 
-void fanotify_get_path(int fd, char **path, size_t *length, char *format);
+void crtx_fanotify_get_path(int fd, char **path, size_t *length, char *format);
 
 struct crtx_listener_base *crtx_new_fanotify_listener(void *options);
 

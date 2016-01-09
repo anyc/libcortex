@@ -588,7 +588,7 @@ static void in_cache_on_hit(struct crtx_cache_task *ct, void **key, struct crtx_
 	struct crtx_event *orig_event;
 	
 	printf("in_cache_on_hit\n");
-	if (!strcmp(event->type, "cortex/socket/response")) {
+	if (!strcmp(event->type, "cortex.socket.response")) {
 		// find entry, pass/drop
 		orig_event = (struct crtx_event*) c_entry->value;
 		
@@ -600,7 +600,7 @@ static void in_cache_on_hit(struct crtx_cache_task *ct, void **key, struct crtx_
 }
 
 static void in_cache_on_miss(struct crtx_cache_task *ct, void **key, struct crtx_event *event) {
-	if (!strcmp(event->type, "cortex/socket/response")) {
+	if (!strcmp(event->type, "cortex.socket.response")) {
 		// drop response
 	}printf("in_cache_on_miss\n");
 }

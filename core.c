@@ -772,6 +772,9 @@ void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level) {
 	struct crtx_dict_item *di;
 	uint8_t i,j;
 	
+	if (!ds)
+		printf("error, trying to print non-existing dict\n");
+	
 	for (j=0;j<level;j++) printf("  ");
 	printf("sign: %s (%zu==%u)\n", ds->signature, strlen(ds->signature), ds->signature_length);
 	
@@ -837,6 +840,9 @@ struct crtx_dict_item *crtx_get_next_item(struct crtx_dict_item *di) {
 char crtx_get_value(struct crtx_dict *ds, char *key, void *buffer, size_t buffer_size) {
 	char *s;
 	struct crtx_dict_item *di;
+	
+	if (!ds)
+		return 0;
 	
 	s = ds->signature;
 	di = ds->items;

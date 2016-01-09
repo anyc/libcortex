@@ -39,7 +39,7 @@ void sd_bus_print_msg(sd_bus_message *m) {
 	
 	sig = sd_bus_message_get_signature(m, 1);
 	
-	printf("got bus signal... %s %s %s %s %s \"%s\"\n",
+	printf("sd_bus_message %s %s %s %s %s \"%s\"\n",
 		  sd_bus_message_get_path(m),
 		  sd_bus_message_get_interface(m),
 		  sd_bus_message_get_member(m),

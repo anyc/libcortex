@@ -11,7 +11,7 @@
 
 char *fanotify_msg_etype[] = { FANOTIFY_MSG_ETYPE, 0 };
 
-void fanotify_get_path(int fd, char **path, size_t *length, char *format) {
+void crtx_fanotify_get_path(int fd, char **path, size_t *length, char *format) {
 	char fdpath[32];
 	char buf[PATH_MAX];
 	ssize_t linklen;
