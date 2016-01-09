@@ -46,7 +46,7 @@ void *fanotify_tmain(void *data) {
 	char buf[4096];
 	ssize_t buflen;
 	struct fanotify_event_metadata *metadata;
-	struct event *event;
+	struct crtx_event *event;
 	struct fanotify_listener *fal;
 	
 	fal = (struct fanotify_listener*) data;

@@ -99,7 +99,7 @@ void send_dict(send_fct send, void *conn_id, struct crtx_dict *ds) {
 	}
 }
 
-void send_event_as_dict(struct event *event, send_fct send, void *conn_id) {
+void send_event_as_dict(struct crtx_event *event, send_fct send, void *conn_id) {
 	struct serialized_event sev;
 // 	struct crtx_dict *ds;
 // 	struct crtx_dict_item *di;
@@ -259,7 +259,7 @@ struct crtx_dict *recv_dict(recv_fct recv, void *conn_id) {
 	struct crtx_dict_item *di;
 	struct serialized_dict sdict;
 	struct serialized_dict_item sdi;
-// 	struct event *event;
+// 	struct crtx_event *event;
 	char *s;
 	char ret;
 	uint8_t i;
@@ -350,13 +350,13 @@ struct crtx_dict *recv_dict(recv_fct recv, void *conn_id) {
 #define FREE_EVENT(event) { free((event)->type); free(event); }
 // #define FREE_DICT(dict) { free_dict(dict); }
 
-struct event *recv_event_as_dict(recv_fct recv, void *conn_id) {
+struct crtx_event *recv_event_as_dict(recv_fct recv, void *conn_id) {
 	struct serialized_event sev;
 // 	struct crtx_dict *ds;
 // 	struct crtx_dict_item *di;
 // 	struct serialized_dict sdict;
 // 	struct serialized_dict_item sdi;
-	struct event *event;
+	struct crtx_event *event;
 // 	char *s;
 	char ret;
 // 	uint8_t i;
@@ -373,7 +373,7 @@ struct event *recv_event_as_dict(recv_fct recv, void *conn_id) {
 		return 0;
 	}
 	
-// 	event = (struct event*) calloc(1, sizeof(struct event));
+// 	event = (struct crtx_event*) calloc(1, sizeof(struct crtx_event));
 	event = new_event();
 	event->original_event_id = sev.id;
 	
@@ -490,24 +490,24 @@ struct event *recv_event_as_dict(recv_fct recv, void *conn_id) {
 
 // static struct queue_entry *sent_events = 0;
 
-static void inbox_dispatch_handler(struct event *event, void *userdata, void **sessiondata) {
+static void inbox_dispatch_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	add_raw_event(event);
 }
 
-// static void response_out_handler(struct event *event, void *userdata, void **sessiondata) {
+// static void response_out_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	event_ll_add(&sent_events, event);
 // }
 // 
-// static void response_in_handler(struct event *event, void *userdata, void **sessiondata) {
+// static void response_in_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	if (!strcmp(event->type, "cortex/socket/response")) {
 // 		
 // 	}
 // }
 
-// typedef char *(*create_key_cb_t)(struct event *event);
-// typedef char (*match_cb_t)(struct response_cache *rc, struct event *event, struct response_cache_entry *c_entry);
+// typedef char *(*create_key_cb_t)(struct crtx_event *event);
+// typedef char (*match_cb_t)(struct response_cache *rc, struct crtx_event *event, struct response_cache_entry *c_entry);
 
-static char *in_create_key_cb(struct event *event) {
+static char *in_create_key_cb(struct crtx_event *event) {
 	char *key = 0;
 	
 	
@@ -522,7 +522,7 @@ static char *in_create_key_cb(struct event *event) {
 	return key;
 }
 
-static char *out_create_key_cb(struct event *event) {
+static char *out_create_key_cb(struct crtx_event *event) {
 	char *key;
 	
 	key = (char*) malloc(sizeof(uint64_t)*2+1);
@@ -531,11 +531,11 @@ static char *out_create_key_cb(struct event *event) {
 	return key;
 }
 
-static void out_cache_on_hit(struct response_cache_task *ct, void **key, struct event *event, struct response_cache_entry *c_entry) {
+static void out_cache_on_hit(struct response_cache_task *ct, void **key, struct crtx_event *event, struct response_cache_entry *c_entry) {
 	printf("ERROR duplicate event ID\n");
 }
 
-static void out_cache_on_miss(struct response_cache_task *ct, void **key, struct event *event) {
+static void out_cache_on_miss(struct response_cache_task *ct, void **key, struct crtx_event *event) {
 	struct response_cache *dc = ct->cache;
 	
 	printf("add event outlist\n");
@@ -561,13 +561,13 @@ static void out_cache_on_miss(struct response_cache_task *ct, void **key, struct
 	*key = 0;
 }
 
-static void in_cache_on_hit(struct response_cache_task *ct, void **key, struct event *event, struct response_cache_entry *c_entry) {
-	struct event *orig_event;
+static void in_cache_on_hit(struct response_cache_task *ct, void **key, struct crtx_event *event, struct response_cache_entry *c_entry) {
+	struct crtx_event *orig_event;
 	
 	printf("in_cache_on_hit\n");
 	if (!strcmp(event->type, "cortex/socket/response")) {
 		// find entry, pass/drop
-		orig_event = (struct event*) c_entry->value;
+		orig_event = (struct crtx_event*) c_entry->value;
 		
 		orig_event->response.dict = event->data.dict;
 		event->data.dict = 0;
@@ -576,15 +576,15 @@ static void in_cache_on_hit(struct response_cache_task *ct, void **key, struct e
 	}
 }
 
-static void in_cache_on_miss(struct response_cache_task *ct, void **key, struct event *event) {
+static void in_cache_on_miss(struct response_cache_task *ct, void **key, struct crtx_event *event) {
 	if (!strcmp(event->type, "cortex/socket/response")) {
 		// drop response
 	}printf("in_cache_on_miss\n");
 }
 
 void create_in_out_box() {
-	struct event_task *task;
-	struct event_graph *graph;
+	struct crtx_task *task;
+	struct crtx_graph *graph;
 	struct response_cache *dc;
 	struct response_cache_task *ct_out, *ct_in;
 	

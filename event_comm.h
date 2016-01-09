@@ -29,7 +29,7 @@ struct serialized_event {
 };
 
 
-void send_event_as_dict(struct event *event, send_fct send, void *conn_id);
-struct event *recv_event_as_dict(recv_fct recv, void *conn_id);
+void send_event_as_dict(struct crtx_event *event, send_fct send, void *conn_id);
+struct crtx_event *recv_event_as_dict(recv_fct recv, void *conn_id);
 
 void create_in_out_box();

@@ -19,7 +19,7 @@ void *inotify_tmain(void *data) {
 	ssize_t length;
 	size_t i;
 	
-	struct event *event;
+	struct crtx_event *event;
 	struct inotify_listener *fal;
 	struct inotify_event *in_event;
 	

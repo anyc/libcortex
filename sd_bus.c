@@ -21,7 +21,7 @@ sd_bus *sd_bus_main_bus;
 
 struct dbus_thread {
 	sd_bus *bus;
-	struct event_graph *graph;
+	struct crtx_graph *graph;
 };
 
 
@@ -30,7 +30,7 @@ struct dbus_thread {
 
 struct sd_bus_userdata {
 	sd_bus *bus;
-	struct event_graph *graph;
+	struct crtx_graph *graph;
 };
 
 void sd_bus_print_msg(sd_bus_message *m) {
@@ -57,7 +57,7 @@ void sd_bus_print_msg(sd_bus_message *m) {
 static int sd_bus_add_event(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
 	char *type, *data;
 	int r;
-	struct event *event;
+	struct crtx_event *event;
 	struct sd_bus_userdata *args;
 	
 	args = (struct sd_bus_userdata*) userdata;
@@ -97,7 +97,7 @@ char * new_strcpy(char *input) {
 
 static int sd_bus_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
 	struct listener_data *listener;
-	struct event *event;
+	struct crtx_event *event;
 	
 	listener = (struct listener_data*) userdata;
 	
@@ -189,7 +189,7 @@ struct sd_bus_signal {
 struct sd_bus_signal *signals = 0;
 unsigned int n_signals = 0;
 
-void submit_signal(struct event *event, void *userdata, void **sessiondata) {
+void submit_signal(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	sd_bus_message *m = (sd_bus_message *) event->data;
 	
 // 	print_sd_bus_msg(m);
@@ -254,7 +254,7 @@ static int sd_bus_add_signal(sd_bus_message *m, void *userdata, sd_bus_error *re
 	event_types[1] = 0;
 	new_eventgraph(&args->graph, event_types);
 	
-	struct event_task *etask = new_task();
+	struct crtx_task *etask = new_task();
 	etask->handle = &submit_signal;
 	etask->userdata = sign;
 	
@@ -349,7 +349,7 @@ finish:
 
 
 
-void sd_bus_print_event_task(struct event *event, void *userdata) {
+void sd_bus_print_event_task(struct crtx_event *event, void *userdata) {
 	sd_bus_message *m = (sd_bus_message *) event->data.raw;
 	
 	sd_bus_print_msg(m);
@@ -361,7 +361,7 @@ static int bus_signal_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_er
 	// 	const char *sig;
 	// 	char *val;
 	struct dbus_thread * dthread;
-	struct event *event;
+	struct crtx_event *event;
 	
 	dthread = (struct dbus_thread*) userdata;
 	
@@ -434,7 +434,7 @@ void * tmain(void *data) {
 void sd_bus_init() {
 // 	sd_bus *bus = NULL;
 	
-// 	struct event_graph *event_graph;
+// 	struct crtx_graph *crtx_graph;
 // 	
 // 	i=0;
 // 	while (local_event_types[i]) {
@@ -442,12 +442,12 @@ void sd_bus_init() {
 // 		i++;
 // 	}
 // 	
-// 	new_eventgraph(&event_graph, local_event_types);
+// 	new_eventgraph(&crtx_graph, local_event_types);
 // 	
-// 	struct event_task *etask = (struct event_task*) malloc(sizeof(struct event_task));
+// 	struct crtx_task *etask = (struct crtx_task*) malloc(sizeof(struct crtx_task));
 // 	etask->handle = &handle_event;
 // 	
-// 	event_graph->entry_task = etask;
+// 	crtx_graph->entry_task = etask;
 // 	
 // 	/* Connect to the system bus */
 // 	r = sd_bus_open_system(&bus);
@@ -464,9 +464,9 @@ void sd_bus_init() {
 // 	
 // 	
 // 	duthread.bus = ubus;
-// 	duthread.graph = event_graph;
+// 	duthread.graph = crtx_graph;
 // 	dsthread.bus = bus;
-// 	dsthread.graph = event_graph;
+// 	dsthread.graph = crtx_graph;
 // 	
 // 	pthread_create(&sthread, NULL, tmain, &dsthread);
 // 	pthread_create(&uthread, NULL, tmain, &duthread);

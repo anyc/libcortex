@@ -10,10 +10,10 @@
 // char ** event_types = 0;
 // unsigned n_event_types = 0;
 
-struct event_graph **graphs;
+struct crtx_graph **graphs;
 unsigned int n_graphs;
 
-struct event_graph *cortexd_graph;
+struct crtx_graph *cortexd_graph;
 static char * local_event_types[] = { "cortexd/module_initialized", 0 };
 
 #include "socket.h"
@@ -108,7 +108,7 @@ void free_listener(struct listener *listener) {
 	}
 }
 
-void traverse_graph_r(struct event_task *ti, struct event *event) {
+void traverse_graph_r(struct crtx_task *ti, struct crtx_event *event) {
 	void *sessiondata = 0;
 	
 	printf("execute task %s\n", ti->id);
@@ -123,14 +123,14 @@ void traverse_graph_r(struct event_task *ti, struct event *event) {
 		ti->cleanup(event, ti->userdata, sessiondata);
 }
 
-void crtx_traverse_graph(struct event_graph *graph, struct event *event) {
+void crtx_traverse_graph(struct crtx_graph *graph, struct crtx_event *event) {
 	traverse_graph_r(graph->tasks, event);
 }
 
 void *graph_consumer_main(void *arg) {
-	struct thread *self = (struct thread*) arg;
+	struct crtx_thread *self = (struct crtx_thread*) arg;
 	struct queue_entry *qe;
-// 	struct event_task *ti;
+// 	struct crtx_task *ti;
 	
 	while (!self->stop) {
 		pthread_mutex_lock(&self->graph->queue_mutex);
@@ -177,17 +177,17 @@ void *graph_consumer_main(void *arg) {
 	return 0;
 }
 
-void spawn_thread(struct event_graph *graph) {
+void spawn_thread(struct crtx_graph *graph) {
 	graph->n_consumers++;
-	graph->consumers = (struct thread*) realloc(graph->consumers, sizeof(struct thread)*graph->n_consumers); ASSERT(graph->consumers);
+	graph->consumers = (struct crtx_thread*) realloc(graph->consumers, sizeof(struct crtx_thread)*graph->n_consumers); ASSERT(graph->consumers);
 	
 	graph->consumers[graph->n_consumers-1].stop = 0;
 	graph->consumers[graph->n_consumers-1].graph = graph;
 	pthread_create(&graph->consumers[graph->n_consumers-1].handle, NULL, &graph_consumer_main, &graph->consumers[graph->n_consumers-1]);
 }
 
-void add_task(struct event_graph *graph, struct event_task *task) {
-	struct event_task *ti, *last;
+void add_task(struct crtx_graph *graph, struct crtx_task *task) {
+	struct crtx_task *ti, *last;
 	
 	task->graph = graph;
 	
@@ -223,7 +223,7 @@ void add_task(struct event_graph *graph, struct event_task *task) {
 	}
 }
 
-void event_ll_add(struct queue_entry **list, struct event *event) {
+void event_ll_add(struct queue_entry **list, struct crtx_event *event) {
 	struct queue_entry *eit;
 	
 	for (eit=*list; eit && eit->next; eit = eit->next) {}
@@ -239,7 +239,7 @@ void event_ll_add(struct queue_entry **list, struct event *event) {
 	eit->next = 0;
 }
 
-void add_event(struct event_graph *graph, struct event *event) {
+void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	
 	reference_event_release(event);
 	reference_event_response(event);
@@ -264,8 +264,8 @@ void add_event(struct event_graph *graph, struct event *event) {
 	pthread_mutex_unlock(&graph->mutex);
 }
 
-// void add_event_sync(struct event_graph *graph, struct event *event) {
-// 	struct event *eit;
+// void add_event_sync(struct crtx_graph *graph, struct crtx_event *event) {
+// 	struct crtx_event *eit;
 // 	
 // 	pthread_mutex_lock(&graph->mutex);
 // 	
@@ -297,8 +297,8 @@ void add_event(struct event_graph *graph, struct event *event) {
 // 	pthread_mutex_unlock(&event->mutex);
 // }
 
-struct event *create_event(char *type, void *data, size_t data_size) {
-	struct event *event;
+struct crtx_event *create_event(char *type, void *data, size_t data_size) {
+	struct crtx_event *event;
 	
 	event = new_event();
 	event->type = type;
@@ -308,8 +308,8 @@ struct event *create_event(char *type, void *data, size_t data_size) {
 	return event;
 }
 
-// struct event *create_response(struct event *event, void *data, size_t data_size) {
-// 	struct event *response;
+// struct crtx_event *create_response(struct crtx_event *event, void *data, size_t data_size) {
+// 	struct crtx_event *response;
 // 	
 // 	response = create_event(event->type, data, data_size);
 // 	response->original_event = event;
@@ -317,7 +317,7 @@ struct event *create_event(char *type, void *data, size_t data_size) {
 // 	return response;
 // }
 
-void init_signal(struct signal *signal) {
+void init_signal(struct crtx_signal *signal) {
 	int ret;
 	
 	ret = pthread_mutex_init(&signal->mutex, 0); ASSERT(ret >= 0);
@@ -327,17 +327,17 @@ void init_signal(struct signal *signal) {
 	signal->condition = &signal->local_condition;
 }
 
-struct signal *new_signal() {
-	struct signal *signal;
+struct crtx_signal *new_signal() {
+	struct crtx_signal *signal;
 	
-	signal = (struct signal*) calloc(1, sizeof(struct signal));
+	signal = (struct crtx_signal*) calloc(1, sizeof(struct crtx_signal));
 	
 	init_signal(signal);
 	
 	return signal;
 }
 
-void wait_on_signal(struct signal *signal) {
+void wait_on_signal(struct crtx_signal *signal) {
 	pthread_mutex_lock(&signal->mutex);
 	
 	while (!*signal->condition)
@@ -346,7 +346,7 @@ void wait_on_signal(struct signal *signal) {
 	pthread_mutex_unlock(&signal->mutex);
 }
 
-void send_signal(struct signal *s, char brdcst) {
+void send_signal(struct crtx_signal *s, char brdcst) {
 	pthread_mutex_lock(&s->mutex);
 	
 	if (!*s->condition)
@@ -360,17 +360,17 @@ void send_signal(struct signal *s, char brdcst) {
 	pthread_mutex_unlock(&s->mutex);
 }
 
-void free_signal(struct signal *s) {
+void free_signal(struct crtx_signal *s) {
 	free(s);
 }
 
-void reference_event_release(struct event *event) {
+void reference_event_release(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	event->refs_before_release++;
 	pthread_mutex_unlock(&event->mutex);
 }
 
-void dereference_event_release(struct event *event) {
+void dereference_event_release(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	printf("deref release %d %s\n", event->refs_before_release, event->type);
 	if (event->refs_before_release > 0)
@@ -385,13 +385,13 @@ void dereference_event_release(struct event *event) {
 	pthread_mutex_unlock(&event->mutex);
 }
 
-void reference_event_response(struct event *event) {
+void reference_event_response(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	event->refs_before_response++;
 	pthread_mutex_unlock(&event->mutex);
 }
 
-void dereference_event_response(struct event *event) {
+void dereference_event_response(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
 	if (event->refs_before_response > 0)
@@ -403,7 +403,7 @@ void dereference_event_response(struct event *event) {
 	pthread_mutex_unlock(&event->mutex);
 }
 
-void wait_on_event(struct event *event) {
+void wait_on_event(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
 	while (event->refs_before_response > 0)
@@ -412,11 +412,11 @@ void wait_on_event(struct event *event) {
 	pthread_mutex_unlock(&event->mutex);
 }
 
-struct event *new_event() {
-	struct event *event;
+struct crtx_event *new_event() {
+	struct crtx_event *event;
 	int ret;
 	
-	event = (struct event*) calloc(1, sizeof(struct event));
+	event = (struct crtx_event*) calloc(1, sizeof(struct crtx_event));
 // 	event->id = (uint64_t) (uintptr_t) event;
 	
 	ret = pthread_mutex_init(&event->mutex, 0); ASSERT(ret >= 0);
@@ -426,14 +426,14 @@ struct event *new_event() {
 	return event;
 }
 
-void free_event_data(struct event_data *ed) {
+void free_event_data(struct crtx_event_data *ed) {
 	if (ed->raw)
 		free(ed->raw);
 	if (ed->dict)
 		free_dict(ed->dict);
 }
 
-void free_event(struct event *event) {
+void free_event(struct crtx_event *event) {
 	printf("free %s\n", event->type);
 	
 	if (event->cb_before_release)
@@ -445,8 +445,8 @@ void free_event(struct event *event) {
 	free(event);
 }
 
-struct event_graph *find_graph_for_event_type(char *event_type) {
-	struct event_graph *graph;
+struct crtx_graph *find_graph_for_event_type(char *event_type) {
+	struct crtx_graph *graph;
 	unsigned int i, j;
 	
 	graph = 0;
@@ -462,8 +462,8 @@ struct event_graph *find_graph_for_event_type(char *event_type) {
 	return graph;
 }
 
-struct event_graph *get_graph_for_event_type(char *event_type, char **event_types) {
-	struct event_graph *graph;
+struct crtx_graph *get_graph_for_event_type(char *event_type, char **event_types) {
+	struct crtx_graph *graph;
 	
 	graph = find_graph_for_event_type(event_type);
 	if (!graph) {
@@ -473,8 +473,8 @@ struct event_graph *get_graph_for_event_type(char *event_type, char **event_type
 	return graph;
 }
 
-void add_raw_event(struct event *event) {
-	struct event_graph *graph;
+void add_raw_event(struct crtx_event *event) {
+	struct crtx_graph *graph;
 	
 	graph = find_graph_for_event_type(event->type);
 	
@@ -486,13 +486,13 @@ void add_raw_event(struct event *event) {
 	add_event(graph, event);
 }
 
-void new_eventgraph(struct event_graph **event_graph, char **event_types) {
-	struct event_graph *graph;
+void new_eventgraph(struct crtx_graph **crtx_graph, char **event_types) {
+	struct crtx_graph *graph;
 	int ret;
 	
-	graph = (struct event_graph*) calloc(1, sizeof(struct event_graph)); ASSERT(graph);
+	graph = (struct crtx_graph*) calloc(1, sizeof(struct crtx_graph)); ASSERT(graph);
 	
-	*event_graph = graph;
+	*crtx_graph = graph;
 	
 	ret = pthread_mutex_init(&graph->mutex, 0); ASSERT(ret >= 0);
 	
@@ -511,13 +511,13 @@ void new_eventgraph(struct event_graph **event_graph, char **event_types) {
 	printf("\n");
 	
 	n_graphs++;
-	graphs = (struct event_graph**) realloc(graphs, sizeof(struct event_graph*)*n_graphs);
+	graphs = (struct crtx_graph**) realloc(graphs, sizeof(struct crtx_graph*)*n_graphs);
 	graphs[n_graphs-1] = graph;
 }
 
-void free_eventgraph(struct event_graph *egraph) {
+void free_eventgraph(struct crtx_graph *egraph) {
 	size_t i;
-	struct event_task *t, *tnext;
+	struct crtx_task *t, *tnext;
 	struct queue_entry *qe, *qe_next;
 	
 	for (qe = egraph->equeue; qe; qe=qe_next) {
@@ -552,15 +552,15 @@ void free_eventgraph(struct event_graph *egraph) {
 // 	event_types[n_event_types-1] = event_type;
 // }
 
-struct event_task *new_task() {
-	struct event_task *etask = (struct event_task*) calloc(1, sizeof(struct event_task));
+struct crtx_task *new_task() {
+	struct crtx_task *etask = (struct crtx_task*) calloc(1, sizeof(struct crtx_task));
 	etask->position = 100;
 	
 	return etask;
 }
 
-void free_task(struct event_task *task) {
-	struct event_task *t, *prev;
+void free_task(struct crtx_task *task) {
+	struct crtx_task *t, *prev;
 	
 	prev=0;
 // 	if (task->graph) {
@@ -613,8 +613,8 @@ void cortex_finish() {
 	}
 }
 
-void print_tasks(struct event_graph *graph) {
-	struct event_task *e;
+void print_tasks(struct crtx_graph *graph) {
+	struct crtx_task *e;
 	
 	for (e=graph->tasks; e; e=e->next) {
 		printf("%u %s\n", e->position, e->id);
@@ -630,9 +630,9 @@ void hexdump(unsigned char *buffer, size_t index) {
 	printf("\n");
 }
 
-typedef char (*event_notifier_filter)(struct event *event);
-typedef void (*event_notifier_cb)(struct event *event);
-struct event_notifier {
+typedef char (*event_notifier_filter)(struct crtx_event *event);
+typedef void (*event_notifier_cb)(struct crtx_event *event);
+struct crtx_event_notifier {
 	event_notifier_filter filter;
 	event_notifier_cb callback;
 	
@@ -640,8 +640,8 @@ struct event_notifier {
 	pthread_cond_t cond;
 };
 
-void event_notifier_task(struct event *event, void *userdata, void **sessiondata) {
-	struct event_notifier *en = (struct event_notifier*) userdata;
+void event_notifier_task(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_event_notifier *en = (struct crtx_event_notifier*) userdata;
 	
 	if (en->filter(event)) {
 		en->callback(event);
@@ -652,7 +652,7 @@ void event_notifier_task(struct event *event, void *userdata, void **sessiondata
 	}
 }
 
-void wait_on_notifier(struct event_notifier *en) {
+void wait_on_notifier(struct crtx_event_notifier *en) {
 	pthread_mutex_lock(&en->mutex);
 	
 	pthread_cond_wait(&en->cond, &en->mutex);
@@ -661,12 +661,12 @@ void wait_on_notifier(struct event_notifier *en) {
 }
 
 
-struct event_task *new_event_notifier(struct event_graph *graph, event_notifier_filter filter, event_notifier_cb callback) {
-	struct event_task *task;
-	struct event_notifier *en;
+struct crtx_task *new_event_notifier(struct crtx_graph *graph, event_notifier_filter filter, event_notifier_cb callback) {
+	struct crtx_task *task;
+	struct crtx_event_notifier *en;
 	int ret;
 	
-	en = (struct event_notifier*) calloc(1, sizeof(struct event_notifier));
+	en = (struct crtx_event_notifier*) calloc(1, sizeof(struct crtx_event_notifier));
 	en->filter = filter;
 	en->callback = callback;
 	

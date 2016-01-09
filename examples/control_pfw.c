@@ -25,9 +25,9 @@
 #include "controls.h"
 
 struct nfq_thread_data *td;
-struct event_task *pfw_handle_task, *rp_cache, *readline_handle_task, *pfw_rules_task;
-struct event_graph *rl_graph, *newp_graph, *newp_raw_graph;
-struct event_task *rcache_host, *rcache_ip;
+struct crtx_task *pfw_handle_task, *rp_cache, *readline_handle_task, *pfw_rules_task;
+struct crtx_graph *rl_graph, *newp_graph, *newp_raw_graph;
+struct crtx_task *rcache_host, *rcache_ip;
 
 
 // iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW  -m mark --mark 0 -j NFQUEUE --queue-num 0
@@ -141,8 +141,8 @@ void add_ips_to_list(struct filter_set *fset, char *hostname) {
 	return;
 }
 
-static void pfw_main_handler(struct event *event, void *userdata, void **sessiondata) {
-	struct event *newp_raw_event, *newp_event;
+static void pfw_main_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_event *newp_raw_event, *newp_event;
 	
 	if (event->response.raw)
 		return;
@@ -342,8 +342,8 @@ static void pfw_main_handler(struct event *event, void *userdata, void **session
 	}
 }
 
-// static void readline_handler(struct event *event, void *userdata, void **sessiondata) {
-// 	struct event *rl_event;
+// static void readline_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+// 	struct crtx_event *rl_event;
 // 	int res;
 // 	char host[64];
 // 	char *s;
@@ -453,7 +453,7 @@ void pfw_get_remote_data(struct crtx_dict *ds, char **remote_ip, char **remote_h
 }
 
 
-// char * pfw_rcache_create_key(struct event *event) {
+// char * pfw_rcache_create_key(struct crtx_event *event) {
 // 	struct ev_nf_queue_packet_msg *ev;
 // 	struct iphdr *iph;
 // 	char *ss, *sd, *s;
@@ -478,7 +478,7 @@ void pfw_get_remote_data(struct crtx_dict *ds, char **remote_ip, char **remote_h
 // }
 
 
-char * pfw_rcache_create_key_ip(struct event *event) {
+char * pfw_rcache_create_key_ip(struct crtx_event *event) {
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
@@ -490,7 +490,7 @@ char * pfw_rcache_create_key_ip(struct event *event) {
 	return stracpy(remote_ip, 0);
 }
 
-char * pfw_rcache_create_key_host(struct event *event) {
+char * pfw_rcache_create_key_host(struct crtx_event *event) {
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
@@ -535,7 +535,7 @@ struct crtx_dict_item *get_crtx_dict_item(struct crtx_dict *ds, char *key) {
 	return 0;
 }
 
-static void pfw_print_packet(struct event *event, void *userdata, void **sessiondata) {
+static void pfw_print_packet(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *ds, *pds;
 	char src_local, dst_local;
 	
@@ -663,7 +663,7 @@ static char match_regexp_list(char *input, struct filter_set *fset) {
 	return 0;
 }
 
-static void pfw_rules_filter(struct event *event, void *userdata, void **sessiondata) {
+static void pfw_rules_filter(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	

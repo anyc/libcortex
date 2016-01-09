@@ -7,12 +7,12 @@
 #include "core.h"
 #include "cache.h"
 
-char rcache_match_cb_t_strcmp(struct response_cache *rc, void *key, struct event *event, struct response_cache_entry *c_entry) {
+char rcache_match_cb_t_strcmp(struct response_cache *rc, void *key, struct crtx_event *event, struct response_cache_entry *c_entry) {
 	printf("asd %s %s\n", (char*) key, (char*) c_entry->key);
 	return !strcmp( (char*) key, (char*) c_entry->key);
 }
 
-char rcache_match_cb_t_regex(struct response_cache *rc, void *key, struct event *event, struct response_cache_entry *c_entry) {
+char rcache_match_cb_t_regex(struct response_cache *rc, void *key, struct crtx_event *event, struct response_cache_entry *c_entry) {
 	int ret;
 	char msgbuf[128];
 	
@@ -37,7 +37,7 @@ char rcache_match_cb_t_regex(struct response_cache *rc, void *key, struct event 
 	}
 }
 
-void response_cache_on_hit(struct response_cache_task *rc, void **key, struct event *event, struct response_cache_entry *c_entry) {
+void response_cache_on_hit(struct response_cache_task *rc, void **key, struct crtx_event *event, struct response_cache_entry *c_entry) {
 	struct response_cache *dc = rc->cache;
 	
 	event->response.raw = c_entry->value;
@@ -49,7 +49,7 @@ void response_cache_on_hit(struct response_cache_task *rc, void **key, struct ev
 	printf("\n");
 }
 
-void response_cache_task(struct event *event, void *userdata, void **sessiondata) {
+void response_cache_task(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct response_cache_task *ct = (struct response_cache_task*) userdata;
 	size_t i;
 	void *key;
@@ -83,7 +83,7 @@ void response_cache_task(struct event *event, void *userdata, void **sessiondata
 		free(key);
 }
 
-void response_cache_task_cleanup(struct event *event, void *userdata, void *sessiondata) {
+void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void *sessiondata) {
 	struct response_cache_task *ct = (struct response_cache_task*) userdata;
 	struct response_cache *dc = ct->cache;
 	void *key;
@@ -197,10 +197,10 @@ void prefill_rcache(struct response_cache *rcache, char *file) {
 }
 
 
-struct event_task *create_response_cache_task(char *signature, create_key_cb_t create_key) {
+struct crtx_task *create_response_cache_task(char *signature, create_key_cb_t create_key) {
 	struct response_cache *dc;
 	struct response_cache_task *ct;
-	struct event_task *task;
+	struct crtx_task *task;
 	int ret;
 	
 	task = new_task();

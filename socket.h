@@ -17,9 +17,9 @@ struct socket_listener {
 	int sockfd;
 	int server_sockfd;
 	
-	struct event_graph *outbox;
-	struct event_graph *crtx_inbox;
-	struct event_graph *crtx_outbox;
+	struct crtx_graph *outbox;
+	struct crtx_graph *crtx_inbox;
+	struct crtx_graph *crtx_outbox;
 	
 	struct queue_event *sent_events;
 	
@@ -33,4 +33,4 @@ void socket_finish();
 struct listener *new_socket_server_listener(void *options);
 struct listener *new_socket_client_listener(void *options);
 
-// void send_event(struct socket_listener *slistener, struct event *event);
+// void send_event(struct socket_listener *slistener, struct crtx_event *event);

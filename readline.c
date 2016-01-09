@@ -31,7 +31,7 @@ void *readline_tmain(void *data) {
 	return 0;
 }
 
-void handle_request(struct event *event, void *userdata, void **sessiondata) {
+void handle_request(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char *input;
 	
 	pthread_mutex_lock(&stdout_mutex);
@@ -46,16 +46,16 @@ void handle_request(struct event *event, void *userdata, void **sessiondata) {
 }
 
 void readline_init() {
-	struct event_graph *event_graph;
+	struct crtx_graph *crtx_graph;
 	int ret;
 	
 	ret = pthread_mutex_init(&stdout_mutex, 0); ASSERT(ret >= 0);
 	
-	new_eventgraph(&event_graph, event_types);
+	new_eventgraph(&crtx_graph, event_types);
 	
-	struct event_task *etask = new_task();
+	struct crtx_task *etask = new_task();
 	etask->handle = &handle_request;
-	event_graph->tasks = etask;
+	crtx_graph->tasks = etask;
 }
 
 void readline_finish() {

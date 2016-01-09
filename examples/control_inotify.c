@@ -9,7 +9,7 @@
 struct listener *fa;
 struct inotify_listener listener;
 
-static void inotify_event_handler(struct event *event, void *userdata, void **sessiondata) {
+static void inotify_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct inotify_event *in_event;
 	char buf[1024];
 	
@@ -44,7 +44,7 @@ static void inotify_event_handler(struct event *event, void *userdata, void **se
 
 
 void init() {
-	struct event_task * fan_handle_task;
+	struct crtx_task * fan_handle_task;
 	
 	printf("starting inotify example plugin\n");
 	

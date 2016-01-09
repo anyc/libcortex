@@ -12,7 +12,7 @@ struct listener *fa;
 struct socket_listener sock_listener;
 struct sd_bus_notifications_listener notify_listener;
 
-// static void notifyd_event_handler(struct event *event, void *userdata, void **sessiondata) {
+// static void notifyd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	struct fanotify_event_metadata *metadata;
 // 	char *buf, *chosen_action;
 // 	char title[32];
@@ -42,7 +42,7 @@ struct sd_bus_notifications_listener notify_listener;
 // }
 
 void init() {
-// 	struct event_task * fan_handle_task;
+// 	struct crtx_task * fan_handle_task;
 	
 	printf("starting notifyd example plugin\n");
 	

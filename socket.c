@@ -30,10 +30,10 @@ int socket_send(void *conn_id, void *data, size_t data_size) {
 	return write(*(int*) conn_id, data, data_size);
 }
 
-void event_before_release(struct event *event) {
-// void event_respond_cb(struct event *event, struct event_data *ed) {
+void event_before_release(struct crtx_event *event) {
+// void event_respond_cb(struct crtx_event *event, struct crtx_event_data *ed) {
 	struct socket_listener *slist;
-	struct event *resp_event;
+	struct crtx_event *resp_event;
 	
 	slist = (struct socket_listener*) event->cb_before_release_data;
 	printf("before release\n");
@@ -49,7 +49,7 @@ void event_before_release(struct event *event) {
 	add_event(slist->outbox, resp_event);
 }
 
-static void send_event_handler(struct event *event, void *userdata, void **sessiondata) {
+static void send_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct socket_listener *slistener;
 	
 	slistener = (struct socket_listener *) userdata;
@@ -62,7 +62,7 @@ static void send_event_handler(struct event *event, void *userdata, void **sessi
 	send_event_as_dict(event, socket_send, &slistener->sockfd);
 }
 
-static void recv_event_handler(struct event *event, void *userdata, void **sessiondata) {
+static void recv_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct socket_listener *slistener;
 	
 	slistener = (struct socket_listener *) userdata;
@@ -75,7 +75,7 @@ static void recv_event_handler(struct event *event, void *userdata, void **sessi
 
 void *socket_connection_tmain(void *data) {
 	struct socket_listener slist;
-	struct event *event;
+	struct crtx_event *event;
 	struct socket_connection_tmain_args *args;
 	
 	
@@ -88,7 +88,7 @@ void *socket_connection_tmain(void *data) {
 	
 	slist.sockfd = args->sockfd;
 	
-	struct event_task * recv_event;
+	struct crtx_task * recv_event;
 	recv_event = new_task();
 	recv_event->id = "recv_event";
 	recv_event->handle = &recv_event_handler;
@@ -96,7 +96,7 @@ void *socket_connection_tmain(void *data) {
 	recv_event->position = 200;
 	add_task(slist.parent.graph, recv_event);
 	
-	struct event_task * task;
+	struct crtx_task * task;
 	task = new_task();
 	task->id = "send_event";
 	task->handle = &send_event_handler;
@@ -202,7 +202,7 @@ void *socket_server_tmain(void *data) {
 void *socket_client_tmain(void *data) {
 	int ret;
 	struct socket_listener *listeners;
-	struct event *event;
+	struct crtx_event *event;
 	struct addrinfo hints, *result, *resbkp;
 	
 	listeners = (struct socket_listener*) data;
@@ -278,7 +278,7 @@ struct listener *new_socket_server_listener(void *options) {
 // 	new_eventgraph(&slistener->parent.graph, slistener->recv_types);
 // 	new_eventgraph(&slistener->outbox, slistener->send_types);
 // 	
-// 	struct event_task * recv_event;
+// 	struct crtx_task * recv_event;
 // 	recv_event = new_task();
 // 	recv_event->id = "recv_event";
 // 	recv_event->handle = &recv_event_handler;
@@ -286,7 +286,7 @@ struct listener *new_socket_server_listener(void *options) {
 // 	recv_event->position = 200;
 // 	add_task(slistener->parent.graph, recv_event);
 // 	
-// 	struct event_task * task;
+// 	struct crtx_task * task;
 // 	task = new_task();
 // 	task->id = "send_event";
 // 	task->handle = &send_event_handler;
@@ -301,7 +301,7 @@ struct listener *new_socket_server_listener(void *options) {
 
 struct listener *new_socket_client_listener(void *options) {
 	struct socket_listener *slistener;
-	struct event_task * task;
+	struct crtx_task * task;
 	
 	slistener = (struct socket_listener *) options;
 	
@@ -310,7 +310,7 @@ struct listener *new_socket_client_listener(void *options) {
 	new_eventgraph(&slistener->parent.graph, slistener->recv_types);
 	new_eventgraph(&slistener->outbox, slistener->send_types);
 	
-	struct event_task * recv_event;
+	struct crtx_task * recv_event;
 	recv_event = new_task();
 	recv_event->id = "recv_event";
 	recv_event->handle = &recv_event_handler;

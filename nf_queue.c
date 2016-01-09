@@ -29,11 +29,11 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 	
 	struct nfq_thread_data *td = (struct nfq_thread_data*) data;
 	
-	struct event_graph *new_packet_graph_msg = td->parent.graph;
+	struct crtx_graph *new_packet_graph_msg = td->parent.graph;
 	
 	if (new_packet_graph_msg && new_packet_graph_msg->tasks) {
 		struct ev_nf_queue_packet_msg *ev;
-		struct event *event;
+		struct crtx_event *event;
 		size_t msg_size;
 		unsigned char *payload;
 		size_t payload_size, data_size;
@@ -228,7 +228,7 @@ void free_nf_queue_listener(void *data) {
 	free(tdata);
 }
 
-char nfq_packet_msg_okay(struct event *event) {
+char nfq_packet_msg_okay(struct crtx_event *event) {
 	if (event->data.raw_size < sizeof(struct ev_nf_queue_packet_msg))
 		return 0;
 	

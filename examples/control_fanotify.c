@@ -21,12 +21,12 @@ struct socket_listener sock_listener;
 char *sendtypes[2] = { "cortex.socket.outbox", 0 };
 char *recvtypes[2] = { "cortex.socket.inbox", 0 };
 
-static void fanotify_event_handler(struct event *event, void *userdata, void **sessiondata) {
+static void fanotify_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct fanotify_event_metadata *metadata;
 	char *buf, *chosen_action;
 	char title[32];
 	char msg[1024];
-	struct event *notif_event;
+	struct crtx_event *notif_event;
 	struct crtx_dict *data, *actions_dict;
 	size_t title_len, buf_len;
 	
@@ -98,7 +98,7 @@ static void fanotify_event_handler(struct event *event, void *userdata, void **s
 }
 
 void init() {
-	struct event_task * fan_handle_task;
+	struct crtx_task * fan_handle_task;
 	
 	printf("starting fanotify example plugin\n");
 	

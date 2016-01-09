@@ -17,9 +17,9 @@ extern char *crtx_evt_inbox[];
 #define CRTX_EVT_OUTBOX "cortexd/outbox"
 extern char *crtx_evt_outbox[];
 
-struct event;
+struct crtx_event;
 
-struct signal {
+struct crtx_signal {
 	char *condition;
 	char local_condition;
 	
@@ -27,75 +27,75 @@ struct signal {
 	pthread_cond_t cond;
 };
 
-struct event_data {
+struct crtx_event_data {
 	void *raw;
 	size_t raw_size;
 	
-	void (*raw_to_dict)(struct event *event);
+	void (*raw_to_dict)(struct crtx_event *event);
 	
 	struct crtx_dict *dict;
 };
 
-struct event {
+struct crtx_event {
 	char *type;
 	
-	struct event_data data;
+	struct crtx_event_data data;
 	
 	char response_expected;
-	struct event_data response;
+	struct crtx_event_data response;
 	
-// 	void (*respond)(struct event *to_event, struct event_data *ev);
+// 	void (*respond)(struct crtx_event *to_event, struct crtx_event_data *ev);
 // 	void *respond_cb_payload;
 	uint64_t original_event_id;
-// 	struct event *original_event;
+// 	struct crtx_event *original_event;
 	
 	unsigned char refs_before_response;
 	unsigned char refs_before_release;
 	pthread_cond_t response_cond;
 // 	pthread_cond_t release_cond;
-	void (*cb_before_release)(struct event *event);
+	void (*cb_before_release)(struct crtx_event *event);
 	void *cb_before_release_data;
 	
 	pthread_mutex_t mutex;
 };
 
 struct queue_entry {
-	struct event *event;
+	struct crtx_event *event;
 	
 	struct queue_entry *next;
 };
 
-struct event_graph;
-struct event_task {
+struct crtx_graph;
+struct crtx_task {
 	char *id;
 	unsigned char position;
-	struct event_graph *graph;
+	struct crtx_graph *graph;
 	
-	void (*handle)(struct event *event, void *userdata, void **sessiondata);
-	void (*cleanup)(struct event *event, void *userdata, void *sessiondata);
+	void (*handle)(struct crtx_event *event, void *userdata, void **sessiondata);
+	void (*cleanup)(struct crtx_event *event, void *userdata, void *sessiondata);
 	void *userdata;
 	
-	struct event_task *prev;
-	struct event_task *next;
+	struct crtx_task *prev;
+	struct crtx_task *next;
 };
 
-struct thread {
+struct crtx_thread {
 	pthread_t handle;
 	
 	char stop;
 	
-	struct event_graph *graph;
+	struct crtx_graph *graph;
 };
 
-struct event_graph {
+struct crtx_graph {
 	char **types;
 	unsigned int n_types;
 	
 	pthread_mutex_t mutex;
 	
-	struct event_task *tasks;
+	struct crtx_task *tasks;
 	
-	struct thread *consumers;
+	struct crtx_thread *consumers;
 	unsigned int n_consumers;
 	
 	struct queue_entry *equeue;
@@ -114,7 +114,7 @@ struct listener_factory {
 struct listener {
 	void (*free)(void *data);
 	
-	struct event_graph *graph;
+	struct crtx_graph *graph;
 };
 
 struct module {
@@ -157,38 +157,38 @@ struct crtx_dict {
 };
 
 extern struct module static_modules[];
-extern struct event_graph *cortexd_graph;
+extern struct crtx_graph *cortexd_graph;
 
-extern struct event_graph **graphs;
+extern struct crtx_graph **graphs;
 extern unsigned int n_graphs;
 
 
 
 
 char *stracpy(char *str, size_t *str_length);
-struct event *new_event();
-void free_event(struct event *event);
+struct crtx_event *new_event();
+void free_event(struct crtx_event *event);
 void cortex_init();
 void cortex_finish();
-void new_eventgraph(struct event_graph **event_graph, char **event_types);
-void free_eventgraph(struct event_graph *egraph);
-// void get_eventgraph(struct event_graph **event_graph, char **event_types, unsigned int n_event_types);
-void add_task(struct event_graph *graph, struct event_task *task);
+void new_eventgraph(struct crtx_graph **crtx_graph, char **event_types);
+void free_eventgraph(struct crtx_graph *egraph);
+// void get_eventgraph(struct crtx_graph **crtx_graph, char **event_types, unsigned int n_event_types);
+void add_task(struct crtx_graph *graph, struct crtx_task *task);
 void add_event_type(char *event_type);
-void add_raw_event(struct event *event);
-void add_event(struct event_graph *graph, struct event *event);
-void add_event_sync(struct event_graph *graph, struct event *event);
-struct event_graph *find_graph_for_event_type(char *event_type);
-struct event_graph *get_graph_for_event_type(char *event_type, char **event_types);
-struct event_task *new_task();
-void free_task(struct event_task *task);
-void wait_on_event(struct event *event);
+void add_raw_event(struct crtx_event *event);
+void add_event(struct crtx_graph *graph, struct crtx_event *event);
+void add_event_sync(struct crtx_graph *graph, struct crtx_event *event);
+struct crtx_graph *find_graph_for_event_type(char *event_type);
+struct crtx_graph *get_graph_for_event_type(char *event_type, char **event_types);
+struct crtx_task *new_task();
+void free_task(struct crtx_task *task);
+void wait_on_event(struct crtx_event *event);
 struct listener *create_listener(char *id, void *options);
 void free_listener(struct listener *listener);
-struct event *create_event(char *type, void *data, size_t data_size);
-// struct event *create_response(struct event *event, void *data, size_t data_size);
+struct crtx_event *create_event(char *type, void *data, size_t data_size);
+// struct crtx_event *create_response(struct crtx_event *event, void *data, size_t data_size);
 
-void print_tasks(struct event_graph *graph);
+void print_tasks(struct crtx_graph *graph);
 void hexdump(unsigned char *buffer, size_t index);
 
 struct crtx_dict * crtx_create_dict(char *signature, ...);
@@ -199,16 +199,16 @@ void crtx_print_dict(struct crtx_dict *ds);
 struct crtx_dict_item *crtx_get_first_item(struct crtx_dict *ds);
 struct crtx_dict_item *crtx_get_next_item(struct crtx_dict_item *di);
 
-struct signal *new_signal();
-void init_signal(struct signal *signal);
-void wait_on_signal(struct signal *s);
-void send_signal(struct signal *s, char brdcst);
-void free_signal(struct signal *s);
+struct crtx_signal *new_signal();
+void init_signal(struct crtx_signal *signal);
+void wait_on_signal(struct crtx_signal *s);
+void send_signal(struct crtx_signal *s, char brdcst);
+void free_signal(struct crtx_signal *s);
 
-void crtx_traverse_graph(struct event_graph *graph, struct event *event);
-void reference_event_response(struct event *event);
-void dereference_event_response(struct event *event);
-void reference_event_release(struct event *event);
-void dereference_event_release(struct event *event);
+void crtx_traverse_graph(struct crtx_graph *graph, struct crtx_event *event);
+void reference_event_response(struct crtx_event *event);
+void dereference_event_response(struct crtx_event *event);
+void reference_event_release(struct crtx_event *event);
+void dereference_event_release(struct crtx_event *event);
 
-void event_ll_add(struct queue_entry **list, struct event *event);
+void event_ll_add(struct queue_entry **list, struct crtx_event *event);

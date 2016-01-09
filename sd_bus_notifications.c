@@ -10,12 +10,12 @@
 char *notif_event_types[] = { EV_NOTIF_AC_INVOKED, 0 };
 
 static char initialized = 0;
-static struct event_graph *graph;
+static struct crtx_graph *graph;
 
 struct sd_bus_notifications_item {
 	u_int32_t id;
 	char *answer;
-	struct signal barrier;
+	struct crtx_signal barrier;
 	
 	struct sd_bus_notifications_item *prev;
 	struct sd_bus_notifications_item *next;
@@ -23,7 +23,7 @@ struct sd_bus_notifications_item {
 
 // static u_int32_t *notif_ids = 0;
 // static size_t n_notif_ids = 0;
-// static struct signal *signals = 0;
+// static struct crtx_signal *signals = 0;
 // static char **answers = 0;
 struct sd_bus_notifications_item *wait_list = 0;
 pthread_mutex_t notif_mutex;
@@ -101,7 +101,7 @@ static u_int32_t sd_bus_send_notification(char *icon, char *title, char *text, c
 	return res;
 }
 
-void handle_notification_response(struct event *event, void *userdata, void **sessiondata) {
+void handle_notification_response(struct crtx_event *event, void *userdata, void **sessiondata) {
 	sd_bus_message *m = (sd_bus_message *) event->data.raw;
 	struct sd_bus_notifications_item *it;
 	char *s;
@@ -143,7 +143,7 @@ void send_notification(char *icon, char *title, char *text, char **actions, char
 		
 		sd_bus_add_listener(sd_bus_main_bus, "/org/freedesktop/Notifications", EV_NOTIF_AC_INVOKED);
 		
-		struct event_task *task2;
+		struct crtx_task *task2;
 		task2 = new_task();
 		task2->id = "notif_handler";
 		task2->handle = &handle_notification_response;
@@ -161,7 +161,7 @@ void send_notification(char *icon, char *title, char *text, char **actions, char
 		
 // 		n_notif_ids++;
 // 		notif_ids = (u_int32_t*) realloc(notif_ids, sizeof(u_int32_t)*n_notif_ids);
-// 		signals = (struct signal*) realloc(signals, sizeof(struct signal)*n_notif_ids);
+// 		signals = (struct crtx_signal*) realloc(signals, sizeof(struct crtx_signal)*n_notif_ids);
 // 		answers = (char **) realloc(answers, sizeof(char*)*n_notif_ids);
 		for (it = wait_list; it && it->next; it = it->next) {}
 		if (it) {
@@ -206,7 +206,7 @@ void send_notification(char *icon, char *title, char *text, char **actions, char
 }
 
 // char *test[5] = { "yes", "YES", "no", "NO", 0 };
-static void notify_task_handler(struct event *event, void *userdata, void **sessiondata) {
+static void notify_task_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char *title, *msg, *answer;
 	char ret;
 	size_t answer_length;
@@ -265,7 +265,7 @@ static void notify_task_handler(struct event *event, void *userdata, void **sess
 // 	event->response = data;
 // 	response = create_response(event, 0, 0);
 	
-// 	memset(&ed, 0, sizeof(struct event_data));
+// 	memset(&ed, 0, sizeof(struct crtx_event_data));
 // 	ed.dict = data;
 	
 // 	if (event->respond)
@@ -280,7 +280,7 @@ static void notify_task_handler(struct event *event, void *userdata, void **sess
 
 struct listener *new_sd_bus_notification_listener(void *options) {
 	struct sd_bus_notifications_listener *slistener;
-	struct event_graph *graph;
+	struct crtx_graph *graph;
 	
 	slistener = (struct sd_bus_notifications_listener *) options;
 	
@@ -288,7 +288,7 @@ struct listener *new_sd_bus_notification_listener(void *options) {
 	
 	graph = get_graph_for_event_type(CRTX_EVT_NOTIFICATION, crtx_evt_notification);
 	
-	struct event_task * notify_task;
+	struct crtx_task * notify_task;
 	notify_task = new_task();
 	notify_task->id = "notify_task";
 	notify_task->handle = &notify_task_handler;
