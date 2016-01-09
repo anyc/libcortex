@@ -1,6 +1,7 @@
 
 
 struct crtx_cache;
+struct crtx_cache_entry;
 struct crtx_cache_task;
 
 typedef char *(*create_key_cb_t)(struct crtx_event *event);

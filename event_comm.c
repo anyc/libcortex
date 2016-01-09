@@ -10,6 +10,29 @@
 #include "cache.h"
 #include "event_comm.h"
 
+struct serialized_dict_item {
+	uint64_t key_length;
+	uint64_t payload_size;
+	
+	uint8_t type;
+	uint8_t flags;
+};
+
+struct serialized_dict {
+	uint8_t signature_length;
+};
+
+#define CRTX_SEREV_FLAG_EXPECT_RESPONSE 1<<0
+
+struct serialized_event {
+	uint8_t version;
+	uint64_t id;
+	
+	uint32_t type_length;
+	uint8_t flags;
+};
+
+
 void send_dict(send_fct send, void *conn_id, struct crtx_dict *ds) {
 	struct crtx_dict_item *di;
 	struct serialized_dict sdict;

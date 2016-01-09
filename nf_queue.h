@@ -5,7 +5,6 @@ struct nfq_thread_data {
 	pthread_t thread;
 	
 	u_int16_t queue_num;
-// 	struct crtx_graph *graph;
 };
 
 struct ev_nf_queue_packet {
@@ -17,8 +16,6 @@ struct ev_nf_queue_packet_msg {
 	int id;
 	u_int16_t hw_protocol;
 	
-	// 	u_int8_t hw_addr;
-	// 	u_int16_t hw_addrlen;
 	char *hw_addr;
 	
 	u_int32_t mark;
