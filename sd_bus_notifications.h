@@ -1,5 +1,5 @@
 
-struct sd_bus_notifications_listener {
+struct crtx_sd_bus_notification_listener {
 	struct crtx_listener_base parent;
 };
 

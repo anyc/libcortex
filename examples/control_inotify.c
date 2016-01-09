@@ -10,7 +10,7 @@
 
 struct crtx_listener_base *fa;
 struct crtx_inotify_listener listener;
-struct sd_bus_notifications_listener notify_listener;
+struct crtx_sd_bus_notification_listener notify_listener;
 
 static void send_notification(char *msg) {
 	struct crtx_event *notif_event;

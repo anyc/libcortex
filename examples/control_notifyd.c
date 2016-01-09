@@ -10,7 +10,7 @@
 
 struct crtx_listener_base *fa;
 struct socket_listener sock_listener;
-struct sd_bus_notifications_listener notify_listener;
+struct crtx_sd_bus_notification_listener notify_listener;
 
 // static void notifyd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	struct fanotify_event_metadata *metadata;

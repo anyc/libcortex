@@ -7,25 +7,24 @@
 #include "sd_bus.h"
 #include "sd_bus_notifications.h"
 
-// https://developer.gnome.org/notification-spec/
+// See https://developer.gnome.org/notification-spec/ for DBUS service specification
 
 #define EV_NOTIF_SIGNAL "sd-bus.org.freedesktop.Notifications.Signal"
 char *notif_event_types[] = { EV_NOTIF_SIGNAL, 0 };
 
 static char initialized = 0;
-static struct crtx_graph *graph;
 
-struct sd_bus_notifications_item {
+struct wait_list_item {
 	u_int32_t id;
 	char *answer;
 	struct crtx_signal barrier;
 	
-	struct sd_bus_notifications_item *prev;
-	struct sd_bus_notifications_item *next;
+	struct wait_list_item *prev;
+	struct wait_list_item *next;
 };
 
-struct sd_bus_notifications_item *wait_list = 0;
-pthread_mutex_t notif_mutex;
+struct wait_list_item *wait_list = 0;
+pthread_mutex_t wait_list_mutex;
 
 
 
@@ -36,6 +35,8 @@ static u_int32_t sd_bus_send_notification(char *icon, char *title, char *text, c
 	sd_bus_message *m = NULL, *reply = NULL;
 	char **ait;
 	sd_bus *bus;
+	int32_t id = 0;
+	int32_t time = 0;
 	
 	r = sd_bus_default(&bus);
 	if (r < 0) {
@@ -43,14 +44,13 @@ static u_int32_t sd_bus_send_notification(char *icon, char *title, char *text, c
 		return 0;
 	}
 	
-	// 	r = sd_bus_message_new_method_call(bus, &m, dest, path, interface, member);
 	r = sd_bus_message_new_method_call(bus,
-								&m,
-							 "org.freedesktop.Notifications",           /* service to contact */
-							 "/org/freedesktop/Notifications",          /* object path */
-							 "org.freedesktop.Notifications",   /* interface name */
-							 "Notify"                         /* method name */
-	);
+							&m,
+							"org.freedesktop.Notifications",  /* service to contact */
+							"/org/freedesktop/Notifications", /* object path */
+							"org.freedesktop.Notifications",  /* interface name */
+							"Notify"                          /* method name */
+							);
 	if (r < 0) {
 		fprintf(stderr, "Failed to issue method call: %s %s\n", error.name, error.message);
 		return 0;
@@ -58,35 +58,35 @@ static u_int32_t sd_bus_send_notification(char *icon, char *title, char *text, c
 	
 	#define SDCHECK(r) { if (r < 0) {printf("err %d %s %d\n", r, strerror(r), __LINE__);} }
 	r = sd_bus_message_append_basic(m, 's', "cortexd"); SDCHECK(r)
-	int32_t id = 0;
 	r = sd_bus_message_append_basic(m, 'u', &id); SDCHECK(r)
 	r = sd_bus_message_append_basic(m, 's', icon); SDCHECK(r)
 	r = sd_bus_message_append_basic(m, 's', title); SDCHECK(r)
 	r = sd_bus_message_append_basic(m, 's', text); SDCHECK(r)
 	
 	r = sd_bus_message_open_container(m, 'a', "s"); SDCHECK(r)
-	if (actions) {
-		ait = actions;
-		while (*ait) {
-			r = sd_bus_message_append_basic(m, 's', *ait); SDCHECK(r)
-			ait++;
+		if (actions) {
+			ait = actions;
+			while (*ait) {
+				r = sd_bus_message_append_basic(m, 's', *ait); SDCHECK(r)
+				ait++;
+			}
+		} else {
+			r = sd_bus_message_append_basic(m, 's', ""); SDCHECK(r)
 		}
-	} else {
-		r = sd_bus_message_append_basic(m, 's', ""); SDCHECK(r)
-	}
 	r = sd_bus_message_close_container(m); SDCHECK(r)
+	
 	
 	r = sd_bus_message_open_container(m, 'a', "{sv}"); SDCHECK(r)
-	r = sd_bus_message_open_container(m, 'e', "sv"); SDCHECK(r)
-	r = sd_bus_message_append_basic(m, 's', ""); SDCHECK(r)
+		r = sd_bus_message_open_container(m, 'e', "sv"); SDCHECK(r)
+			r = sd_bus_message_append_basic(m, 's', ""); SDCHECK(r)
+			
+			r = sd_bus_message_open_container(m, 'v', "s"); SDCHECK(r)
+				r = sd_bus_message_append_basic(m, 's', ""); SDCHECK(r)
+			r = sd_bus_message_close_container(m); SDCHECK(r)
+		r = sd_bus_message_close_container(m); SDCHECK(r)
+	r = sd_bus_message_close_container(m); SDCHECK(r)
 	
-	r = sd_bus_message_open_container(m, 'v', "s"); SDCHECK(r)
-	r = sd_bus_message_append_basic(m, 's', ""); SDCHECK(r)
-	r = sd_bus_message_close_container(m); SDCHECK(r)
-	r = sd_bus_message_close_container(m); SDCHECK(r)
-	r = sd_bus_message_close_container(m); SDCHECK(r)
 	
-	int32_t time = 0;
 	r = sd_bus_message_append_basic(m, 'i', &time); SDCHECK(r)
 	
 	r = sd_bus_call(bus, m, -1, &error, &reply); SDCHECK(r)
@@ -102,7 +102,7 @@ static u_int32_t sd_bus_send_notification(char *icon, char *title, char *text, c
 
 static void notification_signal_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	sd_bus_message *m = (sd_bus_message *) event->data.raw;
-	struct sd_bus_notifications_item *it;
+	struct wait_list_item *it;
 	char *s;
 	const char *signal;
 	uint32_t id, reason;
@@ -120,7 +120,7 @@ static void notification_signal_handler(struct crtx_event *event, void *userdata
 	}
 	
 	// lookup list of notifications and register answer
-	pthread_mutex_lock(&notif_mutex);
+	pthread_mutex_lock(&wait_list_mutex);
 	for (it=wait_list; it; it = it->next) {
 		if (it->id == id) {
 			if (s)
@@ -132,20 +132,23 @@ static void notification_signal_handler(struct crtx_event *event, void *userdata
 			break;
 		}
 	}
-	pthread_mutex_unlock(&notif_mutex);
+	pthread_mutex_unlock(&wait_list_mutex);
 }
 
 void crtx_send_notification(char *icon, char *title, char *text, char **actions, char**chosen_action) {
 	if (!initialized) {
 		int ret;
+		struct crtx_graph *graph;
 		
-		ret = pthread_mutex_init(&notif_mutex, 0); ASSERT(ret >= 0);
+		ret = pthread_mutex_init(&wait_list_mutex, 0); ASSERT(ret >= 0);
 		
 		graph = get_graph_for_event_type(EV_NOTIF_SIGNAL, notif_event_types);
 		
 		/*
 		 * instruct the sd_bus module to listen for notification DBUS signals
 		 */
+		
+		// TODO check if sd-bus module is initialized!
 		
 		sd_bus_add_listener(sd_bus_main_bus, "/org/freedesktop/Notifications", EV_NOTIF_SIGNAL);
 		
@@ -160,28 +163,28 @@ void crtx_send_notification(char *icon, char *title, char *text, char **actions,
 	}
 	
 	if (actions && chosen_action) {
-		struct sd_bus_notifications_item *it;
+		struct wait_list_item *it;
 		
 		/*
 		 * register this notification as we expect a response later
 		 */
 		
-		pthread_mutex_lock(&notif_mutex);
+		pthread_mutex_lock(&wait_list_mutex);
 		
 		// add this notification to list of unanswered notifications
 		for (it = wait_list; it && it->next; it = it->next) {}
 		if (it) {
-			it->next = (struct sd_bus_notifications_item *) malloc(sizeof(struct sd_bus_notifications_item));
+			it->next = (struct wait_list_item *) malloc(sizeof(struct wait_list_item));
 			it->next->prev = it;
 			it = it->next;
 		} else {
-			wait_list = (struct sd_bus_notifications_item *) malloc(sizeof(struct sd_bus_notifications_item));
+			wait_list = (struct wait_list_item *) malloc(sizeof(struct wait_list_item));
 			it = wait_list;
 			it->prev = 0;
 		}
 		it->next = 0;
 		
-		pthread_mutex_unlock(&notif_mutex);
+		pthread_mutex_unlock(&wait_list_mutex);
 		
 		init_signal(&it->barrier);
 		it->id = sd_bus_send_notification(icon, title, text, actions);
@@ -191,14 +194,14 @@ void crtx_send_notification(char *icon, char *title, char *text, char **actions,
 		*chosen_action = it->answer;
 		
 		// remove this notification from list
-		pthread_mutex_lock(&notif_mutex);
+		pthread_mutex_lock(&wait_list_mutex);
 		if (it->prev)
 			it->prev->next = it->next;
 		else
 			wait_list = it->next;
 		if (it->next)
 			it->next->prev = it->prev;
-		pthread_mutex_unlock(&notif_mutex);
+		pthread_mutex_unlock(&wait_list_mutex);
 		
 		free(it);
 	} else {
@@ -276,25 +279,26 @@ static void notify_send_handler(struct crtx_event *event, void *userdata, void *
 }
 
 struct crtx_listener_base *crtx_new_sd_bus_notification_listener(void *options) {
-	struct sd_bus_notifications_listener *slistener;
-	struct crtx_graph *graph;
+	struct crtx_sd_bus_notification_listener *slistener;
+	struct crtx_graph *global_graph;
 	struct crtx_task * sd_bus_notify_task;
 	
+	// TODO: convert this into a module as we likely need only one listener?
 	
-	slistener = (struct sd_bus_notifications_listener *) options;
+	slistener = (struct crtx_sd_bus_notification_listener *) options;
 	slistener->parent.graph = get_graph_for_event_type(EV_NOTIF_SIGNAL, notif_event_types);
 	
 	/*
 	 * add this listener to the global notification graph
 	 */
 	
-	graph = get_graph_for_event_type(CRTX_EVT_NOTIFICATION, crtx_evt_notification);
+	global_graph = get_graph_for_event_type(CRTX_EVT_NOTIFICATION, crtx_evt_notification);
 	
 	sd_bus_notify_task = new_task();
 	sd_bus_notify_task->id = "sd_bus_notify_send";
 	sd_bus_notify_task->handle = &notify_send_handler;
 	sd_bus_notify_task->userdata = slistener;
-	add_task(graph, sd_bus_notify_task);
+	add_task(global_graph, sd_bus_notify_task);
 	
 	return &slistener->parent;
 }
