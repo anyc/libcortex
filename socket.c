@@ -1,4 +1,21 @@
 
+/*
+ * To open a TCPv4 connection with localhost:1234
+ * 
+ * sock_listener.ai_family = AF_INET;
+ * sock_listener.type = SOCK_STREAM;
+ * sock_listener.protocol = IPPROTO_TCP;
+ * sock_listener.host = "localhost";
+ * sock_listener.service = "1234";
+ * sock_list = create_listener("socket_client", &sock_listener);
+ * 
+ * To open a Unix socket /tmp/mysocket:
+ * 
+ * sock_listener.ai_family = AF_UNIX;
+ * sock_listener.type = SOCK_STREAM;
+ * sock_listener.service = "/tmp/mysocket";
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -140,6 +157,7 @@ struct addrinfo *crtx_get_addrinfo(struct crtx_socket_listener *listener) {
 		
 		result = (struct addrinfo *) calloc(1, sizeof(struct addrinfo) + sizeof(struct sockaddr_un));
 		result->ai_family = AF_UNIX;
+		result->ai_socktype = listener->type;
 		result->ai_next = 0;
 		
 		result->ai_addrlen = sizeof(struct sockaddr_un);
@@ -186,9 +204,7 @@ void *socket_server_tmain(void *data) {
 	
 	result = crtx_get_addrinfo(listeners);
 	
-	rit = result;
-	
-	do {
+	for (rit = result; rit; rit = rit->ai_next) {
 		listeners->sockfd = socket(rit->ai_family, rit->ai_socktype, rit->ai_protocol);
 		
 		if (listeners->sockfd < 0)
@@ -200,16 +216,20 @@ void *socket_server_tmain(void *data) {
 			printf("setsockopt(SO_REUSEADDR) failed");
 		}
 		
+		if (rit->ai_family == AF_UNIX) {
+			ret = unlink( ((struct sockaddr_un *)rit->ai_addr)->sun_path );
+			if (ret < 0)
+				printf("failed to unlink existing unix socket: %s\n", strerror(errno));
+		}
+		
 		if (bind(listeners->sockfd, rit->ai_addr, rit->ai_addrlen) == 0)
 			break;
 		
 		close(listeners->sockfd);
-		
-		rit=rit->ai_next;
-	} while (rit != 0);
+	}
 	
 	if (rit == 0) {
-		printf("error in socket main thread\n");
+		printf("error in socket main thread: %s\n", strerror(errno));
 		return 0;
 	}
 	
@@ -246,8 +266,7 @@ void *socket_client_tmain(void *data) {
 	
 	result = crtx_get_addrinfo(listeners);
 	
-	rit = result;
-	do {
+	for (rit = result; rit; rit = rit->ai_next) {
 		listeners->sockfd = socket(rit->ai_family, rit->ai_socktype, rit->ai_protocol);
 		
 		if (listeners->sockfd < 0)
@@ -257,12 +276,10 @@ void *socket_client_tmain(void *data) {
 			break;
 		
 		close(listeners->sockfd);
-		
-		rit=rit->ai_next;
-	} while (rit != 0);
+	}
 	
 	if (rit == 0) {
-		printf("error in socket client main thread\n");
+		printf("error in socket client main thread: %s\n", strerror(errno));
 		return 0;
 	}
 	

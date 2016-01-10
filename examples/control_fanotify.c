@@ -1,11 +1,20 @@
 
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
- * 
+ *
  * This example sets up fanotify to ask for permission before a file in the
- * current work directory can be opened.
- * 
- * This example needs a kernel with CONFIG_FANOTIFY_ACCESS_PERMISSIONS enabled.
+ * current work directory can be opened. To ask for permission, this example
+ * sends a notification event over a socket to a notification daemon. Please
+ * see control_notifyd.c for an example of such a daemon.
+ *
+ * Fanotify requires root privileges (CAP_SYS_ADMIN). Hence, this example
+ * usually needs to be executed as root while the notification daemon can run
+ * with the privileges of a local user.
+ *
+ * This example needs a kernel with CONFIG_FANOTIFY_ACCESS_PERMISSIONS enabled!
+ *
+ * See control_inotify.c for a simple way to receive notifications for file
+ * operations.
  */
 
 #include <stdio.h>
@@ -20,11 +29,14 @@
 #include "fanotify.h"
 #include "sd_bus_notifications.h"
 
+#define PREFIX "notification_daemon"
+
 struct crtx_listener_base *fa;
 struct crtx_listener_base *sock_list;
 struct crtx_fanotify_listener listener;
 struct crtx_socket_listener sock_listener;
 
+char *sock_path = 0;
 
 static void fanotify_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct fanotify_event_metadata *metadata;
@@ -108,15 +120,34 @@ void init() {
 	printf("starting fanotify example plugin\n");
 	
 	/*
-	 * setup a socket listener that opens a TCPv4 connection to localhost:1234
+	 * setup a socket listener
 	 */
 	
-	memset(&sock_listener, 0, sizeof(struct crtx_socket_listener));
-	sock_listener.ai_family = AF_INET;
-	sock_listener.type = SOCK_STREAM;
-	sock_listener.protocol = IPPROTO_TCP;
-	sock_listener.host = "localhost";
-	sock_listener.service = "1234";
+	// open a TCPv4 client socket,
+	/*
+	{
+		sock_listener.ai_family = AF_INET;
+		sock_listener.type = SOCK_STREAM;
+		sock_listener.protocol = IPPROTO_TCP;
+		sock_listener.host = "localhost";
+		sock_listener.service = "1234";
+	}
+	*/
+	
+	// or open a unix socket
+	{
+		char *user;
+		
+		user = getenv("USER");
+		
+		sock_path = (char*) malloc(strlen(CRTX_UNIX_SOCKET_DIR) + 1 + strlen(PREFIX) + 1 + strlen(user) + 1);
+		sprintf(sock_path, "%s/%s_%s", CRTX_UNIX_SOCKET_DIR, PREFIX, user);
+		
+		memset(&sock_listener, 0, sizeof(struct crtx_socket_listener));
+		sock_listener.ai_family = AF_UNIX;
+		sock_listener.type = SOCK_STREAM;
+		sock_listener.service = sock_path;
+	}
 	
 	sock_list = create_listener("socket_client", &sock_listener);
 	if (!sock_list) {
@@ -163,4 +194,7 @@ void init() {
 void finish() {
 	free_listener(sock_list);
 	free_listener(fa);
+	
+	if (sock_path)
+		free(sock_path);
 }

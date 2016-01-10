@@ -1,6 +1,10 @@
 
 #include <arpa/inet.h>
 
+#ifndef CRTX_UNIX_SOCKET_DIR
+#define CRTX_UNIX_SOCKET_DIR "/var/run/cortexd/"
+#endif
+
 struct crtx_socket_listener {
 	struct crtx_listener_base parent;
 	

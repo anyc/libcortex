@@ -209,3 +209,4 @@ void reference_event_release(struct crtx_event *event);
 void dereference_event_release(struct crtx_event *event);
 
 void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event);
+char *get_username();

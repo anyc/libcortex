@@ -5,6 +5,10 @@
 #include <stddef.h>
 #include <inttypes.h>
 
+// for get_username()
+#include <unistd.h>
+#include <pwd.h>
+
 #include "core.h"
 
 struct crtx_graph **graphs;
@@ -853,6 +857,19 @@ char crtx_get_value(struct crtx_dict *ds, char *key, void *buffer, size_t buffer
 		
 		s++;
 		di++;
+	}
+	
+	return 0;
+}
+
+char *get_username() {
+	struct passwd *pw;
+	uid_t uid;
+	
+	uid = getuid();
+	pw = getpwuid(uid);
+	if (pw) {
+		return pw->pw_name;
 	}
 	
 	return 0;
