@@ -1,4 +1,16 @@
 
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ * This example creates a D-BUS notification every time a file or directory
+ * is created or deleted using inotify.
+ * 
+ * This example considers the following environment variables:
+ *
+ *  - INOTIFY_PATH: path that will be monitored (default: the current work
+ *                  directory)
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -12,6 +24,7 @@ struct crtx_listener_base *fa;
 struct crtx_inotify_listener listener;
 struct crtx_sd_bus_notification_listener notify_listener;
 
+/// this function sets up and sends a notification event
 static void send_notification(char *msg) {
 	struct crtx_event *notif_event;
 	struct crtx_dict *data;
@@ -29,6 +42,7 @@ static void send_notification(char *msg) {
 	add_raw_event(notif_event);
 }
 
+/// this function is called for every inotify event
 static void inotify_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct inotify_event *in_event;
 	char buf[1024];
@@ -64,24 +78,34 @@ static void inotify_event_handler(struct crtx_event *event, void *userdata, void
 
 void init() {
 	struct crtx_task * fan_handle_task;
+	char *path;
 	
 	printf("starting inotify example plugin\n");
 	
+	// create a listener (queue) for notification events
 	fa = create_listener("sd_bus_notification", &notify_listener);
 	if (!fa) {
 		printf("cannot create fanotify listener\n");
 		return;
 	}
 	
-	listener.mask = IN_CREATE | IN_DELETE;
-	listener.path = ".";
 	
+	path = getenv("INOTIFY_PATH");
+	if (!path)
+		path = ".";
+	
+	// setup inotify
+	listener.path = path;
+	listener.mask = IN_CREATE | IN_DELETE;
+	
+	// create a listener (queue) for inotify events
 	fa = create_listener("inotify", &listener);
 	if (!fa) {
 		printf("cannot create inotify listener\n");
 		return;
 	}
 	
+	// setup a task that will process the inotify events
 	fan_handle_task = new_task();
 	fan_handle_task->id = "inotify_event_handler";
 	fan_handle_task->handle = &inotify_event_handler;
