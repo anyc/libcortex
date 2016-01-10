@@ -13,8 +13,14 @@
  *
  * This example needs a kernel with CONFIG_FANOTIFY_ACCESS_PERMISSIONS enabled!
  *
- * See control_inotify.c for a simple way to receive notifications for file
+ * See control_inotify.c for a simpler way to receive notifications for file
  * operations.
+ * 
+ * This example reads the following environment variables:
+ *
+ *  - FANOTIFY_USER: contains the username of the user who will be asked for
+ *                 permission
+ *  - FANOTIFY_PATH: the path that will be monitored
  */
 
 #include <stdio.h>
@@ -38,11 +44,11 @@ struct crtx_socket_listener sock_listener;
 
 char *sock_path = 0;
 
+/// this function will be called for each fanotify event
 static void fanotify_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct fanotify_event_metadata *metadata;
 	char *buf, *chosen_action;
 	char title[32];
-	char msg[1024];
 	struct crtx_event *notif_event;
 	struct crtx_dict *data, *actions_dict;
 	size_t title_len, buf_len;
@@ -50,13 +56,11 @@ static void fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 	metadata = (struct fanotify_event_metadata *) event->data.raw;
 	
 	if ( (metadata->mask & FAN_OPEN_PERM) || (metadata->mask & FAN_OPEN) ) {
-		struct fanotify_response access;
-		
-		// acts like sprintf to replace %s with the file path
+		// replace %s with the file path and store the string in buf
 		crtx_fanotify_get_path(metadata->fd, &buf, 0, "Grant permission to open \"%s\"");
 		
+		// write the process id into the title
 		snprintf(title, 32, "PID %"PRId32, metadata->pid);
-		snprintf(msg, 1024, "%s %s", title, buf);
 		
 		if (metadata->mask & FAN_OPEN_PERM) {
 			// create options that are shown to a user
@@ -68,9 +72,11 @@ static void fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 				"", "No", 2, DIF_DATA_UNALLOCATED
 				);
 		} else {
+			// fanotify does not expect a response
 			actions_dict = 0;
 		}
 		
+		// create the payload of the event
 		title_len = strlen(title);
 		buf_len = strlen(buf);
 		data = crtx_create_dict("ssD",
@@ -82,33 +88,39 @@ static void fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 		notif_event = create_event(CRTX_EVT_NOTIFICATION, 0, 0);
 		notif_event->data.dict = data;
 		
-		// indicate that we are interested in a response to this event
-		reference_event_release(notif_event);
-		notif_event->response_expected = 1;
+		if (metadata->mask & FAN_OPEN_PERM) {
+			// indicate that we are interested in a response to this event
+			reference_event_release(notif_event);
+			notif_event->response_expected = 1;
+		}
 		
 		// process event
 		add_event(sock_listener.outbox, notif_event);
 		
-		wait_on_event(notif_event);
-		
-		if (!crtx_get_value(notif_event->response.dict, "action", &chosen_action, sizeof(chosen_action))) {
-			printf("received invalid response:\n");
-			crtx_print_dict(notif_event->response.dict);
+		if (metadata->mask & FAN_OPEN_PERM) {
+			struct fanotify_response access;
 			
-			free(buf);
-			return;
+			wait_on_event(notif_event);
+			
+			if (!crtx_get_value(notif_event->response.dict, "action", &chosen_action, sizeof(chosen_action))) {
+				printf("received invalid response:\n");
+				crtx_print_dict(notif_event->response.dict);
+				
+				free(buf);
+				return;
+			}
+			
+			access.fd = metadata->fd;
+			
+			if (!strcmp(chosen_action, "grant"))
+				access.response = FAN_ALLOW;
+			else
+				access.response = FAN_DENY;
+			
+			dereference_event_release(notif_event);
+			
+			write(listener.fanotify_fd, &access, sizeof(access));
 		}
-		
-		access.fd = metadata->fd;
-		
-		if (!strcmp(chosen_action, "grant"))
-			access.response = FAN_ALLOW;
-		else
-			access.response = FAN_DENY;
-		
-		dereference_event_release(notif_event);
-		
-		write(listener.fanotify_fd, &access, sizeof(access));
 	}
 	
 	free(buf);
@@ -116,6 +128,7 @@ static void fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 
 void init() {
 	struct crtx_task * fan_handle_task;
+	char *fanotify_path;
 	
 	printf("starting fanotify example plugin\n");
 	
@@ -138,7 +151,11 @@ void init() {
 	{
 		char *user;
 		
-		user = getenv("USER");
+		user = getenv("FANOTIFY_USER");
+		if (!user) {
+			printf("FANOTIFY_USER not set!\n");
+			user = get_username();
+		}
 		
 		sock_path = (char*) malloc(strlen(CRTX_UNIX_SOCKET_DIR) + 1 + strlen(PREFIX) + 1 + strlen(user) + 1);
 		sprintf(sock_path, "%s/%s_%s", CRTX_UNIX_SOCKET_DIR, PREFIX, user);
@@ -172,7 +189,12 @@ void init() {
 	
 	listener.event_f_flags = O_RDONLY;
 	listener.dirfd = AT_FDCWD;
-	listener.path = "."; // current working directory
+	
+	fanotify_path = getenv("FANOTIFY_PATH");
+	if (fanotify_path)
+		listener.path = fanotify_path;
+	else
+		listener.path = "."; // current working directory
 	
 	fa = create_listener("fanotify", &listener);
 	if (!fa) {
