@@ -21,6 +21,7 @@
  *  - FANOTIFY_USER: contains the username of the user who will be asked for
  *                 permission
  *  - FANOTIFY_PATH: the path that will be monitored
+ *  - NOTIFIER_PATH: path to the socket of the notification daemon
  */
 
 #include <stdio.h>
@@ -29,6 +30,7 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <stdarg.h>
+
 
 #include "core.h"
 #include "socket.h"
@@ -157,8 +159,13 @@ void init() {
 			user = get_username();
 		}
 		
-		sock_path = (char*) malloc(strlen(CRTX_UNIX_SOCKET_DIR) + 1 + strlen(PREFIX) + 1 + strlen(user) + 1);
-		sprintf(sock_path, "%s/%s_%s", CRTX_UNIX_SOCKET_DIR, PREFIX, user);
+		// default path: /var/run/cortexd/notification_daemon_$user
+		
+		sock_path = getenv("NOTIFIER_PATH");
+		if (!sock_path) {
+			sock_path = (char*) malloc(strlen(CRTX_UNIX_SOCKET_DIR) + 1 + strlen(PREFIX) + 1 + strlen(user) + 1);
+			sprintf(sock_path, "%s/%s_%s", CRTX_UNIX_SOCKET_DIR, PREFIX, user);
+		}
 		
 		memset(&sock_listener, 0, sizeof(struct crtx_socket_listener));
 		sock_listener.ai_family = AF_UNIX;
