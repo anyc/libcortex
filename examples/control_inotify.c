@@ -62,7 +62,6 @@ static void inotify_event_handler(struct crtx_event *event, void *userdata, void
 	}
 }
 
-
 void init() {
 	struct crtx_task * fan_handle_task;
 	

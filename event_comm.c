@@ -171,6 +171,8 @@ void send_event_as_dict(struct crtx_event *event, send_fct send, void *conn_id) 
 		
 	}
 	
+	printf("serializing event %s %d %" PRIu64 "\n", event->type, sev.flags, sev.id);
+	
 	ret = send(conn_id, &sev, sizeof(struct serialized_event));
 	if (ret < 0) {
 		printf("sending event failed: %s\n", strerror(errno));
@@ -411,6 +413,8 @@ struct crtx_event *recv_event_as_dict(recv_fct recv, void *conn_id) {
 		return 0;
 	}
 	event->type[sev.type_length] = 0;
+	
+	printf("deserializing event %s %d %" PRIu64 "\n", event->type, sev.flags, sev.id);
 	
 	event->data.dict = recv_dict(recv, conn_id);
 	if (!event->data.dict) {

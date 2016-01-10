@@ -3,9 +3,9 @@
  * Mario Kicherer (dev@kicherer.org) 2016
  * 
  * This example sets up fanotify to ask for permission before a file in the
- * current work directory can be opened. The permission request is sent to
- * the notification graph and if the response is "grant", the permission to
- * open the file is granted.
+ * current work directory can be opened.
+ * 
+ * This example needs a kernel with CONFIG_FANOTIFY_ACCESS_PERMISSIONS enabled.
  */
 
 #include <stdio.h>
@@ -19,8 +19,6 @@
 #include "socket.h"
 #include "fanotify.h"
 #include "sd_bus_notifications.h"
-
-// CONFIG_FANOTIFY_ACCESS_PERMISSIONS
 
 struct crtx_listener_base *fa;
 struct crtx_listener_base *sock_list;

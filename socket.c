@@ -9,6 +9,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <netdb.h>
 
 #include "core.h"
@@ -81,6 +82,7 @@ void *socket_connection_tmain(void *data) {
 	struct crtx_socket_listener slist;
 	struct crtx_event *event;
 	struct socket_connection_tmain_args *args;
+	struct crtx_task * task;
 	
 	
 	args = (struct socket_connection_tmain_args*) data;
@@ -92,18 +94,16 @@ void *socket_connection_tmain(void *data) {
 	
 	slist.sockfd = args->sockfd;
 	
-	struct crtx_task * recv_event;
-	recv_event = new_task();
-	recv_event->id = "outbound_event_handler";
-	recv_event->handle = &outbound_event_handler;
-	recv_event->userdata = &slist;
-	recv_event->position = 200;
-	add_task(slist.parent.graph, recv_event);
-	
-	struct crtx_task * task;
 	task = new_task();
 	task->id = "inbound_event_handler";
 	task->handle = &inbound_event_handler;
+	task->userdata = &slist;
+	task->position = 200;
+	add_task(slist.parent.graph, task);
+	
+	task = new_task();
+	task->id = "outbound_event_handler";
+	task->handle = &outbound_event_handler;
 	task->userdata = &slist;
 	task->position = 200;
 	add_task(slist.outbox, task);
@@ -118,7 +118,6 @@ void *socket_connection_tmain(void *data) {
 			event->cb_before_release_data = &slist;
 		}
 		
-		
 		if (slist.parent.graph)
 			add_event(slist.parent.graph, event);
 		else
@@ -132,57 +131,93 @@ void *socket_connection_tmain(void *data) {
 	return 0;
 }
 
+struct addrinfo *crtx_get_addrinfo(struct crtx_socket_listener *listener) {
+	struct addrinfo hints, *result;
+	int ret;
+	
+	if (listener->ai_family == AF_UNIX) {
+		struct sockaddr_un *sun;
+		
+		result = (struct addrinfo *) calloc(1, sizeof(struct addrinfo) + sizeof(struct sockaddr_un));
+		result->ai_family = AF_UNIX;
+		result->ai_next = 0;
+		
+		result->ai_addrlen = sizeof(struct sockaddr_un);
+		result->ai_addr = (void *) (result) + sizeof(struct addrinfo);
+		
+		sun = (struct sockaddr_un *) result->ai_addr;
+		
+		sun->sun_family = AF_UNIX;
+		strncpy(sun->sun_path, listener->service, sizeof(sun->sun_path)-1);
+	} else {
+		bzero(&hints, sizeof(struct addrinfo));
+		hints.ai_flags=AI_PASSIVE;
+		hints.ai_family=listener->ai_family;
+		hints.ai_socktype=listener->type;
+		hints.ai_protocol=listener->protocol;
+		
+		ret = getaddrinfo(listener->host, listener->service, &hints, &result);
+		if (ret !=0) {
+			printf("getaddrinfo error %s %s: %s", listener->host, listener->service, gai_strerror(ret));
+			return 0;
+		}
+	}
+	
+	return result;
+}
+
+void crtx_free_addrinfo(struct addrinfo *result) {
+	if (result->ai_family == AF_UNIX) {
+		free(result);
+	} else {
+		freeaddrinfo(result);
+	}
+}
+
 /// main thread of a server socket
 void *socket_server_tmain(void *data) {
 	int ret;
 	struct crtx_socket_listener *listeners;
-	struct addrinfo hints, *result, *resbkp;
+	struct addrinfo *result, *rit;
 	socklen_t addrlen;
 	struct sockaddr *cliaddr;
 	
 	listeners = (struct crtx_socket_listener*) data;
 	
-	bzero(&hints, sizeof(struct addrinfo));
-	hints.ai_flags=AI_PASSIVE;
-	hints.ai_family=listeners->ai_family;
-	hints.ai_socktype=listeners->type;
-	hints.ai_protocol=listeners->protocol;
+	result = crtx_get_addrinfo(listeners);
 	
-	ret = getaddrinfo(listeners->host, listeners->service, &hints, &result);
-	if (ret !=0) {
-		printf("getaddrinfo error %s %s: %s", listeners->host, listeners->service, gai_strerror(ret));
-		return 0;
-	}
-	
-	resbkp = result;
+	rit = result;
 	
 	do {
-		listeners->sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+		listeners->sockfd = socket(rit->ai_family, rit->ai_socktype, rit->ai_protocol);
 		
 		if (listeners->sockfd < 0)
 			continue;
 		
 		int enable = 1;
-		if (setsockopt(listeners->sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+		ret = setsockopt(listeners->sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int));
+		if (ret < 0) {
 			printf("setsockopt(SO_REUSEADDR) failed");
 		}
 		
-		if (bind(listeners->sockfd, result->ai_addr, result->ai_addrlen) == 0)
+		if (bind(listeners->sockfd, rit->ai_addr, rit->ai_addrlen) == 0)
 			break;
 		
 		close(listeners->sockfd);
-	} while ((result=result->ai_next) != NULL);
+		
+		rit=rit->ai_next;
+	} while (rit != 0);
 	
-	if (result == 0) {
+	if (rit == 0) {
 		printf("error in socket main thread\n");
 		return 0;
 	}
 	
 	listen(listeners->sockfd, 5);
 	
-	addrlen=result->ai_addrlen;
+	addrlen=rit->ai_addrlen;
 	
-	freeaddrinfo(resbkp);
+	crtx_free_addrinfo(result);
 	
 	cliaddr = malloc(addrlen);
 	
@@ -203,45 +238,35 @@ void *socket_server_tmain(void *data) {
 
 /// main thread of a client socket
 void *socket_client_tmain(void *data) {
-	int ret;
 	struct crtx_socket_listener *listeners;
 	struct crtx_event *event;
-	struct addrinfo hints, *result, *resbkp;
+	struct addrinfo *result, *rit;
 	
 	listeners = (struct crtx_socket_listener*) data;
 	
-	bzero(&hints, sizeof(struct addrinfo));
-// 	hints.ai_flags=AI_PASSIVE;
-	hints.ai_family=listeners->ai_family;
-	hints.ai_socktype=listeners->type;
-	hints.ai_protocol=listeners->protocol;
+	result = crtx_get_addrinfo(listeners);
 	
-	ret = getaddrinfo(listeners->host, listeners->service, &hints, &result);
-	if (ret !=0) {
-		printf("getaddrinfo error %s %s: %s", listeners->host, listeners->service, gai_strerror(ret));
-		return 0;
-	}
-	
-	resbkp = result;
-	
+	rit = result;
 	do {
-		listeners->sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+		listeners->sockfd = socket(rit->ai_family, rit->ai_socktype, rit->ai_protocol);
 		
 		if (listeners->sockfd < 0)
 			continue;
 		
-		if (connect(listeners->sockfd, result->ai_addr, result->ai_addrlen) == 0)
+		if (connect(listeners->sockfd, rit->ai_addr, rit->ai_addrlen) == 0)
 			break;
 		
 		close(listeners->sockfd);
-	} while ((result=result->ai_next) != NULL);
+		
+		rit=rit->ai_next;
+	} while (rit != 0);
 	
-	if (result == 0) {
+	if (rit == 0) {
 		printf("error in socket client main thread\n");
 		return 0;
 	}
 	
-	freeaddrinfo(resbkp);
+	crtx_free_addrinfo(result);
 	
 	while (!listeners->stop) {
 		event = recv_event_as_dict(&socket_recv, &listeners->sockfd);
@@ -252,7 +277,7 @@ void *socket_client_tmain(void *data) {
 		
 		if (event->response_expected) {
 			event->cb_before_release = &setup_response_event_cb;
-			event->cb_before_release_data = &listeners;
+			event->cb_before_release_data = listeners;
 		}
 		
 		if (listeners->parent.graph)
@@ -288,13 +313,12 @@ struct crtx_listener_base *crtx_new_socket_client_listener(void *options) {
 	new_eventgraph(&slistener->parent.graph, slistener->recv_types);
 	new_eventgraph(&slistener->outbox, slistener->send_types);
 	
-	struct crtx_task * recv_event;
-	recv_event = new_task();
-	recv_event->id = "inbound_event_handler";
-	recv_event->handle = &inbound_event_handler;
-	recv_event->userdata = slistener;
-	recv_event->position = 200;
-	add_task(slistener->parent.graph, recv_event);
+	task = new_task();
+	task->id = "inbound_event_handler";
+	task->handle = &inbound_event_handler;
+	task->userdata = slistener;
+	task->position = 200;
+	add_task(slistener->parent.graph, task);
 	
 	task = new_task();
 	task->id = "outbound_event_handler";
