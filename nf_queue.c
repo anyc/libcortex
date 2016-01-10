@@ -114,11 +114,9 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		ev->payload_size = payload_size;
 		memcpy(ev->payload, payload, ev->payload_size);
 		
-// 		event = new_event();
-// 		event->type = td->parent.graph->types[0];
-// 		event->data = ev;
-// 		event->data_size = data_size;
 		event = create_event(td->parent.graph->types[0], ev, data_size);
+		
+		reference_event_release(event);
 		
 		add_event(new_packet_graph_msg, event);
 		
@@ -129,7 +127,8 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		int ret = nfq_set_verdict2(qh, ev->id, NF_REPEAT, (long) event->response.raw, 0, NULL);
 		
 		free(ev);
-		free_event(event);
+// 		free_event(event);
+		reference_event_release(event);
 		
 		return ret;
 	} else {
@@ -213,15 +212,13 @@ void free_nf_queue_listener(void *data) {
 struct crtx_listener_base *crtx_new_nf_queue_listener(void *options) {
 	struct nfq_thread_data *tdata;
 	
-	tdata = (struct nfq_thread_data*) malloc(sizeof(struct nfq_thread_data));
-	tdata->queue_num = 0;
+// 	tdata = (struct nfq_thread_data*) malloc(sizeof(struct nfq_thread_data));
+// 	tdata->queue_num = 0;
+	
+	tdata = (struct nfq_thread_data*) options;
 	tdata->parent.free = &free_nf_queue_listener;
 	
-	// 	char **event_types = (char**) malloc(sizeof(char*)*2);
-	// 	event_types[0] = "nf_queue/packet_msg";
-	// 	event_types[1] = 0;
 	new_eventgraph(&tdata->parent.graph, nfq_packet_msg_etype);
-	
 	
 	pthread_create(&tdata->thread, NULL, nfq_tmain, tdata);
 	

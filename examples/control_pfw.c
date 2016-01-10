@@ -11,10 +11,8 @@
 #include <netinet/udp.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
-
 #include <sys/socket.h>
 #include <netdb.h>
-
 #include <sys/types.h>
 #include <ifaddrs.h>
 
@@ -38,6 +36,10 @@ struct crtx_task *rcache_host, *rcache_ip;
 #define PFW_DEFAULT 3
 #define PFW_ACCEPT 2
 #define PFW_REJECT 1
+
+#ifndef PFW_DATA_DIR
+#define PFW_DATA_DIR "/etc/cortexd/pfw/"
+#endif
 
 #define PFW_NEWPACKET_SIGNATURE "uststD"
 enum {PFW_NEWP_PROTOCOL=0, PFW_NEWP_SRC_IP, PFW_NEWP_SRC_HOST, PFW_NEWP_DST_IP, PFW_NEWP_DST_HOST, PFW_NEWP_PAYLOAD};
@@ -69,10 +71,6 @@ struct filter_set {
 	
 	size_t length;
 };
-
-#ifndef PFW_DATA_DIR
-#define PFW_DATA_DIR "/etc/cortexd/pfw/"
-#endif
 
 struct filter_set ip_whitelist;
 struct filter_set ip_blacklist;
@@ -151,10 +149,6 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 		return;
 	
 	if (newp_raw_graph && newp_raw_graph->tasks) {
-// 		newp_raw_event = new_event();
-// 		newp_raw_event->type = PFW_NEWPACKET_ETYPE;
-// 		newp_raw_event->data = event->data;
-// 		newp_raw_event->data_size = event->data_size;
 		newp_raw_event = create_event(PFW_NEWPACKET_ETYPE, event->data.raw, event->data.raw_size);
 		
 		add_event(newp_graph, newp_raw_event);
@@ -167,8 +161,6 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 	if (newp_graph && newp_graph->tasks) {
 		int res;
 		char host[256];
-// 		char *s;
-// 		char buf[64];
 		struct ev_nf_queue_packet_msg *ev;
 		struct iphdr *iph;
 		size_t size;
@@ -324,16 +316,22 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 		newp_event = create_event(PFW_NEWPACKET_ETYPE, 0, 0);
 		newp_event->data.dict = ds;
 		
+		reference_event_release(newp_event);
+		
 		add_event(newp_graph, newp_event);
 		
 		wait_on_event(newp_event);
 		
-		if (newp_event->response.raw)
+		if (newp_event->response.raw) {
 			event->response.raw = newp_event->response.raw;
+			newp_event->response.raw = 0;
+		}
 		
-		free_dict(ds);
+		dereference_event_release(newp_event);
 		
-		free_event(newp_event);
+// 		free_dict(ds);
+		
+// 		free_event(newp_event);
 	}
 	
 	if (!event->response.raw) {
@@ -341,67 +339,6 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 		event->response.raw = (void*) PFW_DEFAULT;
 	}
 }
-
-// static void readline_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	struct crtx_event *rl_event;
-// 	int res;
-// 	char host[64];
-// 	char *s;
-// 	char buf[64];
-// 	struct ev_nf_queue_packet_msg *ev;
-// 	struct iphdr *iph;
-// 	
-// 	
-// 	ev = (struct ev_nf_queue_packet_msg*) event->data;
-// 	iph = (struct iphdr*)ev->payload;
-// 	
-// 	struct sockaddr_in sa;
-// 	sa.sin_family = AF_INET;
-// 	sa.sin_addr = *(struct in_addr *)&iph->saddr;
-// 	res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
-// 	if (res) {
-// 		printf("getnameinfo failed %d\n", res);
-// 		host[0] = 0;
-// 	}
-// 	
-// 	s = buf;
-// 	s += sprintf(s, "%s %s (%s) ", nfq_proto2str(iph->protocol),
-// 			   host,
-// 		    inet_ntoa(*(struct in_addr *)&iph->saddr));
-// 	
-// 	sa.sin_addr = *(struct in_addr *)&iph->daddr;
-// 	res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
-// 	if (res) {
-// 		printf("getnameinfo failed %d\n", res);
-// 		host[0] = 0;
-// 	}
-// 	
-// 	s += sprintf(s, "%s (%s) (yes/no)",
-// 			   host,
-// 		    inet_ntoa(*(struct in_addr *)&iph->daddr));
-// 	
-// 	
-// 	while (!event->response) {
-// 		rl_event = new_event();
-// 		rl_event->type = "readline/request";
-// 		rl_event->data = buf;
-// 		rl_event->data_size = s-buf;
-// 		
-// 		if (!rl_graph)
-// 			rl_graph = get_graph_for_event_type("readline/request");
-// 		
-// 		add_event(rl_graph, rl_event);
-// 		
-// 		wait_on_event(rl_event);
-// 		
-// 		if (rl_event->response && !strncmp(rl_event->response, "yes", 3)) {
-// 			event->response = (void*) PFW_ACCEPT;
-// 		}
-// 		if (rl_event->response && !strncmp(rl_event->response, "no", 2)) {
-// 			event->response = (void*) PFW_REJECT;
-// 		}
-// 	}
-// }
 
 char pfw_is_ip_local(char *ip) {
 	struct ip_ll *iit;
@@ -414,8 +351,7 @@ char pfw_is_ip_local(char *ip) {
 	return 0;
 }
 
-
-void pfw_get_remote_data(struct crtx_dict *ds, char **remote_ip, char **remote_host) {
+void pfw_get_remote_part(struct crtx_dict *ds, char **remote_ip, char **remote_host) {
 	char src_local, dst_local;
 	unsigned int i_remote_ip, i_remote_host;
 	
@@ -452,40 +388,13 @@ void pfw_get_remote_data(struct crtx_dict *ds, char **remote_ip, char **remote_h
 	*remote_ip = ds->items[i_remote_ip].string;
 }
 
-
-// char * pfw_rcache_create_key(struct crtx_event *event) {
-// 	struct ev_nf_queue_packet_msg *ev;
-// 	struct iphdr *iph;
-// 	char *ss, *sd, *s;
-// 	size_t len;
-// 	
-// 	if (!nfq_packet_msg_okay(event))
-// 		return 0;
-// 	
-// 	ev = (struct ev_nf_queue_packet_msg*) event->data;
-// 	
-// 	iph = (struct iphdr*)ev->payload;
-// 	
-// 	ss = inet_ntoa(*(struct in_addr *)&iph->saddr);
-// 	sd = inet_ntoa(*(struct in_addr *)&iph->daddr);
-// 	
-// 	ASSERT(iph->protocol < 999);
-// 	len = 3 + 1 + strlen(ss) + 1 + strlen(sd) + 1;
-// 	s = (char*) malloc(len);
-// 	sprintf(s, "%u %s %s", iph->protocol, ss, sd);
-// 	
-// 	return s;
-// }
-
-
 char * pfw_rcache_create_key_ip(struct crtx_event *event) {
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
-// 	ds = (struct crtx_dict *) event->data;
 	ds = event->data.dict;
 	
-	pfw_get_remote_data(ds, &remote_ip, &remote_host);
+	pfw_get_remote_part(ds, &remote_ip, &remote_host);
 	
 	return stracpy(remote_ip, 0);
 }
@@ -494,52 +403,17 @@ char * pfw_rcache_create_key_host(struct crtx_event *event) {
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
-// 	ds = (struct crtx_dict *) event->data;
 	ds = event->data.dict;
 	
-	pfw_get_remote_data(ds, &remote_ip, &remote_host);
+	pfw_get_remote_part(ds, &remote_ip, &remote_host);
 	
 	return stracpy(remote_host, 0);
-}
-
-// struct crtx_dict_item *get_crtx_dict_item(struct crtx_dict *ds, char *key) {
-// 	struct crtx_dict_item *di;
-// 	char *c;
-// 	
-// 	c = ds->signature;
-// 	di = ds->items;
-// 	while (c && *c) {
-// 		if (!strcmp(di->key, key))
-// 			return di;
-// 		c++;
-// 		di++;
-// 	}
-// 	
-// 	return 0;
-// }
-
-struct crtx_dict_item *get_crtx_dict_item(struct crtx_dict *ds, char *key) {
-	struct crtx_dict_item *di;
-	
-	di = ds->items;
-	while (di) {
-		if (!strcmp(di->key, key))
-			return di;
-		
-		if (!DIF_IS_LAST(di))
-			break;
-		
-		di++;
-	}
-	
-	return 0;
 }
 
 static void pfw_print_packet(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *ds, *pds;
 	char src_local, dst_local;
 	
-// 	ds = (struct crtx_dict *) event->data;
 	ds = event->data.dict;
 	
 	if (strcmp(ds->signature, PFW_NEWPACKET_SIGNATURE)) {
@@ -670,7 +544,7 @@ static void pfw_rules_filter(struct crtx_event *event, void *userdata, void **se
 // 	ds = (struct crtx_dict *) event->data;
 	ds = event->data.dict;
 	
-	pfw_get_remote_data(ds, &remote_ip, &remote_host);
+	pfw_get_remote_part(ds, &remote_ip, &remote_host);
 	
 	if (match_regexp_list(remote_host, &host_blacklist)) {
 		event->response.raw = (void *) PFW_REJECT;
@@ -743,12 +617,6 @@ void init() {
 	}
 	
 	freeifaddrs(addrs);
-	
-// 	readline_handle_task = new_task();
-// 	readline_handle_task->id = "readline_handler";
-// 	readline_handle_task->handle = &readline_handler;
-// 	add_task(newp_graph, readline_handle_task);
-// 	
 	
 	
 	load_list(&host_blacklist, PFW_DATA_DIR "hblack.txt");

@@ -216,6 +216,7 @@ struct crtx_task *create_response_cache_task(char *signature, create_key_cb_t cr
 	ct->match_event = &rcache_match_cb_t_strcmp;
 	ct->on_hit = &response_cache_on_hit;
 	ct->on_miss = 0;
+	ct->cache = dc;
 	
 	task->id = "response_cache";
 	task->position = 90;
