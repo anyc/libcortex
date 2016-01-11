@@ -23,15 +23,15 @@ char *nfq_packet_msg_etype[] = { NFQ_PACKET_MSG_ETYPE, 0 };
 static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		    struct nfq_data *tb, void *data)
 {
+	struct crtx_nfq_listener *nfq_list;
 	struct nfqnl_msg_packet_hdr *ph;
 	struct nfqnl_msg_packet_hw *hwph;
-	u_int32_t mark,ifi; 
+	u_int32_t mark, ifi;
 	
-	struct crtx_nfq_listener *td = (struct crtx_nfq_listener*) data;
 	
-	struct crtx_graph *new_packet_graph_msg = td->parent.graph;
+	nfq_list = (struct crtx_nfq_listener*) data;
 	
-	if (new_packet_graph_msg && new_packet_graph_msg->tasks) {
+	if (!is_graph_empty(nfq_list->parent.graph, 0)) {
 		struct crtx_nfq_packet *ev;
 		struct crtx_event *event;
 		size_t msg_size;
@@ -88,7 +88,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		ifi = nfq_get_outdev(tb);
 		if (ifi) {
-// 			printf("outdev=%u ", ifi);
+// 			printf("ounfq_listev=%u ", ifi);
 			ev->outdev = ifi;
 		}
 		
@@ -100,7 +100,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		ifi = nfq_get_physoutdev(tb);
 		if (ifi) {
-// 			printf("physoutdev=%u ", ifi);
+// 			printf("physounfq_listev=%u ", ifi);
 			ev->physoutdev = ifi;
 		}
 		
@@ -114,11 +114,11 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		ev->payload_size = payload_size;
 		memcpy(ev->payload, payload, ev->payload_size);
 		
-		event = create_event(td->parent.graph->types[0], ev, data_size);
+		event = create_event(nfq_list->parent.graph->types[0], ev, data_size);
 		
 		reference_event_release(event);
 		
-		add_event(new_packet_graph_msg, event);
+		add_event(nfq_list->parent.graph, event);
 		
 		wait_on_event(event);
 		
@@ -127,8 +127,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		int ret = nfq_set_verdict2(qh, ev->id, NF_REPEAT, (long) event->response.raw, 0, NULL);
 		
 		free(ev);
-// 		free_event(event);
-		reference_event_release(event);
+		dereference_event_release(event);
 		
 		return ret;
 	} else {
@@ -155,7 +154,7 @@ void *nfq_tmain(void *data) {
 	int fd, rv;
 	char buf[4096] __attribute__ ((aligned));
 	
-	struct crtx_nfq_listener *td = (struct crtx_nfq_listener*) data;
+	struct crtx_nfq_listener *nfq_list = (struct crtx_nfq_listener*) data;
 	
 	h = nfq_open();
 	if (!h) {
@@ -176,7 +175,7 @@ void *nfq_tmain(void *data) {
 	}
 	
 	printf("binding this socket to queue '0'\n");
-	qh = nfq_create_queue(h, td->queue_num, &nfq_event_cb, td);
+	qh = nfq_create_queue(h, nfq_list->queue_num, &nfq_event_cb, nfq_list);
 	if (!qh) {
 		fprintf(stderr, "error during nfq_create_queue()\n");
 		return 0;
@@ -200,29 +199,29 @@ void *nfq_tmain(void *data) {
 }
 
 void free_nf_queue_listener(void *data) {
-	struct crtx_nfq_listener *tdata = (struct crtx_nfq_listener *) data;
+	struct crtx_nfq_listener *nfq_listata = (struct crtx_nfq_listener *) data;
 	
-	free_eventgraph(tdata->parent.graph);
+	free_eventgraph(nfq_listata->parent.graph);
 	
-// 	pthread_join(tdata->thread, 0);
+// 	pthread_join(nfq_listata->thread, 0);
 	
-	free(tdata);
+	free(nfq_listata);
 }
 
 struct crtx_listener_base *crtx_new_nf_queue_listener(void *options) {
-	struct crtx_nfq_listener *tdata;
+	struct crtx_nfq_listener *nfq_listata;
 	
-// 	tdata = (struct crtx_nfq_listener*) malloc(sizeof(struct crtx_nfq_listener));
-// 	tdata->queue_num = 0;
+// 	nfq_listata = (struct crtx_nfq_listener*) malloc(sizeof(struct crtx_nfq_listener));
+// 	nfq_listata->queue_num = 0;
 	
-	tdata = (struct crtx_nfq_listener*) options;
-	tdata->parent.free = &free_nf_queue_listener;
+	nfq_listata = (struct crtx_nfq_listener*) options;
+	nfq_listata->parent.free = &free_nf_queue_listener;
 	
-	new_eventgraph(&tdata->parent.graph, nfq_packet_msg_etype);
+	new_eventgraph(&nfq_listata->parent.graph, nfq_packet_msg_etype);
 	
-	pthread_create(&tdata->thread, NULL, nfq_tmain, tdata);
+	pthread_create(&nfq_listata->thread, NULL, nfq_tmain, nfq_listata);
 	
-	return &tdata->parent;
+	return &nfq_listata->parent;
 }
 
 char *crtx_nfq_proto2str(u_int16_t protocol) {

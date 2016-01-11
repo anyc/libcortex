@@ -240,6 +240,10 @@ void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event) {
 	eit->next = 0;
 }
 
+char is_graph_empty(struct crtx_graph *graph, char *event_type) {
+	return (graph->tasks == 0);
+}
+
 void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	
 	reference_event_release(event);
@@ -248,6 +252,13 @@ void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	pthread_mutex_lock(&graph->mutex);
 	
 	printf("new event %s\n", event->type);
+	
+	if (!graph->tasks) {
+		printf("dropping event as graph is empty\n");
+		
+		pthread_mutex_unlock(&graph->mutex);
+		return;
+	}
 	
 	event_ll_add(&graph->equeue, event);
 	
