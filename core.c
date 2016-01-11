@@ -696,44 +696,119 @@ void wait_on_notifier(struct crtx_event_notifier *en) {
 // 	return task;
 // }
 
-struct crtx_dict * crtx_create_dict(char *signature, ...) {
-	struct crtx_dict *ds;
-	struct crtx_dict_item *di;
-	char *s;
-	size_t size;
+char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
+// 	if (ds) {
+// 		size_t idx;
+// 		
+// 		idx = di - ds->items;
+// 		printf("idx %zu\n", idx);
+// 		if (ds->signature[idx] != type) {
+// 			printf("type mismatch %c %c\n", ds->signature[idx], type);
+// 			return -1;
+// 		}
+// 	}
+	
+	di->type = type;
+	di->key = va_arg(va, char*);
+	
+	switch (di->type) {
+		case 'u':
+			di->uint32 = va_arg(va, uint32_t);
+			
+			di->size = va_arg(va, size_t);
+			if (di->size > 0 && di->size != sizeof(uint32_t)) {
+				printf("size mismatch %zu %zu\n", di->size, sizeof(uint32_t));
+				return 0;
+			}
+			break;
+		case 's':
+			di->string = va_arg(va, char*);
+			
+			di->size = va_arg(va, size_t) + 1; // add space for \0 delimiter
+			break;
+		case 'D':
+			di->ds = va_arg(va, struct crtx_dict*);
+			di->size = va_arg(va, size_t);
+			break;
+		default:
+			printf("unknown literal '%c'\n", di->type);
+			return -1;
+	}
+	
+	di->flags = va_arg(va, int);
+	
+	return 0;
+}
+
+char crtx_fill_data_item(struct crtx_dict_item *di, char type, ...) {
 	va_list va;
+	char ret;
+	
+	va_start(va, type);
+	
+	ret = crtx_fill_data_item_va(di, type, va);
+	
+	va_end(va);
+	
+	return ret;
+}
+
+struct crtx_dict * crtx_init_dict(char *signature) {
+	struct crtx_dict *ds;
+	size_t size;
 	
 	size = strlen(signature) * sizeof(struct crtx_dict_item) + sizeof(struct crtx_dict);
 	ds = (struct crtx_dict*) malloc(size);
+	
 	ds->signature = signature;
 	ds->size = size;
 	ds->signature_length = 0;
+	
+	return ds;
+}
+
+struct crtx_dict * crtx_create_dict(char *signature, ...) {
+	struct crtx_dict *ds;
+	struct crtx_dict_item *di;
+	char *s, ret;
+	va_list va;
+	
+	
+	ds = crtx_init_dict(signature);
 	
 	va_start(va, signature);
 	
 	s = signature;
 	di = ds->items;
 	while (*s) {
-		di->type = *s;
-		di->key = va_arg(va, char*);
+// 		di->type = *s;
+// 		di->key = va_arg(va, char*);
 		
-		switch (*s) {
-			case 'u':
-				di->uint32 = va_arg(va, uint32_t);
-				break;
-			case 's':
-				di->string = va_arg(va, char*);
-				break;
-			case 'D':
-				di->ds = va_arg(va, struct crtx_dict*);
-				break;
-			default:
-				printf("unknown literal '%c' in signature \"%s\"\n", *s, signature);
-				return 0;
-		}
+// 		switch (*s) {
+// 			case 'u':
+// 				di->uint32 = va_arg(va, uint32_t);
+// 				di->size = sizeof(uint32_t);
+// 				break;
+// 			case 's':
+// 				di->string = va_arg(va, char*);
+// 				di->size = sizeof(char *);
+// 				break;
+// 			case 'D':
+// 				di->ds = va_arg(va, struct crtx_dict*);
+// 				break;
+// 			default:
+// 				printf("unknown literal '%c' in signature \"%s\"\n", *s, signature);
+// 				return 0;
+// 		}
+// 		
+// 		size = va_arg(va, size_t);
+// 		if (size > 0)
+// 			di->size = size;
+// 		di->flags = va_arg(va, int);
 		
-		di->size = va_arg(va, size_t);
-		di->flags = va_arg(va, int);
+		ret = crtx_fill_data_item_va(di, *s, va);
+		if (ret < 0)
+			return 0;
 		
 		di++;
 		s++;
@@ -787,8 +862,10 @@ void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level) {
 	struct crtx_dict_item *di;
 	uint8_t i,j;
 	
-	if (!ds)
+	if (!ds) {
 		printf("error, trying to print non-existing dict\n");
+		return;
+	}
 	
 	for (j=0;j<level;j++) printf("  ");
 	printf("sign: %s (%zu==%u)\n", ds->signature, strlen(ds->signature), ds->signature_length);
@@ -807,7 +884,11 @@ void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level) {
 			case 'u': printf("(uint32_t) %d\n", di->uint32); break;
 			case 'i': printf("(int32_t) %d\n", di->int32); break;
 			case 's': printf("(char*) %s\n", di->string); break;
-			case 'D': printf("(dict) \n"); crtx_print_dict_rec(di->ds, level+1); break;
+			case 'D':
+				printf("(dict) \n");
+				if (di->ds)
+					crtx_print_dict_rec(di->ds, level+1);
+				break;
 		}
 		
 		s++;

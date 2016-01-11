@@ -42,7 +42,7 @@ struct crtx_task *rcache_host, *rcache_ip;
 #define PFW_DATA_DIR "/etc/cortexd/pfw/"
 #endif
 
-#define PFW_NEWPACKET_SIGNATURE "uststD"
+#define PFW_NEWPACKET_SIGNATURE "ussssD"
 enum {PFW_NEWP_PROTOCOL=0, PFW_NEWP_SRC_IP, PFW_NEWP_SRC_HOST, PFW_NEWP_DST_IP, PFW_NEWP_DST_HOST, PFW_NEWP_PAYLOAD};
 
 #define PFW_NEWPACKET_TCP_SIGNATURE "uu"
@@ -145,9 +145,6 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 	struct crtx_event *newp_raw_event, *newp_event;
 	struct crtx_nfq_packet *ev;
 	
-// 	if (event->response.raw)
-// 		return;
-	
 	if (event->data.raw_size < sizeof(struct crtx_nfq_packet))
 		return;
 	
@@ -173,30 +170,31 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 		int res;
 		char host[256];
 		struct iphdr *iph;
-		size_t size;
-		char *sign;
+		size_t slen;
+// 		char *sign;
 		struct crtx_dict_item *di;
 		struct crtx_dict *ds;
 		
 		iph = (struct iphdr*)ev->payload;
 		
 		
-		sign = PFW_NEWPACKET_SIGNATURE;
-		size = strlen(sign)*sizeof(struct crtx_dict_item) + sizeof(struct crtx_dict);
-		ds = (struct crtx_dict*) malloc(size);
+// 		sign = PFW_NEWPACKET_SIGNATURE;
+// 		size = strlen(sign)*sizeof(struct crtx_dict_item) + sizeof(struct crtx_dict);
+// 		ds = (struct crtx_dict*) malloc(size);
+// 		
+// 		ds->signature = sign;
 		
-		ds->signature = sign;
+		ds = crtx_init_dict(PFW_NEWPACKET_SIGNATURE);
+		di = ds->items;
 		
-		di = &ds->items[PFW_NEWP_PROTOCOL];
-		di->type = 'u';
-		di->size = 0;
-		di->flags = 0;
-		di->key = "protocol";
-		di->uint32 = iph->protocol;
-// 		di->flags = DIF_DATA_UNALLOCATED;
-// 		di->string = crtx_nfq_proto2str(iph->protocol);
-// 		di->size = strlen(di->string)+1; // add one byte for terminating \0
-		
+		crtx_fill_data_item(di, 'u', "protocol", iph->protocol, 0, 0);
+		di++;
+// 		di = &ds->items[PFW_NEWP_PROTOCOL];
+// 		di->type = 'u';
+// 		di->size = 0;
+// 		di->flags = 0;
+// 		di->key = "protocol";
+// 		di->uint32 = iph->protocol;
 		
 		struct sockaddr_in sa;
 		sa.sin_family = AF_INET;
@@ -207,21 +205,27 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 			host[0] = 0;
 		}
 		
-		di = &ds->items[PFW_NEWP_SRC_HOST];
-		di->type = 's';
-		di->size = 0;
-		di->flags = 0;
-		di->key = "src_hostname";
-		di->string = stracpy(host, &di->size);
-		di->size += 1; // add one byte for terminating \0
+		slen = strlen(host);
+		crtx_fill_data_item(di, 's', "src_ip", stracpy(inet_ntoa(*(struct in_addr *)&iph->saddr), &slen), slen, 0);
+		di++;
+// 		di = &ds->items[PFW_NEWP_SRC_IP];
+// 		di->type = 's';
+// 		di->size = 0;
+// 		di->flags = 0;
+// 		di->key = "src_ip";
+// 		di->string = stracpy(inet_ntoa(*(struct in_addr *)&iph->saddr), &di->size);
+// 		di->size += 1; // add one byte for terminating \0
 		
-		di = &ds->items[PFW_NEWP_SRC_IP];
-		di->type = 's';
-		di->size = 0;
-		di->flags = 0;
-		di->key = "src_ip";
-		di->string = stracpy(inet_ntoa(*(struct in_addr *)&iph->saddr), &di->size);
-		di->size += 1; // add one byte for terminating \0
+		slen = strlen(host);
+		crtx_fill_data_item(di, 's', "src_hostname", stracpy(host, &slen), slen, 0);
+		di++;
+// 		di = &ds->items[PFW_NEWP_SRC_HOST];
+// 		di->type = 's';
+// 		di->size = 0;
+// 		di->flags = 0;
+// 		di->key = "src_hostname";
+// 		di->string = stracpy(host, &di->size);
+// 		di->size += 1; // add one byte for terminating \0
 		
 		sa.sin_addr = *(struct in_addr *)&iph->daddr;
 		res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
@@ -230,56 +234,70 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 			host[0] = 0;
 		}
 		
-		di = &ds->items[PFW_NEWP_DST_HOST];
-		di->type = 's';
-		di->size = 0;
-		di->flags = 0;
-		di->key = "dst_hostname";
-		di->string = stracpy(host, &di->size);
-		di->size += 1; // add one byte for terminating \0
+		slen = strlen(host);
+		crtx_fill_data_item(di, 's', "dst_ip", stracpy(inet_ntoa(*(struct in_addr *)&iph->daddr), &slen), slen, 0);
+		di++;
+// 		di = &ds->items[PFW_NEWP_DST_IP];
+// 		di->type = 's';
+// 		di->size = 0;
+// 		di->flags = 0;
+// 		di->key = "dst_ip";
+// 		di->string = stracpy(inet_ntoa(*(struct in_addr *)&iph->daddr), &di->size);
+// 		di->size += 1; // add one byte for terminating \0
 		
-		di = &ds->items[PFW_NEWP_DST_IP];
-		di->type = 's';
-		di->size = 0;
-		di->flags = 0;
-		di->key = "dst_ip";
-		di->string = stracpy(inet_ntoa(*(struct in_addr *)&iph->daddr), &di->size);
-		di->size += 1; // add one byte for terminating \0
+		slen = strlen(host);
+		crtx_fill_data_item(di, 's', "dst_hostname", stracpy(host, &slen), slen, 0);
+		di++;
+// 		di = &ds->items[PFW_NEWP_DST_HOST];
+// 		di->type = 's';
+// 		di->size = 0;
+// 		di->flags = 0;
+// 		di->key = "dst_hostname";
+// 		di->string = stracpy(host, &di->size);
+// 		di->size += 1; // add one byte for terminating \0
 		
-		di = &ds->items[PFW_NEWP_PAYLOAD];
-		di->type = 'D';
-		di->flags = 0;
-		di->key = "payload";
-		di->ds = 0;
+		crtx_fill_data_item(di, 'D', "payload", 0, 0, DIF_LAST);
+// 		di = &ds->items[PFW_NEWP_PAYLOAD];
+// 		di->type = 'D';
+// 		di->flags = 0;
+// 		di->key = "payload";
+// 		di->ds = 0;
 		
-		ds->items[PFW_NEWP_PAYLOAD].flags = DIF_LAST;
+// 		ds->items[PFW_NEWP_PAYLOAD].flags = DIF_LAST;
+// 		di->flags |= DIF_LAST;
 		
 		if (iph->protocol == 6) {
 			struct crtx_dict_item *pdi;
-			size_t size;
-			char *sign;
+// 			size_t size;
+// 			char *sign;
 			
 			struct tcphdr *tcp = (struct tcphdr *) (ev->payload + (iph->ihl << 2));
 			
-			sign = PFW_NEWPACKET_TCP_SIGNATURE;
-			size = strlen(sign)*sizeof(struct crtx_dict_item) + sizeof(struct crtx_dict);
-			di->ds = (struct crtx_dict*) malloc(size);
+// 			sign = PFW_NEWPACKET_TCP_SIGNATURE;
+// 			size = strlen(sign)*sizeof(struct crtx_dict_item) + sizeof(struct crtx_dict);
+// 			di->ds = (struct crtx_dict*) malloc(size);
+// 			di->ds->signature = sign;
 			
-			di->ds->signature = sign;
+			di->ds = crtx_init_dict(PFW_NEWPACKET_TCP_SIGNATURE);
+			pdi = di->ds->items;
 			
-			pdi = &di->ds->items[PFW_NEWP_TCP_SPORT];
-			pdi->type = 'u';
-			pdi->flags = 0;
-			pdi->key = "src_port";
-			pdi->uint32 = ntohs(tcp->source);
+			crtx_fill_data_item(pdi, 'u', "src_port", ntohs(tcp->source), 0, 0);
+			pdi++;
+// 			pdi = &di->ds->items[PFW_NEWP_TCP_SPORT];
+// 			pdi->type = 'u';
+// 			pdi->flags = 0;
+// 			pdi->key = "src_port";
+// 			pdi->uint32 = ntohs(tcp->source);
 			
-			pdi = &di->ds->items[PFW_NEWP_TCP_DPORT];
-			pdi->type = 'u';
-			pdi->flags = 0;
-			pdi->key = "dst_port";
-			pdi->uint32 = ntohs(tcp->dest);
+			crtx_fill_data_item(pdi, 'u', "dst_port", ntohs(tcp->dest), 0, DIF_LAST);
+// 			pdi = &di->ds->items[PFW_NEWP_TCP_DPORT];
+// 			pdi->type = 'u';
+// 			pdi->flags = 0;
+// 			pdi->key = "dst_port";
+// 			pdi->uint32 = ntohs(tcp->dest);
 			
-			di->ds->items[PFW_NEWP_TCP_DPORT].flags = DIF_LAST;
+// 			di->ds->items[PFW_NEWP_TCP_DPORT].flags = DIF_LAST;
+// 			pdi->flags = DIF_LAST;
 			
 // 			fprintf(stdout, "TCP{sport=%u; dport=%u; seq=%u; ack_seq=%u; flags=u%ua%up%ur%us%uf%u; window=%u; urg=%u}\n",
 // 				   ntohs(tcp->source), ntohs(tcp->dest), ntohl(tcp->seq), ntohl(tcp->ack_seq)
@@ -287,62 +305,55 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 		} else
 		if (iph->protocol == 17) {
 			struct crtx_dict_item *pdi;
-			size_t size;
-			char *sign;
+// 			size_t size;
+// 			char *sign;
 			
 			struct udphdr *udp = (struct udphdr *) (ev->payload + (iph->ihl << 2));
 			
-			sign = PFW_NEWPACKET_UDP_SIGNATURE;
-			size = strlen(sign)*sizeof(struct crtx_dict_item) + sizeof(struct crtx_dict);
-			di->ds = (struct crtx_dict*) malloc(size);
+// 			sign = PFW_NEWPACKET_UDP_SIGNATURE;
+// 			size = strlen(sign)*sizeof(struct crtx_dict_item) + sizeof(struct crtx_dict);
+// 			di->ds = (struct crtx_dict*) malloc(size);
+// 			
+// 			di->ds->signature = sign;
 			
-			di->ds->signature = sign;
+			di->ds = crtx_init_dict(PFW_NEWPACKET_UDP_SIGNATURE);
+			pdi = di->ds->items;
 			
-			pdi = &di->ds->items[PFW_NEWP_UDP_SPORT];
-			pdi->type = 'u';
-			pdi->flags = 0;
-			pdi->key = "src_port";
-			pdi->uint32 = ntohs(udp->source);
+			crtx_fill_data_item(pdi, 'u', "src_port", ntohs(udp->source), 0, 0);
+			pdi++;
+// 			pdi = &di->ds->items[PFW_NEWP_UDP_SPORT];
+// 			pdi->type = 'u';
+// 			pdi->flags = 0;
+// 			pdi->key = "src_port";
+// 			pdi->uint32 = ntohs(udp->source);
 			
-			pdi = &di->ds->items[PFW_NEWP_UDP_DPORT];
-			pdi->type = 'u';
-			pdi->flags = 0;
-			pdi->key = "dst_port";
-			pdi->uint32 = ntohs(udp->dest);
+			crtx_fill_data_item(pdi, 'u', "dst_port", ntohs(udp->dest), 0, DIF_LAST);
+// 			pdi = &di->ds->items[PFW_NEWP_UDP_DPORT];
+// 			pdi->type = 'u';
+// 			pdi->flags = 0;
+// 			pdi->key = "dst_port";
+// 			pdi->uint32 = ntohs(udp->dest);
 			
-			di->ds->items[PFW_NEWP_UDP_DPORT].flags = DIF_LAST;
+// 			di->ds->items[PFW_NEWP_UDP_DPORT].flags = DIF_LAST;
+// 			pdi->flags = DIF_LAST;
 			
-			// 			fprintf(stdout,"UDP{sport=%u; dport=%u; len=%u}\n",
-			// 				   ntohs(udp->source), ntohs(udp->dest), udp->len);
+// 			fprintf(stdout,"UDP{sport=%u; dport=%u; len=%u}\n",
+// 				   ntohs(udp->source), ntohs(udp->dest), udp->len);
 		}
 		
+		crtx_print_dict(ds);
 		
-// 		newp_event = new_event();
-// 		newp_event->type = PFW_NEWPACKET_ETYPE;
-// 		newp_event->data = ds;
-// 		newp_event->data_size = size;
 		newp_event = create_event(PFW_NEWPACKET_ETYPE, 0, 0);
 		newp_event->data.dict = ds;
 		newp_event->data.raw = event->data.raw;
 		newp_event->data.raw_size = event->data.raw_size;
 		newp_event->response.copy_raw = &crtx_copy_raw_data;
 		
-// 		newp_event->response.raw = event->response.raw;
-// 		newp_event->response.raw_size = event->response.raw_size;
-// 		newp_event->response.copy_raw = &crtx_copy_raw_data;
-		
 		reference_event_release(newp_event);
 		
 		add_event(newp_graph, newp_event);
 		
 		wait_on_event(newp_event);
-		
-// 		if (newp_event->response.raw) {
-// 			event->response.raw = newp_event->response.raw;
-// 			((struct crtx_nfq_packet*) event->data.raw)->mark_out = newp_event->response.raw;
-// 			SET_MARK(event, (u_int32_t) (uintptr_t) newp_event->response.raw);
-// 			newp_event->response.raw = 0;
-// 		}
 		
 		if (newp_event->response.raw && newp_event->response.raw != &ev->mark_out)
 			ev->mark_out = *((u_int32_t*) newp_event->response.raw);
@@ -353,23 +364,13 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 		newp_event->data.raw = 0; 
 		newp_event->response.raw = 0;
 		dereference_event_release(newp_event);
-		
-// 		free_dict(ds);
-		
-// 		free_event(newp_event);
 	}
-	
-// 	if (!event->response.raw) {
-// 		printf("set to %d\n", PFW_DEFAULT);
-// 		event->response.raw = (void*) PFW_DEFAULT;
-// 		((struct crtx_nfq_packet*) event->data.raw)->mark_out = PFW_DEFAULT;
-// 	}
 }
 
 char pfw_is_ip_local(char *ip) {
 	struct ip_ll *iit;
 	
-	for (iit=local_ips; iit; iit=iit->next) {
+	for (iit=local_ips; iit; iit=iit->next) {printf("%s %s\n", iit->ip, ip);
 		if (!strcmp(iit->ip, ip))
 			return 1;
 	}
@@ -385,7 +386,6 @@ void pfw_get_remote_part(struct crtx_dict *ds, char **remote_ip, char **remote_h
 		printf("error, signature mismatch: %s %s\n", ds->signature, PFW_NEWPACKET_SIGNATURE);
 		return;
 	}
-	
 	
 	if (pfw_is_ip_local(ds->items[PFW_NEWP_SRC_IP].string)) {
 		src_local = 1;
@@ -567,42 +567,34 @@ static void pfw_rules_filter(struct crtx_event *event, void *userdata, void **se
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
-// 	if (event->response.raw)
-// 		printf("asdD %d\n", *((u_int32_t*) event->response.raw));
 	if (event->response.raw)
 		return;
 	
-// 	ds = (struct crtx_dict *) event->data;
 	ds = event->data.dict;
 	
 	pfw_get_remote_part(ds, &remote_ip, &remote_host);
 	
-// 	#define SET_MARK(event, mark) { *((u_int32_t*) (event)->data.raw) = (mark); event->response.raw = & }
 	#define SET_MARK(event, mark) { \
 			(event)->response.raw = &((struct crtx_nfq_packet*) (event)->data.raw)->mark_out; \
 			(event)->response.raw_size = sizeof(u_int32_t); \
 			((struct crtx_nfq_packet*) (event)->data.raw)->mark_out = (mark); \
 		}
 	if (match_regexp_list(remote_host, &host_blacklist)) {
-// 		event->response.raw = (void *) PFW_REJECT;
 		SET_MARK(event, PFW_REJECT);
 		return;
 	}
 	
 	if (match_regexp_list(remote_ip, &ip_blacklist)) {
-// 		event->response.raw = (void *) PFW_REJECT;
 		SET_MARK(event, PFW_REJECT);
 		return;
 	}
 	
 	if (match_regexp_list(remote_host, &host_whitelist)) {
-// 		event->response.raw = (void *) PFW_ACCEPT;
 		SET_MARK(event, PFW_ACCEPT);
 		return;
 	}
 	
 	if (match_regexp_list(remote_ip, &ip_whitelist)) {
-// 		event->response.raw = (void *) PFW_ACCEPT;
 		SET_MARK(event, PFW_ACCEPT);
 		return;
 	}
@@ -745,7 +737,6 @@ void finish() {
 	
 	free_eventgraph(newp_graph);
 	
-// 	free_nf_queue_listener(td);
 	free_listener(nfq_list_base);
 // 	regfree(&regex);
 }
