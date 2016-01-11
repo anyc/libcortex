@@ -174,130 +174,60 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 // 		char *sign;
 		struct crtx_dict_item *di;
 		struct crtx_dict *ds;
+		struct sockaddr_in sa;
 		
 		iph = (struct iphdr*)ev->payload;
-		
-		
-// 		sign = PFW_NEWPACKET_SIGNATURE;
-// 		size = strlen(sign)*sizeof(struct crtx_dict_item) + sizeof(struct crtx_dict);
-// 		ds = (struct crtx_dict*) malloc(size);
-// 		
-// 		ds->signature = sign;
+		sa.sin_family = AF_INET;
 		
 		ds = crtx_init_dict(PFW_NEWPACKET_SIGNATURE);
 		di = ds->items;
 		
-		crtx_fill_data_item(di, 'u', "protocol", iph->protocol, 0, 0);
-		di++;
-// 		di = &ds->items[PFW_NEWP_PROTOCOL];
-// 		di->type = 'u';
-// 		di->size = 0;
-// 		di->flags = 0;
-// 		di->key = "protocol";
-// 		di->uint32 = iph->protocol;
+		crtx_fill_data_item(di, 'u', "protocol", iph->protocol, 0, 0); di++;
 		
-		struct sockaddr_in sa;
-		sa.sin_family = AF_INET;
-		sa.sin_addr = *(struct in_addr *)&iph->saddr;
-		res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
-		if (res) {
-			printf("getnameinfo failed %d\n", res);
-			host[0] = 0;
+		{
+			slen = 0;
+			crtx_fill_data_item(di, 's', "src_ip", stracpy(inet_ntoa(*(struct in_addr *)&iph->saddr), &slen), slen, 0); di++;
+			
+			sa.sin_addr = *(struct in_addr *)&iph->saddr;
+			res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
+			if (res) {
+				printf("getnameinfo failed %d\n", res);
+				host[0] = 0;
+			}
+			
+			slen = strlen(host);
+			crtx_fill_data_item(di, 's', "src_hostname", stracpy(host, &slen), slen, 0); di++;
 		}
 		
-		slen = strlen(host);
-		crtx_fill_data_item(di, 's', "src_ip", stracpy(inet_ntoa(*(struct in_addr *)&iph->saddr), &slen), slen, 0);
-		di++;
-// 		di = &ds->items[PFW_NEWP_SRC_IP];
-// 		di->type = 's';
-// 		di->size = 0;
-// 		di->flags = 0;
-// 		di->key = "src_ip";
-// 		di->string = stracpy(inet_ntoa(*(struct in_addr *)&iph->saddr), &di->size);
-// 		di->size += 1; // add one byte for terminating \0
-		
-		slen = strlen(host);
-		crtx_fill_data_item(di, 's', "src_hostname", stracpy(host, &slen), slen, 0);
-		di++;
-// 		di = &ds->items[PFW_NEWP_SRC_HOST];
-// 		di->type = 's';
-// 		di->size = 0;
-// 		di->flags = 0;
-// 		di->key = "src_hostname";
-// 		di->string = stracpy(host, &di->size);
-// 		di->size += 1; // add one byte for terminating \0
-		
-		sa.sin_addr = *(struct in_addr *)&iph->daddr;
-		res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
-		if (res) {
-			printf("getnameinfo failed %d\n", res);
-			host[0] = 0;
+		{
+			slen = 0;
+			crtx_fill_data_item(di, 's', "dst_ip", stracpy(inet_ntoa(*(struct in_addr *)&iph->daddr), &slen), slen, 0); di++;
+			
+			sa.sin_addr = *(struct in_addr *)&iph->daddr;
+			res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
+			if (res) {
+				printf("getnameinfo failed %d\n", res);
+				host[0] = 0;
+			}
+			
+			slen = strlen(host);
+			crtx_fill_data_item(di, 's', "dst_hostname", stracpy(host, &slen), slen, 0); di++;
 		}
-		
-		slen = strlen(host);
-		crtx_fill_data_item(di, 's', "dst_ip", stracpy(inet_ntoa(*(struct in_addr *)&iph->daddr), &slen), slen, 0);
-		di++;
-// 		di = &ds->items[PFW_NEWP_DST_IP];
-// 		di->type = 's';
-// 		di->size = 0;
-// 		di->flags = 0;
-// 		di->key = "dst_ip";
-// 		di->string = stracpy(inet_ntoa(*(struct in_addr *)&iph->daddr), &di->size);
-// 		di->size += 1; // add one byte for terminating \0
-		
-		slen = strlen(host);
-		crtx_fill_data_item(di, 's', "dst_hostname", stracpy(host, &slen), slen, 0);
-		di++;
-// 		di = &ds->items[PFW_NEWP_DST_HOST];
-// 		di->type = 's';
-// 		di->size = 0;
-// 		di->flags = 0;
-// 		di->key = "dst_hostname";
-// 		di->string = stracpy(host, &di->size);
-// 		di->size += 1; // add one byte for terminating \0
 		
 		crtx_fill_data_item(di, 'D', "payload", 0, 0, DIF_LAST);
-// 		di = &ds->items[PFW_NEWP_PAYLOAD];
-// 		di->type = 'D';
-// 		di->flags = 0;
-// 		di->key = "payload";
-// 		di->ds = 0;
-		
-// 		ds->items[PFW_NEWP_PAYLOAD].flags = DIF_LAST;
-// 		di->flags |= DIF_LAST;
 		
 		if (iph->protocol == 6) {
 			struct crtx_dict_item *pdi;
-// 			size_t size;
-// 			char *sign;
+			struct tcphdr *tcp;
 			
-			struct tcphdr *tcp = (struct tcphdr *) (ev->payload + (iph->ihl << 2));
-			
-// 			sign = PFW_NEWPACKET_TCP_SIGNATURE;
-// 			size = strlen(sign)*sizeof(struct crtx_dict_item) + sizeof(struct crtx_dict);
-// 			di->ds = (struct crtx_dict*) malloc(size);
-// 			di->ds->signature = sign;
+			tcp = (struct tcphdr *) (ev->payload + (iph->ihl << 2));
 			
 			di->ds = crtx_init_dict(PFW_NEWPACKET_TCP_SIGNATURE);
 			pdi = di->ds->items;
 			
-			crtx_fill_data_item(pdi, 'u', "src_port", ntohs(tcp->source), 0, 0);
-			pdi++;
-// 			pdi = &di->ds->items[PFW_NEWP_TCP_SPORT];
-// 			pdi->type = 'u';
-// 			pdi->flags = 0;
-// 			pdi->key = "src_port";
-// 			pdi->uint32 = ntohs(tcp->source);
+			crtx_fill_data_item(pdi, 'u', "src_port", ntohs(tcp->source), 0, 0); pdi++;
 			
 			crtx_fill_data_item(pdi, 'u', "dst_port", ntohs(tcp->dest), 0, DIF_LAST);
-// 			pdi = &di->ds->items[PFW_NEWP_TCP_DPORT];
-// 			pdi->type = 'u';
-// 			pdi->flags = 0;
-// 			pdi->key = "dst_port";
-// 			pdi->uint32 = ntohs(tcp->dest);
-			
-// 			di->ds->items[PFW_NEWP_TCP_DPORT].flags = DIF_LAST;
-// 			pdi->flags = DIF_LAST;
 			
 // 			fprintf(stdout, "TCP{sport=%u; dport=%u; seq=%u; ack_seq=%u; flags=u%ua%up%ur%us%uf%u; window=%u; urg=%u}\n",
 // 				   ntohs(tcp->source), ntohs(tcp->dest), ntohl(tcp->seq), ntohl(tcp->ack_seq)
@@ -305,43 +235,22 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 		} else
 		if (iph->protocol == 17) {
 			struct crtx_dict_item *pdi;
-// 			size_t size;
-// 			char *sign;
+			struct udphdr *udp;
 			
-			struct udphdr *udp = (struct udphdr *) (ev->payload + (iph->ihl << 2));
-			
-// 			sign = PFW_NEWPACKET_UDP_SIGNATURE;
-// 			size = strlen(sign)*sizeof(struct crtx_dict_item) + sizeof(struct crtx_dict);
-// 			di->ds = (struct crtx_dict*) malloc(size);
-// 			
-// 			di->ds->signature = sign;
+			udp = (struct udphdr *) (ev->payload + (iph->ihl << 2));
 			
 			di->ds = crtx_init_dict(PFW_NEWPACKET_UDP_SIGNATURE);
 			pdi = di->ds->items;
 			
-			crtx_fill_data_item(pdi, 'u', "src_port", ntohs(udp->source), 0, 0);
-			pdi++;
-// 			pdi = &di->ds->items[PFW_NEWP_UDP_SPORT];
-// 			pdi->type = 'u';
-// 			pdi->flags = 0;
-// 			pdi->key = "src_port";
-// 			pdi->uint32 = ntohs(udp->source);
+			crtx_fill_data_item(pdi, 'u', "src_port", ntohs(udp->source), 0, 0); pdi++;
 			
 			crtx_fill_data_item(pdi, 'u', "dst_port", ntohs(udp->dest), 0, DIF_LAST);
-// 			pdi = &di->ds->items[PFW_NEWP_UDP_DPORT];
-// 			pdi->type = 'u';
-// 			pdi->flags = 0;
-// 			pdi->key = "dst_port";
-// 			pdi->uint32 = ntohs(udp->dest);
-			
-// 			di->ds->items[PFW_NEWP_UDP_DPORT].flags = DIF_LAST;
-// 			pdi->flags = DIF_LAST;
 			
 // 			fprintf(stdout,"UDP{sport=%u; dport=%u; len=%u}\n",
 // 				   ntohs(udp->source), ntohs(udp->dest), udp->len);
 		}
 		
-		crtx_print_dict(ds);
+// 		crtx_print_dict(ds);
 		
 		newp_event = create_event(PFW_NEWPACKET_ETYPE, 0, 0);
 		newp_event->data.dict = ds;
@@ -358,8 +267,6 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 		if (newp_event->response.raw && newp_event->response.raw != &ev->mark_out)
 			ev->mark_out = *((u_int32_t*) newp_event->response.raw);
 		
-		printf("asd %d\n", ev->mark_out);
-		
 		// do not free as referenced data does not belong to us
 		newp_event->data.raw = 0; 
 		newp_event->response.raw = 0;
@@ -370,7 +277,7 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 char pfw_is_ip_local(char *ip) {
 	struct ip_ll *iit;
 	
-	for (iit=local_ips; iit; iit=iit->next) {printf("%s %s\n", iit->ip, ip);
+	for (iit=local_ips; iit; iit=iit->next) {
 		if (!strcmp(iit->ip, ip))
 			return 1;
 	}

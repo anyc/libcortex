@@ -60,7 +60,7 @@ void response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 	}
 	
 	pthread_mutex_lock(&ct->cache->mutex);
-	for (i=0; i < ct->cache->n_entries; i++) { printf("\"%s\" \"%s\"\n", key, ct->cache->entries[i].key);
+	for (i=0; i < ct->cache->n_entries; i++) { //printf("\"%s\" \"%s\"\n", key, ct->cache->entries[i].key);
 		if (ct->match_event(ct->cache, key, event, &ct->cache->entries[i])) {
 			ct->on_hit(ct, &key, event, &ct->cache->entries[i]);
 			
