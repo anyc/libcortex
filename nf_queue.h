@@ -1,5 +1,5 @@
 
-struct nfq_thread_data {
+struct crtx_nfq_listener {
 	struct crtx_listener_base parent;
 	
 	pthread_t thread;
@@ -7,12 +7,7 @@ struct nfq_thread_data {
 	u_int16_t queue_num;
 };
 
-struct ev_nf_queue_packet {
-	struct nfq_q_handle *qh;
-	struct nfq_data *data;
-};
-
-struct ev_nf_queue_packet_msg {
+struct crtx_nfq_packet {
 	int id;
 	u_int16_t hw_protocol;
 	
@@ -33,5 +28,4 @@ struct crtx_listener_base *crtx_new_nf_queue_listener(void *options);
 void crtx_nf_queue_init();
 void crtx_nf_queue_finish();
 
-char * nfq_decision_cache_create_key(struct crtx_event *event);
-char *nfq_proto2str(u_int16_t protocol);
+char *crtx_nfq_proto2str(u_int16_t protocol);

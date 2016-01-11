@@ -20,19 +20,19 @@ char *nfq_packet_msg_etype[] = { NFQ_PACKET_MSG_ETYPE, 0 };
 
 // iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW  -m mark --mark 0 -j NFQUEUE --queue-num 0
 
-static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
+static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		    struct nfq_data *tb, void *data)
 {
 	struct nfqnl_msg_packet_hdr *ph;
 	struct nfqnl_msg_packet_hw *hwph;
 	u_int32_t mark,ifi; 
 	
-	struct nfq_thread_data *td = (struct nfq_thread_data*) data;
+	struct crtx_nfq_listener *td = (struct crtx_nfq_listener*) data;
 	
 	struct crtx_graph *new_packet_graph_msg = td->parent.graph;
 	
 	if (new_packet_graph_msg && new_packet_graph_msg->tasks) {
-		struct ev_nf_queue_packet_msg *ev;
+		struct crtx_nfq_packet *ev;
 		struct crtx_event *event;
 		size_t msg_size;
 		unsigned char *payload;
@@ -52,11 +52,11 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		payload_size = nfq_get_payload(tb, &payload);
 		msg_size += payload_size;
 		
-		data_size = msg_size + sizeof(struct ev_nf_queue_packet_msg);
+		data_size = msg_size + sizeof(struct crtx_nfq_packet);
 		ev = calloc(1, data_size);
 		
 		if (hwph) {
-			ev->hw_addr = ((void*) ev) + sizeof(struct ev_nf_queue_packet_msg);
+			ev->hw_addr = ((void*) ev) + sizeof(struct crtx_nfq_packet);
 			
 			memcpy(ev->hw_addr, hwph->hw_addr, hw_addrlen*sizeof(hwph->hw_addr[0]));
 			
@@ -105,12 +105,12 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		}
 		
 // 		struct iphdr *iph = (struct iphdr *) payload;
-// 		printf("rec: %s %s ", nfq_proto2str(iph->protocol),
+// 		printf("rec: %s %s ", crtx_nfq_proto2str(iph->protocol),
 // 				inet_ntoa(*(struct in_addr *)&iph->saddr));
 // 		printf("%s\n", inet_ntoa(*(struct in_addr *)&iph->daddr));
 		
 		
-		ev->payload = ((void*) ev) + sizeof(struct ev_nf_queue_packet_msg) + hw_addrlen*sizeof(hwph->hw_addr[0]);
+		ev->payload = ((void*) ev) + sizeof(struct crtx_nfq_packet) + hw_addrlen*sizeof(hwph->hw_addr[0]);
 		ev->payload_size = payload_size;
 		memcpy(ev->payload, payload, ev->payload_size);
 		
@@ -155,7 +155,7 @@ void *nfq_tmain(void *data) {
 	int fd, rv;
 	char buf[4096] __attribute__ ((aligned));
 	
-	struct nfq_thread_data *td = (struct nfq_thread_data*) data;
+	struct crtx_nfq_listener *td = (struct crtx_nfq_listener*) data;
 	
 	h = nfq_open();
 	if (!h) {
@@ -176,7 +176,7 @@ void *nfq_tmain(void *data) {
 	}
 	
 	printf("binding this socket to queue '0'\n");
-	qh = nfq_create_queue(h, td->queue_num, &cb, td);
+	qh = nfq_create_queue(h, td->queue_num, &nfq_event_cb, td);
 	if (!qh) {
 		fprintf(stderr, "error during nfq_create_queue()\n");
 		return 0;
@@ -200,7 +200,7 @@ void *nfq_tmain(void *data) {
 }
 
 void free_nf_queue_listener(void *data) {
-	struct nfq_thread_data *tdata = (struct nfq_thread_data *) data;
+	struct crtx_nfq_listener *tdata = (struct crtx_nfq_listener *) data;
 	
 	free_eventgraph(tdata->parent.graph);
 	
@@ -210,12 +210,12 @@ void free_nf_queue_listener(void *data) {
 }
 
 struct crtx_listener_base *crtx_new_nf_queue_listener(void *options) {
-	struct nfq_thread_data *tdata;
+	struct crtx_nfq_listener *tdata;
 	
-// 	tdata = (struct nfq_thread_data*) malloc(sizeof(struct nfq_thread_data));
+// 	tdata = (struct crtx_nfq_listener*) malloc(sizeof(struct crtx_nfq_listener));
 // 	tdata->queue_num = 0;
 	
-	tdata = (struct nfq_thread_data*) options;
+	tdata = (struct crtx_nfq_listener*) options;
 	tdata->parent.free = &free_nf_queue_listener;
 	
 	new_eventgraph(&tdata->parent.graph, nfq_packet_msg_etype);
@@ -225,14 +225,7 @@ struct crtx_listener_base *crtx_new_nf_queue_listener(void *options) {
 	return &tdata->parent;
 }
 
-char nfq_packet_msg_okay(struct crtx_event *event) {
-	if (event->data.raw_size < sizeof(struct ev_nf_queue_packet_msg))
-		return 0;
-	
-	return 1;
-}
-
-char *nfq_proto2str(u_int16_t protocol) {
+char *crtx_nfq_proto2str(u_int16_t protocol) {
 	switch (protocol) {
 		case 1: return "ICMP"; break;
 		case 2: return "IGMP"; break;

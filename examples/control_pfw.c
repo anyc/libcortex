@@ -22,7 +22,8 @@
 #include "nf_queue.h"
 #include "controls.h"
 
-struct nfq_thread_data *td;
+struct crtx_nfq_listener nfq_list;
+struct crtx_listener_base *nfq_list_base;
 struct crtx_task *pfw_handle_task, *rp_cache, *readline_handle_task, *pfw_rules_task;
 struct crtx_graph *rl_graph, *newp_graph, *newp_raw_graph;
 struct crtx_task *rcache_host, *rcache_ip;
@@ -145,7 +146,7 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 	if (event->response.raw)
 		return;
 	
-	if (!nfq_packet_msg_okay(event))
+	if (event->data.raw_size < sizeof(struct crtx_nfq_packet))
 		return;
 	
 	if (newp_raw_graph && newp_raw_graph->tasks) {
@@ -161,7 +162,7 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 	if (newp_graph && newp_graph->tasks) {
 		int res;
 		char host[256];
-		struct ev_nf_queue_packet_msg *ev;
+		struct crtx_nfq_packet *ev;
 		struct iphdr *iph;
 		size_t size;
 		char *sign;
@@ -169,7 +170,7 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 		struct crtx_dict *ds;
 		
 		
-		ev = (struct ev_nf_queue_packet_msg*) event->data.raw;
+		ev = (struct crtx_nfq_packet*) event->data.raw;
 		iph = (struct iphdr*)ev->payload;
 		
 		
@@ -186,7 +187,7 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 		di->key = "protocol";
 		di->uint32 = iph->protocol;
 // 		di->flags = DIF_DATA_UNALLOCATED;
-// 		di->string = nfq_proto2str(iph->protocol);
+// 		di->string = crtx_nfq_proto2str(iph->protocol);
 // 		di->size = strlen(di->string)+1; // add one byte for terminating \0
 		
 		
@@ -431,7 +432,7 @@ static void pfw_print_packet(struct crtx_event *event, void *userdata, void **se
 			dst_local = 0;
 	}
 	
-	printf("%s ", nfq_proto2str(ds->items[PFW_NEWP_PROTOCOL].uint32));
+	printf("%s ", crtx_nfq_proto2str(ds->items[PFW_NEWP_PROTOCOL].uint32));
 	
 	if (!src_local && !dst_local) {
 		printf("brd %s %s ", ds->items[PFW_NEWP_SRC_IP].string, ds->items[PFW_NEWP_SRC_HOST].string);
@@ -569,8 +570,10 @@ static void pfw_rules_filter(struct crtx_event *event, void *userdata, void **se
 }
 
 void init() {
-	td = (struct nfq_thread_data*) create_listener("nf_queue", 0);
-	if (!td) {
+	nfq_list.queue_num = 0;
+	
+	nfq_list_base = create_listener("nf_queue", &nfq_list);
+	if (!nfq_list_base) {
 		printf("cannot create nq_queue listener\n");
 		return;
 	}
@@ -581,8 +584,8 @@ void init() {
 	pfw_handle_task = new_task();
 	pfw_handle_task->id = "pfw_handler";
 	pfw_handle_task->handle = &pfw_main_handler;
-	pfw_handle_task->userdata = td;
-	add_task(td->parent.graph, pfw_handle_task);
+	pfw_handle_task->userdata = &nfq_list;
+	add_task(nfq_list.parent.graph, pfw_handle_task);
 	
 	struct ifaddrs *addrs, *tmp;
 	struct ip_ll *iit;
@@ -699,6 +702,6 @@ void finish() {
 	free_eventgraph(newp_graph);
 	
 // 	free_nf_queue_listener(td);
-	free_listener(&td->parent);
+	free_listener(nfq_list_base);
 // 	regfree(&regex);
 }
