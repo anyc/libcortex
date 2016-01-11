@@ -122,9 +122,10 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		wait_on_event(event);
 		
+// 		nfq_list->default_policy
 		printf("packet mark: %lu\n", (long) event->response.raw);
 		
-		int ret = nfq_set_verdict2(qh, ev->id, NF_REPEAT, (long) event->response.raw, 0, NULL);
+		int ret = nfq_set_verdict2(qh, ev->id, NF_REPEAT, (u_int32_t) event->response.raw, 0, NULL);
 		
 		free(ev);
 		dereference_event_release(event);
@@ -141,8 +142,8 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		else
 			return 0;
 		
-		// TODO default
-		return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL);
+// 		return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL);
+		return nfq_set_verdict2(qh, ev->id, NF_REPEAT, (u_int32_t) event->response.raw, 0, NULL);
 	}
 	
 	return 0;
@@ -210,9 +211,6 @@ void free_nf_queue_listener(void *data) {
 
 struct crtx_listener_base *crtx_new_nf_queue_listener(void *options) {
 	struct crtx_nfq_listener *nfq_listata;
-	
-// 	nfq_listata = (struct crtx_nfq_listener*) malloc(sizeof(struct crtx_nfq_listener));
-// 	nfq_listata->queue_num = 0;
 	
 	nfq_listata = (struct crtx_nfq_listener*) options;
 	nfq_listata->parent.free = &free_nf_queue_listener;

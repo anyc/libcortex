@@ -5,6 +5,7 @@ struct crtx_nfq_listener {
 	pthread_t thread;
 	
 	u_int16_t queue_num;
+	u_int32_t default_policy;
 };
 
 struct crtx_nfq_packet {

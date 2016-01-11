@@ -111,6 +111,8 @@ struct crtx_listener_repository {
 struct crtx_listener_base {
 	void (*free)(void *data);
 	
+	// TODO: add (*start)() to start listener after tasks have been added?
+	
 	struct crtx_graph *graph;
 };
 
