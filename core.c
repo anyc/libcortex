@@ -117,7 +117,7 @@ void traverse_graph_r(struct crtx_task *ti, struct crtx_event *event) {
 	if (ti->handle)
 		ti->handle(event, ti->userdata, &sessiondata);
 	
-	if (!event->response.raw && ti->next)
+	if (ti->next)
 		traverse_graph_r(ti->next, event);
 	
 	if (ti->cleanup)
@@ -673,28 +673,28 @@ void wait_on_notifier(struct crtx_event_notifier *en) {
 }
 
 
-struct crtx_task *new_event_notifier(struct crtx_graph *graph, event_notifier_filter filter, event_notifier_cb callback) {
-	struct crtx_task *task;
-	struct crtx_event_notifier *en;
-	int ret;
-	
-	en = (struct crtx_event_notifier*) calloc(1, sizeof(struct crtx_event_notifier));
-	en->filter = filter;
-	en->callback = callback;
-	
-	ret = pthread_mutex_init(&en->mutex, 0); ASSERT(ret >= 0);
-	ret = pthread_cond_init(&en->cond, NULL); ASSERT(ret >= 0);
-	
-	task = new_task();
-	task->id = "event_notifier";
-	task->position = 110;
-	task->userdata = en;
-	task->handle = &event_notifier_task;
-	
-	add_task(graph, task);
-	
-	return task;
-}
+// struct crtx_task *new_event_notifier(struct crtx_graph *graph, event_notifier_filter filter, event_notifier_cb callback) {
+// 	struct crtx_task *task;
+// 	struct crtx_event_notifier *en;
+// 	int ret;
+// 	
+// 	en = (struct crtx_event_notifier*) calloc(1, sizeof(struct crtx_event_notifier));
+// 	en->filter = filter;
+// 	en->callback = callback;
+// 	
+// 	ret = pthread_mutex_init(&en->mutex, 0); ASSERT(ret >= 0);
+// 	ret = pthread_cond_init(&en->cond, NULL); ASSERT(ret >= 0);
+// 	
+// 	task = new_task();
+// 	task->id = "event_notifier";
+// 	task->position = 110;
+// 	task->userdata = en;
+// 	task->handle = &event_notifier_task;
+// 	
+// 	add_task(graph, task);
+// 	
+// 	return task;
+// }
 
 struct crtx_dict * crtx_create_dict(char *signature, ...) {
 	struct crtx_dict *ds;
@@ -884,4 +884,13 @@ char *get_username() {
 	}
 	
 	return 0;
+}
+
+void *crtx_copy_raw_data(struct crtx_event_data *data) {
+	void *new_data;
+	
+	new_data = malloc(data->raw_size);
+	memcpy(new_data, data->raw, data->raw_size);
+	
+	return new_data;
 }

@@ -5,7 +5,7 @@ struct crtx_nfq_listener {
 	pthread_t thread;
 	
 	u_int16_t queue_num;
-	u_int32_t default_policy;
+	u_int32_t default_mark;
 };
 
 struct crtx_nfq_packet {
@@ -14,7 +14,7 @@ struct crtx_nfq_packet {
 	
 	char *hw_addr;
 	
-	u_int32_t mark;
+	u_int32_t mark_in;
 	u_int32_t indev;
 	u_int32_t outdev;
 	u_int32_t physindev;
@@ -22,6 +22,8 @@ struct crtx_nfq_packet {
 	
 	unsigned char *payload;
 	size_t payload_size;
+	
+	u_int32_t mark_out;
 };
 
 char nfq_packet_msg_okay(struct crtx_event *event);

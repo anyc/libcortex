@@ -8,7 +8,6 @@
 #include "cache.h"
 
 char rcache_match_cb_t_strcmp(struct crtx_cache *rc, void *key, struct crtx_event *event, struct crtx_cache_entry *c_entry) {
-	printf("asd %s %s\n", (char*) key, (char*) c_entry->key);
 	return !strcmp( (char*) key, (char*) c_entry->key);
 }
 
@@ -102,7 +101,13 @@ void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void 
 		
 		memset(&dc->entries[dc->n_entries-1], 0, sizeof(struct crtx_cache_entry));
 		dc->entries[dc->n_entries-1].key = key;
-		dc->entries[dc->n_entries-1].value = event->response.raw;
+		if (event->response.copy_raw) {
+			dc->entries[dc->n_entries-1].value = event->response.copy_raw(&event->response);
+			dc->entries[dc->n_entries-1].copied = 1;
+		} else {
+			dc->entries[dc->n_entries-1].value = event->response.raw;
+			dc->entries[dc->n_entries-1].copied = 0;
+		}
 		dc->entries[dc->n_entries-1].value_size = event->response.raw_size;
 		
 		pthread_mutex_unlock(&dc->mutex);
@@ -232,7 +237,7 @@ void free_response_cache(struct crtx_cache *dc) {
 	
 	for (i=0; i<dc->n_entries; i++) {
 		free(dc->entries[i].key);
-		if (dc->entries[i].value_size > 0)
+		if (dc->entries[i].value_size > 0 && dc->entries[i].copied)
 			free(dc->entries[i].value);
 		
 		if (dc->entries[i].regex_initialized)

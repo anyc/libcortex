@@ -137,7 +137,7 @@ void send_event_as_dict(struct crtx_event *event, send_fct send, void *conn_id) 
 			return;
 		}
 		
-		event->data.raw_to_dict(event);
+		event->data.raw_to_dict(&event->data);
 		
 		if (!event->data.dict) {
 			printf("cannot prepare this event of type \"%s\" for transmission\n", event->type);

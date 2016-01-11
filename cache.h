@@ -22,6 +22,7 @@ struct crtx_cache_entry {
 	
 	void *value;
 	size_t value_size;
+	char copied;
 };
 
 struct crtx_cache {

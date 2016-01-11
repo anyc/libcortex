@@ -31,7 +31,8 @@ struct crtx_event_data {
 	void *raw;
 	size_t raw_size;
 	
-	void (*raw_to_dict)(struct crtx_event *event);
+	void *(*copy_raw)(struct crtx_event_data *data);
+	void (*raw_to_dict)(struct crtx_event_data *data);
 	
 	struct crtx_dict *dict;
 };
@@ -213,3 +214,4 @@ void dereference_event_release(struct crtx_event *event);
 void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event);
 char *get_username();
 char is_graph_empty(struct crtx_graph *graph, char *event_type);
+void *crtx_copy_raw_data(struct crtx_event_data *data);

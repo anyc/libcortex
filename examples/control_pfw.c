@@ -57,6 +57,7 @@ char *newp_event_types[] = { PFW_NEWPACKET_ETYPE, 0 };
 #define PFW_NEWPACKET_RAW_ETYPE "pfw/newpacket_raw"
 char *newp_raw_event_types[] = { PFW_NEWPACKET_RAW_ETYPE, 0 };
 
+
 struct ip_ll {
 	struct ip_ll *next;
 	
@@ -142,12 +143,21 @@ void add_ips_to_list(struct filter_set *fset, char *hostname) {
 
 static void pfw_main_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event *newp_raw_event, *newp_event;
+	struct crtx_nfq_packet *ev;
 	
-	if (event->response.raw)
-		return;
+// 	if (event->response.raw)
+// 		return;
 	
 	if (event->data.raw_size < sizeof(struct crtx_nfq_packet))
 		return;
+	
+	ev = (struct crtx_nfq_packet*) event->data.raw;
+	
+	// if someone set a response already, ignore
+	if (event->response.raw && event->response.raw != &ev->mark_out)
+		return;
+	
+	ev->mark_out = PFW_DEFAULT;
 	
 	if (newp_raw_graph && newp_raw_graph->tasks) {
 		newp_raw_event = create_event(PFW_NEWPACKET_ETYPE, event->data.raw, event->data.raw_size);
@@ -162,15 +172,12 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 	if (newp_graph && newp_graph->tasks) {
 		int res;
 		char host[256];
-		struct crtx_nfq_packet *ev;
 		struct iphdr *iph;
 		size_t size;
 		char *sign;
 		struct crtx_dict_item *di;
 		struct crtx_dict *ds;
 		
-		
-		ev = (struct crtx_nfq_packet*) event->data.raw;
 		iph = (struct iphdr*)ev->payload;
 		
 		
@@ -316,6 +323,13 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 // 		newp_event->data_size = size;
 		newp_event = create_event(PFW_NEWPACKET_ETYPE, 0, 0);
 		newp_event->data.dict = ds;
+		newp_event->data.raw = event->data.raw;
+		newp_event->data.raw_size = event->data.raw_size;
+		newp_event->response.copy_raw = &crtx_copy_raw_data;
+		
+// 		newp_event->response.raw = event->response.raw;
+// 		newp_event->response.raw_size = event->response.raw_size;
+// 		newp_event->response.copy_raw = &crtx_copy_raw_data;
 		
 		reference_event_release(newp_event);
 		
@@ -323,11 +337,21 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 		
 		wait_on_event(newp_event);
 		
-		if (newp_event->response.raw) {
-			event->response.raw = newp_event->response.raw;
-			newp_event->response.raw = 0;
-		}
+// 		if (newp_event->response.raw) {
+// 			event->response.raw = newp_event->response.raw;
+// 			((struct crtx_nfq_packet*) event->data.raw)->mark_out = newp_event->response.raw;
+// 			SET_MARK(event, (u_int32_t) (uintptr_t) newp_event->response.raw);
+// 			newp_event->response.raw = 0;
+// 		}
 		
+		if (newp_event->response.raw && newp_event->response.raw != &ev->mark_out)
+			ev->mark_out = *((u_int32_t*) newp_event->response.raw);
+		
+		printf("asd %d\n", ev->mark_out);
+		
+		// do not free as referenced data does not belong to us
+		newp_event->data.raw = 0; 
+		newp_event->response.raw = 0;
 		dereference_event_release(newp_event);
 		
 // 		free_dict(ds);
@@ -335,10 +359,11 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 // 		free_event(newp_event);
 	}
 	
-	if (!event->response.raw) {
-		printf("set to %d\n", PFW_DEFAULT);
-		event->response.raw = (void*) PFW_DEFAULT;
-	}
+// 	if (!event->response.raw) {
+// 		printf("set to %d\n", PFW_DEFAULT);
+// 		event->response.raw = (void*) PFW_DEFAULT;
+// 		((struct crtx_nfq_packet*) event->data.raw)->mark_out = PFW_DEFAULT;
+// 	}
 }
 
 char pfw_is_ip_local(char *ip) {
@@ -542,51 +567,49 @@ static void pfw_rules_filter(struct crtx_event *event, void *userdata, void **se
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
+// 	if (event->response.raw)
+// 		printf("asdD %d\n", *((u_int32_t*) event->response.raw));
+	if (event->response.raw)
+		return;
+	
 // 	ds = (struct crtx_dict *) event->data;
 	ds = event->data.dict;
 	
 	pfw_get_remote_part(ds, &remote_ip, &remote_host);
 	
+// 	#define SET_MARK(event, mark) { *((u_int32_t*) (event)->data.raw) = (mark); event->response.raw = & }
+	#define SET_MARK(event, mark) { \
+			(event)->response.raw = &((struct crtx_nfq_packet*) (event)->data.raw)->mark_out; \
+			(event)->response.raw_size = sizeof(u_int32_t); \
+			((struct crtx_nfq_packet*) (event)->data.raw)->mark_out = (mark); \
+		}
 	if (match_regexp_list(remote_host, &host_blacklist)) {
-		event->response.raw = (void *) PFW_REJECT;
+// 		event->response.raw = (void *) PFW_REJECT;
+		SET_MARK(event, PFW_REJECT);
 		return;
 	}
 	
 	if (match_regexp_list(remote_ip, &ip_blacklist)) {
-		event->response.raw = (void *) PFW_REJECT;
+// 		event->response.raw = (void *) PFW_REJECT;
+		SET_MARK(event, PFW_REJECT);
 		return;
 	}
 	
 	if (match_regexp_list(remote_host, &host_whitelist)) {
-		event->response.raw = (void *) PFW_ACCEPT;
+// 		event->response.raw = (void *) PFW_ACCEPT;
+		SET_MARK(event, PFW_ACCEPT);
 		return;
 	}
 	
 	if (match_regexp_list(remote_ip, &ip_whitelist)) {
-		event->response.raw = (void *) PFW_ACCEPT;
+// 		event->response.raw = (void *) PFW_ACCEPT;
+		SET_MARK(event, PFW_ACCEPT);
 		return;
 	}
 	
 }
 
 void init() {
-	nfq_list.queue_num = 0;
-	
-	nfq_list_base = create_listener("nf_queue", &nfq_list);
-	if (!nfq_list_base) {
-		printf("cannot create nq_queue listener\n");
-		return;
-	}
-	
-	new_eventgraph(&newp_graph, newp_event_types);
-// 	new_eventgraph(&newp_raw_graph, newp_raw_event_types);
-	
-	pfw_handle_task = new_task();
-	pfw_handle_task->id = "pfw_handler";
-	pfw_handle_task->handle = &pfw_main_handler;
-	pfw_handle_task->userdata = &nfq_list;
-	add_task(nfq_list.parent.graph, pfw_handle_task);
-	
 	struct ifaddrs *addrs, *tmp;
 	struct ip_ll *iit;
 	char *s;
@@ -646,12 +669,13 @@ void init() {
 	print_filter_set(&host_whitelist, "host whitelist");
 	print_filter_set(&ip_whitelist, "ip blacklist");
 	
+	
+	new_eventgraph(&newp_graph, newp_event_types);
+	
 	pfw_rules_task = new_task();
 	pfw_rules_task->id = "pfw_print_packet";
 	pfw_rules_task->handle = &pfw_print_packet;
 	add_task(newp_graph, pfw_rules_task);
-	
-	
 	
 	
 	rcache_host = create_response_cache_task("su", pfw_rcache_create_key_host);
@@ -669,11 +693,31 @@ void init() {
 // 	prefill_rcache( ((struct crtx_cache*) rcache_ip->userdata), PFW_DATA_DIR "rcache_ip.txt");
 	add_task(newp_graph, rcache_ip);
 	
-	
 	pfw_rules_task = new_task();
 	pfw_rules_task->id = "pfw_rules_filter";
 	pfw_rules_task->handle = &pfw_rules_filter;
 	add_task(newp_graph, pfw_rules_task);
+	
+	print_tasks(newp_graph);
+	
+	/*
+	 * create nfqueue listener
+	 */
+	
+	nfq_list.queue_num = 0;
+	nfq_list.default_mark = PFW_DEFAULT;
+	
+	nfq_list_base = create_listener("nf_queue", &nfq_list);
+	if (!nfq_list_base) {
+		printf("cannot create nq_queue listener\n");
+		return;
+	}
+	
+	pfw_handle_task = new_task();
+	pfw_handle_task->id = "pfw_handler";
+	pfw_handle_task->handle = &pfw_main_handler;
+	pfw_handle_task->userdata = &nfq_list;
+	add_task(nfq_list.parent.graph, pfw_handle_task);
 }
 
 void finish() {
