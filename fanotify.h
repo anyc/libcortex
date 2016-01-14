@@ -19,7 +19,7 @@ struct crtx_fanotify_listener {
 	int dirfd;
 	char *path;
 	
-	pthread_t thread;
+// 	struct crtx_thread *thread;
 };
 
 void crtx_fanotify_get_path(int fd, char **path, size_t *length, char *format);

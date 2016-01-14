@@ -32,9 +32,10 @@
 #include "core.h"
 #include "socket.h"
 #include "event_comm.h"
+#include "threads.h"
 
 struct socket_connection_tmain_args {
-	pthread_t thread;
+// 	pthread_t thread;
 	
 	struct crtx_socket_listener *slistener;
 	int sockfd;
@@ -249,7 +250,8 @@ void *socket_server_tmain(void *data) {
 		args->slistener = listeners;
 		args->sockfd = accept(listeners->sockfd, cliaddr, &addrlen); ASSERT(args->sockfd >= 0);
 		
-		pthread_create(&args->thread, NULL, socket_connection_tmain, args);
+// 		pthread_create(&args->thread, NULL, socket_connection_tmain, args);
+		get_thread(socket_connection_tmain, args, 1);
 	}
 	close(listeners->sockfd);
 	
@@ -314,7 +316,8 @@ struct crtx_listener_base *crtx_new_socket_server_listener(void *options) {
 	
 	create_in_out_box();
 	
-	pthread_create(&slistener->thread, NULL, socket_server_tmain, slistener);
+// 	pthread_create(&slistener->thread, NULL, socket_server_tmain, slistener);
+	get_thread(socket_server_tmain, slistener, 1);
 	
 	return &slistener->parent;
 }
@@ -344,7 +347,8 @@ struct crtx_listener_base *crtx_new_socket_client_listener(void *options) {
 	task->position = 200;
 	add_task(slistener->outbox, task);
 	
-	pthread_create(&slistener->thread, NULL, socket_client_tmain, slistener);
+// 	pthread_create(&slistener->thread, NULL, socket_client_tmain, slistener);
+	get_thread(socket_client_tmain, slistener, 1);
 	
 	return &slistener->parent;
 }

@@ -1,6 +1,5 @@
 
 #include <stdint.h>
-#include <pthread.h>
 #include <regex.h>
 
 #define STRINGIFYB(x) #x
@@ -18,14 +17,6 @@ extern char *crtx_evt_inbox[];
 extern char *crtx_evt_outbox[];
 
 struct crtx_event;
-
-struct crtx_signal {
-	char *condition;
-	char local_condition;
-	
-	pthread_mutex_t mutex;
-	pthread_cond_t cond;
-};
 
 struct crtx_event_data {
 	void *raw;
@@ -77,14 +68,6 @@ struct crtx_task {
 	struct crtx_task *next;
 };
 
-struct crtx_thread {
-	pthread_t handle;
-	
-	char stop;
-	
-	struct crtx_graph *graph;
-};
-
 struct crtx_graph {
 	char **types;
 	unsigned int n_types;
@@ -93,8 +76,9 @@ struct crtx_graph {
 	
 	struct crtx_task *tasks;
 	
-	struct crtx_thread *consumers;
+// 	struct crtx_thread *consumers;
 	unsigned int n_consumers;
+	unsigned int n_max_consumers;
 	
 	struct crtx_event_ll *equeue;
 	unsigned int n_queue_entries;
@@ -200,12 +184,6 @@ char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size
 void crtx_print_dict(struct crtx_dict *ds);
 struct crtx_dict_item *crtx_get_first_item(struct crtx_dict *ds);
 struct crtx_dict_item *crtx_get_next_item(struct crtx_dict_item *di);
-
-struct crtx_signal *new_signal();
-void init_signal(struct crtx_signal *signal);
-void wait_on_signal(struct crtx_signal *s);
-void send_signal(struct crtx_signal *s, char brdcst);
-void free_signal(struct crtx_signal *s);
 
 void crtx_traverse_graph(struct crtx_graph *graph, struct crtx_event *event);
 void reference_event_response(struct crtx_event *event);

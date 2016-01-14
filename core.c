@@ -29,6 +29,7 @@ static char * local_event_types[] = { "cortexd/module_initialized", 0 };
 #include "fanotify.h"
 #include "inotify.h"
 #include "sd_bus_notifications.h"
+#include "threads.h"
 
 struct crtx_module static_modules[] = {
 	{"socket", &crtx_socket_init, &crtx_socket_finish},
@@ -42,6 +43,7 @@ struct crtx_module static_modules[] = {
 	{"fanotify", &crtx_fanotify_init, &crtx_fanotify_finish},
 	{"inotify", &crtx_inotify_init, &crtx_inotify_finish},
 	{"controls", &crtx_controls_init, &crtx_controls_finish},
+	{"threads", &crtx_threads_init, &crtx_threads_finish},
 	{0, 0}
 };
 
@@ -129,62 +131,36 @@ void crtx_traverse_graph(struct crtx_graph *graph, struct crtx_event *event) {
 }
 
 void *graph_consumer_main(void *arg) {
-	struct crtx_thread *self = (struct crtx_thread*) arg;
+// 	struct crtx_thread *self = (struct crtx_thread*) arg;
 	struct crtx_event_ll *qe;
 // 	struct crtx_task *ti;
+	struct crtx_graph *graph = (struct crtx_graph*) arg;
 	
-	while (!self->stop) {
-		pthread_mutex_lock(&self->graph->queue_mutex);
+// 	while (!stop) {
+		LOCK(graph->queue_mutex);
 		
-		while (self->graph->n_queue_entries == 0)
-			pthread_cond_wait(&self->graph->queue_cond, &self->graph->queue_mutex);
+		while (graph->n_queue_entries == 0)
+			pthread_cond_wait(&graph->queue_cond, &graph->queue_mutex);
 		
-		qe = self->graph->equeue;
-		self->graph->equeue = self->graph->equeue->next;
-		self->graph->n_queue_entries--;
+		qe = graph->equeue;
+		graph->equeue = graph->equeue->next;
+		graph->n_queue_entries--;
 		
-// 		for (ti=self->graph->tasks;ti;ti=ti->next) {
-// 			if (ti->handle)
-// 				ti->handle(qe->event, ti->userdata);
-// 			if (!ti->next)
-// 				break;
-// 		}
-// 		
-// 		for (;ti;ti=ti->prev)
-// 			if (ti->cleanup)
-// 				ti->cleanup(qe->event, ti->userdata);
-		
-		if (self->graph->tasks)
-			traverse_graph_r(self->graph->tasks, qe->event);
+		if (graph->tasks)
+			traverse_graph_r(graph->tasks, qe->event);
 		else
-			printf("no task in graph %s\n", self->graph->types[0]);
+			printf("no task in graph %s\n", graph->types[0]);
 		
-// 		pthread_mutex_lock(&qe->event->mutex);
-// 		qe->event->refs_before_response--;
-// 		
-// 		if (qe->event->refs_before_response == 0)
-// 			pthread_cond_broadcast(&qe->event->response_cond);
-// 		
-// 		pthread_mutex_unlock(&qe->event->mutex);
 		dereference_event_response(qe->event);
 		
 		dereference_event_release(qe->event);
 		
 		free(qe);
 		
-		pthread_mutex_unlock(&self->graph->queue_mutex);
-	}
+		UNLOCK(graph->queue_mutex);
+// 	}
 	
 	return 0;
-}
-
-void spawn_thread(struct crtx_graph *graph) {
-	graph->n_consumers++;
-	graph->consumers = (struct crtx_thread*) realloc(graph->consumers, sizeof(struct crtx_thread)*graph->n_consumers); ASSERT(graph->consumers);
-	
-	graph->consumers[graph->n_consumers-1].stop = 0;
-	graph->consumers[graph->n_consumers-1].graph = graph;
-	pthread_create(&graph->consumers[graph->n_consumers-1].handle, NULL, &graph_consumer_main, &graph->consumers[graph->n_consumers-1]);
 }
 
 void add_task(struct crtx_graph *graph, struct crtx_task *task) {
@@ -244,7 +220,14 @@ char is_graph_empty(struct crtx_graph *graph, char *event_type) {
 	return (graph->tasks == 0);
 }
 
+void graph_on_thread_finish(struct crtx_thread *thread, void *data) {
+	struct crtx_graph *graph = (struct crtx_graph*) data;
+	
+	ATOMIC_FETCH_SUB(graph->n_consumers, 1);
+}
+
 void add_event(struct crtx_graph *graph, struct crtx_event *event) {
+	unsigned int new_n_consumers;
 	
 	reference_event_release(event);
 	reference_event_response(event);
@@ -268,8 +251,18 @@ void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	
 	graph->n_queue_entries++;
 	
-	if (graph->n_consumers == 0)
-		spawn_thread(graph);
+	new_n_consumers = ATOMIC_FETCH_ADD(graph->n_consumers, 1);
+	if (!graph->n_max_consumers || new_n_consumers < graph->n_max_consumers) {
+		struct crtx_thread *t;
+		
+		t = get_thread(&graph_consumer_main, graph, 0);
+		t->on_finish = &graph_on_thread_finish;
+		t->on_finish_data = graph;
+		
+		start_thread(t);
+	} else {
+		ATOMIC_FETCH_SUB(graph->n_consumers, 1);
+	}
 	
 	pthread_cond_signal(&graph->queue_cond);
 	
@@ -328,53 +321,6 @@ struct crtx_event *create_event(char *type, void *data, size_t data_size) {
 // 	
 // 	return response;
 // }
-
-void init_signal(struct crtx_signal *signal) {
-	int ret;
-	
-	ret = pthread_mutex_init(&signal->mutex, 0); ASSERT(ret >= 0);
-	ret = pthread_cond_init(&signal->cond, NULL); ASSERT(ret >= 0);
-	
-	signal->local_condition = 0;
-	signal->condition = &signal->local_condition;
-}
-
-struct crtx_signal *new_signal() {
-	struct crtx_signal *signal;
-	
-	signal = (struct crtx_signal*) calloc(1, sizeof(struct crtx_signal));
-	
-	init_signal(signal);
-	
-	return signal;
-}
-
-void wait_on_signal(struct crtx_signal *signal) {
-	pthread_mutex_lock(&signal->mutex);
-	
-	while (!*signal->condition)
-		pthread_cond_wait(&signal->cond, &signal->mutex);
-	
-	pthread_mutex_unlock(&signal->mutex);
-}
-
-void send_signal(struct crtx_signal *s, char brdcst) {
-	pthread_mutex_lock(&s->mutex);
-	
-	if (!*s->condition)
-		*s->condition = 1;
-	
-	if (brdcst)
-		pthread_cond_broadcast(&s->cond);
-	else
-		pthread_cond_signal(&s->cond);
-	
-	pthread_mutex_unlock(&s->mutex);
-}
-
-void free_signal(struct crtx_signal *s) {
-	free(s);
-}
 
 void reference_event_release(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
@@ -541,7 +487,7 @@ void free_eventgraph(struct crtx_graph *egraph) {
 // 	for (i=0; i<egraph->n_consumers; i++) {
 // 		pthread_join(egraph->consumers[i].handle, 0);
 // 	}
-	free(egraph->consumers);
+// 	free(egraph->consumers);
 	
 	for (t = egraph->tasks; t; t=tnext) {
 		tnext = t->next;

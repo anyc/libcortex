@@ -14,7 +14,7 @@ struct crtx_inotify_listener {
 	uint32_t mask;
 	char *path;
 	
-	pthread_t thread;
+// 	pthread_t thread;
 };
 
 struct crtx_listener_base *crtx_new_inotify_listener(void *options);

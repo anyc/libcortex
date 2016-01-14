@@ -3,6 +3,7 @@
 
 #include "core.h"
 #include "sd_bus.h"
+#include "threads.h"
 
 // busctl --user tree org.cortexd.main
 // busctl --user introspect org.cortexd.main /org/cortexd/main
@@ -14,7 +15,7 @@
 
 static char * local_event_types[] = { "test", 0 };
 
-static pthread_t dthread;
+// static pthread_t dthread;
 struct dbus_thread duthread, dsthread, ddthread;
 
 sd_bus *sd_bus_main_bus;
@@ -478,7 +479,8 @@ void crtx_sd_bus_init() {
 // 	ddthread.bus = bus;
 	ddthread.graph = cortexd_graph;
 	
-	pthread_create(&dthread, NULL, sd_bus_daemon_thread, &ddthread);
+// 	pthread_create(&dthread, NULL, sd_bus_daemon_thread, &ddthread);
+	get_thread(sd_bus_daemon_thread, &ddthread, 1);
 	
 	
 	
@@ -535,7 +537,7 @@ void crtx_sd_bus_finish() {
 // 	pthread_join(sthread, NULL);
 // 	pthread_join(uthread, NULL);
 	
-	pthread_join(dthread, NULL);
+// 	pthread_join(dthread, NULL);
 }
 
 #ifndef STATIC_SD_BUS

@@ -9,6 +9,7 @@
 #include "core.h"
 #include "cache.h"
 #include "event_comm.h"
+#include "threads.h"
 
 struct serialized_dict_item {
 	uint64_t key_length;

@@ -6,6 +6,7 @@
 
 #include "core.h"
 #include "cache.h"
+#include "threads.h"
 
 char rcache_match_cb_t_strcmp(struct crtx_cache *rc, void *key, struct crtx_event *event, struct crtx_cache_entry *c_entry) {
 	return !strcmp( (char*) key, (char*) c_entry->key);

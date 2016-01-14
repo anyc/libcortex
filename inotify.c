@@ -8,6 +8,7 @@
 
 #include "core.h"
 #include "inotify.h"
+#include "threads.h"
 
 static int inotify_fd = -1;
 char *inotify_msg_etype[] = { INOTIFY_MSG_ETYPE, 0 };
@@ -97,7 +98,8 @@ struct crtx_listener_base *crtx_new_inotify_listener(void *options) {
 	
 	new_eventgraph(&inlist->parent.graph, inotify_msg_etype);
 	
-	pthread_create(&inlist->thread, NULL, inotify_tmain, inlist);
+// 	pthread_create(&inlist->thread, NULL, inotify_tmain, inlist);
+	printf("a\n");get_thread(inotify_tmain, inlist, 1);printf("b\n");
 	
 	return &inlist->parent;
 }

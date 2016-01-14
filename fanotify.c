@@ -8,6 +8,7 @@
 
 #include "core.h"
 #include "fanotify.h"
+#include "threads.h"
 
 char *fanotify_msg_etype[] = { FANOTIFY_MSG_ETYPE, 0 };
 
@@ -125,7 +126,8 @@ struct crtx_listener_base *crtx_new_fanotify_listener(void *options) {
 	
 	new_eventgraph(&falist->parent.graph, fanotify_msg_etype);
 	
-	pthread_create(&falist->thread, NULL, fanotify_tmain, falist);
+// 	pthread_create(&falist->thread, NULL, fanotify_tmain, falist);
+	get_thread(fanotify_tmain, falist, 1);
 	
 	return &falist->parent;
 }

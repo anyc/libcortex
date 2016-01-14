@@ -27,7 +27,7 @@ struct crtx_socket_listener {
 	
 	struct queue_event *sent_events;
 	
-	pthread_t thread;
+// 	pthread_t thread;
 	char stop;
 };
 

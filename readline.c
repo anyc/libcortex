@@ -8,6 +8,7 @@
 
 #include "core.h"
 #include "readline.h"
+#include "threads.h"
 
 static char *event_types[] = { "readline/request", 0 };
 
