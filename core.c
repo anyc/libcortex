@@ -93,7 +93,7 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 		l++;
 	}
 	
-	printf("listener \"%s\" not found\n", id);
+	ERROR("listener \"%s\" not found\n", id);
 	
 	return 0;
 }
@@ -114,7 +114,7 @@ void free_listener(struct crtx_listener_base *listener) {
 void traverse_graph_r(struct crtx_task *ti, struct crtx_event *event) {
 	void *sessiondata = 0;
 	
-	printf("execute task %s\n", ti->id);
+	INFO("execute task %s with event %s (%p)\n", ti->id, event->type, event);
 	
 	if (ti->handle)
 		ti->handle(event, ti->userdata, &sessiondata);
@@ -131,34 +131,30 @@ void crtx_traverse_graph(struct crtx_graph *graph, struct crtx_event *event) {
 }
 
 void *graph_consumer_main(void *arg) {
-// 	struct crtx_thread *self = (struct crtx_thread*) arg;
 	struct crtx_event_ll *qe;
-// 	struct crtx_task *ti;
 	struct crtx_graph *graph = (struct crtx_graph*) arg;
 	
-// 	while (!stop) {
-		LOCK(graph->queue_mutex);
-		
-		while (graph->n_queue_entries == 0)
-			pthread_cond_wait(&graph->queue_cond, &graph->queue_mutex);
-		
-		qe = graph->equeue;
-		graph->equeue = graph->equeue->next;
-		graph->n_queue_entries--;
-		
-		if (graph->tasks)
-			traverse_graph_r(graph->tasks, qe->event);
-		else
-			printf("no task in graph %s\n", graph->types[0]);
-		
-		dereference_event_response(qe->event);
-		
-		dereference_event_release(qe->event);
-		
-		free(qe);
-		
-		UNLOCK(graph->queue_mutex);
-// 	}
+	LOCK(graph->queue_mutex);
+	
+	while (graph->n_queue_entries == 0)
+		pthread_cond_wait(&graph->queue_cond, &graph->queue_mutex);
+	
+	qe = graph->equeue;
+	graph->equeue = graph->equeue->next;
+	graph->n_queue_entries--;
+	
+	if (graph->tasks)
+		traverse_graph_r(graph->tasks, qe->event);
+	else
+		INFO("no task in graph %s\n", graph->types[0]);
+	
+	dereference_event_response(qe->event);
+	
+	dereference_event_release(qe->event);
+	
+	free(qe);
+	
+	UNLOCK(graph->queue_mutex);
 	
 	return 0;
 }
@@ -234,20 +230,16 @@ void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	
 	pthread_mutex_lock(&graph->mutex);
 	
-	printf("new event %s\n", event->type);
+	DBG("add event %s (%p) to graph\n", event->type, event);
 	
 	if (!graph->tasks) {
-		printf("dropping event as graph is empty\n");
+		INFO("dropping event as graph is empty\n");
 		
 		pthread_mutex_unlock(&graph->mutex);
 		return;
 	}
 	
 	event_ll_add(&graph->equeue, event);
-	
-// 	pthread_mutex_lock(&event->mutex);
-// 	event->refs_before_response++;
-// 	pthread_mutex_unlock(&event->mutex);
 	
 	graph->n_queue_entries++;
 	
@@ -269,39 +261,6 @@ void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	pthread_mutex_unlock(&graph->mutex);
 }
 
-// void add_event_sync(struct crtx_graph *graph, struct crtx_event *event) {
-// 	struct crtx_event *eit;
-// 	
-// 	pthread_mutex_lock(&graph->mutex);
-// 	
-// 	printf("new event %s\n", event->type);
-// 	
-// 	for (eit=graph->equeue; eit && eit->next; eit = eit->next) {}
-// 	
-// 	if (eit) {
-// 		eit->next = event;
-// 	} else {
-// 		graph->equeue = event;
-// 	}
-// 	event->next = 0;
-// 	graph->n_queue_entries++;
-// 	
-// 	if (graph->n_consumers == 0)
-// 		spawn_thread(graph);
-// 	
-// 	pthread_cond_signal(&graph->queue_cond);
-// 	
-// 	pthread_mutex_unlock(&graph->mutex);
-// 	
-// 	
-// 	pthread_mutex_lock(&event->mutex);
-// 	
-// 	while (event->response == 0)
-// 		pthread_cond_wait(&event->cond, &event->mutex);
-// 	
-// 	pthread_mutex_unlock(&event->mutex);
-// }
-
 struct crtx_event *create_event(char *type, void *data, size_t data_size) {
 	struct crtx_event *event;
 	
@@ -313,29 +272,24 @@ struct crtx_event *create_event(char *type, void *data, size_t data_size) {
 	return event;
 }
 
-// struct crtx_event *create_response(struct crtx_event *event, void *data, size_t data_size) {
-// 	struct crtx_event *response;
-// 	
-// 	response = create_event(event->type, data, data_size);
-// 	response->original_event = event;
-// 	
-// 	return response;
-// }
-
 void reference_event_release(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
+	
 	event->refs_before_release++;
+	DBG("ref release of event %s (%p) (now %d)\n", event->type, event, event->refs_before_release);
+	
 	pthread_mutex_unlock(&event->mutex);
 }
 
 void dereference_event_release(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
-	printf("deref release %d %s\n", event->refs_before_release, event->type);
+	
+	DBG("deref release of event %s (%p) (remaining %d)\n", event->type, event, event->refs_before_release);
+	
 	if (event->refs_before_release > 0)
 		event->refs_before_release--;
 	
 	if (event->refs_before_release == 0) {
-// 		pthread_cond_broadcast(&event->release_cond);
 		free_event(event);
 		return;
 	}
@@ -345,12 +299,17 @@ void dereference_event_release(struct crtx_event *event) {
 
 void reference_event_response(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
+	
 	event->refs_before_response++;
+	DBG("ref response of event %s (%p) (now %d)\n", event->type, event, event->refs_before_response);
+	
 	pthread_mutex_unlock(&event->mutex);
 }
 
 void dereference_event_response(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
+	
+	DBG("ref response of event %s (%p) (remaining %d)\n", event->type, event, event->refs_before_response);
 	
 	if (event->refs_before_response > 0)
 		event->refs_before_response--;
@@ -375,11 +334,9 @@ struct crtx_event *new_event() {
 	int ret;
 	
 	event = (struct crtx_event*) calloc(1, sizeof(struct crtx_event));
-// 	event->id = (uint64_t) (uintptr_t) event;
 	
 	ret = pthread_mutex_init(&event->mutex, 0); ASSERT(ret >= 0);
 	ret = pthread_cond_init(&event->response_cond, NULL); ASSERT(ret >= 0);
-// 	ret = pthread_cond_init(&event->release_cond, NULL); ASSERT(ret >= 0);
 	
 	return event;
 }
@@ -392,8 +349,6 @@ void free_event_data(struct crtx_event_data *ed) {
 }
 
 void free_event(struct crtx_event *event) {
-	printf("free %s\n", event->type);
-	
 	if (event->cb_before_release)
 		event->cb_before_release(event);
 	
@@ -437,7 +392,7 @@ void add_raw_event(struct crtx_event *event) {
 	graph = find_graph_for_event_type(event->type);
 	
 	if (!graph) {
-		printf("did not find graph for event type %s\n", event->type);
+		ERROR("did not find graph for event type %s\n", event->type);
 		return;
 	}
 	
@@ -457,16 +412,16 @@ void new_eventgraph(struct crtx_graph **crtx_graph, char **event_types) {
 	ret = pthread_mutex_init(&graph->queue_mutex, 0); ASSERT(ret >= 0);
 	ret = pthread_cond_init(&graph->queue_cond, NULL); ASSERT(ret >= 0);
 	
-	printf("new eventgraph ");
+	INFO("new eventgraph ");
 	if (event_types) {
 		while (event_types[graph->n_types]) {
-			printf("%s ", event_types[graph->n_types]);
+			INFO("%s ", event_types[graph->n_types]);
 			graph->n_types++;
 		}
 		
 		graph->types = event_types;
 	}
-	printf("\n");
+	INFO("\n");
 	
 	n_graphs++;
 	graphs = (struct crtx_graph**) realloc(graphs, sizeof(struct crtx_graph*)*n_graphs);
@@ -484,11 +439,6 @@ void free_eventgraph(struct crtx_graph *egraph) {
 		free(qe);
 	}
 	
-// 	for (i=0; i<egraph->n_consumers; i++) {
-// 		pthread_join(egraph->consumers[i].handle, 0);
-// 	}
-// 	free(egraph->consumers);
-	
 	for (t = egraph->tasks; t; t=tnext) {
 		tnext = t->next;
 		free_task(t);
@@ -504,12 +454,6 @@ void free_eventgraph(struct crtx_graph *egraph) {
 	free(egraph);
 }
 
-// void add_event_type(char *event_type) {
-// 	n_event_types++;
-// 	event_types = (char**) realloc(event_types, sizeof(char*)*n_event_types);
-// 	event_types[n_event_types-1] = event_type;
-// }
-
 struct crtx_task *new_task() {
 	struct crtx_task *etask = (struct crtx_task*) calloc(1, sizeof(struct crtx_task));
 	etask->position = 100;
@@ -521,18 +465,16 @@ void free_task(struct crtx_task *task) {
 	struct crtx_task *t, *prev;
 	
 	prev=0;
-// 	if (task->graph) {
-		for (t = task->graph->tasks; t; t=t->next) {
-			if (t == task) {
-				if (prev) {
-					prev->next = t->next;
-				} else {
-					task->graph->tasks = t->next;
-				}
+	for (t = task->graph->tasks; t; t=t->next) {
+		if (t == task) {
+			if (prev) {
+				prev->next = t->next;
+			} else {
+				task->graph->tasks = t->next;
 			}
-			prev = t;
 		}
-// 	}
+		prev = t;
+	}
 	
 	free(task);
 }
@@ -540,23 +482,15 @@ void free_task(struct crtx_task *task) {
 void cortex_init() {
 	unsigned int i;
 	
-// 	i=0;
-// 	while (local_event_types[i]) {
-// 		add_event_type(local_event_types[i]);
-// 		i++;
-// 	}
-	
 	new_eventgraph(&cortexd_graph, local_event_types);
 	
 	i=0;
 	while (static_modules[i].id) {
-		printf("initialize \"%s\"\n", static_modules[i].id);
+		DBG("initialize \"%s\"\n", static_modules[i].id);
 		
 		static_modules[i].init();
 		i++;
 	}
-	
-// 	cortexd_graph->tasks = etask;
 }
 
 void cortex_finish() {
@@ -564,7 +498,7 @@ void cortex_finish() {
 	
 	i=0;
 	while (static_modules[i].id) {
-		printf("finish \"%s\"\n", static_modules[i].id);
+		DBG("finish \"%s\"\n", static_modules[i].id);
 		
 		static_modules[i].finish();
 		i++;
@@ -575,7 +509,7 @@ void print_tasks(struct crtx_graph *graph) {
 	struct crtx_task *e;
 	
 	for (e=graph->tasks; e; e=e->next) {
-		printf("%u %s\n", e->position, e->id);
+		INFO("%u %s\n", e->position, e->id);
 	}
 }
 
@@ -583,9 +517,9 @@ void hexdump(unsigned char *buffer, size_t index) {
 	size_t i;
 	
 	for (i=0;i<index;i++) {
-		printf("%02x ", buffer[i]);
+		INFO("%02x ", buffer[i]);
 	}
-	printf("\n");
+	INFO("\n");
 }
 
 typedef char (*event_notifier_filter)(struct crtx_event *event);
@@ -618,30 +552,6 @@ void wait_on_notifier(struct crtx_event_notifier *en) {
 	pthread_mutex_unlock(&en->mutex);
 }
 
-
-// struct crtx_task *new_event_notifier(struct crtx_graph *graph, event_notifier_filter filter, event_notifier_cb callback) {
-// 	struct crtx_task *task;
-// 	struct crtx_event_notifier *en;
-// 	int ret;
-// 	
-// 	en = (struct crtx_event_notifier*) calloc(1, sizeof(struct crtx_event_notifier));
-// 	en->filter = filter;
-// 	en->callback = callback;
-// 	
-// 	ret = pthread_mutex_init(&en->mutex, 0); ASSERT(ret >= 0);
-// 	ret = pthread_cond_init(&en->cond, NULL); ASSERT(ret >= 0);
-// 	
-// 	task = new_task();
-// 	task->id = "event_notifier";
-// 	task->position = 110;
-// 	task->userdata = en;
-// 	task->handle = &event_notifier_task;
-// 	
-// 	add_task(graph, task);
-// 	
-// 	return task;
-// }
-
 char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 // 	if (ds) {
 // 		size_t idx;
@@ -663,7 +573,7 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 			
 			di->size = va_arg(va, size_t);
 			if (di->size > 0 && di->size != sizeof(uint32_t)) {
-				printf("size mismatch %zu %zu\n", di->size, sizeof(uint32_t));
+				ERROR("size mismatch %zu %zu\n", di->size, sizeof(uint32_t));
 				return 0;
 			}
 			break;
@@ -677,7 +587,7 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 			di->size = va_arg(va, size_t);
 			break;
 		default:
-			printf("unknown literal '%c'\n", di->type);
+			ERROR("unknown literal '%c'\n", di->type);
 			return -1;
 	}
 	
@@ -727,31 +637,6 @@ struct crtx_dict * crtx_create_dict(char *signature, ...) {
 	s = signature;
 	di = ds->items;
 	while (*s) {
-// 		di->type = *s;
-// 		di->key = va_arg(va, char*);
-		
-// 		switch (*s) {
-// 			case 'u':
-// 				di->uint32 = va_arg(va, uint32_t);
-// 				di->size = sizeof(uint32_t);
-// 				break;
-// 			case 's':
-// 				di->string = va_arg(va, char*);
-// 				di->size = sizeof(char *);
-// 				break;
-// 			case 'D':
-// 				di->ds = va_arg(va, struct crtx_dict*);
-// 				break;
-// 			default:
-// 				printf("unknown literal '%c' in signature \"%s\"\n", *s, signature);
-// 				return 0;
-// 		}
-// 		
-// 		size = va_arg(va, size_t);
-// 		if (size > 0)
-// 			di->size = size;
-// 		di->flags = va_arg(va, int);
-		
 		ret = crtx_fill_data_item_va(di, *s, va);
 		if (ret < 0)
 			return 0;
@@ -799,7 +684,6 @@ void free_dict(struct crtx_dict *ds) {
 		s++;
 	}
 	
-// 	free(ds->signature);
 	free(ds);
 }
 
@@ -809,29 +693,29 @@ void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level) {
 	uint8_t i,j;
 	
 	if (!ds) {
-		printf("error, trying to print non-existing dict\n");
+		ERROR("error, trying to print non-existing dict\n");
 		return;
 	}
 	
 	for (j=0;j<level;j++) printf("  ");
-	printf("sign: %s (%zu==%u)\n", ds->signature, strlen(ds->signature), ds->signature_length);
+	INFO("sign: %s (%zu==%u)\n", ds->signature, strlen(ds->signature), ds->signature_length);
 	
 	i=0;
 	s = ds->signature;
 	di = ds->items;
 	while (*s) {
-		for (j=0;j<level;j++) printf("  ");
-		printf("%u: %s = ", i, di->key);
+		for (j=0;j<level;j++) INFO("  "); // indent
+		INFO("%u: %s = ", i, di->key);
 		
 		if (*s != di->type)
-			printf("error type %c != %c\n", *s, di->type);
+			INFO("error type %c != %c\n", *s, di->type);
 		
 		switch (di->type) {
-			case 'u': printf("(uint32_t) %d\n", di->uint32); break;
-			case 'i': printf("(int32_t) %d\n", di->int32); break;
-			case 's': printf("(char*) %s\n", di->string); break;
+			case 'u': INFO("(uint32_t) %d\n", di->uint32); break;
+			case 'i': INFO("(int32_t) %d\n", di->int32); break;
+			case 's': INFO("(char*) %s\n", di->string); break;
 			case 'D':
-				printf("(dict) \n");
+				INFO("(dict) \n");
 				if (di->ds)
 					crtx_print_dict_rec(di->ds, level+1);
 				break;
@@ -861,10 +745,10 @@ char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size
 				memcpy(buffer, &di->pointer, buffer_size);
 				return 1;
 			} else
-				printf("error, size does not match type: %zu != %zu\n", buffer_size, sizeof(void*));
+				ERROR("error, size does not match type: %zu != %zu\n", buffer_size, sizeof(void*));
 			break;
 		default:
-			printf("error, unimplemented value type %c\n", di->type);
+			ERROR("error, unimplemented value type %c\n", di->type);
 			return 0;
 	}
 	
@@ -921,3 +805,7 @@ void *crtx_copy_raw_data(struct crtx_event_data *data) {
 	
 	return new_data;
 }
+
+// void crtx_fprintf(int fd, char *fmt, ...) {
+	// check if last char is \n
+// }

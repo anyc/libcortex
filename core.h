@@ -5,9 +5,19 @@
 #define STRINGIFYB(x) #x
 #define STRINGIFY(x) STRINGIFYB(x)
 
-#define ASSERT(x) { if (!(x)) { printf(__FILE__ ":" STRINGIFY(__LINE__) " assertion failed: " #x "\n"); exit(1); } }
+#define ASSERT(x) do { if (!(x)) { printf(__FILE__ ":" STRINGIFY(__LINE__) " assertion failed: " #x "\n"); exit(1); } } while (0)
 
-#define ASSERT_STR(x, msg, ...) { if (!(x)) { printf(__FILE__ ":" STRINGIFY(__LINE__) " " msg " " #x "failed\n", __VA_ARGS__); exit(1); } }
+#define ASSERT_STR(x, msg, ...) do { if (!(x)) { printf(__FILE__ ":" STRINGIFY(__LINE__) " " msg " " #x "failed\n", __VA_ARGS__); exit(1); } } while (0)
+
+#define INFO(fmt, ...) do { fprintf(stderr, fmt, ##__VA_ARGS__); } while (0)
+
+#ifndef DDEBUG
+#define DBG(fmt, ...) do { fprintf(stderr, fmt, ##__VA_ARGS__); } while (0)
+#else
+#define DDBG(fmt, ...) do { fprintf(stderr, "%s:%d:%s(): " fmt, __FILE__, __LINE__, __func__, ##__VA_ARGS__); } while (0)
+#endif
+
+#define ERROR(fmt, ...) do { fprintf(stderr, "\x1b[31m"); fprintf(stderr, fmt, ##__VA_ARGS__); fprintf(stderr, "\x1b[0m"); } while (0)
 
 #define CRTX_EVT_NOTIFICATION "cortexd/notification"
 extern char *crtx_evt_notification[];
@@ -41,6 +51,8 @@ struct crtx_event {
 	unsigned char refs_before_response;
 	unsigned char refs_before_release;
 	pthread_cond_t response_cond;
+	
+// 	void (*event_to_str)(struct crtx_event *event);
 	
 	void (*cb_before_release)(struct crtx_event *event);
 	void *cb_before_release_data;

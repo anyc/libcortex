@@ -151,7 +151,7 @@ void crtx_send_notification(char *icon, char *title, char *text, char **actions,
 		
 		// TODO check if sd-bus module is initialized!
 		
-		sd_bus_add_listener(sd_bus_main_bus, "/org/freedesktop/Notifications", EV_NOTIF_SIGNAL);
+		sd_bus_add_signal_listener(sd_bus_main_bus, "/org/freedesktop/Notifications", EV_NOTIF_SIGNAL);
 		
 		struct crtx_task *task2;
 		task2 = new_task();

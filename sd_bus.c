@@ -72,9 +72,6 @@ static int sd_bus_add_event(sd_bus_message *m, void *userdata, sd_bus_error *ret
 	
 	printf("received %s %s\n", type, data);
 	
-// 	event = new_event();
-// 	event->type = type;
-// 	event->data = data;
 	event = create_event(type, data, strlen(data)+1);
 	
 	add_event(args->graph, event);
@@ -102,28 +99,9 @@ static int sd_bus_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *r
 	
 	listener = (struct crtx_listener_base_data*) userdata;
 	
-// 	event = new_event();
-// 	event->type = listener->event_type;
-// 	event->data = m;
 	event = create_event(listener->event_type, m, 0);
 	
 	sd_bus_print_msg(m);
-	
-	// 	sig = sd_bus_message_get_signature(m, 1);
-	// 	
-	// 	printf("got bus signal... %s %s %s %s %s \"%s\"\n",
-	// 		  sd_bus_message_get_path(m),
-	// 		  sd_bus_message_get_interface(m),
-	// 		  sd_bus_message_get_member(m),
-	// 		  sd_bus_message_get_destination(m),
-	// 		  sd_bus_message_get_sender(m),
-	// 		  sig
-	// 	);
-	// 	
-	// 	if (sig[0] == 's') {
-	// 		sd_bus_message_read_basic(m, 's', &val);
-	// 		printf("\tval %s\n", val);
-	// 	}
 	
 	reference_event_release(event);
 	
@@ -138,7 +116,7 @@ static int sd_bus_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *r
 	return 0;
 }
 
-void sd_bus_add_listener(sd_bus *bus, char *path, char *event_type) {
+void sd_bus_add_signal_listener(sd_bus *bus, char *path, char *event_type) {
 	struct crtx_listener_base_data *listener;
 	char *buf;
 	int len;
@@ -159,7 +137,7 @@ void sd_bus_add_listener(sd_bus *bus, char *path, char *event_type) {
 	free(buf);
 }
 
-static int sd_bus_add_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
+static int sd_bus_add_signal_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
 	char *path, *event_type;
 	int r;
 	struct sd_bus_userdata *args;
@@ -173,7 +151,7 @@ static int sd_bus_add_listener_cb(sd_bus_message *m, void *userdata, sd_bus_erro
 		return r;
 	}
 	
-	sd_bus_add_listener(args->bus, path, event_type);
+	sd_bus_add_signal_listener(args->bus, path, event_type);
 	
 	return sd_bus_reply_method_return(m, "");
 }
@@ -276,7 +254,7 @@ static int sd_bus_add_signal(sd_bus_message *m, void *userdata, sd_bus_error *re
 static const sd_bus_vtable cortexd_vtable[] = {
 	SD_BUS_VTABLE_START(0),
 	SD_BUS_METHOD("add_event", "ss", "", sd_bus_add_event, SD_BUS_VTABLE_UNPRIVILEGED),
-	SD_BUS_METHOD("add_listener", "ss", "", sd_bus_add_listener_cb, SD_BUS_VTABLE_UNPRIVILEGED),
+	SD_BUS_METHOD("add_signal_listener", "ss", "", sd_bus_add_signal_listener_cb, SD_BUS_VTABLE_UNPRIVILEGED),
 	SD_BUS_METHOD("add_signal", "s", "", sd_bus_add_signal, SD_BUS_VTABLE_UNPRIVILEGED),
 	SD_BUS_VTABLE_END
 };
@@ -356,38 +334,14 @@ void sd_bus_print_event_task(struct crtx_event *event, void *userdata) {
 	sd_bus_print_msg(m);
 }
 
-// static int bus_signal_cb(sd_bus *bus, int ret, sd_bus_message *m, void *user_data)
 static int bus_signal_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
-	// 	uint8_t type;
-	// 	const char *sig;
-	// 	char *val;
 	struct dbus_thread * dthread;
 	struct crtx_event *event;
 	
 	dthread = (struct dbus_thread*) userdata;
 	
-// 	event = new_event();
-// 	event->type = local_event_types[0];
-// 	event->data = m;
 	event = create_event(local_event_types[0], m, 0);
 
-	
-	// 	sig = sd_bus_message_get_signature(m, 1);
-	// 	
-	// 	printf("got bus signal... %s %s %s %s %s \"%s\"\n",
-	// 		  sd_bus_message_get_path(m),
-	// 		  sd_bus_message_get_interface(m),
-	// 		  sd_bus_message_get_member(m),
-	// 		  sd_bus_message_get_destination(m),
-	// 		  sd_bus_message_get_sender(m),
-	// 		  sig
-	// 	);
-	// 	
-	// 	if (sig[0] == 's') {
-	// 		sd_bus_message_read_basic(m, 's', &val);
-	// 		printf("\tval %s\n", val);
-	// 	}
-	
 	add_event(dthread->graph, event);
 	
 	return 0;
@@ -433,104 +387,9 @@ void * tmain(void *data) {
 }
 
 void crtx_sd_bus_init() {
-// 	sd_bus *bus = NULL;
-	
-// 	struct crtx_graph *crtx_graph;
-// 	
-// 	i=0;
-// 	while (local_event_types[i]) {
-// 		add_event_type(local_event_types[i]);
-// 		i++;
-// 	}
-// 	
-// 	new_eventgraph(&crtx_graph, local_event_types);
-// 	
-// 	struct crtx_task *etask = (struct crtx_task*) malloc(sizeof(struct crtx_task));
-// 	etask->handle = &handle_event;
-// 	
-// 	crtx_graph->entry_task = etask;
-// 	
-// 	/* Connect to the system bus */
-// 	r = sd_bus_open_system(&bus);
-// 	if (r < 0) {
-// 		fprintf(stderr, "Failed to connect to system bus: %s\n", strerror(-r));
-// 		return;
-// 	}
-// 	
-// 	r = sd_bus_open_user(&ubus);
-// 	if (r < 0) {
-// 		fprintf(stderr, "Failed to connect to user bus: %s\n", strerror(-r));
-// 		return;
-// 	}
-// 	
-// 	
-// 	duthread.bus = ubus;
-// 	duthread.graph = crtx_graph;
-// 	dsthread.bus = bus;
-// 	dsthread.graph = crtx_graph;
-// 	
-// 	pthread_create(&sthread, NULL, tmain, &dsthread);
-// 	pthread_create(&uthread, NULL, tmain, &duthread);
-	
-	
-	
-	
-// 	main_bus = bus;
-// 	ddthread.bus = bus;
 	ddthread.graph = cortexd_graph;
 	
-// 	pthread_create(&dthread, NULL, sd_bus_daemon_thread, &ddthread);
 	get_thread(sd_bus_daemon_thread, &ddthread, 1);
-	
-	
-	
-	// 	/* Issue the method call and store the respons message in m */
-	// 	r = sd_bus_call_method(bus,
-	// 						"org.freedesktop.UDisks2",           /* service to contact */
-	// 						"/org/freedesktop/UDisks2/drives/hp________DDVDW_TS_H653R_R3786GASC5277600",          /* object path */
-	// 						"org.freedesktop.DBus.Peer",   /* interface name */
-	// 						"GetMachineId",                          /* method name */
-	// 						&error,                               /* object to return error in */
-	// 						&m,                                   /* return message on success */
-	// 						"",                                 /* input signature */
-	// 						"",                       /* first argument */
-	// 						"");                           /* second argument */
-	// 	if (r < 0) {
-	// 			fprintf(stderr, "Failed to issue method call: %s\n", error.message);
-	// 			goto finish;
-	// 	}
-	// 
-	// 	/* Parse the response message */
-	// 	r = sd_bus_message_read(m, "s", &path);
-	// 	if (r < 0) {
-	// 			fprintf(stderr, "Failed to parse response message: %s\n", strerror(-r));
-	// 			goto finish;
-	// 	}
-	// 
-	// 	printf("Queued service job as %s.\n", path);
-	
-	// 	while (1) {
-	// 		r = sd_bus_process(bus, NULL);
-	// 		if (r < 0) {
-	// 			fprintf(stderr, "sd_bus_process failed %d\n", r);
-	// 			break;
-	// 		}
-	// 		if (r == 0) {
-	// 			r = sd_bus_wait(bus, (uint64_t) -1);
-	// 			if (r < 0) {
-	// 				fprintf(stderr, "Failed to wait: %d", r);
-	// 				goto finish;
-	// 			}
-	// 		}
-	// 	}
-	
-	// finish:
-	// 	sd_bus_flush(bus);
-	// 	sd_bus_error_free(&error);
-	// 	sd_bus_message_unref(m);
-	// 	sd_bus_unref(bus);
-	// 
-	// 	return r < 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 void crtx_sd_bus_finish() {
@@ -545,27 +404,3 @@ void init() {
 	sd_bus_init();
 }
 #endif
-
-// void sd_bus_call_method(sd_bus *bus, char *dest, char *path, char *interface, char *member, char *sign) {
-// 	int r;
-// 	sd_bus_error error = SD_BUS_ERROR_NULL;
-// 	sd_bus_message *m = NULL;
-// 	
-// 	r = sd_bus_call_method(bus,
-// 				"org.freedesktop.systemd1",           /* service to contact */
-// 				"/org/freedesktop/systemd1",          /* object path */
-// 				"org.freedesktop.systemd1.Manager",   /* interface name */
-// 				"StartUnit",                          /* method name */
-// 				&error,                               /* object to return error in */
-// 				&m,                                   /* return message on success */
-// 				"ss",                                 /* input signature */
-// 				"cups.service",                       /* first argument */
-// 				"replace");                           /* second argument */
-// 	if (r < 0) {
-// 		fprintf(stderr, "Failed to issue method call: %s\n", error.message);
-// 		goto finish;
-// 	}
-// 	
-// 	
-// 	r = sd_bus_message_new_method_call(bus, &m, dest, path, interface, member);
-// }
