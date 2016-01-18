@@ -18,12 +18,14 @@ struct crtx_control {
 	char *basename;
 	
 	void *handle;
-	void (*init)();
+	
+	char initialized;
+	char (*init)();
 	void (*finish)();
 };
 
-struct crtx_control *controls = 0;
-unsigned int n_controls = 0;
+static struct crtx_control *controls = 0;
+static unsigned int n_controls = 0;
 
 static void load_control(char *path, char *basename) {
 	struct crtx_control *p;
@@ -34,15 +36,20 @@ static void load_control(char *path, char *basename) {
 	controls = (struct crtx_control*) realloc(controls, sizeof(struct crtx_control)*n_controls);
 	p = &controls[n_controls-1];
 	
+	memset(p, 0, sizeof(struct crtx_control));
 	p->path = path;
 	p->basename = basename;
 	p->handle = dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
 	
+	if (!p->handle)
+		return;
+	
+	p->initialized = 1;
 	p->init = dlsym(p->handle, "init");
 	p->finish = dlsym(p->handle, "finish");
 	
 	if (p->init)
-		p->init();
+		p->initialized = p->init();
 }
 
 static void load_dir(char * directory) {
@@ -85,6 +92,16 @@ void crtx_controls_finish() {
 	size_t i;
 	
 	for (i=0; i<n_controls; i++) {
-		controls[i].finish();
+		if (controls[i].initialized) {
+			if (controls[i].finish)
+				controls[i].finish();
+			controls[i].initialized = 0;
+		}
+		
+		if (controls[i].handle)
+			dlclose(controls[i].handle);
+		free(controls[i].path);
 	}
+	
+	free(controls);
 }

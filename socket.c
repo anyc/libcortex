@@ -107,8 +107,8 @@ void *socket_connection_tmain(void *data) {
 	
 	memcpy(&slist, args->slistener, sizeof(struct crtx_socket_listener));
 	
-	new_eventgraph(&slist.parent.graph, slist.recv_types);
-	new_eventgraph(&slist.outbox, slist.send_types);
+	new_eventgraph(&slist.parent.graph, 0, slist.recv_types);
+	new_eventgraph(&slist.outbox, 0, slist.send_types);
 	
 	slist.sockfd = args->sockfd;
 	
@@ -330,8 +330,8 @@ struct crtx_listener_base *crtx_new_socket_client_listener(void *options) {
 	
 	create_in_out_box();
 	
-	new_eventgraph(&slistener->parent.graph, slistener->recv_types);
-	new_eventgraph(&slistener->outbox, slistener->send_types);
+	new_eventgraph(&slistener->parent.graph, 0, slistener->recv_types);
+	new_eventgraph(&slistener->outbox, 0, slistener->send_types);
 	
 	task = new_task();
 	task->id = "inbound_event_handler";

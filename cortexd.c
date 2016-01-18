@@ -1,17 +1,18 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "core.h"
+#include "signals.h"
 
 int main(int argc, char *argv[]) {
-	cortex_init();
+	crtx_init();
+	crtx_handle_std_signals();
 	
-	while (1) {
-		sleep(1);
-	}
+	crtx_loop();
 	
-	cortex_finish();
+	crtx_finish();
 	
 	return 0;
 }

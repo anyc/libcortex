@@ -1,4 +1,7 @@
 
+#ifndef _CRTX_CORE_H
+#define _CRTX_CORE_H
+
 #include <stdint.h>
 #include <regex.h>
 
@@ -19,12 +22,14 @@
 
 #define ERROR(fmt, ...) do { fprintf(stderr, "\x1b[31m"); fprintf(stderr, fmt, ##__VA_ARGS__); fprintf(stderr, "\x1b[0m"); } while (0)
 
-#define CRTX_EVT_NOTIFICATION "cortexd/notification"
+#define CRTX_EVT_NOTIFICATION "cortexd.notification"
 extern char *crtx_evt_notification[];
-#define CRTX_EVT_INBOX "cortexd/inbox"
+#define CRTX_EVT_INBOX "cortexd.inbox"
 extern char *crtx_evt_inbox[];
-#define CRTX_EVT_OUTBOX "cortexd/outbox"
+#define CRTX_EVT_OUTBOX "cortexd.outbox"
 extern char *crtx_evt_outbox[];
+
+
 
 struct crtx_event;
 
@@ -72,6 +77,8 @@ struct crtx_task {
 	unsigned char position;
 	struct crtx_graph *graph;
 	
+	char *event_type_match; // if 0, task receives all events passing the graph
+	
 	void (*handle)(struct crtx_event *event, void *userdata, void **sessiondata);
 	void (*cleanup)(struct crtx_event *event, void *userdata, void *sessiondata);
 	void *userdata;
@@ -81,6 +88,8 @@ struct crtx_task {
 };
 
 struct crtx_graph {
+	char *name;
+	
 	char **types;
 	unsigned int n_types;
 	
@@ -106,7 +115,7 @@ struct crtx_listener_repository {
 };
 
 struct crtx_listener_base {
-	void (*free)(void *data);
+	void (*free)(struct crtx_listener_base *data);
 	
 	// TODO: add (*start)() to start listener after tasks have been added?
 	
@@ -152,11 +161,16 @@ struct crtx_dict {
 	struct crtx_dict_item items[0];
 };
 
+
 extern struct crtx_module static_modules[];
 extern struct crtx_graph *cortexd_graph;
 
 extern struct crtx_graph **graphs;
 extern unsigned int n_graphs;
+
+#define CRTX_EVT_SHUTDOWN "cortexd.control.shutdown"
+#define CRTX_EVT_MOD_INIT "cortex.control.module_initialized"
+extern struct crtx_graph *crtx_ctrl_graph;
 
 
 
@@ -164,9 +178,10 @@ extern unsigned int n_graphs;
 char *stracpy(char *str, size_t *str_length);
 struct crtx_event *new_event();
 void free_event(struct crtx_event *event);
-void cortex_init();
-void cortex_finish();
-void new_eventgraph(struct crtx_graph **crtx_graph, char **event_types);
+void crtx_init();
+void crtx_finish();
+void crtx_loop();
+void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **event_types);
 void free_eventgraph(struct crtx_graph *egraph);
 // void get_eventgraph(struct crtx_graph **crtx_graph, char **event_types, unsigned int n_event_types);
 void add_task(struct crtx_graph *graph, struct crtx_task *task);
@@ -175,7 +190,8 @@ void add_raw_event(struct crtx_event *event);
 void add_event(struct crtx_graph *graph, struct crtx_event *event);
 void add_event_sync(struct crtx_graph *graph, struct crtx_event *event);
 struct crtx_graph *find_graph_for_event_type(char *event_type);
-struct crtx_graph *get_graph_for_event_type(char *event_type, char **event_types);
+struct crtx_graph *find_graph_by_name(char *name);
+struct crtx_graph *get_graph_for_event_type(char *event_type, char **new_event_types);
 struct crtx_task *new_task();
 void free_task(struct crtx_task *task);
 void wait_on_event(struct crtx_event *event);
@@ -207,3 +223,5 @@ void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event);
 char *get_username();
 char is_graph_empty(struct crtx_graph *graph, char *event_type);
 void *crtx_copy_raw_data(struct crtx_event_data *data);
+
+#endif

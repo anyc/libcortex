@@ -89,14 +89,14 @@ void *fanotify_tmain(void *data) {
 	return 0;
 }
 
-void crtx_free_fanotify_listener(void *data) {
-	struct crtx_fanotify_listener *falist = (struct crtx_fanotify_listener *) falist;
+void crtx_free_fanotify_listener(struct crtx_listener_base *data) {
+// 	struct crtx_fanotify_listener *falist = (struct crtx_fanotify_listener *) data;
 	
-	free_eventgraph(falist->parent.graph);
+// 	free_eventgraph(falist->parent.graph);
 	
 // 	pthread_join(falist->thread, 0);
 	
-	free(falist);
+// 	free(falist);
 }
 
 struct crtx_listener_base *crtx_new_fanotify_listener(void *options) {
@@ -124,7 +124,7 @@ struct crtx_listener_base *crtx_new_fanotify_listener(void *options) {
 	
 	falist->parent.free = &crtx_free_fanotify_listener;
 	
-	new_eventgraph(&falist->parent.graph, fanotify_msg_etype);
+	new_eventgraph(&falist->parent.graph, 0, fanotify_msg_etype);
 	
 // 	pthread_create(&falist->thread, NULL, fanotify_tmain, falist);
 	get_thread(fanotify_tmain, falist, 1);

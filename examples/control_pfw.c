@@ -508,7 +508,7 @@ static void pfw_rules_filter(struct crtx_event *event, void *userdata, void **se
 	
 }
 
-void init() {
+char init() {
 	struct ifaddrs *addrs, *tmp;
 	struct ip_ll *iit;
 	char *s;
@@ -569,7 +569,7 @@ void init() {
 	print_filter_set(&ip_whitelist, "ip blacklist");
 	
 	
-	new_eventgraph(&newp_graph, newp_event_types);
+	new_eventgraph(&newp_graph, 0, newp_event_types);
 	
 	pfw_rules_task = new_task();
 	pfw_rules_task->id = "pfw_print_packet";
@@ -609,7 +609,7 @@ void init() {
 	nfq_list_base = create_listener("nf_queue", &nfq_list);
 	if (!nfq_list_base) {
 		printf("cannot create nq_queue listener\n");
-		return;
+		return 0;
 	}
 	
 	pfw_handle_task = new_task();
@@ -617,6 +617,8 @@ void init() {
 	pfw_handle_task->handle = &pfw_main_handler;
 	pfw_handle_task->userdata = &nfq_list;
 	add_task(nfq_list.parent.graph, pfw_handle_task);
+	
+	return 1;
 }
 
 void finish() {

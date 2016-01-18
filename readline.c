@@ -52,11 +52,11 @@ void crtx_readline_init() {
 	
 	ret = pthread_mutex_init(&stdout_mutex, 0); ASSERT(ret >= 0);
 	
-	new_eventgraph(&crtx_graph, event_types);
+	new_eventgraph(&crtx_graph, 0, event_types);
 	
 	struct crtx_task *etask = new_task();
 	etask->handle = &handle_request;
-	crtx_graph->tasks = etask;
+	add_task(crtx_graph, etask);
 }
 
 void crtx_readline_finish() {

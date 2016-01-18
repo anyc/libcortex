@@ -20,7 +20,7 @@
 #include "inotify.h"
 #include "sd_bus_notifications.h"
 
-struct crtx_listener_base *fa;
+struct crtx_listener_base *in_base, *notify_base;
 struct crtx_inotify_listener listener;
 struct crtx_sd_bus_notification_listener notify_listener;
 
@@ -76,17 +76,17 @@ static void inotify_event_handler(struct crtx_event *event, void *userdata, void
 	}
 }
 
-void init() {
+char init() {
 	struct crtx_task * fan_handle_task;
 	char *path;
 	
 	printf("starting inotify example plugin\n");
 	
 	// create a listener (queue) for notification events
-	fa = create_listener("sd_bus_notification", &notify_listener);
-	if (!fa) {
+	notify_base = create_listener("sd_bus_notification", &notify_listener);
+	if (!notify_base) {
 		printf("cannot create fanotify listener\n");
-		return;
+		return 0;
 	}
 	
 	
@@ -99,20 +99,23 @@ void init() {
 	listener.mask = IN_CREATE | IN_DELETE;
 	
 	// create a listener (queue) for inotify events
-	fa = create_listener("inotify", &listener);
-	if (!fa) {
+	in_base = create_listener("inotify", &listener);
+	if (!in_base) {
 		printf("cannot create inotify listener\n");
-		return;
+		return 0;
 	}
 	
 	// setup a task that will process the inotify events
 	fan_handle_task = new_task();
 	fan_handle_task->id = "inotify_event_handler";
 	fan_handle_task->handle = &inotify_event_handler;
-	fan_handle_task->userdata = fa;
-	add_task(fa->graph, fan_handle_task);
+	fan_handle_task->userdata = in_base;
+	add_task(in_base->graph, fan_handle_task);
+	
+	return 1;
 }
 
 void finish() {
-	free_listener(fa);
+	free_listener(in_base);
+	free_listener(notify_base);
 }

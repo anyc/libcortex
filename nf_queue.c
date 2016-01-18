@@ -208,14 +208,14 @@ void *nfq_tmain(void *data) {
 	return 0;
 }
 
-void free_nf_queue_listener(void *data) {
+void free_nf_queue_listener(struct crtx_listener_base *data) {
 	struct crtx_nfq_listener *nfq_listata = (struct crtx_nfq_listener *) data;
 	
 	free_eventgraph(nfq_listata->parent.graph);
 	
 // 	pthread_join(nfq_listata->thread, 0);
 	
-	free(nfq_listata);
+// 	free(nfq_listata);
 }
 
 struct crtx_listener_base *crtx_new_nf_queue_listener(void *options) {
@@ -224,7 +224,7 @@ struct crtx_listener_base *crtx_new_nf_queue_listener(void *options) {
 	nfq_listata = (struct crtx_nfq_listener*) options;
 	nfq_listata->parent.free = &free_nf_queue_listener;
 	
-	new_eventgraph(&nfq_listata->parent.graph, nfq_packet_msg_etype);
+	new_eventgraph(&nfq_listata->parent.graph, 0, nfq_packet_msg_etype);
 	
 // 	pthread_create(&nfq_listata->thread, NULL, nfq_tmain, nfq_listata);
 	get_thread(nfq_tmain, nfq_listata, 1);

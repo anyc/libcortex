@@ -128,7 +128,7 @@ static void fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 	free(buf);
 }
 
-void init() {
+char init() {
 	struct crtx_task * fan_handle_task;
 	char *fanotify_path;
 	
@@ -176,7 +176,7 @@ void init() {
 	sock_list = create_listener("socket_client", &sock_listener);
 	if (!sock_list) {
 		printf("cannot create sock_listener\n");
-		return;
+		return 0;
 	}
 	
 	/*
@@ -206,7 +206,7 @@ void init() {
 	fa = create_listener("fanotify", &listener);
 	if (!fa) {
 		printf("cannot create fanotify listener\n");
-		return;
+		return 0;
 	}
 	
 	/*
@@ -218,6 +218,8 @@ void init() {
 	fan_handle_task->handle = &fanotify_event_handler;
 	fan_handle_task->userdata = fa;
 	add_task(fa->graph, fan_handle_task);
+	
+	return 1;
 }
 
 void finish() {

@@ -26,8 +26,11 @@ void *inotify_tmain(void *data) {
 	
 	fal = (struct crtx_inotify_listener*) data;
 	
-	while (1) {
+	while (!fal->stop) {
 		length = read(inotify_fd, buffer, INOFITY_BUFLEN);
+		printf("read end inotify %d\n", fal->stop);
+		if (fal->stop)
+			break;
 		
 		if (length < 0) {
 			printf("inotify read failed\n");
@@ -61,17 +64,28 @@ void *inotify_tmain(void *data) {
 	return 0;
 }
 
-void crtx_free_inotify_listener(void *data) {
-	struct crtx_inotify_listener *inlist = (struct crtx_inotify_listener *) inlist;
+void crtx_free_inotify_listener(struct crtx_listener_base *data) {
+// 	struct crtx_inotify_listener *inlist = (struct crtx_inotify_listener *) data;
 	
-	inotify_rm_watch(inotify_fd, inlist->wd);
-	close(inotify_fd);
+// 	inotify_rm_watch(inotify_fd, inlist->wd);
+// 	close(inotify_fd);
 	
-	free_eventgraph(inlist->parent.graph);
+// 	free_eventgraph(inlist->parent.graph);
 	
 // 	pthread_join(inlist->thread, 0);
 	
-	free(inlist);
+// 	free(inlist);
+}
+
+static void stop_thread(void *data) {
+	struct crtx_inotify_listener *inlist = (struct crtx_inotify_listener *) data;
+	
+	inlist = (struct crtx_inotify_listener*) data;
+	
+	inlist->stop = 1;
+	inotify_rm_watch(inotify_fd, inlist->wd);
+	close(inotify_fd);
+	printf("close inotify\n");
 }
 
 struct crtx_listener_base *crtx_new_inotify_listener(void *options) {
@@ -96,10 +110,12 @@ struct crtx_listener_base *crtx_new_inotify_listener(void *options) {
 	
 	inlist->parent.free = &crtx_free_inotify_listener;
 	
-	new_eventgraph(&inlist->parent.graph, inotify_msg_etype);
+	new_eventgraph(&inlist->parent.graph, 0, inotify_msg_etype);
 	
+	struct crtx_thread *t;
 // 	pthread_create(&inlist->thread, NULL, inotify_tmain, inlist);
-	printf("a\n");get_thread(inotify_tmain, inlist, 1);printf("b\n");
+	t = get_thread(inotify_tmain, inlist, 1);
+	t->do_stop = &stop_thread;
 	
 	return &inlist->parent;
 }

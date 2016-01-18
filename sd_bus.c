@@ -13,17 +13,17 @@
 // busctl --user call org.cortexd.main /org/cortexd/main org.cortexd.main add_listener ss "/Mixers/PulseAudio__Playback_Devices_1" test
 // dbus-monitor type=signal interface="org.cortexd.dbus.signal"
 
-static char * local_event_types[] = { "test", 0 };
+// static char * local_event_types[] = { "test", 0 };
 
 // static pthread_t dthread;
-struct dbus_thread duthread, dsthread, ddthread;
+// struct dbus_thread duthread, dsthread; // , ddthread;
 
 sd_bus *sd_bus_main_bus;
 
-struct dbus_thread {
-	sd_bus *bus;
-	struct crtx_graph *graph;
-};
+// struct dbus_thread {
+// 	sd_bus *bus;
+// 	struct crtx_graph *graph;
+// };
 
 
 
@@ -231,7 +231,7 @@ static int sd_bus_add_signal(sd_bus_message *m, void *userdata, sd_bus_error *re
 	char **event_types = (char**) malloc(sizeof(char*)*2);
 	event_types[0] = event_type;
 	event_types[1] = 0;
-	new_eventgraph(&args->graph, event_types);
+	new_eventgraph(&args->graph, 0, event_types);
 	
 	struct crtx_task *etask = new_task();
 	etask->handle = &submit_signal;
@@ -259,25 +259,26 @@ static const sd_bus_vtable cortexd_vtable[] = {
 	SD_BUS_VTABLE_END
 };
 
-void *sd_bus_daemon_thread(void *data) {
+void *sd_bus_crtx_main_thread(void *data) {
 	sd_bus_slot *slot = NULL;
 	sd_bus *bus = NULL;
 	int r;
-	struct dbus_thread *tdata;
+// 	struct dbus_thread *tdata;
 	struct sd_bus_userdata cb_args;
 	
-	tdata = (struct dbus_thread*) data;
+// 	tdata = (struct dbus_thread*) data;
 	
-	r = sd_bus_open_user(&bus);
-// 	ASSERT_STR(r >=0, "Failed to connect to system bus: %s\n", strerror(-r));
-	if (r < 0) {
-		printf("sd_bus: failed to open bus: %s\n", strerror(-r));
-		return 0;
-	}
+// 	r = sd_bus_open_user(&bus);
+// // 	ASSERT_STR(r >=0, "Failed to connect to system bus: %s\n", strerror(-r));
+// 	if (r < 0) {
+// 		printf("sd_bus: failed to open bus: %s\n", strerror(-r));
+// 		return 0;
+// 	}
+// 	
+// 	sd_bus_main_bus = bus;
+	bus = sd_bus_main_bus;
 	
-	sd_bus_main_bus = bus;
-	
-	cb_args.graph = tdata->graph;
+// 	cb_args.graph = tdata->graph;
 	cb_args.bus = bus;
 	
 	/* Install the object */
@@ -328,71 +329,91 @@ finish:
 
 
 
-void sd_bus_print_event_task(struct crtx_event *event, void *userdata) {
-	sd_bus_message *m = (sd_bus_message *) event->data.raw;
-	
-	sd_bus_print_msg(m);
-}
+// void sd_bus_print_event_task(struct crtx_event *event, void *userdata) {
+// 	sd_bus_message *m = (sd_bus_message *) event->data.raw;
+// 	
+// 	sd_bus_print_msg(m);
+// }
 
-static int bus_signal_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
-	struct dbus_thread * dthread;
-	struct crtx_event *event;
-	
-	dthread = (struct dbus_thread*) userdata;
-	
-	event = create_event(local_event_types[0], m, 0);
+// static int /*bus_signal_cb*/(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
+// 	struct dbus_thread * dthread;
+// 	struct crtx_event *event;
+// 	
+// 	dthread = (struct dbus_thread*) userdata;
+// 	
+// 	event = create_event(local_event_types[0], m, 0);
+// 
+// 	add_event(dthread->graph, event);
+// 	
+// 	return 0;
+// }
 
-	add_event(dthread->graph, event);
-	
-	return 0;
-}
+// void * tmain(void *data) {
+// 	sd_bus_error error = SD_BUS_ERROR_NULL;
+// 	sd_bus_slot* slot;
+// 	sd_bus *bus;
+// 	int r;
+// 	struct dbus_thread * dthread;
+// 	
+// 	dthread = (struct dbus_thread*) data;
+// 	bus = dthread->bus;
+// 	
+// 	slot = sd_bus_get_current_slot(bus);
+// 	
+// 	// 	r = sd_bus_add_match(bus, NULL, "type='signal',interface='org.freedesktop.DBus',member='NameOwnerChanged'", match_callback, NULL);
+// 	// 	sd_bus_add_match(bus, &slot, "type='signal',path='/Mixers/PulseAudio__Playback_Devices_1'" , bus_signal_cb, bus);
+// 	sd_bus_add_match(bus, &slot, "type='signal'" , bus_signal_cb, dthread);
+// 	
+// 	printf("listening...\n");
+// 	while (1) {
+// 		r = sd_bus_process(bus, NULL);
+// 		if (r < 0) {
+// 			fprintf(stderr, "sd_bus_process failed %d\n", r);
+// 			break;
+// 		}
+// 		if (r == 0) {
+// 			r = sd_bus_wait(bus, (uint64_t) -1);
+// 			if (r < 0) {
+// 				fprintf(stderr, "Failed to wait: %d", r);
+// 				break;
+// 			}
+// 		}
+// 	}
+// 	
+// 	sd_bus_flush(bus);
+// 	sd_bus_error_free(&error);
+// 	sd_bus_unref(bus);
+// 	
+// 	return 0;
+// }
 
-void * tmain(void *data) {
-	sd_bus_error error = SD_BUS_ERROR_NULL;
-	sd_bus_slot* slot;
-	sd_bus *bus;
-	int r;
-	struct dbus_thread * dthread;
-	
-	dthread = (struct dbus_thread*) data;
-	bus = dthread->bus;
-	
-	slot = sd_bus_get_current_slot(bus);
-	
-	// 	r = sd_bus_add_match(bus, NULL, "type='signal',interface='org.freedesktop.DBus',member='NameOwnerChanged'", match_callback, NULL);
-	// 	sd_bus_add_match(bus, &slot, "type='signal',path='/Mixers/PulseAudio__Playback_Devices_1'" , bus_signal_cb, bus);
-	sd_bus_add_match(bus, &slot, "type='signal'" , bus_signal_cb, dthread);
-	
-	printf("listening...\n");
-	while (1) {
-		r = sd_bus_process(bus, NULL);
-		if (r < 0) {
-			fprintf(stderr, "sd_bus_process failed %d\n", r);
-			break;
-		}
-		if (r == 0) {
-			r = sd_bus_wait(bus, (uint64_t) -1);
-			if (r < 0) {
-				fprintf(stderr, "Failed to wait: %d", r);
-				break;
-			}
-		}
-	}
-	
-	sd_bus_flush(bus);
-	sd_bus_error_free(&error);
-	sd_bus_unref(bus);
-	
-	return 0;
-}
+// struct crtx_listener_base *crtx_new_sdbus_listener(void *options) {
+// 	struct crtx_sdbus_listener *slistener;
+// 	struct crtx_task * task;
+// 	
+// 	slistener = (struct crtx_sdbus_listener *) options;
+// 	
+// 	
+// }
 
 void crtx_sd_bus_init() {
-	ddthread.graph = cortexd_graph;
+	int r;
+// 	ddthread.graph = cortexd_graph;
 	
-	get_thread(sd_bus_daemon_thread, &ddthread, 1);
+// 	get_thread(sd_bus_daemon_thread, &ddthread, 1);
+	
+	r = sd_bus_open_user(&sd_bus_main_bus);
+	if (r < 0) {
+		printf("sd_bus: failed to open bus: %s\n", strerror(-r));
+		return;
+	}
 }
 
 void crtx_sd_bus_finish() {
+	sd_bus_flush(sd_bus_main_bus);
+	sd_bus_unref(sd_bus_main_bus);
+// 	sd_bus_close(sd_bus_main_bus);
+	
 // 	pthread_join(sthread, NULL);
 // 	pthread_join(uthread, NULL);
 	

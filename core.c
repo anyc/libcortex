@@ -14,8 +14,8 @@
 struct crtx_graph **graphs;
 unsigned int n_graphs;
 
-struct crtx_graph *cortexd_graph;
-static char * local_event_types[] = { "cortexd/module_initialized", 0 };
+static char * crtx_evt_control[] = { CRTX_EVT_MOD_INIT, CRTX_EVT_SHUTDOWN, 0 };
+struct crtx_graph *crtx_ctrl_graph;
 
 #include "socket.h"
 #ifdef STATIC_SD_BUS
@@ -30,8 +30,11 @@ static char * local_event_types[] = { "cortexd/module_initialized", 0 };
 #include "inotify.h"
 #include "sd_bus_notifications.h"
 #include "threads.h"
+#include "signals.h"
 
 struct crtx_module static_modules[] = {
+	{"threads", &crtx_threads_init, &crtx_threads_finish},
+	{"signals", &crtx_signals_init, &crtx_signals_finish},
 	{"socket", &crtx_socket_init, &crtx_socket_finish},
 #ifdef STATIC_SD_BUS
 	{"sd-bus", &crtx_sd_bus_init, &crtx_sd_bus_finish},
@@ -42,8 +45,8 @@ struct crtx_module static_modules[] = {
 	{"readline", &crtx_readline_init, &crtx_readline_finish},
 	{"fanotify", &crtx_fanotify_init, &crtx_fanotify_finish},
 	{"inotify", &crtx_inotify_init, &crtx_inotify_finish},
+	{"sd_bus_notification", &crtx_sdbus_notification_init, &crtx_sdbus_notification_finish},
 	{"controls", &crtx_controls_init, &crtx_controls_finish},
-	{"threads", &crtx_threads_init, &crtx_threads_finish},
 	{0, 0}
 };
 
@@ -56,6 +59,7 @@ struct crtx_listener_repository listener_factory[] = {
 	{"socket_server", &crtx_new_socket_server_listener},
 	{"socket_client", &crtx_new_socket_client_listener},
 	{"sd_bus_notification", &crtx_new_sd_bus_notification_listener},
+	{"signals", &crtx_new_signals_listener},
 	{0, 0}
 };
 
@@ -99,25 +103,26 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 }
 
 void free_listener(struct crtx_listener_base *listener) {
-	if (listener->free) {
+	if (listener->free)
 		listener->free(listener);
-	} else {
-		if (listener->graph)
-			free_eventgraph(listener->graph);
+	
+	if (listener->graph)
+		free_eventgraph(listener->graph);
 		
 // 		pthread_join(slistener->thread, 0);
 		
-		free(listener);
-	}
+// 		free(listener);
+// 	}
 }
 
 void traverse_graph_r(struct crtx_task *ti, struct crtx_event *event) {
 	void *sessiondata = 0;
 	
-	INFO("execute task %s with event %s (%p)\n", ti->id, event->type, event);
-	
-	if (ti->handle)
+	if (ti->handle && (!ti->event_type_match || !strcmp(ti->event_type_match, event->type))) {
+		INFO("execute task %s with event %s (%p)\n", ti->id, event->type, event);
+		
 		ti->handle(event, ti->userdata, &sessiondata);
+	}
 	
 	if (ti->next)
 		traverse_graph_r(ti->next, event);
@@ -359,28 +364,37 @@ void free_event(struct crtx_event *event) {
 }
 
 struct crtx_graph *find_graph_for_event_type(char *event_type) {
-	struct crtx_graph *graph;
 	unsigned int i, j;
 	
-	graph = 0;
-	for (i=0; i < n_graphs && !graph; i++) {
+	for (i=0; i < n_graphs; i++) {
 		for (j=0; j < graphs[i]->n_types; j++) {
 			if (!strcmp(graphs[i]->types[j], event_type)) {
-				graph = graphs[i];
-				break;
+				return graphs[i];
 			}
 		}
 	}
 	
-	return graph;
+	return 0;
 }
 
-struct crtx_graph *get_graph_for_event_type(char *event_type, char **event_types) {
+struct crtx_graph *find_graph_by_name(char *name) {
+	unsigned int i;
+	
+	for (i=0; i < n_graphs; i++) {
+		if (!strcmp(graphs[i]->name, name)) {
+			return graphs[i];
+		}
+	}
+	
+	return 0;
+}
+
+struct crtx_graph *get_graph_for_event_type(char *event_type, char **new_event_types) {
 	struct crtx_graph *graph;
 	
 	graph = find_graph_for_event_type(event_type);
 	if (!graph) {
-		new_eventgraph(&graph, event_types);
+		new_eventgraph(&graph, 0, new_event_types);
 	}
 	
 	return graph;
@@ -399,13 +413,14 @@ void add_raw_event(struct crtx_event *event) {
 	add_event(graph, event);
 }
 
-void new_eventgraph(struct crtx_graph **crtx_graph, char **event_types) {
+void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **event_types) {
 	struct crtx_graph *graph;
-	int ret;
+	int i, ret;
 	
 	graph = (struct crtx_graph*) calloc(1, sizeof(struct crtx_graph)); ASSERT(graph);
 	
-	*crtx_graph = graph;
+	if (crtx_graph)
+		*crtx_graph = graph;
 	
 	ret = pthread_mutex_init(&graph->mutex, 0); ASSERT(ret >= 0);
 	
@@ -423,15 +438,25 @@ void new_eventgraph(struct crtx_graph **crtx_graph, char **event_types) {
 	}
 	INFO("\n");
 	
-	n_graphs++;
-	graphs = (struct crtx_graph**) realloc(graphs, sizeof(struct crtx_graph*)*n_graphs);
-	graphs[n_graphs-1] = graph;
+	for (i=0; i < n_graphs; i++) {
+		if (graphs[i] == 0) {
+			graphs[i] = graph;
+			break;
+		}
+	}
+	if (i == n_graphs) {
+		n_graphs++;
+		graphs = (struct crtx_graph**) realloc(graphs, sizeof(struct crtx_graph*)*n_graphs);
+		graphs[n_graphs-1] = graph;
+	}
 }
 
 void free_eventgraph(struct crtx_graph *egraph) {
 	size_t i;
 	struct crtx_task *t, *tnext;
 	struct crtx_event_ll *qe, *qe_next;
+	
+	DBG("free graph %s t[0]: %s\n", egraph->name, egraph->types?egraph->types[0]:0);
 	
 	for (qe = egraph->equeue; qe; qe=qe_next) {
 		free_event(qe->event);
@@ -464,6 +489,8 @@ struct crtx_task *new_task() {
 void free_task(struct crtx_task *task) {
 	struct crtx_task *t, *prev;
 	
+	DBG("free task %s\n", task->id);
+	
 	prev=0;
 	for (t = task->graph->tasks; t; t=t->next) {
 		if (t == task) {
@@ -479,10 +506,28 @@ void free_task(struct crtx_task *task) {
 	free(task);
 }
 
-void cortex_init() {
+static void handle_shutdown(struct crtx_event *event, void *userdata, void **sessiondata) {
+	INFO("shutdown crtx\n");
+	
+// 	crtx_finish();
+	crtx_threads_stop();
+}
+
+void crtx_init() {
+	struct crtx_task *t;
 	unsigned int i;
 	
-	new_eventgraph(&cortexd_graph, local_event_types);
+	DBG("initialized cortex (PID: %d)\n", getpid());
+	
+	new_eventgraph(&crtx_ctrl_graph, "cortexd.control", crtx_evt_control);
+	
+	t = new_task();
+	t->id = "shutdown";
+	t->handle = &handle_shutdown;
+	t->userdata = 0;
+	t->position = 255;
+	t->event_type_match = CRTX_EVT_SHUTDOWN;
+	add_task(crtx_ctrl_graph, t);
 	
 	i=0;
 	while (static_modules[i].id) {
@@ -493,23 +538,35 @@ void cortex_init() {
 	}
 }
 
-void cortex_finish() {
+void crtx_finish() {
 	unsigned int i;
 	
 	i=0;
-	while (static_modules[i].id) {
+	while (static_modules[i].id) { i++; }
+	i--;
+	
+	// stop threads first
+	static_modules[0].finish();
+	
+	while (i > 0) {
 		DBG("finish \"%s\"\n", static_modules[i].id);
 		
 		static_modules[i].finish();
-		i++;
+		i--;
 	}
+	
+	for (i=0; i < n_graphs; i++) {
+		if (graphs[i])
+			free_eventgraph(graphs[i]);
+	}
+	free(graphs);
 }
 
 void print_tasks(struct crtx_graph *graph) {
 	struct crtx_task *e;
 	
 	for (e=graph->tasks; e; e=e->next) {
-		INFO("%u %s\n", e->position, e->id);
+		INFO("%u %s %s\n", e->position, e->id, e->event_type_match);
 	}
 }
 
@@ -809,3 +866,7 @@ void *crtx_copy_raw_data(struct crtx_event_data *data) {
 // void crtx_fprintf(int fd, char *fmt, ...) {
 	// check if last char is \n
 // }
+
+void crtx_loop() {
+	spawn_thread(0);
+}

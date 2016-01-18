@@ -35,7 +35,7 @@ struct crtx_sd_bus_notification_listener notify_listener;
 
 char *sock_path = 0;
 
-void init() {
+char init() {
 	printf("starting notifyd example plugin\n");
 	
 	// open a TCPv4 server socket,
@@ -71,14 +71,16 @@ void init() {
 	sock_list = create_listener("socket_server", &sock_listener);
 	if (!sock_list) {
 		printf("cannot create fanotify listener\n");
-		return;
+		return 0;
 	}
 	
 	notify_list = create_listener("sd_bus_notification", &notify_listener);
 	if (!notify_list) {
 		printf("cannot create fanotify listener\n");
-		return;
+		return 0;
 	}
+	
+	return 1;
 }
 
 void finish() {
