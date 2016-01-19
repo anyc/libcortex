@@ -34,7 +34,7 @@ struct crtx_thread {
 	
 	struct crtx_signal start;
 	
-	void (*do_stop)(void *data);
+	void (*do_stop)(struct crtx_thread *thread, void *data);
 	
 	void (*on_finish)(struct crtx_thread *thread, void *on_finish_data);
 	void *on_finish_data;
@@ -59,6 +59,7 @@ void start_thread(struct crtx_thread *t);
 struct crtx_thread *spawn_thread(char create);
 
 void crtx_threads_stop();
+void crtx_threads_interrupt_thread(struct crtx_thread *t);
 
 void crtx_threads_init();
 void crtx_threads_finish();

@@ -52,8 +52,11 @@ void *fanotify_tmain(void *data) {
 	
 	fal = (struct crtx_fanotify_listener*) data;
 	
-	while (1) {
+	while (!fal->stop) {
 		buflen = read(fal->fanotify_fd, buf, sizeof(buf));
+		
+		if (fal->stop)
+			break;
 		
 		// FAN_EVENT_OK will check the size
 		metadata = (struct fanotify_event_metadata*)&buf;
@@ -64,10 +67,6 @@ void *fanotify_tmain(void *data) {
 				continue;
 			}
 			
-// 			event = new_event();
-// 			event->type = fal->parent.graph->types[0];
-// 			event->raw_data = metadata;
-// 			event->raw_data_size = sizeof(struct fanotify_event_metadata);
 			event = create_event(fal->parent.graph->types[0], metadata, sizeof(struct fanotify_event_metadata));
 			
 			reference_event_release(event);
@@ -91,16 +90,24 @@ void *fanotify_tmain(void *data) {
 
 void crtx_free_fanotify_listener(struct crtx_listener_base *data) {
 // 	struct crtx_fanotify_listener *falist = (struct crtx_fanotify_listener *) data;
+}
+
+static void stop_thread(struct crtx_thread *thread, void *data) {
+	struct crtx_fanotify_listener *falist;
 	
-// 	free_eventgraph(falist->parent.graph);
+	DBG("stopping fanotify\n");
 	
-// 	pthread_join(falist->thread, 0);
+	falist = (struct crtx_fanotify_listener*) data;
 	
-// 	free(falist);
+	falist->stop = 1;
+	close(falist->fanotify_fd);
+	
+	crtx_threads_interrupt_thread(thread);
 }
 
 struct crtx_listener_base *crtx_new_fanotify_listener(void *options) {
 	struct crtx_fanotify_listener *falist;
+	struct crtx_thread *t;
 	int ret;
 	
 	falist = (struct crtx_fanotify_listener *) options;
@@ -126,8 +133,8 @@ struct crtx_listener_base *crtx_new_fanotify_listener(void *options) {
 	
 	new_eventgraph(&falist->parent.graph, 0, fanotify_msg_etype);
 	
-// 	pthread_create(&falist->thread, NULL, fanotify_tmain, falist);
-	get_thread(fanotify_tmain, falist, 1);
+	t = get_thread(fanotify_tmain, falist, 1);
+	t->do_stop = &stop_thread;
 	
 	return &falist->parent;
 }

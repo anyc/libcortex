@@ -20,9 +20,9 @@
 #include "inotify.h"
 #include "sd_bus_notifications.h"
 
-struct crtx_listener_base *in_base, *notify_base;
-struct crtx_inotify_listener listener;
-struct crtx_sd_bus_notification_listener notify_listener;
+static struct crtx_listener_base *in_base;
+static struct crtx_inotify_listener listener;
+static void *notifier_data = 0;
 
 /// this function sets up and sends a notification event
 static void send_notification(char *msg) {
@@ -81,13 +81,7 @@ char init() {
 	
 	printf("starting inotify example plugin\n");
 	
-	// create a listener (queue) for notification events
-	notify_base = create_listener("sd_bus_notification", &notify_listener);
-	if (!notify_base) {
-		printf("cannot create fanotify listener\n");
-		return 0;
-	}
-	
+	crtx_init_notification_listeners(&notifier_data);
 	
 	path = getenv("INOTIFY_PATH");
 	if (!path)
@@ -111,6 +105,7 @@ char init() {
 }
 
 void finish() {
+	crtx_finish_notification_listeners(notifier_data);
+	
 	free_listener(in_base);
-	free_listener(notify_base);
 }

@@ -229,6 +229,7 @@ static void notify_send_handler(struct crtx_event *event, void *userdata, void *
 		return;
 	}
 	
+	actions = 0;
 	ret = crtx_get_value(event->data.dict, "actions", &actions_dict, sizeof(void*));
 	if (ret && actions_dict) {
 		struct crtx_dict_item *di;
@@ -273,6 +274,7 @@ static void notify_send_handler(struct crtx_event *event, void *userdata, void *
 						"action", 0, 0, 0
 					);
 		}
+		free(actions);
 	}
 	
 	event->response.dict = data;

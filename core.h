@@ -92,6 +92,8 @@ struct crtx_task {
 struct crtx_graph {
 	char *name;
 	
+	char paused;
+	
 	char **types;
 	unsigned int n_types;
 	
@@ -225,5 +227,8 @@ void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event);
 char *get_username();
 char is_graph_empty(struct crtx_graph *graph, char *event_type);
 void *crtx_copy_raw_data(struct crtx_event_data *data);
+
+void crtx_init_notification_listeners(void **data);
+void crtx_finish_notification_listeners(void *data);
 
 #endif

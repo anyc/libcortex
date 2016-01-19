@@ -64,8 +64,8 @@ void crtx_free_inotify_listener(struct crtx_listener_base *data) {
 // 	struct crtx_inotify_listener *inlist = (struct crtx_inotify_listener *) data;
 }
 
-static void stop_thread(void *data) {
-	struct crtx_inotify_listener *inlist = (struct crtx_inotify_listener *) data;
+static void stop_thread(struct crtx_thread *thread, void *data) {
+	struct crtx_inotify_listener *inlist;
 	
 	inlist = (struct crtx_inotify_listener*) data;
 	
@@ -76,6 +76,7 @@ static void stop_thread(void *data) {
 
 struct crtx_listener_base *crtx_new_inotify_listener(void *options) {
 	struct crtx_inotify_listener *inlist;
+	struct crtx_thread *t;
 	
 	inlist = (struct crtx_inotify_listener*) options;
 	
@@ -98,7 +99,6 @@ struct crtx_listener_base *crtx_new_inotify_listener(void *options) {
 	
 	new_eventgraph(&inlist->parent.graph, 0, inotify_msg_etype);
 	
-	struct crtx_thread *t;
 	t = get_thread(inotify_tmain, inlist, 1);
 	t->do_stop = &stop_thread;
 	

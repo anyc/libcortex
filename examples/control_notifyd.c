@@ -29,11 +29,12 @@
 
 #define PREFIX "notification_daemon"
 
-struct crtx_listener_base *sock_list, *notify_list;
-struct crtx_socket_listener sock_listener;
-struct crtx_sd_bus_notification_listener notify_listener;
+static struct crtx_listener_base *sock_list;
+static struct crtx_socket_listener sock_listener;
+// static struct crtx_sd_bus_notification_listener notify_listener;
 
-char *sock_path = 0;
+static char *sock_path = 0;
+static void *notifier_data = 0;
 
 char init() {
 	printf("starting notifyd example plugin\n");
@@ -74,18 +75,21 @@ char init() {
 		return 0;
 	}
 	
-	notify_list = create_listener("sd_bus_notification", &notify_listener);
-	if (!notify_list) {
-		printf("cannot create fanotify listener\n");
-		return 0;
-	}
+// 	notify_list = create_listener("sd_bus_notification", &notify_listener);
+// 	if (!notify_list) {
+// 		printf("cannot create fanotify listener\n");
+// 		return 0;
+// 	}
+	crtx_init_notification_listeners(&notifier_data);
 	
 	return 1;
 }
 
 void finish() {
 	free_listener(sock_list);
-	free_listener(notify_list);
+// 	free_listener(notify_list);
+	
+	crtx_finish_notification_listeners(notifier_data);
 	
 	if (sock_path)
 		free(sock_path);

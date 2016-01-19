@@ -11,12 +11,6 @@
 
 #include "core.h"
 
-struct crtx_graph **graphs;
-unsigned int n_graphs;
-
-static char * crtx_evt_control[] = { CRTX_EVT_MOD_INIT, CRTX_EVT_SHUTDOWN, 0 };
-struct crtx_graph *crtx_ctrl_graph;
-
 #include "socket.h"
 #ifdef STATIC_SD_BUS
 #include "sd_bus.h"
@@ -31,6 +25,15 @@ struct crtx_graph *crtx_ctrl_graph;
 #include "sd_bus_notifications.h"
 #include "threads.h"
 #include "signals.h"
+
+
+struct crtx_graph **graphs;
+unsigned int n_graphs;
+MUTEX_TYPE graphs_mutex;
+
+static char * crtx_evt_control[] = { CRTX_EVT_MOD_INIT, CRTX_EVT_SHUTDOWN, 0 };
+struct crtx_graph *crtx_ctrl_graph;
+
 
 struct crtx_module static_modules[] = {
 	{"threads", &crtx_threads_init, &crtx_threads_finish},
@@ -60,6 +63,7 @@ struct crtx_listener_repository listener_factory[] = {
 	{"socket_client", &crtx_new_socket_client_listener},
 	{"sd_bus_notification", &crtx_new_sd_bus_notification_listener},
 	{"signals", &crtx_new_signals_listener},
+	{"readline", &crtx_new_readline_listener},
 	{0, 0}
 };
 
@@ -267,10 +271,14 @@ void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 		struct crtx_thread *t;
 		
 		t = get_thread(&graph_consumer_main, graph, 0);
-		t->on_finish = &graph_on_thread_finish;
-		t->on_finish_data = graph;
-		
-		start_thread(t);
+		if (t) {
+			t->on_finish = &graph_on_thread_finish;
+			t->on_finish_data = graph;
+			
+			start_thread(t);
+		} else {
+			ATOMIC_FETCH_SUB(graph->n_consumers, 1);
+		}
 	} else {
 		ATOMIC_FETCH_SUB(graph->n_consumers, 1);
 	}
@@ -452,6 +460,7 @@ void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **event_typ
 	}
 	INFO("\n");
 	
+	LOCK(graphs_mutex);
 	for (i=0; i < n_graphs; i++) {
 		if (graphs[i] == 0) {
 			graphs[i] = graph;
@@ -463,14 +472,28 @@ void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **event_typ
 		graphs = (struct crtx_graph**) realloc(graphs, sizeof(struct crtx_graph*)*n_graphs);
 		graphs[n_graphs-1] = graph;
 	}
+	UNLOCK(graphs_mutex);
 }
 
-void free_eventgraph(struct crtx_graph *egraph) {
+void free_eventgraph_intern(struct crtx_graph *egraph, char crtx_shutdown) {
 	size_t i;
 	struct crtx_task *t, *tnext;
 	struct crtx_event_ll *qe, *qe_next;
 	
 	DBG("free graph %s t[0]: %s\n", egraph->name, egraph->types?egraph->types[0]:0);
+	
+	if (!crtx_shutdown) {
+		LOCK(graphs_mutex);
+		
+		for (i=0; i < n_graphs; i++) {
+			if (graphs[i] == egraph) {
+				graphs[i] = 0;
+				break;
+			}
+		}
+		
+		UNLOCK(graphs_mutex);
+	}
 	
 	for (qe = egraph->equeue; qe; qe=qe_next) {
 		free_event(qe->event);
@@ -483,14 +506,11 @@ void free_eventgraph(struct crtx_graph *egraph) {
 		free_task(t);
 	}
 	
-	for (i=0; i < n_graphs; i++) {
-		if (graphs[i] == egraph) {
-			graphs[i] = 0;
-			break;
-		}
-	}
-	
 	free(egraph);
+}
+
+void free_eventgraph(struct crtx_graph *egraph) {
+	free_eventgraph_intern(egraph, 0);
 }
 
 struct crtx_task *new_task() {
@@ -521,7 +541,13 @@ void free_task(struct crtx_task *task) {
 }
 
 static void handle_shutdown(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_task *t;
+	
 	INFO("shutdown crtx\n");
+	
+	// make sure we're only called once
+	t = (struct crtx_task *) userdata;
+	t->handle = 0;
 	
 // 	crtx_finish();
 	crtx_threads_stop();
@@ -533,12 +559,14 @@ void crtx_init() {
 	
 	DBG("initialized cortex (PID: %d)\n", getpid());
 	
+	INIT_MUTEX(graphs_mutex);
+	
 	new_eventgraph(&crtx_ctrl_graph, "cortexd.control", crtx_evt_control);
 	
 	t = new_task();
 	t->id = "shutdown";
 	t->handle = &handle_shutdown;
-	t->userdata = 0;
+	t->userdata = t;
 	t->position = 255;
 	t->event_type_match = CRTX_EVT_SHUTDOWN;
 	add_task(crtx_ctrl_graph, t);
@@ -569,11 +597,13 @@ void crtx_finish() {
 		i--;
 	}
 	
+	LOCK(graphs_mutex);
 	for (i=0; i < n_graphs; i++) {
 		if (graphs[i])
-			free_eventgraph(graphs[i]);
+			free_eventgraph_intern(graphs[i], 1);
 	}
 	free(graphs);
+	UNLOCK(graphs_mutex);
 }
 
 void print_tasks(struct crtx_graph *graph) {
@@ -883,4 +913,53 @@ void *crtx_copy_raw_data(struct crtx_event_data *data) {
 
 void crtx_loop() {
 	spawn_thread(0);
+}
+
+void crtx_init_notification_listeners(void **data) {
+	void *result, *tmp;
+	struct crtx_sd_bus_notification_listener *notify_listener;
+	struct crtx_readline_listener *rl_listener;
+	
+	
+	*data = calloc(1, 
+			sizeof(struct crtx_sd_bus_notification_listener) +
+			sizeof(struct crtx_readline_listener));
+	tmp = *data;
+	
+	notify_listener = (struct crtx_sd_bus_notification_listener *) tmp;
+	tmp += sizeof(struct crtx_sd_bus_notification_listener);
+	
+	// create a listener (queue) for notification events
+	result = create_listener("sd_bus_notification", notify_listener);
+	if (!result) {
+		printf("cannot create fanotify listener\n");
+		return;
+	}
+	
+	rl_listener = (struct crtx_readline_listener *) tmp;
+	tmp += sizeof(struct crtx_readline_listener);
+	
+	// create a listener (queue) for notification events
+	result = create_listener("readline", &rl_listener);
+	if (!result) {
+		printf("cannot create fanotify listener\n");
+		return;
+	}
+}
+
+void crtx_finish_notification_listeners(void *data) {
+	struct crtx_listener_base *base;
+	void *tmp;
+	
+	tmp = data;
+	
+	base = (struct crtx_listener_base*) tmp;
+	free_listener(base);
+	tmp += sizeof(struct crtx_sd_bus_notification_listener);
+	
+	base = (struct crtx_listener_base*) tmp;
+	free_listener(base);
+	tmp += sizeof(struct crtx_readline_listener);
+	
+	free(data);
 }

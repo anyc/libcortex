@@ -35,18 +35,16 @@
 #include "threads.h"
 
 struct socket_connection_tmain_args {
-// 	pthread_t thread;
-	
 	struct crtx_socket_listener *slistener;
 	int sockfd;
 };
 
 
-int socket_recv(void *conn_id, void *data, size_t data_size) {
+static int socket_recv(void *conn_id, void *data, size_t data_size) {
 	return read(*(int*) conn_id, data, data_size);
 }
 
-int socket_send(void *conn_id, void *data, size_t data_size) {
+static int socket_send(void *conn_id, void *data, size_t data_size) {
 	return write(*(int*) conn_id, data, data_size);
 }
 
@@ -96,7 +94,7 @@ static void inbound_event_handler(struct crtx_event *event, void *userdata, void
 }
 
 /// thread for a connection of a server socket
-void *socket_connection_tmain(void *data) {
+static void *socket_connection_tmain(void *data) {
 	struct crtx_socket_listener slist;
 	struct crtx_event *event;
 	struct socket_connection_tmain_args *args;
@@ -138,7 +136,7 @@ void *socket_connection_tmain(void *data) {
 	return 0;
 }
 
-struct addrinfo *crtx_get_addrinfo(struct crtx_socket_listener *listener) {
+static struct addrinfo *crtx_get_addrinfo(struct crtx_socket_listener *listener) {
 	struct addrinfo hints, *result;
 	int ret;
 	
@@ -174,7 +172,7 @@ struct addrinfo *crtx_get_addrinfo(struct crtx_socket_listener *listener) {
 	return result;
 }
 
-void crtx_free_addrinfo(struct addrinfo *result) {
+static void crtx_free_addrinfo(struct addrinfo *result) {
 	if (result->ai_family == AF_UNIX) {
 		free(result);
 	} else {
@@ -183,7 +181,7 @@ void crtx_free_addrinfo(struct addrinfo *result) {
 }
 
 /// main thread of a server socket
-void *socket_server_tmain(void *data) {
+static void *socket_server_tmain(void *data) {
 	int ret;
 	struct crtx_socket_listener *listeners;
 	struct addrinfo *result, *rit;
@@ -239,7 +237,6 @@ void *socket_server_tmain(void *data) {
 		args->slistener = listeners;
 		args->sockfd = accept(listeners->sockfd, cliaddr, &addrlen); ASSERT(args->sockfd >= 0);
 		
-// 		pthread_create(&args->thread, NULL, socket_connection_tmain, args);
 		get_thread(socket_connection_tmain, args, 1);
 	}
 	close(listeners->sockfd);
@@ -248,7 +245,7 @@ void *socket_server_tmain(void *data) {
 }
 
 /// main thread of a client socket
-void *socket_client_tmain(void *data) {
+static void *socket_client_tmain(void *data) {
 	struct crtx_socket_listener *listeners;
 	struct crtx_event *event;
 	struct addrinfo *result, *rit;
@@ -298,21 +295,37 @@ void *socket_client_tmain(void *data) {
 	return 0;
 }
 
+static void stop_thread(struct crtx_thread *t, void *data) {
+	struct crtx_socket_listener *inlist;
+	
+	DBG("stopping socket listener\n");
+	
+	inlist = (struct crtx_socket_listener*) data;
+	
+	inlist->stop = 1;
+	if (inlist->sockfd)
+		shutdown(inlist->sockfd, SHUT_RDWR);
+	if (inlist->server_sockfd)
+		shutdown(inlist->server_sockfd, SHUT_RDWR);
+}
+
 struct crtx_listener_base *crtx_new_socket_server_listener(void *options) {
 	struct crtx_socket_listener *slistener;
+	struct crtx_thread *t;
 	
 	slistener = (struct crtx_socket_listener *) options;
 	
 	create_in_out_box();
 	
-// 	pthread_create(&slistener->thread, NULL, socket_server_tmain, slistener);
-	get_thread(socket_server_tmain, slistener, 1);
+	t = get_thread(socket_server_tmain, slistener, 1);
+	t->do_stop = &stop_thread;
 	
 	return &slistener->parent;
 }
 
 struct crtx_listener_base *crtx_new_socket_client_listener(void *options) {
 	struct crtx_socket_listener *slistener;
+	struct crtx_thread *t;
 	
 	slistener = (struct crtx_socket_listener *) options;
 	
@@ -322,11 +335,10 @@ struct crtx_listener_base *crtx_new_socket_client_listener(void *options) {
 	new_eventgraph(&slistener->outbox, 0, slistener->send_types);
 	
 	crtx_create_task(slistener->parent.graph, 200, "inbound_event_handler", &inbound_event_handler, slistener);
-	
 	crtx_create_task(slistener->outbox, 200, "outbound_event_handler", &outbound_event_handler, slistener);
 	
-// 	pthread_create(&slistener->thread, NULL, socket_client_tmain, slistener);
-	get_thread(socket_client_tmain, slistener, 1);
+	t = get_thread(socket_client_tmain, slistener, 1);
+	t->do_stop = &stop_thread;
 	
 	return &slistener->parent;
 }

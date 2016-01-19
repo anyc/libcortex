@@ -14,7 +14,7 @@
 struct crtx_thread *pool = 0;
 MUTEX_TYPE pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 unsigned int n_threads = 0;
-
+static char pool_stop = 0;
 
 void init_signal(struct crtx_signal *signal) {
 	int ret;
@@ -72,7 +72,7 @@ void free_signal(struct crtx_signal *s) {
 	pthread_cond_destroy(&s->cond);
 }
 
-void * thread_main(void *data) {
+static void * thread_main(void *data) {
 	struct crtx_thread *thread = (struct crtx_thread*) data;
 	
 	DBG("thread %p starts\n", data);
@@ -136,6 +136,12 @@ static struct crtx_thread *get_thread_intern(thread_fct fct, void *data, char st
 	struct crtx_thread *t;
 	
 	LOCK(pool_mutex);
+	
+	if (pool_stop) {
+		UNLOCK(pool_mutex);
+		return 0;
+	}
+	
 	for (t=pool; t; t = t->next) {
 		if (main_thread && t->handle == 0) {
 			
@@ -181,10 +187,16 @@ void crtx_threads_init() {
 	}
 }
 
+void crtx_threads_interrupt_thread(struct crtx_thread *t) {
+	pthread_kill(t->handle, SIGTERM);
+}
+
 void crtx_threads_stop() {
 	struct crtx_thread *t;
 	
 	LOCK(pool_mutex);
+	
+	pool_stop = 1;
 	
 	DBG("shutdown pool\n");
 	
@@ -194,7 +206,7 @@ void crtx_threads_stop() {
 			start_thread(t);
 		} else {
 			if (t->do_stop)
-				t->do_stop(t->fct_data);
+				t->do_stop(t, t->fct_data);
 		}
 	}
 	UNLOCK(pool_mutex);
