@@ -611,7 +611,6 @@ static void in_cache_on_miss(struct crtx_cache_task *ct, void **key, struct crtx
 }
 
 void create_in_out_box() {
-	struct crtx_task *task;
 	struct crtx_graph *graph;
 	struct crtx_cache *dc;
 	struct crtx_cache_task *ct_out, *ct_in;
@@ -630,28 +629,12 @@ void create_in_out_box() {
 	ct_in->create_key = &in_create_key_cb;
 	ct_in->match_event = &rcache_match_cb_t_strcmp;
 	
-	task = new_task();
-	task->id = "response_in_matching";
-	task->position = 90;
-	task->userdata = ct_in;
-	task->handle = &response_cache_task;
-	add_task(graph, task);
+	crtx_create_task(graph, 90, "response_in_matching", &response_cache_task, ct_in);
 	
-	task = new_task();
-	task->id = "inbox_dispatch_handler";
-	task->handle = &inbox_dispatch_handler;
-	task->userdata = 0;
-	task->position = 200;
-	add_task(graph, task);
-	print_tasks(graph);
+	crtx_create_task(graph, 200, "inbox_dispatch_handler", &inbox_dispatch_handler, 0);
+	
+	
 	graph = get_graph_for_event_type(CRTX_EVT_OUTBOX, crtx_evt_outbox);
-	
-// 	task = new_task();
-// 	task->id = "response_out_handler";
-// 	task->handle = &response_out_handler;
-// 	task->userdata = 0;
-// 	task->position = 10;
-// 	add_task(graph, task);
 	
 	ct_out = (struct crtx_cache_task*) calloc(1, sizeof(struct crtx_cache_task));
 	ct_out->cache = dc;
@@ -660,10 +643,7 @@ void create_in_out_box() {
 	ct_out->create_key = &out_create_key_cb;
 	ct_out->match_event = &rcache_match_cb_t_strcmp;
 	
-	task = new_task();
-	task->id = "response_out_matching";
-	task->position = 90;
-	task->userdata = ct_out;
-	task->handle = &response_cache_task;
-	add_task(graph, task);
+	crtx_create_task(graph, 90, "response_out_matching", &response_cache_task, ct_out);
+	
+// 	crtx_create_task(graph, 200, "outbox_dispatch_handler", &outbox_dispatch_handler, 0);
 }

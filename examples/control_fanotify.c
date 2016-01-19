@@ -129,7 +129,6 @@ static void fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 }
 
 char init() {
-	struct crtx_task * fan_handle_task;
 	char *fanotify_path;
 	
 	printf("starting fanotify example plugin\n");
@@ -209,15 +208,8 @@ char init() {
 		return 0;
 	}
 	
-	/*
-	 * add function that will process a fanotify event
-	 */
-	
-	fan_handle_task = new_task();
-	fan_handle_task->id = "fanotify_event_handler";
-	fan_handle_task->handle = &fanotify_event_handler;
-	fan_handle_task->userdata = fa;
-	add_task(fa->graph, fan_handle_task);
+	// add function that will process a fanotify event
+	crtx_create_task(fa->graph, 0, "fanotify_event_handler", &fanotify_event_handler, fa);
 	
 	return 1;
 }

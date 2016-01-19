@@ -156,12 +156,8 @@ void crtx_send_notification(char *icon, char *title, char *text, char **actions,
 		
 		sd_bus_add_signal_listener(sd_bus_main_bus, "/org/freedesktop/Notifications", EV_NOTIF_SIGNAL);
 		
-		struct crtx_task *task2;
-		task2 = new_task();
-		task2->id = "sd_bus_handle_notify_signal";
-		task2->handle = &notification_signal_handler;
-		task2->userdata = 0;
-		add_task(graph, task2);
+		crtx_create_task(graph, 200, "sd_bus_handle_notify_signal", &notification_signal_handler, 0);
+		
 		
 		initialized = 1;
 	}
@@ -285,7 +281,6 @@ static void notify_send_handler(struct crtx_event *event, void *userdata, void *
 struct crtx_listener_base *crtx_new_sd_bus_notification_listener(void *options) {
 	struct crtx_sd_bus_notification_listener *slistener;
 	struct crtx_graph *global_notify_graph;
-	struct crtx_task * sd_bus_notify_task;
 	
 	// TODO: convert this into a module as we likely need only one listener?
 	
@@ -298,11 +293,7 @@ struct crtx_listener_base *crtx_new_sd_bus_notification_listener(void *options) 
 	
 	global_notify_graph = get_graph_for_event_type(CRTX_EVT_NOTIFICATION, crtx_evt_notification);
 	
-	sd_bus_notify_task = new_task();
-	sd_bus_notify_task->id = "sd_bus_notify_send";
-	sd_bus_notify_task->handle = &notify_send_handler;
-	sd_bus_notify_task->userdata = slistener;
-	add_task(global_notify_graph, sd_bus_notify_task);
+	crtx_create_task(global_notify_graph, 0, "sd_bus_notify_send", &notify_send_handler, slistener);
 	
 	return &slistener->parent;
 }

@@ -83,7 +83,7 @@ void response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 		free(key);
 }
 
-void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void *sessiondata) {
+void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_cache_task *ct = (struct crtx_cache_task*) userdata;
 	struct crtx_cache *dc = ct->cache;
 	void *key;
@@ -94,7 +94,7 @@ void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void 
 		return;
 	}
 	
-	if (!sessiondata && event->response.raw) {
+	if (!*sessiondata && event->response.raw) {
 		pthread_mutex_lock(&dc->mutex);
 		
 		dc->n_entries++;

@@ -78,13 +78,6 @@ static void load_dir(char * directory) {
 }
 
 void crtx_controls_init() {
-// 	main_cbs.add_task = &add_task;
-// 	main_cbs.create_listener = &create_listener;
-// 	main_cbs.wait_on_event = &wait_on_event;
-// 	main_cbs.add_event = &add_event;
-// 	main_cbs.new_event = &new_event;
-// 	main_cbs.get_graph_for_event_type = &get_graph_for_event_type;
-	
 	load_dir(PLUGINDIR);
 }
 

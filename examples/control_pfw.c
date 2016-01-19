@@ -24,7 +24,6 @@
 
 struct crtx_nfq_listener nfq_list;
 struct crtx_listener_base *nfq_list_base;
-struct crtx_task *pfw_handle_task, *rp_cache, *readline_handle_task, *pfw_rules_task;
 struct crtx_graph *rl_graph, *newp_graph, *newp_raw_graph;
 struct crtx_task *rcache_host, *rcache_ip;
 
@@ -534,8 +533,6 @@ char init() {
 			iit->next = 0;
 			
 			strcpy(iit->ip, s);
-// 			printf("%s\n", iit->ip);
-// 			printf("%s: %s\n", tmp->ifa_name, inet_ntoa(pAddr->sin_addr));
 		}
 		
 		tmp = tmp->ifa_next;
@@ -570,11 +567,7 @@ char init() {
 	
 	
 	new_eventgraph(&newp_graph, 0, newp_event_types);
-	
-	pfw_rules_task = new_task();
-	pfw_rules_task->id = "pfw_print_packet";
-	pfw_rules_task->handle = &pfw_print_packet;
-	add_task(newp_graph, pfw_rules_task);
+	crtx_create_task(newp_graph, 0, "pfw_print_packet", &pfw_print_packet, 0);
 	
 	
 	rcache_host = create_response_cache_task("su", pfw_rcache_create_key_host);
@@ -592,10 +585,7 @@ char init() {
 // 	prefill_rcache( ((struct crtx_cache*) rcache_ip->userdata), PFW_DATA_DIR "rcache_ip.txt");
 	add_task(newp_graph, rcache_ip);
 	
-	pfw_rules_task = new_task();
-	pfw_rules_task->id = "pfw_rules_filter";
-	pfw_rules_task->handle = &pfw_rules_filter;
-	add_task(newp_graph, pfw_rules_task);
+	crtx_create_task(newp_graph, 0, "pfw_rules_filter", &pfw_rules_filter, 0);
 	
 	print_tasks(newp_graph);
 	
@@ -612,19 +602,13 @@ char init() {
 		return 0;
 	}
 	
-	pfw_handle_task = new_task();
-	pfw_handle_task->id = "pfw_handler";
-	pfw_handle_task->handle = &pfw_main_handler;
-	pfw_handle_task->userdata = &nfq_list;
-	add_task(nfq_list.parent.graph, pfw_handle_task);
+	crtx_create_task(nfq_list.parent.graph, 0, "pfw_handler", &pfw_main_handler, &nfq_list);
 	
 	return 1;
 }
 
 void finish() {
 	struct ip_ll *ipi, *ipin;
-	
-	free_task(pfw_rules_task);
 	
 	free_response_cache(((struct crtx_cache*) rcache_host->userdata));
 	free_response_cache(((struct crtx_cache*) rcache_ip->userdata));
@@ -641,8 +625,6 @@ void finish() {
 		ipin=ipi->next;
 		free(ipi);
 	}
-	
-	free_task(pfw_handle_task);
 	
 	free_eventgraph(newp_graph);
 	

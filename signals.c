@@ -5,8 +5,6 @@
 
 #include "signals.h"
 
-// char *crtx_evt_signals[] = { "cortex.signals.SIGTERM", "cortex.signals.SIGINT", 0 };
-
 #define SIGNAL(id) { id, #id, "cortex.signals." #id }
 struct signal_map {
 	int id;
@@ -43,14 +41,10 @@ struct signal_map *get_signal(int signum) {
 static void signal_handler(int signum) {
 	struct crtx_event *event;
 	struct signal_map *smap;
-// 	int *num;
 	
 	smap = get_signal(signum);
 	
 	DBG("received signal %s (%d)\n", smap->name, signum);
-	
-// 	num = (int*) malloc(sizeof(int));
-// 	*num = signum;
 	
 	event = create_event(smap->etype, 0, 0);
 	

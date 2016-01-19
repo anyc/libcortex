@@ -71,6 +71,8 @@ struct crtx_event_ll {
 	struct crtx_event_ll *next;
 };
 
+typedef void (*crtx_handle_task_t)(struct crtx_event *event, void *userdata, void **sessiondata);
+
 struct crtx_graph;
 struct crtx_task {
 	char *id;
@@ -79,8 +81,8 @@ struct crtx_task {
 	
 	char *event_type_match; // if 0, task receives all events passing the graph
 	
-	void (*handle)(struct crtx_event *event, void *userdata, void **sessiondata);
-	void (*cleanup)(struct crtx_event *event, void *userdata, void *sessiondata);
+	crtx_handle_task_t handle;
+	crtx_handle_task_t cleanup;
 	void *userdata;
 	
 	struct crtx_task *prev;
@@ -198,7 +200,7 @@ void wait_on_event(struct crtx_event *event);
 struct crtx_listener_base *create_listener(char *id, void *options);
 void free_listener(struct crtx_listener_base *listener);
 struct crtx_event *create_event(char *type, void *data, size_t data_size);
-// struct crtx_event *create_response(struct crtx_event *event, void *data, size_t data_size);
+struct crtx_task *crtx_create_task(struct crtx_graph *graph, unsigned char position, char *id, crtx_handle_task_t handler, void *userdata);
 
 void print_tasks(struct crtx_graph *graph);
 void hexdump(unsigned char *buffer, size_t index);

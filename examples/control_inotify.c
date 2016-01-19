@@ -77,7 +77,6 @@ static void inotify_event_handler(struct crtx_event *event, void *userdata, void
 }
 
 char init() {
-	struct crtx_task * fan_handle_task;
 	char *path;
 	
 	printf("starting inotify example plugin\n");
@@ -106,11 +105,7 @@ char init() {
 	}
 	
 	// setup a task that will process the inotify events
-	fan_handle_task = new_task();
-	fan_handle_task->id = "inotify_event_handler";
-	fan_handle_task->handle = &inotify_event_handler;
-	fan_handle_task->userdata = in_base;
-	add_task(in_base->graph, fan_handle_task);
+	crtx_create_task(in_base->graph, 0, "inotify_event_handler", &inotify_event_handler, in_base);
 	
 	return 1;
 }

@@ -70,14 +70,12 @@ void free_signal(struct crtx_signal *s) {
 	
 	pthread_mutex_destroy(&s->mutex);
 	pthread_cond_destroy(&s->cond);
-	
-// 	free(s);
 }
 
 void * thread_main(void *data) {
 	struct crtx_thread *thread = (struct crtx_thread*) data;
 	
-	printf("tstart %p\n", data);
+	DBG("thread %p starts\n", data);
 	
 	while (!thread->stop) {
 		// we wait until someone has work for us
@@ -101,26 +99,15 @@ void * thread_main(void *data) {
 		UNLOCK(pool_mutex);
 	}
 	
-	printf("tstop %p\n", data);
+	printf("thread %p ends\n", data);
 	
 	return 0;
 }
-
-// void spawn_thread(struct crtx_graph *graph) {
-// 	graph->n_consumers++;
-// 	graph->consumers = (struct crtx_thread*) realloc(graph->consumers, sizeof(struct crtx_thread)*graph->n_consumers); ASSERT(graph->consumers);
-// 	
-// 	graph->consumers[graph->n_consumers-1].stop = 0;
-// 	graph->consumers[graph->n_consumers-1].graph = graph;
-// 	pthread_create(&graph->consumers[graph->n_consumers-1].handle, NULL, &graph_consumer_main, &graph->consumers[graph->n_consumers-1]);
-// }
 
 struct crtx_thread *spawn_thread(char create) {
 	struct crtx_thread *t;
 	
 	n_threads++;
-// 	pool = (struct crtx_thread*) realloc(pool, sizeof(struct crtx_thread)*n_threads);
-// 	t = &pool[n_threads-1];
 	for (t=pool; t && t->next; t = t->next) {}
 	
 	if (t) {
@@ -138,34 +125,17 @@ struct crtx_thread *spawn_thread(char create) {
 	if (create) {
 		pthread_create(&t->handle, NULL, &thread_main, t);
 	} else {
-// 		struct crtx_signal signal;
-		
-// 		init_signal(&signal);
-		
-// 		t->handle = pthread_self();
 		t->handle = 0;
-// 		t->main_thread_finished = &signal;
 		thread_main(t);
-// 		printf("main finished\n");
-// 		send_signal(&signal, 0);
-		
-// 		free_signal(&signal);
 	}
 	
 	return t;
 }
-// void (*do_stop)(), 
+
 static struct crtx_thread *get_thread_intern(thread_fct fct, void *data, char start, char main_thread) {
 	struct crtx_thread *t;
-// 	unsigned int i;
 	
 	LOCK(pool_mutex);
-// 	for (i=0; i < n_threads; i++) {
-// 		if ( pool[i].in_use == 0 && CAS(&pool[i].in_use, 0, 1) ) {
-// 			t = &pool[i];
-// 			break;
-// 		}
-// 	}
 	for (t=pool; t; t = t->next) {
 		if (main_thread && t->handle == 0) {
 			
@@ -184,7 +154,6 @@ static struct crtx_thread *get_thread_intern(thread_fct fct, void *data, char st
 	
 	t->fct = fct;
 	t->fct_data = data;
-// 	t->do_stop = do_stop;
 	
 	if (start)
 		send_signal(&t->start, 0);
@@ -215,9 +184,10 @@ void crtx_threads_init() {
 void crtx_threads_stop() {
 	struct crtx_thread *t;
 	
-	printf("wait shutdown pool\n");
 	LOCK(pool_mutex);
-	printf("shutdown pool\n");
+	
+	DBG("shutdown pool\n");
+	
 	for (t=pool; t; t = t->next) {
 		t->stop = 1;
 		if (!t->in_use) {
@@ -235,14 +205,9 @@ void crtx_threads_finish() {
 	
 	for (t=pool; t; t = tnext) {
 		tnext = t->next;
-// 		if (pthread_equal(t->handle, pthread_self()))
-// 			continue;
-// 		printf("wait %p\n", t);
+		
 		if (t->handle)
 			pthread_join(t->handle, 0);
-// 		else
-// 			wait_on_signal(t->main_thread_finished);
-// 		printf("joined %p\n", t);
 		
 		free(t);
 	}

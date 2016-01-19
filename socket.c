@@ -100,7 +100,6 @@ void *socket_connection_tmain(void *data) {
 	struct crtx_socket_listener slist;
 	struct crtx_event *event;
 	struct socket_connection_tmain_args *args;
-	struct crtx_task * task;
 	
 	
 	args = (struct socket_connection_tmain_args*) data;
@@ -112,19 +111,9 @@ void *socket_connection_tmain(void *data) {
 	
 	slist.sockfd = args->sockfd;
 	
-	task = new_task();
-	task->id = "inbound_event_handler";
-	task->handle = &inbound_event_handler;
-	task->userdata = &slist;
-	task->position = 200;
-	add_task(slist.parent.graph, task);
+	crtx_create_task(slist.parent.graph, 200, "inbound_event_handler", &inbound_event_handler, &slist);
 	
-	task = new_task();
-	task->id = "outbound_event_handler";
-	task->handle = &outbound_event_handler;
-	task->userdata = &slist;
-	task->position = 200;
-	add_task(slist.outbox, task);
+	crtx_create_task(slist.outbox, 200, "outbound_event_handler", &outbound_event_handler, &slist);
 	
 	while (1) {
 		event = recv_event_as_dict(&socket_recv, &args->sockfd);
@@ -324,7 +313,6 @@ struct crtx_listener_base *crtx_new_socket_server_listener(void *options) {
 
 struct crtx_listener_base *crtx_new_socket_client_listener(void *options) {
 	struct crtx_socket_listener *slistener;
-	struct crtx_task * task;
 	
 	slistener = (struct crtx_socket_listener *) options;
 	
@@ -333,19 +321,9 @@ struct crtx_listener_base *crtx_new_socket_client_listener(void *options) {
 	new_eventgraph(&slistener->parent.graph, 0, slistener->recv_types);
 	new_eventgraph(&slistener->outbox, 0, slistener->send_types);
 	
-	task = new_task();
-	task->id = "inbound_event_handler";
-	task->handle = &inbound_event_handler;
-	task->userdata = slistener;
-	task->position = 200;
-	add_task(slistener->parent.graph, task);
+	crtx_create_task(slistener->parent.graph, 200, "inbound_event_handler", &inbound_event_handler, slistener);
 	
-	task = new_task();
-	task->id = "outbound_event_handler";
-	task->handle = &outbound_event_handler;
-	task->userdata = slistener;
-	task->position = 200;
-	add_task(slistener->outbox, task);
+	crtx_create_task(slistener->outbox, 200, "outbound_event_handler", &outbound_event_handler, slistener);
 	
 // 	pthread_create(&slistener->thread, NULL, socket_client_tmain, slistener);
 	get_thread(socket_client_tmain, slistener, 1);

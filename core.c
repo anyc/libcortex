@@ -201,6 +201,20 @@ void add_task(struct crtx_graph *graph, struct crtx_task *task) {
 	}
 }
 
+struct crtx_task *crtx_create_task(struct crtx_graph *graph, unsigned char position, char *id, crtx_handle_task_t handler, void *userdata) {
+	struct crtx_task * task;
+	
+	task = new_task();
+	task->id = id;
+	task->handle = handler;
+	task->userdata = userdata;
+	if (position > 0)
+		task->position = position;
+	add_task(graph, task);
+	
+	return task;
+}
+
 void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event) {
 	struct crtx_event_ll *eit;
 	

@@ -13,26 +13,15 @@
 // busctl --user call org.cortexd.main /org/cortexd/main org.cortexd.main add_listener ss "/Mixers/PulseAudio__Playback_Devices_1" test
 // dbus-monitor type=signal interface="org.cortexd.dbus.signal"
 
-// static char * local_event_types[] = { "test", 0 };
-
-// static pthread_t dthread;
-// struct dbus_thread duthread, dsthread; // , ddthread;
 
 sd_bus *sd_bus_main_bus;
-
-// struct dbus_thread {
-// 	sd_bus *bus;
-// 	struct crtx_graph *graph;
-// };
-
-
-
-
 
 struct sd_bus_userdata {
 	sd_bus *bus;
 	struct crtx_graph *graph;
 };
+
+
 
 void sd_bus_print_msg(sd_bus_message *m) {
 	const char *sig;
@@ -169,9 +158,6 @@ struct sd_bus_signal *signals = 0;
 unsigned int n_signals = 0;
 
 void submit_signal(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	sd_bus_message *m = (sd_bus_message *) event->data;
-	
-// 	print_sd_bus_msg(m);
 	struct sd_bus_signal *args;
 	
 	args = (struct sd_bus_signal*) userdata;
@@ -198,7 +184,6 @@ static int sd_bus_add_signal(sd_bus_message *m, void *userdata, sd_bus_error *re
 	
 	n_signals++;
 	signals = (struct sd_bus_signal*) realloc(signals, sizeof(struct sd_bus_signal)*n_signals);
-// 	sign = (struct sd_bus_signal*) malloc(sizeof(struct sd_bus_signal));
 	
 	sign = &signals[n_signals-1];
 	
@@ -223,9 +208,7 @@ static int sd_bus_add_signal(sd_bus_message *m, void *userdata, sd_bus_error *re
 						args);
 	if (r < 0) {
 		fprintf(stderr, "Failed to issue method call: %s\n", strerror(-r));
-// 		goto finish;
 	}
-// 	free(buf);
 	sign->path = buf;
 	
 	char **event_types = (char**) malloc(sizeof(char*)*2);
@@ -239,14 +222,6 @@ static int sd_bus_add_signal(sd_bus_message *m, void *userdata, sd_bus_error *re
 	
 	args->graph->tasks = etask;
 	
-	
-	
-	/* Take a well-known service name so that clients can find us */
-// 	r = sd_bus_request_name(bus, "org.cortexd.dbus", 0);
-// 	if (r < 0) {
-// 		fprintf(stderr, "Failed to acquire service name: %s\n", strerror(-r));
-// 		goto finish;
-// 	}
 	
 	return sd_bus_reply_method_return(m, "");
 }
@@ -263,22 +238,10 @@ void *sd_bus_crtx_main_thread(void *data) {
 	sd_bus_slot *slot = NULL;
 	sd_bus *bus = NULL;
 	int r;
-// 	struct dbus_thread *tdata;
 	struct sd_bus_userdata cb_args;
 	
-// 	tdata = (struct dbus_thread*) data;
-	
-// 	r = sd_bus_open_user(&bus);
-// // 	ASSERT_STR(r >=0, "Failed to connect to system bus: %s\n", strerror(-r));
-// 	if (r < 0) {
-// 		printf("sd_bus: failed to open bus: %s\n", strerror(-r));
-// 		return 0;
-// 	}
-// 	
-// 	sd_bus_main_bus = bus;
 	bus = sd_bus_main_bus;
 	
-// 	cb_args.graph = tdata->graph;
 	cb_args.bus = bus;
 	
 	/* Install the object */
@@ -322,7 +285,6 @@ finish:
 	sd_bus_slot_unref(slot);
 	sd_bus_unref(bus);
 	
-	// 	return r < 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 	return 0;
 }
 
@@ -398,9 +360,6 @@ finish:
 
 void crtx_sd_bus_init() {
 	int r;
-// 	ddthread.graph = cortexd_graph;
-	
-// 	get_thread(sd_bus_daemon_thread, &ddthread, 1);
 	
 	r = sd_bus_open_user(&sd_bus_main_bus);
 	if (r < 0) {
@@ -412,12 +371,6 @@ void crtx_sd_bus_init() {
 void crtx_sd_bus_finish() {
 	sd_bus_flush(sd_bus_main_bus);
 	sd_bus_unref(sd_bus_main_bus);
-// 	sd_bus_close(sd_bus_main_bus);
-	
-// 	pthread_join(sthread, NULL);
-// 	pthread_join(uthread, NULL);
-	
-// 	pthread_join(dthread, NULL);
 }
 
 #ifndef STATIC_SD_BUS
