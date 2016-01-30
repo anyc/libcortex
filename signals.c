@@ -20,7 +20,7 @@ struct signal_map {
 };
 
 
-static int std_signals[] = {SIGTERM, 0};
+static int std_signals[] = {SIGTERM, SIGINT, 0};
 struct crtx_signal_listener signal_list;
 struct crtx_listener_base *sl_base;
 

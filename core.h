@@ -51,11 +51,15 @@ struct crtx_event {
 	struct crtx_event_data response;
 	char response_expected;
 	
+	char error;
+	char release_in_progress;
+	
 	uint64_t original_event_id;
 	
 	unsigned char refs_before_response;
 	unsigned char refs_before_release;
 	pthread_cond_t response_cond;
+	pthread_cond_t release_cond;
 	
 // 	void (*event_to_str)(struct crtx_event *event);
 	
@@ -68,6 +72,9 @@ struct crtx_event {
 struct crtx_event_ll {
 	struct crtx_event *event;
 	
+	char in_process;
+	
+	struct crtx_event_ll *prev;
 	struct crtx_event_ll *next;
 };
 
@@ -92,7 +99,7 @@ struct crtx_task {
 struct crtx_graph {
 	char *name;
 	
-	char paused;
+	char stop;
 	
 	char **types;
 	unsigned int n_types;
@@ -198,7 +205,7 @@ struct crtx_graph *find_graph_by_name(char *name);
 struct crtx_graph *get_graph_for_event_type(char *event_type, char **new_event_types);
 struct crtx_task *new_task();
 void free_task(struct crtx_task *task);
-void wait_on_event(struct crtx_event *event);
+char wait_on_event(struct crtx_event *event);
 struct crtx_listener_base *create_listener(char *id, void *options);
 void free_listener(struct crtx_listener_base *listener);
 struct crtx_event *create_event(char *type, void *data, size_t data_size);

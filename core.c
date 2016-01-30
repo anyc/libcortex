@@ -145,12 +145,22 @@ void *graph_consumer_main(void *arg) {
 	
 	LOCK(graph->queue_mutex);
 	
-	while (graph->n_queue_entries == 0)
-		pthread_cond_wait(&graph->queue_cond, &graph->queue_mutex);
+// 	while (graph->n_queue_entries == 0)
+// 		pthread_cond_wait(&graph->queue_cond, &graph->queue_mutex);
 	
-	qe = graph->equeue;
-	graph->equeue = graph->equeue->next;
-	graph->n_queue_entries--;
+	while (!graph->stop) {
+		for (qe = graph->equeue; qe && qe->in_process && qe->event->error; qe = qe->next) {}
+		if (qe && !qe->in_process && !qe->event->error) {
+			qe->in_process = 1;
+			break;
+		}
+		pthread_cond_wait(&graph->queue_cond, &graph->queue_mutex);
+	}
+// 	qe = graph->equeue;
+// 	graph->equeue = graph->equeue->next;
+// 	graph->n_queue_entries--;
+	
+	UNLOCK(graph->queue_mutex);
 	
 	if (graph->tasks)
 		traverse_graph_r(graph->tasks, qe->event);
@@ -161,9 +171,16 @@ void *graph_consumer_main(void *arg) {
 	
 	dereference_event_release(qe->event);
 	
-	free(qe);
-	
+	LOCK(graph->queue_mutex);
+	if (qe->prev)
+		qe->prev->next = qe->next;
+	else
+		graph->equeue = qe->next;
+	if (qe->next)
+		qe->next->prev = qe->prev;
 	UNLOCK(graph->queue_mutex);
+	
+	free(qe);
 	
 	return 0;
 }
@@ -226,12 +243,15 @@ void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event) {
 	
 	if (eit) {
 		eit->next = (struct crtx_event_ll*) malloc(sizeof(struct crtx_event_ll));
+		eit->next->prev = eit;
 		eit = eit->next;
 	} else {
 		*list = (struct crtx_event_ll*) malloc(sizeof(struct crtx_event_ll));
 		eit = *list;
+		eit->prev = 0;
 	}
 	eit->event = event;
+	eit->in_process = 0;
 	eit->next = 0;
 }
 
@@ -243,6 +263,13 @@ void graph_on_thread_finish(struct crtx_thread *thread, void *data) {
 	struct crtx_graph *graph = (struct crtx_graph*) data;
 	
 	ATOMIC_FETCH_SUB(graph->n_consumers, 1);
+}
+
+void graph_consumer_stop(struct crtx_thread *t, void *data) {
+	struct crtx_graph *graph = (struct crtx_graph *) data;
+	
+	graph->stop = 1;
+	pthread_cond_broadcast(&graph->queue_cond);
 }
 
 void add_event(struct crtx_graph *graph, struct crtx_event *event) {
@@ -262,9 +289,15 @@ void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 		return;
 	}
 	
+	LOCK(graph->queue_mutex);
+	
 	event_ll_add(&graph->equeue, event);
 	
 	graph->n_queue_entries++;
+	
+	pthread_cond_signal(&graph->queue_cond);
+	
+	UNLOCK(graph->queue_mutex);
 	
 	new_n_consumers = ATOMIC_FETCH_ADD(graph->n_consumers, 1);
 	if (!graph->n_max_consumers || new_n_consumers < graph->n_max_consumers) {
@@ -274,6 +307,7 @@ void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 		if (t) {
 			t->on_finish = &graph_on_thread_finish;
 			t->on_finish_data = graph;
+			t->do_stop = &graph_consumer_stop;
 			
 			start_thread(t);
 		} else {
@@ -282,8 +316,6 @@ void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	} else {
 		ATOMIC_FETCH_SUB(graph->n_consumers, 1);
 	}
-	
-	pthread_cond_signal(&graph->queue_cond);
 	
 	pthread_mutex_unlock(&graph->mutex);
 }
@@ -317,6 +349,7 @@ void dereference_event_release(struct crtx_event *event) {
 		event->refs_before_release--;
 	
 	if (event->refs_before_release == 0) {
+		pthread_mutex_unlock(&event->mutex);
 		free_event(event);
 		return;
 	}
@@ -327,8 +360,10 @@ void dereference_event_release(struct crtx_event *event) {
 void reference_event_response(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
-	event->refs_before_response++;
-	DBG("ref response of event %s (%p) (now %d)\n", event->type, event, event->refs_before_response);
+	if (!event->error) {
+		event->refs_before_response++;
+		DBG("ref response of event %s (%p) (now %d)\n", event->type, event, event->refs_before_response);
+	}
 	
 	pthread_mutex_unlock(&event->mutex);
 }
@@ -347,13 +382,15 @@ void dereference_event_response(struct crtx_event *event) {
 	pthread_mutex_unlock(&event->mutex);
 }
 
-void wait_on_event(struct crtx_event *event) {
+char wait_on_event(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
 	while (event->refs_before_response > 0)
 		pthread_cond_wait(&event->response_cond, &event->mutex);
 	
 	pthread_mutex_unlock(&event->mutex);
+	
+	return event->error;
 }
 
 struct crtx_event *new_event() {
@@ -364,6 +401,7 @@ struct crtx_event *new_event() {
 	
 	ret = pthread_mutex_init(&event->mutex, 0); ASSERT(ret >= 0);
 	ret = pthread_cond_init(&event->response_cond, NULL); ASSERT(ret >= 0);
+	ret = pthread_cond_init(&event->release_cond, NULL); ASSERT(ret >= 0);
 	
 	return event;
 }
@@ -375,7 +413,36 @@ void free_event_data(struct crtx_event_data *ed) {
 		free_dict(ed->dict);
 }
 
+void crtx_invalidate_event(struct crtx_event *event) {
+	printf("invalidate %p\n", event);
+	pthread_mutex_lock(&event->mutex);
+	event->error = 1;
+	event->refs_before_response = 0;
+	pthread_mutex_unlock(&event->mutex);
+	
+	pthread_cond_broadcast(&event->response_cond);
+}
+
 void free_event(struct crtx_event *event) {
+	// is somebody already releasing this event?
+	if (!CAS(&event->release_in_progress, 0, 1)) {
+		pthread_cond_broadcast(&event->release_cond);
+		return;
+	}
+	
+// 	if (event->refs_before_release > 0)
+// 		reference_event_release(event);
+	
+	// disappoint everyone who still waits for this event
+	crtx_invalidate_event(event);
+	
+	// wait until all references are gone
+	pthread_mutex_lock(&event->mutex);
+	while (event->refs_before_release > 0)
+		pthread_cond_wait(&event->release_cond, &event->mutex);
+	pthread_mutex_unlock(&event->mutex);
+	
+	
 	if (event->cb_before_release)
 		event->cb_before_release(event);
 	
@@ -540,17 +607,43 @@ void free_task(struct crtx_task *task) {
 	free(task);
 }
 
+void crtx_flush_events() {
+	size_t i;
+	
+	for (i=0; i<n_graphs; i++) {
+		struct crtx_event_ll *qe, *qe_next;
+		
+		if (!graphs[i])
+			continue;
+		
+		LOCK(graphs[i]->queue_mutex);
+		printf("flush %s\n", graphs[i]->types? graphs[i]->types[0]: 0);
+		for (qe = graphs[i]->equeue; qe ; qe = qe_next) {
+			qe_next = qe->next;
+// 			graphs[i]->n_queue_entries--;
+			
+			crtx_invalidate_event(qe->event);
+			
+// 			free(qe);
+		}
+// 		graphs[i]->equeue = 0;
+		
+		UNLOCK(graphs[i]->queue_mutex);
+	}
+}
+
 static void handle_shutdown(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_task *t;
 	
 	INFO("shutdown crtx\n");
 	
-	// make sure we're only called once
+	// TODO make sure we're only called once
 	t = (struct crtx_task *) userdata;
 	t->handle = 0;
 	
 // 	crtx_finish();
 	crtx_threads_stop();
+	crtx_flush_events();
 }
 
 void crtx_init() {
