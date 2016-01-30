@@ -37,7 +37,7 @@ struct crtx_dict_transformation {
 	char outflag;
 	
 	char *format;
-	char **inkeys;
+// 	char **inkeys;
 };
 
 struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, struct crtx_dict_transformation *transf);

@@ -7,46 +7,73 @@
 #include "core.h"
 #include "dict.h"
 
-static char parse_fmt(struct crtx_dict *ds, char *format, char **inkeys, char **result, size_t *rlen) {
+static char parse_fmt(struct crtx_dict *ds, char *format, char **result, size_t *rlen, size_t *alloc) {
 	char *f, *e;
-	char **ink, *s;
-	size_t len, alloc;
+	char *key;
+	char *s;
+	size_t len;
 	char *fmt;
 	char buf[32]; // assume primitive data types fit in 32 chars
 	unsigned char min;
 	struct crtx_dict_item *di;
 	
-	*rlen = 0;
-	alloc = 24;
-	*result = (char*) malloc(alloc);
+// 	*rlen = 0;
+// 	alloc = 24;
+// 	*result = (char*) malloc(alloc);
 	
 	printf("fmt %s %s\n", ds->signature, format);
 	
 	f = format;
-	ink = inkeys;
-	di = crtx_get_first_item(ds);
+// 	ink = inkeys;
+// 	di = crtx_get_first_item(ds);
 	while (*f) {
 		if (*f == '%' && *(f+1) != '%') {
+			if (*(f+1) != '[') {
+				ERROR("character after %% neither %% nor [: %c\n", *(f+1));
+				return 0;
+			}
+			
 			e = f;
-			if (*(f+1) == '(') {
+			while (*e != ']')
+			{
+				e++;
+			}
+			min = e - (f+2);
+			e++;
+			
+			key = (char*) malloc(min+1);
+			strncpy(key, f+2, min);
+			key[min] = 0;
+			
+			printf("key %s\n", key);
+			
+			if (*key != '*')
+				di = crtx_get_item(ds, key);
+			else
+				di = crtx_get_first_item(ds);
+			
+			free(key);
+			
+			if (*e == '(') {
+				char *fmt_start;
+				
+				fmt_start = e;
 				while (*e != ')')
 				{
 					e++;
 				}
-				min = e - (f+2);
+				min = e - (fmt_start+1);
 				
 				fmt = (char*) malloc(min+1);
-				strncpy(fmt, f+2, min);
+				strncpy(fmt, fmt_start+1, min);
 				fmt[min] = 0;
+				
 				printf("sub %s\n", fmt);
 				
-				if (ink && *ink)
-					di = crtx_get_item(ds, *ink);
-				else
-					di = crtx_get_next_item(di);
-				
 				char ret;
-				ret = parse_fmt(di->ds, fmt, (char**) *ink, result, rlen);
+				ret = parse_fmt(di->ds, fmt, result, rlen, alloc);
+				
+				free(fmt);
 				if (!ret)
 					return 0;
 			} else {
@@ -62,51 +89,45 @@ static char parse_fmt(struct crtx_dict *ds, char *format, char **inkeys, char **
 				fmt = (char*) malloc(min+1);
 				strncpy(fmt, f, min);
 				fmt[min] = 0;
-				printf("fmt %c %c\n", fmt[1], *e);
-				f = e;
+				
+// 				printf("fmt %c %c\n", fmt[1], *e);
+				
 				switch (*e) {
 					case 's':
 						do {
-							if (ink)
-								di = crtx_get_item(ds, *ink);
-							else
-								di = crtx_get_next_item(di);
 							printf("%c\n", di->type);
 							if (!di || di->type != 's') {
-								if (ink)
-									ERROR("get_value failed, requested key %s\n", *ink);
+								ERROR("get_value failed\n");
 								return 0;
 							}
-							printf("%c\n", di->type);
+							printf("%c %s %zu\n", di->type, di->string, *rlen);
 							
 							s = di->string;
 							len = strlen(s);
 							
-							alloc += len;
-							*result = (char*) realloc(*result, alloc);
+							*alloc += len;
+							*result = (char*) realloc(*result, *alloc);
 							
-							*rlen += sprintf( &((*result)[*rlen]), fmt, s);
-						} while (fmt[1] == '*');
+							*rlen += sprintf( &((*result)[*rlen]), "%s", s);
+							printf("%zu\n", *rlen);
+							di = crtx_get_next_item(di);
+						} while (fmt[1] == '*' && di);
 						
 						break;
 					case 'd':
 					case 'u':
-						if (ink)
-							di = crtx_get_item(ds, *ink);
-						else
-							di = crtx_get_next_item(di);
+// 						di = crtx_get_item(ds, ink);
 						
 						if (!di || (di->type != 's' && di->type != 'u')) {
-							if (ink)
-								ERROR("get_value failed, requested key %s\n", *ink);
+							ERROR("get_value failed\n");
 							return 0;
 						}
 						
 						snprintf(buf, 32, fmt, di->uint32);
 						len = strlen(buf);
 						
-						alloc += len;
-						*result = (char*) realloc(*result, alloc);
+						*alloc += len;
+						*result = (char*) realloc(*result, *alloc);
 						
 						*rlen += sprintf( &((*result)[*rlen]), "%s", buf);
 						
@@ -116,13 +137,11 @@ static char parse_fmt(struct crtx_dict *ds, char *format, char **inkeys, char **
 						return 0;
 				}
 			}
-			
-			if (ink)
-				ink++;
+			f = e;
 		} else {
-			if (*rlen >= alloc-1) {
-				alloc += 24;
-				*result = (char*) realloc(*result, alloc);
+			if (*rlen >= (*alloc)-1) {
+				*alloc += 24;
+				*result = (char*) realloc(*result, *alloc);
 			}
 			
 			(*result)[*rlen] = *f;
@@ -135,11 +154,11 @@ static char parse_fmt(struct crtx_dict *ds, char *format, char **inkeys, char **
 		f++;
 	}
 	
-	if (*rlen >= alloc-1) {
-		alloc += 1;
-		*result = (char*) realloc(*result, alloc);
-	}
-	(*result)[*rlen] = 0;
+// 	if (*rlen >= alloc-1) {
+// 		alloc += 1;
+// 		*result = (char*) realloc(*result, alloc);
+// 	}
+// 	(*result)[*rlen] = 0;
 	
 	return 1;
 }
@@ -148,6 +167,7 @@ struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, 
 	struct crtx_dict_transformation *pit;
 	struct crtx_dict *ds;
 	struct crtx_dict_item *di;
+	size_t alloc;
 	
 	ds = crtx_init_dict(signature, 0);
 	
@@ -156,17 +176,25 @@ struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, 
 		di->type = pit->outtype;
 		di->key = pit->outkey;
 		
+		alloc = 24;
+		di->size = 0;
+		di->string = (char*) malloc(di->size);
+		
 		if (pit->outtype == 's') {
-			parse_fmt(dict, pit->format, pit->inkeys, &di->string, &di->size);
+			parse_fmt(dict, pit->format, &di->string, &di->size, &alloc);
 			di->size++; // add space for \0 delimiter
 		} else
-			if (pit->outtype == 'D') {
-				
-			} else {
-				
-			}
+		if (pit->outtype == 'D') {
 			
-			di->flags = pit->outflag;
+		} else {
+			
+		}
+		
+		di->flags = pit->outflag;
+		
+		di->size++;
+		di->string = (char*) realloc(di->string, di->size+1);
+		di->string[di->size] = 0;
 		
 		di++;
 		ds->signature_length++;
