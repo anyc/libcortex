@@ -143,6 +143,13 @@ struct crtx_module {
 	void (*finish)();
 };
 
+struct crtx_transform_event_handler {
+	char *signature;
+	struct crtx_dict_transformation *transformation;
+	
+	struct crtx_graph *graph;
+	char *type;
+};
 
 extern struct crtx_module static_modules[];
 extern struct crtx_graph *cortexd_graph;
@@ -198,5 +205,7 @@ void *crtx_copy_raw_data(struct crtx_event_data *data);
 
 void crtx_init_notification_listeners(void **data);
 void crtx_finish_notification_listeners(void *data);
+
+struct crtx_task *crtx_create_transform_task(struct crtx_graph *in_graph, char *name, struct crtx_transform_event_handler *trans);
 
 #endif
