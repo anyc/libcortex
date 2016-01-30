@@ -7,6 +7,7 @@
 #include <limits.h>
 
 #include "core.h"
+#include "dict.h"
 #include "inotify.h"
 #include "threads.h"
 
@@ -14,6 +15,75 @@ static int inotify_fd = -1;
 char *inotify_msg_etype[] = { INOTIFY_MSG_ETYPE, 0 };
 
 #define INOFITY_BUFLEN (sizeof(struct inotify_event) + NAME_MAX + 1)
+
+#define EV(name) { IN_ ## name, #name, sizeof(#name) }
+
+struct inotify_event_dict {
+	uint32_t type;
+	char *name;
+	size_t name_size;
+} event_dict[] = {
+	EV(ACCESS),
+	EV(MODIFY),
+	EV(ATTRIB),
+	EV(CLOSE_WRITE),
+	EV(CLOSE_NOWRITE),
+	EV(OPEN),
+	EV(MOVED_FROM),
+	EV(MOVED_TO),
+	EV(CREATE),
+	EV(DELETE),
+	EV(DELETE_SELF),
+	EV(UNMOUNT),
+	EV(Q_OVERFLOW),
+	EV(IGNORED),
+	{0, 0}
+};
+
+void inotify_to_dict(struct crtx_event_data *data) {
+	struct inotify_event *iev;
+	size_t len;
+	unsigned char mlen;
+	struct crtx_dict *mask_dict;
+	char mask_signature[33];
+	struct inotify_event_dict *dictit;
+	struct crtx_dict_item *di;
+	
+	iev = (struct inotify_event*) data->raw;
+	len = strlen(iev->name);
+	
+	mlen = POPCOUNT32(iev->mask);
+	memset(&mask_signature, 's', mlen);
+	mask_signature[mlen] = 0;
+	
+	mask_dict = crtx_init_dict(mask_signature, 0);
+	
+	dictit = event_dict;
+	di = mask_dict->items;
+	while (dictit->name) {
+		if (dictit->type & iev->mask) {
+			di->type = 's';
+			di->key = 0;
+			
+			di->string = dictit->name;
+			di->size = dictit->name_size;
+			di->flags = DIF_DATA_UNALLOCATED;
+			
+			di++;
+		}
+		dictit++;
+	}
+	di--;
+	di->flags |= DIF_LAST;
+	
+	data->dict = crtx_create_dict("iDuus",
+					"wd", iev->wd, sizeof(int32_t), 0,
+					"mask", mask_dict, mask_dict->size, 0,
+					"cookie", iev->cookie, sizeof(uint32_t), 0,
+					"len", iev->len, sizeof(uint32_t), 0,
+					"name", stracpy(iev->name, &len), len, 0
+				);
+}
 
 void *inotify_tmain(void *data) {
 	char buffer[INOFITY_BUFLEN];
@@ -42,6 +112,7 @@ void *inotify_tmain(void *data) {
 			in_event = (struct inotify_event *) &buffer[i];
 			
 			event = create_event(fal->parent.graph->types[0], in_event, sizeof(struct inotify_event) + in_event->len);
+			event->data.raw_to_dict = &inotify_to_dict;
 			
 			reference_event_release(event);
 			

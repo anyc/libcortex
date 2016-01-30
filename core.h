@@ -22,6 +22,9 @@
 
 #define ERROR(fmt, ...) do { fprintf(stderr, "\x1b[31m"); fprintf(stderr, fmt, ##__VA_ARGS__); fprintf(stderr, "\x1b[0m"); } while (0)
 
+#define POPCOUNT32(x) __builtin_popcount(x);
+
+
 #define CRTX_EVT_NOTIFICATION "cortexd.notification"
 extern char *crtx_evt_notification[];
 #define CRTX_EVT_INBOX "cortexd.inbox"

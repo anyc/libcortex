@@ -7,73 +7,118 @@
 #include "core.h"
 #include "dict.h"
 
-char parse_fmt(struct crtx_dict *ds, char *format, char **inkeys, char **result, size_t *rlen) {
+static char parse_fmt(struct crtx_dict *ds, char *format, char **inkeys, char **result, size_t *rlen) {
 	char *f, *e;
 	char **ink, *s;
 	size_t len, alloc;
-	char fmt[9];
+	char *fmt;
 	char buf[32]; // assume primitive data types fit in 32 chars
-	char min;
+	unsigned char min;
 	struct crtx_dict_item *di;
 	
 	*rlen = 0;
 	alloc = 24;
 	*result = (char*) malloc(alloc);
 	
+	printf("fmt %s %s\n", ds->signature, format);
+	
 	f = format;
 	ink = inkeys;
+	di = crtx_get_first_item(ds);
 	while (*f) {
 		if (*f == '%' && *(f+1) != '%') {
 			e = f;
-			while (e-f < 9 &&
-				*e != 's' &&
-				*e != 'd' &&
-				*e != 'u')
-			{
-				e++;
+			if (*(f+1) == '(') {
+				while (*e != ')')
+				{
+					e++;
+				}
+				min = e - (f+2);
+				
+				fmt = (char*) malloc(min+1);
+				strncpy(fmt, f+2, min);
+				fmt[min] = 0;
+				printf("sub %s\n", fmt);
+				
+				if (ink && *ink)
+					di = crtx_get_item(ds, *ink);
+				else
+					di = crtx_get_next_item(di);
+				
+				char ret;
+				ret = parse_fmt(di->ds, fmt, (char**) *ink, result, rlen);
+				if (!ret)
+					return 0;
+			} else {
+				while (*e != 's' &&
+					*e != 'd' &&
+					*e != 'D' &&
+					*e != 'u')
+				{
+					e++;
+				}
+				min = e - f + 1;
+				
+				fmt = (char*) malloc(min+1);
+				strncpy(fmt, f, min);
+				fmt[min] = 0;
+				printf("fmt %c %c\n", fmt[1], *e);
+				f = e;
+				switch (*e) {
+					case 's':
+						do {
+							if (ink)
+								di = crtx_get_item(ds, *ink);
+							else
+								di = crtx_get_next_item(di);
+							printf("%c\n", di->type);
+							if (!di || di->type != 's') {
+								if (ink)
+									ERROR("get_value failed, requested key %s\n", *ink);
+								return 0;
+							}
+							printf("%c\n", di->type);
+							
+							s = di->string;
+							len = strlen(s);
+							
+							alloc += len;
+							*result = (char*) realloc(*result, alloc);
+							
+							*rlen += sprintf( &((*result)[*rlen]), fmt, s);
+						} while (fmt[1] == '*');
+						
+						break;
+					case 'd':
+					case 'u':
+						if (ink)
+							di = crtx_get_item(ds, *ink);
+						else
+							di = crtx_get_next_item(di);
+						
+						if (!di || (di->type != 's' && di->type != 'u')) {
+							if (ink)
+								ERROR("get_value failed, requested key %s\n", *ink);
+							return 0;
+						}
+						
+						snprintf(buf, 32, fmt, di->uint32);
+						len = strlen(buf);
+						
+						alloc += len;
+						*result = (char*) realloc(*result, alloc);
+						
+						*rlen += sprintf( &((*result)[*rlen]), "%s", buf);
+						
+						break;
+					default:
+						ERROR("%c unknown", *e);
+						return 0;
+				}
 			}
-			min = e - f;
-			if (min > 7)
-				min = 7;
-			fmt[min+1] = 0;
-			strncpy(fmt, f, min + 1);
 			
-			f = e;
-			switch (*e) {
-				case 's':
-					di = crtx_get_item(ds, *ink);
-					if (!di || di->type != 's') {
-						ERROR("get_value failed, requested key %s\n", *ink);
-						return 0;
-					}
-					s = di->string;
-					len = strlen(s);
-					
-					alloc += len;
-					*result = (char*) realloc(*result, alloc);
-					
-					*rlen += sprintf( &((*result)[*rlen]), fmt, s);
-					
-					break;
-				case 'd':
-				case 'u':
-					di = crtx_get_item(ds, *ink);
-					if (!di || (di->type != 's' && di->type != 'u')) {
-						ERROR("get_value failed, requested key %s\n", *ink);
-						return 0;
-					}
-					
-					snprintf(buf, 32, fmt, di->uint32);
-					len = strlen(buf);
-					
-					alloc += len;
-					*result = (char*) realloc(*result, alloc);
-					
-					*rlen += sprintf( &((*result)[*rlen]), "%s", buf);
-					
-					break;
-			}
-			ink++;
+			if (ink)
+				ink++;
 		} else {
 			if (*rlen >= alloc-1) {
 				alloc += 24;
@@ -149,6 +194,7 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 	di->key = va_arg(va, char*);
 	
 	switch (di->type) {
+		case 'i':
 		case 'u':
 			di->uint32 = va_arg(va, uint32_t);
 			
@@ -211,7 +257,7 @@ struct crtx_dict * crtx_create_dict(char *signature, ...) {
 	va_list va;
 	
 	
-	ds = crtx_init_dict(signature, 05);
+	ds = crtx_init_dict(signature, 0);
 	
 	va_start(va, signature);
 	
