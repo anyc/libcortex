@@ -45,7 +45,7 @@ void inotify_to_dict(struct crtx_event_data *data) {
 	size_t len;
 	unsigned char mlen;
 	struct crtx_dict *mask_dict;
-	char mask_signature[33];
+	char *mask_signature; //[33]
 	struct inotify_event_dict *dictit;
 	struct crtx_dict_item *di;
 	
@@ -53,7 +53,8 @@ void inotify_to_dict(struct crtx_event_data *data) {
 	len = strlen(iev->name);
 	
 	mlen = POPCOUNT32(iev->mask);
-	memset(&mask_signature, 's', mlen);
+	mask_signature = (char*) malloc(mlen + 1);
+	memset(mask_signature, 's', mlen);
 	mask_signature[mlen] = 0;
 	
 	mask_dict = crtx_init_dict(mask_signature, 0);
