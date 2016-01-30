@@ -5,7 +5,7 @@ local_mk_rules ?= Makefile.local_rules
 
 APP=cortexd
 
-OBJS+=cortexd.o core.o socket.o readline.o controls.o fanotify.o inotify.o event_comm.o cache.o threads.o signals.o
+OBJS+=cortexd.o core.o socket.o readline.o controls.o fanotify.o inotify.o event_comm.o cache.o threads.o signals.o dict.o
 
 CFLAGS+=$(DEBUG_CFLAGS) -D_FILE_OFFSET_BITS=64
 

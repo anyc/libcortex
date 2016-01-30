@@ -21,6 +21,7 @@
 #include "cache.h"
 #include "nf_queue.h"
 #include "controls.h"
+#include "dict.h"
 
 struct crtx_nfq_listener nfq_list;
 struct crtx_listener_base *nfq_list_base;
@@ -178,7 +179,7 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 		iph = (struct iphdr*)ev->payload;
 		sa.sin_family = AF_INET;
 		
-		ds = crtx_init_dict(PFW_NEWPACKET_SIGNATURE);
+		ds = crtx_init_dict(PFW_NEWPACKET_SIGNATURE, 0);
 		di = ds->items;
 		
 		crtx_fill_data_item(di, 'u', "protocol", iph->protocol, 0, 0); di++;
@@ -221,7 +222,7 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 			
 			tcp = (struct tcphdr *) (ev->payload + (iph->ihl << 2));
 			
-			di->ds = crtx_init_dict(PFW_NEWPACKET_TCP_SIGNATURE);
+			di->ds = crtx_init_dict(PFW_NEWPACKET_TCP_SIGNATURE, 0);
 			pdi = di->ds->items;
 			
 			crtx_fill_data_item(pdi, 'u', "src_port", ntohs(tcp->source), 0, 0); pdi++;
@@ -238,7 +239,7 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 			
 			udp = (struct udphdr *) (ev->payload + (iph->ihl << 2));
 			
-			di->ds = crtx_init_dict(PFW_NEWPACKET_UDP_SIGNATURE);
+			di->ds = crtx_init_dict(PFW_NEWPACKET_UDP_SIGNATURE, 0);
 			pdi = di->ds->items;
 			
 			crtx_fill_data_item(pdi, 'u', "src_port", ntohs(udp->source), 0, 0); pdi++;

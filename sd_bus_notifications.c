@@ -7,6 +7,7 @@
 #include "sd_bus.h"
 #include "sd_bus_notifications.h"
 #include "threads.h"
+#include "dict.h"
 
 // See https://developer.gnome.org/notification-spec/ for DBUS service specification
 

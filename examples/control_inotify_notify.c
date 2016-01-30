@@ -19,6 +19,7 @@
 #include "core.h"
 #include "inotify.h"
 #include "sd_bus_notifications.h"
+#include "dict.h"
 
 static struct crtx_listener_base *in_base;
 static struct crtx_inotify_listener listener;

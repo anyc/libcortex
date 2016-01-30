@@ -33,6 +33,7 @@
 
 
 #include "core.h"
+#include "dict.h"
 #include "socket.h"
 #include "fanotify.h"
 #include "sd_bus_notifications.h"

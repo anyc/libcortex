@@ -9,6 +9,7 @@
 #include "core.h"
 #include "readline.h"
 #include "threads.h"
+#include "dict.h"
 
 #define EV_RL_REQUEST "cortex.readline.request"
 static char *rl_event_types[] = { EV_RL_REQUEST, 0 };
