@@ -1,4 +1,10 @@
 
+# CFLAGS+=-DCONTROLDIR=\"/usr/lib/cortexd/controls/\"
+
+# CFLAGS+=-DWITH_JSON
+# CFLAGS+=$(shell pkg-config --cflags json-c)
+# LDLIBS+=$(shell pkg-config --libs json-c)
+
 CFLAGS+=-DSTATIC_SD_BUS
 OBJS+=sd_bus.o sd_bus_notifications.o
 CFLAGS+=$(shell pkg-config --cflags libsystemd)

@@ -10,7 +10,7 @@
 #include "controls.h"
 
 #ifndef CONTROLDIR
-#define CONTROLDIR "/usr/lib/"
+#define CONTROLDIR "/usr/lib/cortexd/controls/"
 #endif
 
 struct crtx_control {
@@ -78,7 +78,7 @@ static void load_dir(char * directory) {
 }
 
 void crtx_controls_init() {
-	load_dir(PLUGINDIR);
+	load_dir(CONTROLDIR);
 }
 
 void crtx_controls_finish() {

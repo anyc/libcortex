@@ -37,6 +37,6 @@ debug:
 	$(MAKE) $(MAKEFILE) DEBUG_CFLAGS="-g -g3 -gdwarf-2 -DDEBUG -Wall" #-Werror 
 
 examples/libcrtx_%.so: examples/control_%.c
-	$(CC) -shared -o $@ -fPIC $< $(LDFLAGS) $(CFLAGS) -I.
+	$(CC) -shared -o $@ -fPIC $< $(LDFLAGS) $(CFLAGS) -I. $(LDLIBS)
 
 -include $(local_mk_rules)

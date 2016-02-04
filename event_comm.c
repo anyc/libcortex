@@ -35,6 +35,15 @@ struct serialized_event {
 };
 
 
+
+int crtx_wrapper_read(void *conn_id, void *data, size_t data_size) {
+	return read(*(int*) conn_id, data, data_size);
+}
+
+int crtx_wrapper_write(void *conn_id, void *data, size_t data_size) {
+	return write(*(int*) conn_id, data, data_size);
+}
+
 void send_dict(send_fct send, void *conn_id, struct crtx_dict *ds) {
 	struct crtx_dict_item *di;
 	struct serialized_dict sdict;

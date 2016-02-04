@@ -40,7 +40,7 @@ struct crtx_dict_transformation {
 // 	char **inkeys;
 };
 
-
+struct crtx_dict_item * crtx_alloc_item(struct crtx_dict *dict);
 struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, struct crtx_dict_transformation *transf);
 struct crtx_dict_item * crtx_get_item(struct crtx_dict *ds, char *key);
 struct crtx_dict * crtx_init_dict(char *signature, size_t payload_size);

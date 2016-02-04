@@ -9,10 +9,16 @@
 
 #include <string.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+
 #include "core.h"
 #include "inotify.h"
 #include "sd_bus_notifications.h"
 #include "dict.h"
+#include "event_comm.h"
 
 static struct crtx_listener_base *in_base;
 static struct crtx_inotify_listener listener;
@@ -26,7 +32,19 @@ struct crtx_dict_transformation to_notification[] = {
 
 struct crtx_transform_dict_handler transform_task;
 
-char init() {
+struct crtx_config;
+typedef char *(*on_new_entry_cb)(struct crtx_config *cfg, char *key, struct crtx_dict *entry);
+
+struct crtx_config {
+	char *name;
+	struct crtx_dict *data;
+	
+	on_new_entry_cb new_entry;
+};
+
+struct crtx_config config;
+
+char init2() {
 	char *path;
 	
 	printf("starting inotify example plugin\n");
@@ -61,7 +79,177 @@ char init() {
 	return 1;
 }
 
+#ifdef WITH_JSON
+#include <json.h>
+struct crtx_dict_item * parse_json_value(json_object *jobj, char *key, struct crtx_dict *dict){
+	enum json_type type;
+	struct crtx_dict_item *ditem;
+	
+	ditem = crtx_alloc_item(dict);
+	
+	ditem->flags = DIF_KEY_ALLOCATED;
+	ditem->key = stracpy(key, 0);
+	
+	type = json_object_get_type(jobj); /*Getting the type of the json object*/
+	switch (type) {
+		case json_type_boolean: printf("json_type_booleann");
+							printf("value: %sn", json_object_get_boolean(jobj)? "true": "false");
+							break;
+		case json_type_double: printf("json_type_doublen");
+							printf("          value: %lfn", json_object_get_double(jobj));
+							break;
+		case json_type_int: printf("json_type_intn");
+							printf("          value: %dn", json_object_get_int(jobj));
+							break;
+		case json_type_string: 
+				ditem->type = 's';
+				ditem->size = 0;
+				ditem->string = stracpy(json_object_get_string(jobj), &ditem->size));
+				ditem->size++;
+				break;
+	}
+}
+
+void json_parse(json_object * jobj, struct crtx_dict *dict);
+
+void json_parse_array(json_object *jobj, char *key, struct crtx_dict *dict) {
+	enum json_type type;
+	struct crtx_dict_item *ditem;
+
+	ditem = 0;
+	
+	json_object *jarray = jobj; /*Simply get the array*/
+	if(key) {
+		jarray = json_object_object_get(jobj, key); /*Getting the array if it is a key value pair*/
+	}
+
+	int arraylen = json_object_array_length(jarray); /*Getting the length of the array*/
+	printf("Array Length: %dn",arraylen);
+	int i;
+	json_object * jvalue;
+
+	for (i=0; i< arraylen; i++){
+		jvalue = json_object_array_get_idx(jarray, i); /*Getting the array element at position i*/
+		type = json_object_get_type(jvalue);
+		if (type == json_type_array) {
+			ditem = crtx_alloc_item(dict);
+			ditem->ds = crtx_init_dict(0, 0);
+			
+			json_parse_array(jvalue, NULL, ditem->ds);
+		}
+		else if (type != json_type_object) {
+			printf("value[%d]: ",i);
+			ditem = parse_json_value(jvalue, 0, dict);
+		}
+		else {
+			json_parse(jvalue, dict);
+		}
+	}
+	
+	if (ditem)
+		ditem->flags |= DIF_LAST;
+}
+
+void json_parse(json_object * jobj, struct crtx_dict *dict) {
+	enum json_type type;
+	
+	json_object_object_foreach(jobj, key, val) {
+		type = json_object_get_type(val);
+		switch (type) {
+			case json_type_boolean:
+			case json_type_double:
+			case json_type_int: 
+			case json_type_string: parse_json_value(val, key, dict);
+								break; 
+			case json_type_object:
+								jobj = json_object_object_get(jobj, key);
+								json_parse(jobj, 0); 
+								break;
+			case json_type_array:
+								json_parse_array(jobj, key);
+								break;
+		}
+	}
+}
+
+int crtx_load_json_config(struct crtx_config *config, char *string) {
+	json_object * jobj = json_tokener_parse(string);
+	
+	config->data = crtx_init_dict(0, 0);
+	
+	json_parse(jobj, config->data);
+}
+#endif
+
+char *crtx_readfile(char *path) {
+	FILE *f;
+	size_t size, read_size;
+	char *s;
+	
+	f = fopen(path, "r");
+	if (!f) {
+		printf("error reading file \"%s\": %s\n", path, strerror(errno));
+		return 0;
+	}
+	
+	fseek(f, 0L, SEEK_END);
+	size = ftell(f);
+	fseek(f, 0L, SEEK_SET);
+	
+	s = (char*) malloc(size + 1);
+	read_size = fread(s, 1, size, f);
+	if (read_size != size) {
+		printf("error while reading file %s\n", path);
+		return 0;
+	}
+	
+	fclose(f);
+	
+	return s;
+}
+
+void crtx_load_config(struct crtx_config *config) {
+	char *s;
+	
+	int f = open(config->name, O_RDONLY);
+	if (f == -1) {
+		printf("error %s\n", strerror(errno));
+		return;
+	}
+	
+// 	config->data = recv_dict(crtx_wrapper_read, &f);
+	
+	s = crtx_readfile(config->name);
+	if (!s)
+		return;
+	printf("s %s\n", s);
+	crtx_load_json_config(config, s);
+	
+	close(f);
+	
+	crtx_print_dict(config->data);
+}
+
+void crtx_store_config(struct crtx_config *config) {
+	int f = open(config->name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP);
+	if (f == -1) {
+		printf("error %s\n", strerror(errno));
+		return;
+	}
+	
+// 	send_dict(crtx_wrapper_write, &f, d);
+	
+	close(f);
+}
+
+char init() {
+	config.name = "testdict";
+	crtx_load_config(&config);
+}
+
 void finish() {
+	crtx_store_config(&config);
+	
 	crtx_finish_notification_listeners(notifier_data);
 	
 	free_listener(in_base);

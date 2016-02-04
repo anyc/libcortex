@@ -42,6 +42,7 @@ struct crtx_module static_modules[] = {
 	{"socket", &crtx_socket_init, &crtx_socket_finish},
 #ifdef STATIC_SD_BUS
 	{"sd-bus", &crtx_sd_bus_init, &crtx_sd_bus_finish},
+	{"sd_bus_notification", &crtx_sdbus_notification_init, &crtx_sdbus_notification_finish},
 #endif
 #ifdef STATIC_NF_QUEUE
 	{"nf-queue", &crtx_nf_queue_init, &crtx_nf_queue_finish},
@@ -49,7 +50,6 @@ struct crtx_module static_modules[] = {
 	{"readline", &crtx_readline_init, &crtx_readline_finish},
 	{"fanotify", &crtx_fanotify_init, &crtx_fanotify_finish},
 	{"inotify", &crtx_inotify_init, &crtx_inotify_finish},
-	{"sd_bus_notification", &crtx_sdbus_notification_init, &crtx_sdbus_notification_finish},
 	{"controls", &crtx_controls_init, &crtx_controls_finish},
 	{0, 0}
 };
@@ -62,7 +62,9 @@ struct crtx_listener_repository listener_factory[] = {
 	{"inotify", &crtx_new_inotify_listener},
 	{"socket_server", &crtx_new_socket_server_listener},
 	{"socket_client", &crtx_new_socket_client_listener},
+#ifdef STATIC_SD_BUS
 	{"sd_bus_notification", &crtx_new_sd_bus_notification_listener},
+#endif
 	{"signals", &crtx_new_signals_listener},
 	{"readline", &crtx_new_readline_listener},
 	{0, 0}
@@ -795,7 +797,6 @@ void crtx_init_notification_listeners(void **data) {
 	result = create_listener("sd_bus_notification", notify_listener);
 	if (!result) {
 		printf("cannot create fanotify listener\n");
-		return;
 	}
 	
 	rl_listener = (struct crtx_readline_listener *) tmp;
@@ -805,7 +806,6 @@ void crtx_init_notification_listeners(void **data) {
 	result = create_listener("readline", &rl_listener);
 	if (!result) {
 		printf("cannot create fanotify listener\n");
-		return;
 	}
 }
 

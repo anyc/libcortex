@@ -7,7 +7,7 @@
 #include "core.h"
 #include "dict.h"
 
-static char dprintf(struct crtx_dict *ds, char *format, char **result, size_t *rlen, size_t *alloc) {
+static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_t *rlen, size_t *alloc) {
 	char *f, *e;
 	char *key;
 	char *s;
@@ -64,7 +64,7 @@ static char dprintf(struct crtx_dict *ds, char *format, char **result, size_t *r
 				fmt[min] = 0;
 				
 				char ret;
-				ret = dprintf(di->ds, fmt, result, rlen, alloc);
+				ret = dict_printf(di->ds, fmt, result, rlen, alloc);
 				
 				free(fmt);
 				if (!ret)
@@ -162,7 +162,7 @@ struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, 
 		di->string = (char*) malloc(alloc);
 		
 		if (pit->outtype == 's') {
-			dprintf(dict, pit->format, &di->string, &di->size, &alloc);
+			dict_printf(dict, pit->format, &di->string, &di->size, &alloc);
 		} else
 		if (pit->outtype == 'D') {
 			
@@ -245,11 +245,23 @@ char crtx_fill_data_item(struct crtx_dict_item *di, char type, ...) {
 	return ret;
 }
 
+struct crtx_dict_item * crtx_alloc_item(struct crtx_dict *dict) {
+	ds->size += sizeof(struct crtx_dict_item);
+	dict = (struct crtx_dict*) realloc(dict, ds->size);
+	
+	// TODO payload
+	return ((void*)dict) + ds->size - sizeof(struct crtx_dict_item);
+}
+
 struct crtx_dict * crtx_init_dict(char *signature, size_t payload_size) {
 	struct crtx_dict *ds;
 	size_t size;
 	
-	size = strlen(signature) * sizeof(struct crtx_dict_item) + sizeof(struct crtx_dict) + payload_size;
+	size = sizeof(struct crtx_dict) + payload_size;
+	
+	if (signature)
+		size = strlen(signature) * sizeof(struct crtx_dict_item);
+	
 	ds = (struct crtx_dict*) malloc(size);
 	
 	ds->signature = signature;
