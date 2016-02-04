@@ -7,7 +7,7 @@
 #include "core.h"
 #include "dict.h"
 
-static char parse_fmt(struct crtx_dict *ds, char *format, char **result, size_t *rlen, size_t *alloc) {
+static char dprintf(struct crtx_dict *ds, char *format, char **result, size_t *rlen, size_t *alloc) {
 	char *f, *e;
 	char *key;
 	char *s;
@@ -20,6 +20,10 @@ static char parse_fmt(struct crtx_dict *ds, char *format, char **result, size_t 
 	f = format;
 	while (*f) {
 		if (*f == '%' && *(f+1) != '%') {
+			/*
+			 * first, get the [key]
+			 */
+			
 			if (*(f+1) != '[') {
 				ERROR("character after %% neither %% nor [: %c\n", *(f+1));
 				return 0;
@@ -37,6 +41,7 @@ static char parse_fmt(struct crtx_dict *ds, char *format, char **result, size_t 
 			strncpy(key, f+2, min);
 			key[min] = 0;
 			
+			// do we print selected or all items?
 			if (*key != '*')
 				di = crtx_get_item(ds, key);
 			else
@@ -59,7 +64,7 @@ static char parse_fmt(struct crtx_dict *ds, char *format, char **result, size_t 
 				fmt[min] = 0;
 				
 				char ret;
-				ret = parse_fmt(di->ds, fmt, result, rlen, alloc);
+				ret = dprintf(di->ds, fmt, result, rlen, alloc);
 				
 				free(fmt);
 				if (!ret)
@@ -157,7 +162,7 @@ struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, 
 		di->string = (char*) malloc(alloc);
 		
 		if (pit->outtype == 's') {
-			parse_fmt(dict, pit->format, &di->string, &di->size, &alloc);
+			dprintf(dict, pit->format, &di->string, &di->size, &alloc);
 		} else
 		if (pit->outtype == 'D') {
 			

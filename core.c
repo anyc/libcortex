@@ -826,10 +826,10 @@ void crtx_finish_notification_listeners(void *data) {
 	free(data);
 }
 
-void crtx_transform_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+void crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *dict;
 	struct crtx_event *new_event;
-	struct crtx_transform_event_handler *trans;
+	struct crtx_transform_dict_handler *trans;
 	
 	if (!event->data.dict)
 		event->data.raw_to_dict(&event->data);
@@ -839,7 +839,7 @@ void crtx_transform_event_handler(struct crtx_event *event, void *userdata, void
 		return;
 	}
 	
-	trans = (struct crtx_transform_event_handler*) userdata;
+	trans = (struct crtx_transform_dict_handler*) userdata;
 	
 	dict = crtx_dict_transform(event->data.dict, trans->signature, trans->transformation);
 	
@@ -852,6 +852,6 @@ void crtx_transform_event_handler(struct crtx_event *event, void *userdata, void
 		add_raw_event(new_event);
 }
 
-struct crtx_task *crtx_create_transform_task(struct crtx_graph *in_graph, char *name, struct crtx_transform_event_handler *trans) {
-	return crtx_create_task(in_graph, 0, "inotify_event_handler", &crtx_transform_event_handler, trans);
+struct crtx_task *crtx_create_transform_task(struct crtx_graph *in_graph, char *name, struct crtx_transform_dict_handler *trans) {
+	return crtx_create_task(in_graph, 0, "inotify_event_handler", &crtx_transform_dict_handler, trans);
 }
