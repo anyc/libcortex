@@ -356,15 +356,15 @@ void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level) {
 		return;
 	}
 	
-	for (j=0;j<level-1;j++) INFO("   ");
-	INFO("dict: %s (%zu==%u)\n", ds->signature, ds->signature?strlen(ds->signature):0, ds->signature_length);
+// 	for (j=0;j<level-1;j++) INFO("   ");
+	INFO("(dict) %s (%zu==%u)\n", ds->signature?ds->signature:"\"\"", ds->signature?strlen(ds->signature):0, ds->signature_length);
 	
 	i=0;
 	s = ds->signature;
 	di = ds->items;
 	while ( s?*s:1 && (!s)? i<ds->signature_length:1 ) {
 		for (j=0;j<level;j++) INFO("   "); // indent
-		INFO("%u: %s = ", i, di->key);
+		INFO("%u: %s = ", i, di->key?di->key:"\"\"");
 		
 		if (s && *s != di->type)
 			INFO("error type %c != %c\n", *s, di->type);
@@ -374,7 +374,7 @@ void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level) {
 			case 'i': INFO("(int32_t) %d\n", di->int32); break;
 			case 's': INFO("(char*) %s\n", di->string); break;
 			case 'D':
-				INFO("(dict) \n");
+// 				INFO("(dict) \n");
 				if (di->ds)
 					crtx_print_dict_rec(di->ds, level+1);
 				break;

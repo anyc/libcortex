@@ -40,7 +40,7 @@ struct socket_connection_tmain_args {
 };
 
 
-/// before original event is released, setup and send the response event
+/// before original event is released, setup and write the response event
 static void setup_response_event_cb(struct crtx_event *event) {
 	struct crtx_socket_listener *slist;
 	struct crtx_event *resp_event;
@@ -67,10 +67,10 @@ static void outbound_event_handler(struct crtx_event *event, void *userdata, voi
 	if (!slistener->crtx_outbox)
 		slistener->crtx_outbox = get_graph_for_event_type(CRTX_EVT_OUTBOX, crtx_evt_outbox);
 	
-	// send every outbound event through the main outbox graph
+	// write every outbound event through the main outbox graph
 	crtx_traverse_graph(slistener->crtx_outbox, event);
 	
-	send_event_as_dict(event, crtx_wrapper_write, &slistener->sockfd);
+	write_event_as_dict(event, crtx_wrapper_write, &slistener->sockfd);
 }
 
 static void inbound_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -81,7 +81,7 @@ static void inbound_event_handler(struct crtx_event *event, void *userdata, void
 	if (!slistener->crtx_inbox)
 		slistener->crtx_inbox = get_graph_for_event_type(CRTX_EVT_INBOX, crtx_evt_inbox);
 	
-	// send inbound event to the main inbox graph
+	// write inbound event to the main inbox graph
 	add_event(slistener->crtx_inbox, event);
 }
 
@@ -106,7 +106,7 @@ static void *socket_connection_tmain(void *data) {
 	crtx_create_task(slist.outbox, 200, "outbound_event_handler", &outbound_event_handler, &slist);
 	
 	while (1) {
-		event = recv_event_as_dict(&crtx_wrapper_read, &args->sockfd);
+		event = read_event_as_dict(&crtx_wrapper_read, &args->sockfd);
 		if (!event)
 			break;
 		
@@ -266,7 +266,7 @@ static void *socket_client_tmain(void *data) {
 	crtx_free_addrinfo(result);
 	
 	while (!listeners->stop) {
-		event = recv_event_as_dict(&crtx_wrapper_read, &listeners->sockfd);
+		event = read_event_as_dict(&crtx_wrapper_read, &listeners->sockfd);
 		if (!event) {
 			close(listeners->sockfd);
 			break;

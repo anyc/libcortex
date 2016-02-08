@@ -13,18 +13,6 @@
 #include "threads.h"
 #include "dict.h"
 
-struct serialized_dict_item {
-	uint64_t key_length;
-	uint64_t payload_size;
-	
-	uint8_t type;
-	uint8_t flags;
-};
-
-struct serialized_dict {
-	uint8_t signature_length;
-};
-
 #define CRTX_SEREV_FLAG_EXPECT_RESPONSE 1<<0
 
 struct serialized_event {
@@ -37,110 +25,8 @@ struct serialized_event {
 
 
 
-int crtx_wrapper_read(void *conn_id, void *data, size_t data_size) {
-	return read(*(int*) conn_id, data, data_size);
-}
-
-int crtx_wrapper_write(void *conn_id, void *data, size_t data_size) {
-	return write(*(int*) conn_id, data, data_size);
-}
-
-void send_dict(send_fct send, void *conn_id, struct crtx_dict *ds) {
-	struct crtx_dict_item *di;
-	struct serialized_dict sdict;
-	struct serialized_dict_item sdi;
-	char *s;
-	int ret;
-	
-	#ifdef DEBUG
-	// suppress valgrind warning
-	memset(&sdi, 0, sizeof(struct serialized_dict_item));
-	#endif
-	
-	sdict.signature_length = strlen(ds->signature);
-	
-	ret = send(conn_id, &sdict, sizeof(struct serialized_dict));
-	if (ret < 0) {
-		printf("sending event failed: %s\n", strerror(errno));
-		return;
-	}
-	
-	ret = send(conn_id, ds->signature, sdict.signature_length);
-	if (ret < 0) {
-		printf("sending event failed: %s\n", strerror(errno));
-		return;
-	}
-	
-	s = ds->signature;
-	di = ds->items;
-	while (*s) {
-		sdi.key_length = strlen(di->key);
-		
-		sdi.type = di->type;
-		sdi.flags = di->flags;
-		
-		switch (*s) {
-			case 'u':
-			case 'i':
-				sdi.payload_size = sizeof(uint32_t);
-				break;
-			case 's':
-			case 'D':
-				sdi.payload_size = di->size;
-				break;
-			default:
-				printf("unknown literal '%c' in signature \"%s\"\n", *s, ds->signature);
-				return;
-		}
-		
-		ret = send(conn_id, &sdi, sizeof(struct serialized_dict_item));
-		if (ret < 0) {
-			printf("sending event failed: %s\n", strerror(errno));
-			return;
-		}
-		
-		ret = send(conn_id, di->key, sdi.key_length);
-		if (ret < 0) {
-			printf("sending event failed: %s\n", strerror(errno));
-			return;
-		}
-		
-		switch (*s) {
-			case 'u':
-			case 'i':
-				ret = send(conn_id, &di->uint32, sdi.payload_size);
-				if (ret < 0) {
-					printf("sending event failed: %s\n", strerror(errno));
-					return;
-				}
-				break;
-			case 's':
-				ret = send(conn_id, di->pointer, sdi.payload_size);
-				if (ret < 0) {
-					printf("sending event failed: %s\n", strerror(errno));
-					return;
-				}
-				break;
-			case 'D':
-				send_dict(send, conn_id, di->ds);
-				break;
-			default:
-				printf("unknown literal '%c' in signature \"%s\"\n", *s, ds->signature);
-				return;
-		}
-		
-		di++;
-		s++;
-	}
-}
-
-void send_event_as_dict(struct crtx_event *event, send_fct send, void *conn_id) {
+void write_event_as_dict(struct crtx_event *event, write_fct write, void *conn_id) {
 	struct serialized_event sev;
-// 	struct crtx_dict *ds;
-// 	struct crtx_dict_item *di;
-// 	struct serialized_dict sdict;
-// 	struct serialized_dict_item sdi;
-// 	char *s;
 	int ret;
 	
 	if (!event->data.dict) {
@@ -157,17 +43,12 @@ void send_event_as_dict(struct crtx_event *event, send_fct send, void *conn_id) 
 		}
 	}
 	
-// 	req.data_length = event->crtx_dict->size + event->crtx_dict->payload_size;
-// 	ds = event->data.dict;
-	
 	#ifdef DEBUG
 	// suppress valgrind warning
 	memset(&sev, 0, sizeof(struct serialized_event));
-// 	memset(&sdi, 0, sizeof(struct serialized_dict_item));
 	#endif
 	
 	sev.version = 0;
-// 	sev.flags = CRTX_SREQ_DICT;
 	sev.type_length = strlen(event->type);
 	sev.flags = 0;
 	sev.id = 0;
@@ -178,229 +59,35 @@ void send_event_as_dict(struct crtx_event *event, send_fct send, void *conn_id) 
 	} else {
 		if (event->original_event_id)
 			sev.id = event->original_event_id;
-// 		else
-// 			sev.id = (uint64_t) (uintptr_t) event;
-		
 	}
 	
 	printf("serializing event %s %d %" PRIu64 "\n", event->type, sev.flags, sev.id);
 	
-	ret = send(conn_id, &sev, sizeof(struct serialized_event));
+	ret = write(conn_id, &sev, sizeof(struct serialized_event));
 	if (ret < 0) {
-		printf("sending event failed: %s\n", strerror(errno));
+		printf("writeing event failed: %s\n", strerror(errno));
 		return;
 	}
 	
-	ret = send(conn_id, event->type, sev.type_length);
+	ret = write(conn_id, event->type, sev.type_length);
 	if (ret < 0) {
-		printf("sending event failed: %s\n", strerror(errno));
+		printf("writeing event failed: %s\n", strerror(errno));
 		return;
 	}
 	
-	send_dict(send, conn_id, event->data.dict);
-	
-// 	sdict.signature_length = strlen(ds->signature);
-// 	
-// 	ret = send(conn_id, &sdict, sizeof(struct serialized_dict));
-// 	if (ret < 0) {
-// 		printf("sending event failed: %s\n", strerror(errno));
-// 		return;
-// 	}
-// 	
-// 	ret = send(conn_id, ds->signature, sdict.signature_length);
-// 	if (ret < 0) {
-// 		printf("sending event failed: %s\n", strerror(errno));
-// 		return;
-// 	}
-// 	
-// 	s = ds->signature;
-// 	di = ds->items;
-// 	while (*s) {
-// 		sdi.key_length = strlen(di->key);
-// 		
-// 		sdi.type = di->type;
-// 		sdi.flags = di->flags;
-// 		
-// 		switch (*s) {
-// 			case 'u':
-// 			case 'i':
-// 				sdi.payload_size = sizeof(uint32_t);
-// 				break;
-// 			case 's':
-// 			case 'D':
-// 				sdi.payload_size = di->size;
-// 				break;
-// 			default:
-// 				printf("unknown literal '%c' in signature \"%s\"\n", *s, ds->signature);
-// 				return;
-// 		}
-// 		
-// 		ret = send(conn_id, &sdi, sizeof(struct serialized_dict_item));
-// 		if (ret < 0) {
-// 			printf("sending event failed: %s\n", strerror(errno));
-// 			return;
-// 		}
-// 		
-// 		ret = send(conn_id, di->key, sdi.key_length);
-// 		if (ret < 0) {
-// 			printf("sending event failed: %s\n", strerror(errno));
-// 			return;
-// 		}
-// 		
-// 		switch (*s) {
-// 			case 'u':
-// 			case 'i':
-// 				ret = send(conn_id, &di->uint32, sdi.payload_size);
-// 				if (ret < 0) {
-// 					printf("sending event failed: %s\n", strerror(errno));
-// 					return;
-// 				}
-// 				break;
-// 			case 's':
-// 			case 'D':
-// 				ret = send(conn_id, di->pointer, sdi.payload_size);
-// 				if (ret < 0) {
-// 					printf("sending event failed: %s\n", strerror(errno));
-// 					return;
-// 				}
-// 				break;
-// 			default:
-// 				printf("unknown literal '%c' in signature \"%s\"\n", *s, ds->signature);
-// 				return;
-// 		}
-// 		
-// 		di++;
-// 		s++;
-// 	}
-}
-
-char my_recv(recv_fct recv, void *conn_id, void *buffer, size_t read_bytes) {
-	int n;
-	
-	n = recv(conn_id, buffer, read_bytes);
-	if (n < 0) {
-		printf("error while reading from socket: %s\n", strerror(errno));
-		return 0;
-	} else
-	if (n != read_bytes) {
-		printf("did not receive enough data (%d != %zu), aborting\n", n, read_bytes);
-		return 0;
-	}
-	
-	return 1;
-}
-
-struct crtx_dict *recv_dict(recv_fct recv, void *conn_id) {
-// 	struct serialized_event sev;
-	struct crtx_dict *ds;
-	struct crtx_dict_item *di;
-	struct serialized_dict sdict;
-	struct serialized_dict_item sdi;
-// 	struct crtx_event *event;
-	char *s;
-	char ret;
-	uint8_t i;
-	
-	
-	ret = my_recv(recv, conn_id, &sdict, sizeof(struct serialized_dict));
-	if (!ret) {
-		return 0;
-	}
-	
-	if (sdict.signature_length >= CRTX_MAX_SIGNATURE_LENGTH) {
-		printf("Too long signature (%u >= %u)\n", sdict.signature_length, CRTX_MAX_SIGNATURE_LENGTH);
-		
-		return 0;
-	}
-	
-	ds = (struct crtx_dict*) calloc(1, sizeof(struct crtx_dict) + sizeof(struct crtx_dict_item)*sdict.signature_length);
-	
-	ds->signature = (char*) malloc(sdict.signature_length+1);
-	ret = my_recv(recv, conn_id, ds->signature, sdict.signature_length);
-	if (!ret) {
-		free_dict(ds);
-		return 0;
-	}
-	ds->signature[sdict.signature_length] = 0;
-	ds->signature_length = sdict.signature_length;
-	
-	i = 0;
-	s = ds->signature;
-	di = ds->items;
-	while (*s) {
-		ret = my_recv(recv, conn_id, &sdi, sizeof(struct serialized_dict_item));
-		if (!ret) {
-			free_dict(ds);
-			return 0;
-		}
-		
-		di->type = sdi.type;
-		di->flags = sdi.flags | DIF_KEY_ALLOCATED;
-		
-		di->key = (char*) malloc(sdi.key_length+1);
-		ret = my_recv(recv, conn_id, di->key, sdi.key_length);
-		if (!ret) {
-			free_dict(ds);
-			return 0;
-		}
-		di->key[sdi.key_length] = 0;
-		
-		switch (*s) {
-			case 'u':
-			case 'i':
-				if (sdi.payload_size != sizeof(uint32_t)) {
-					free_dict(ds);
-					return 0;
-				}
-				
-				ret = my_recv(recv, conn_id, &di->uint32, sdi.payload_size);
-				if (!ret) {
-					free_dict(ds);
-					return 0;
-				}
-				break;
-			case 's':
-				di->string = (char*) malloc(sdi.payload_size+1);
-				ret = my_recv(recv, conn_id, di->string, sdi.payload_size);
-				if (!ret) {
-					free_dict(ds);
-					return 0;
-				}
-				di->string[sdi.payload_size] = 0;
-				break;
-			case 'D':
-				di->ds = recv_dict(recv, conn_id);
-				break;
-			default:
-				printf("unknown literal '%c' in signature \"%s\"\n", *s, ds->signature);
-				return 0;
-		}
-		
-		di++;
-		s++;
-		i++;
-	}
-	
-	return ds;
+	crtx_write_dict(write, conn_id, event->data.dict);
 }
 
 #define FREE_EVENT(event) { free((event)->type); free(event); }
-// #define FREE_DICT(dict) { free_dict(dict); }
 
-struct crtx_event *recv_event_as_dict(recv_fct recv, void *conn_id) {
+struct crtx_event *read_event_as_dict(read_fct read, void *conn_id) {
 	struct serialized_event sev;
-// 	struct crtx_dict *ds;
-// 	struct crtx_dict_item *di;
-// 	struct serialized_dict sdict;
-// 	struct serialized_dict_item sdi;
 	struct crtx_event *event;
-// 	char *s;
 	char ret;
-// 	uint8_t i;
 	
 	printf("waiting on new event\n");
 	
-	ret = my_recv(recv, conn_id, &sev, sizeof(struct serialized_event));
+	ret = crtx_read(read, conn_id, &sev, sizeof(struct serialized_event));
 	if (!ret) {
 		return 0;
 	}
@@ -410,16 +97,14 @@ struct crtx_event *recv_event_as_dict(recv_fct recv, void *conn_id) {
 		return 0;
 	}
 	
-// 	event = (struct crtx_event*) calloc(1, sizeof(struct crtx_event));
 	event = new_event();
 	event->original_event_id = sev.id;
 	
 	if ((sev.flags & CRTX_SEREV_FLAG_EXPECT_RESPONSE) != 0)
 		event->response_expected = 1;
-// 		reference_event_release(event);
 	
 	event->type = (char*) malloc(sev.type_length+1);
-	ret = my_recv(recv, conn_id, event->type, sev.type_length);
+	ret = crtx_read(read, conn_id, event->type, sev.type_length);
 	if (!ret) {
 		FREE_EVENT(event);
 		return 0;
@@ -428,7 +113,7 @@ struct crtx_event *recv_event_as_dict(recv_fct recv, void *conn_id) {
 	
 	printf("deserializing event %s %d %" PRIu64 "\n", event->type, sev.flags, sev.id);
 	
-	event->data.dict = recv_dict(recv, conn_id);
+	event->data.dict = crtx_read_dict(read, conn_id);
 	if (!event->data.dict) {
 		FREE_EVENT(event);
 		return 0;
@@ -436,123 +121,16 @@ struct crtx_event *recv_event_as_dict(recv_fct recv, void *conn_id) {
 	
 	crtx_print_dict(event->data.dict);
 	
-// 	ret = my_recv(recv, conn_id, &sdict, sizeof(struct serialized_dict));
-// 	if (!ret) {
-// 		FREE_EVENT(event);
-// 		return 0;
-// 	}
-// 	
-// 	if (sdict.signature_length >= CRTX_MAX_SIGNATURE_LENGTH) {
-// 		printf("Too long signature (%u >= %u)\n", sdict.signature_length, CRTX_MAX_SIGNATURE_LENGTH);
-// 		
-// 		FREE_EVENT(event);
-// 		return 0;
-// 	}
-// 	
-// 	event->data.dict = (struct crtx_dict*) calloc(1, sizeof(struct crtx_dict) + sizeof(struct crtx_dict_item)*sdict.signature_length);
-// 	ds = event->data.dict;
-// 	
-// 	ds->signature = (char*) malloc(sdict.signature_length+1);
-// 	ret = my_recv(recv, conn_id, ds->signature, sdict.signature_length);
-// 	if (!ret) {
-// 		FREE_DICT(event->data.dict);
-// 		FREE_EVENT(event);
-// 		return 0;
-// 	}
-// 	ds->signature[sdict.signature_length] = 0;
-// 	
-// 	i = 0;
-// 	s = ds->signature;
-// 	di = ds->items;
-// 	while (*s) {
-// 		ret = my_recv(recv, conn_id, &sdi, sizeof(struct serialized_dict_item));
-// 		if (!ret) {
-// 			FREE_DICT(event->data.dict);
-// 			FREE_EVENT(event);
-// 			return 0;
-// 		}
-// 		
-// 		di->type = sdi.type;
-// 		di->flags = sdi.flags | DIF_KEY_ALLOCATED;
-// 		
-// 		di->key = (char*) malloc(sdi.key_length+1);
-// 		ret = my_recv(recv, conn_id, di->key, sdi.key_length);
-// 		if (!ret) {
-// 			FREE_DICT(event->data.dict);
-// 			FREE_EVENT(event);
-// 			return 0;
-// 		}
-// 		di->key[sdi.key_length] = 0;
-// 		
-// 		switch (*s) {
-// 			case 'u':
-// 			case 'i':
-// 				if (sdi.payload_size != sizeof(uint32_t)) {
-// 					FREE_DICT(event->data.dict);
-// 					FREE_EVENT(event);
-// 					return 0;
-// 				}
-// 				
-// 				ret = my_recv(recv, conn_id, &di->uint32, sdi.payload_size);
-// 				if (!ret) {
-// 					FREE_DICT(event->data.dict);
-// 					FREE_EVENT(event);
-// 					return 0;
-// 				}
-// 				break;
-// 			case 's':
-// 				di->string = (char*) malloc(sdi.payload_size+1);
-// 				ret = my_recv(recv, conn_id, di->string, sdi.payload_size);
-// 				if (!ret) {
-// 					FREE_DICT(event->data.dict);
-// 					FREE_EVENT(event);
-// 					return 0;
-// 				}
-// 				di->string[sdi.payload_size] = 0;
-// 				break;
-// 			case 'D':
-// 				
-// 			default:
-// 				printf("unknown literal '%c' in signature \"%s\"\n", *s, ds->signature);
-// 				return 0;
-// 		}
-// 		
-// 		di++;
-// 		s++;
-// 		i++;
-// 	}
-	
-// 	crtx_print_dict(ds);
-	
 	return event;
 }
-
-// static struct crtx_event_ll *sent_events = 0;
 
 static void inbox_dispatch_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	add_raw_event(event);
 }
 
-// static void response_out_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	event_ll_add(&sent_events, event);
-// }
-// 
-// static void response_in_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	if (!strcmp(event->type, "cortex/socket/response")) {
-// 		
-// 	}
-// }
-
-// typedef char *(*create_key_cb_t)(struct crtx_event *event);
-// typedef char (*match_cb_t)(struct crtx_cache *rc, struct crtx_event *event, struct crtx_cache_entry *c_entry);
-
 static char *in_create_key_cb(struct crtx_event *event) {
 	char *key = 0;
 	
-	
-// 	if (event->original_event)
-// 		snprintf(key, sizeof(uint64_t)*2+1, "%" PRIu64, (uint64_t) (uintptr_t) event->original_event->id);
-// 	else
 	if (event->original_event_id) {
 		key = (char*) malloc(sizeof(uint64_t)*2+1);
 		snprintf(key, sizeof(uint64_t)*2+1, "%" PRIu64, (uint64_t) (uintptr_t) event->original_event_id);
