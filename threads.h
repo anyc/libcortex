@@ -1,4 +1,7 @@
 
+#ifndef CRTX_THREADS_H
+#define CRTX_THREADS_H
+
 #include <pthread.h>
 
 #define MUTEX_TYPE pthread_mutex_t
@@ -63,3 +66,5 @@ void crtx_threads_interrupt_thread(struct crtx_thread *t);
 
 void crtx_threads_init();
 void crtx_threads_finish();
+
+#endif

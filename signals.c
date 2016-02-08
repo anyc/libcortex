@@ -98,7 +98,7 @@ static void sigterm_handler(struct crtx_event *event, void *userdata, void **ses
 	
 	newe = create_event(CRTX_EVT_SHUTDOWN, 0, 0);
 	
-	add_event(crtx_ctrl_graph, newe);
+	add_event(crtx_root->crtx_ctrl_graph, newe);
 }
 
 static void sigint_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -106,7 +106,7 @@ static void sigint_handler(struct crtx_event *event, void *userdata, void **sess
 	
 	newe = create_event(CRTX_EVT_SHUTDOWN, 0, 0);
 	
-	add_event(crtx_ctrl_graph, newe);
+	add_event(crtx_root->crtx_ctrl_graph, newe);
 }
 
 

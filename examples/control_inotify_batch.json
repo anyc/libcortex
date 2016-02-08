@@ -16,7 +16,7 @@
 			"etype": "cortexd.notification",
 			"rules": [
 				{ "key": "title", "type": "s", "flag": "0", "format": "Inotify" },
-				{ "key": "message", "type": "s", "flag": "0", "format": "Event \"%[mask](%[*]s)\" for file \"%[name]s\"" }
+				{ "key": "message", "type": "s", "flag": "0", "format": "Event \"%[mask](%[*, ]s)\" for file \"%[name]s\"" }
 				],
 		}
 	}

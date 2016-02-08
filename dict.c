@@ -297,16 +297,21 @@ char *crtx_get_string(struct crtx_dict *ds, char *key) {
 	return ret?s:0;
 }
 
-
+/**
+ * parse format string and substitute %-specifiers with values from the dictionary
+ * %[key]item_type %[key](format string for sub-dictionary)
+ * E.g.: "Event \"%[my_array](%[* ]s)\" for file \"%[name]s\""
+ */
 static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_t *rlen, size_t *alloc) {
 	char *f, *e;
 	char *key;
 	char *s;
 	size_t len;
 	char *fmt;
-	char buf[32]; // assume primitive data types fit in 32 chars
-	unsigned char min;
+// 	char buf[32]; // assume primitive data types fit in 32 chars
+	unsigned char min, keylen;
 	struct crtx_dict_item *di;
+	
 	
 	f = format;
 	while (*f) {
@@ -325,23 +330,27 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 			{
 				e++;
 			}
-			min = e - (f+2);
+			keylen = e - (f+2);
 			e++;
 			
-			key = (char*) malloc(min+1);
-			strncpy(key, f+2, min);
-			key[min] = 0;
+			key = (char*) malloc(keylen+1);
+			strncpy(key, f+2, keylen);
+			key[keylen] = 0;
 			
-			// do we print selected or all items?
+			// do we print specific item referenced by key or all items (*)?
 			if (*key != '*')
 				di = crtx_get_item(ds, key);
 			else
-// 				di = crtx_get_first_item(ds);
 				di = &ds->items[0];
-			printf("key %s %s\n", key, ds->signature);
-			free(key);
 			
+			
+			// check if this part of the format string contains a sub-group
 			if (*e == '(') {
+				/*
+				 * key refers to another dictionary, starting recursion with
+				 * format string "fmt" from "%[key](fmt)"
+				 */
+				
 				char *fmt_start;
 				
 				fmt_start = e;
@@ -364,18 +373,18 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 			} else {
 				uint32_t i;
 				
-				while (*e != 's' &&
-					*e != 'd' &&
-					*e != 'D' &&
-					*e != 'u')
-				{
-					e++;
-				}
-				min = e - f + 1;
-				
-				fmt = (char*) malloc(min+1);
-				strncpy(fmt, f, min);
-				fmt[min] = 0;
+// 				while (*e != 's' &&
+// 					*e != 'd' &&
+// 					*e != 'D' &&
+// 					*e != 'u')
+// 				{
+// 					e++;
+// 				}
+// 				min = e - f + 1;
+// 				
+// 				fmt = (char*) malloc(min+1);
+// 				strncpy(fmt, f, min);
+// 				fmt[min] = 0;
 				
 				switch (*e) {
 					case 's':
@@ -394,26 +403,31 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 							
 							*rlen += sprintf( &((*result)[*rlen]), "%s", s);
 							
+							// add separator, if present
+							if (keylen > 1 && i < ds->signature_length-1)
+								*rlen += sprintf( &((*result)[*rlen]), "%s", &key[1]);
+							
 // 							di = crtx_get_next_item(di);
 							i++;
 							di = &ds->items[i];
-						} while (fmt[1] == '*' && i < ds->signature_length);
+						} while (*key == '*' && i < ds->signature_length);
 						
 						break;
 					case 'd':
 					case 'u':
-						if (!di || (di->type != 's' && di->type != 'u')) {
-							ERROR("get_value failed\n");
-							return 0;
-						}
-						
-						snprintf(buf, 32, fmt, di->uint32);
-						len = strlen(buf);
-						
-						*alloc += len;
-						*result = (char*) realloc(*result, *alloc);
-						
-						*rlen += sprintf( &((*result)[*rlen]), "%s", buf);
+						ERROR("TODO\n");
+// 						if (!di || (di->type != 's' && di->type != 'u')) {
+// 							ERROR("get_value failed\n");
+// 							return 0;
+// 						}
+// 						
+// 						snprintf(buf, 32, fmt, di->uint32);
+// 						len = strlen(buf);
+// 						
+// 						*alloc += len;
+// 						*result = (char*) realloc(*result, *alloc);
+// 						
+// 						*rlen += sprintf( &((*result)[*rlen]), "%s", buf);
 						
 						break;
 					default:
@@ -421,8 +435,14 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 						return 0;
 				}
 			}
+			
+			free(key);
 			f = e;
 		} else {
+			/*
+			 * copy character
+			 */
+			
 			if (*rlen >= (*alloc)-1) {
 				*alloc += 24;
 				*result = (char*) realloc(*result, *alloc);
@@ -432,6 +452,7 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 			
 			(*rlen)++;
 			
+			// ignore the second % in a row
 			if (*f == '%' && *(f+1) == '%')
 				f++;
 		}

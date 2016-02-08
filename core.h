@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include <regex.h>
 
+#include "threads.h"
+
+
 #define STRINGIFYB(x) #x
 #define STRINGIFY(x) STRINGIFYB(x)
 
@@ -143,16 +146,24 @@ struct crtx_module {
 	void (*finish)();
 };
 
-extern struct crtx_module static_modules[];
-extern struct crtx_graph *cortexd_graph;
+struct crtx_root {
+	struct crtx_graph **graphs;
+	unsigned int n_graphs;
+	MUTEX_TYPE graphs_mutex;
+	
+	struct crtx_graph *crtx_ctrl_graph;
+};
 
-extern struct crtx_graph **graphs;
-extern unsigned int n_graphs;
+extern struct crtx_module static_modules[];
+// extern struct crtx_graph *cortexd_graph;
+
+// extern struct crtx_graph **graphs;
+// extern unsigned int n_graphs;
 
 #define CRTX_EVT_SHUTDOWN "cortexd.control.shutdown"
 #define CRTX_EVT_MOD_INIT "cortex.control.module_initialized"
-extern struct crtx_graph *crtx_ctrl_graph;
-
+// extern struct crtx_graph *crtx_ctrl_graph;
+extern struct crtx_root *crtx_root;
 
 
 
