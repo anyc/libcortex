@@ -13,6 +13,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "core.h"
 #include "inotify.h"
@@ -87,27 +88,36 @@ struct crtx_dict_item * parse_json_value(json_object *jobj, char *key, struct cr
 	
 	ditem = crtx_alloc_item(dict);
 	
-	ditem->flags = DIF_KEY_ALLOCATED;
-	ditem->key = stracpy(key, 0);
+	if (key) {
+		ditem->flags = DIF_KEY_ALLOCATED;
+		ditem->key = stracpy(key, 0);
+	}
 	
 	type = json_object_get_type(jobj); /*Getting the type of the json object*/
 	switch (type) {
-		case json_type_boolean: printf("json_type_booleann");
-							printf("value: %sn", json_object_get_boolean(jobj)? "true": "false");
-							break;
-		case json_type_double: printf("json_type_doublen");
-							printf("          value: %lfn", json_object_get_double(jobj));
-							break;
-		case json_type_int: printf("json_type_intn");
-							printf("          value: %dn", json_object_get_int(jobj));
-							break;
+		case json_type_boolean: 
+			ditem->type = 'i';
+			ditem->size = sizeof(int32_t);
+			ditem->int32 = json_object_get_boolean(jobj);
+			break;
+		case json_type_double:
+			printf("TODO double %lf", json_object_get_double(jobj));
+			break;
+		case json_type_int: 
+			ditem->type = 'i';
+			ditem->size = sizeof(int32_t);
+			ditem->int32 = json_object_get_int(jobj);
+			break;
 		case json_type_string: 
-				ditem->type = 's';
-				ditem->size = 0;
-				ditem->string = stracpy(json_object_get_string(jobj), &ditem->size));
-				ditem->size++;
-				break;
+			ditem->type = 's';
+			ditem->size = 0;
+			ditem->string = stracpy(json_object_get_string(jobj), &ditem->size);
+			ditem->size++;
+			break;
+		default:break;
 	}
+	
+	return ditem;
 }
 
 void json_parse(json_object * jobj, struct crtx_dict *dict);
@@ -124,7 +134,7 @@ void json_parse_array(json_object *jobj, char *key, struct crtx_dict *dict) {
 	}
 
 	int arraylen = json_object_array_length(jarray); /*Getting the length of the array*/
-	printf("Array Length: %dn",arraylen);
+	printf("Array Length: %d\n",arraylen);
 	int i;
 	json_object * jvalue;
 
@@ -133,6 +143,7 @@ void json_parse_array(json_object *jobj, char *key, struct crtx_dict *dict) {
 		type = json_object_get_type(jvalue);
 		if (type == json_type_array) {
 			ditem = crtx_alloc_item(dict);
+			ditem->type = 'D';
 			ditem->ds = crtx_init_dict(0, 0);
 			
 			json_parse_array(jvalue, NULL, ditem->ds);
@@ -152,6 +163,8 @@ void json_parse_array(json_object *jobj, char *key, struct crtx_dict *dict) {
 
 void json_parse(json_object * jobj, struct crtx_dict *dict) {
 	enum json_type type;
+	// 	struct crtx_dict *dict2;
+	struct crtx_dict_item *ditem;
 	
 	json_object_object_foreach(jobj, key, val) {
 		type = json_object_get_type(val);
@@ -159,20 +172,32 @@ void json_parse(json_object * jobj, struct crtx_dict *dict) {
 			case json_type_boolean:
 			case json_type_double:
 			case json_type_int: 
-			case json_type_string: parse_json_value(val, key, dict);
-								break; 
-			case json_type_object:
+			case json_type_string: 	printf("string\n");
+								parse_json_value(val, key, dict);
+								break;
+			case json_type_object:printf("obj\n");
 								jobj = json_object_object_get(jobj, key);
-								json_parse(jobj, 0); 
+								
+								ditem = crtx_alloc_item(dict);
+								
+								if (key) {
+									ditem->flags = DIF_KEY_ALLOCATED;
+									ditem->key = stracpy(key, 0);
+								}
+								
+								ditem->type = 'D';
+								ditem->ds = crtx_init_dict(0, 0);
+								json_parse(jobj, ditem->ds);
 								break;
-			case json_type_array:
-								json_parse_array(jobj, key);
+			case json_type_array:printf("array\n");
+								json_parse_array(jobj, key, dict);
 								break;
+			default:break;
 		}
 	}
 }
 
-int crtx_load_json_config(struct crtx_config *config, char *string) {
+void crtx_load_json_config(struct crtx_config *config, char *string) {
 	json_object * jobj = json_tokener_parse(string);
 	
 	config->data = crtx_init_dict(0, 0);
@@ -222,7 +247,7 @@ void crtx_load_config(struct crtx_config *config) {
 	s = crtx_readfile(config->name);
 	if (!s)
 		return;
-	printf("s %s\n", s);
+	
 	crtx_load_json_config(config, s);
 	
 	close(f);
@@ -245,6 +270,8 @@ void crtx_store_config(struct crtx_config *config) {
 char init() {
 	config.name = "testdict";
 	crtx_load_config(&config);
+	
+	return 1;
 }
 
 void finish() {

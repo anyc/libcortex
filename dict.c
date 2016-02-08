@@ -246,11 +246,15 @@ char crtx_fill_data_item(struct crtx_dict_item *di, char type, ...) {
 }
 
 struct crtx_dict_item * crtx_alloc_item(struct crtx_dict *dict) {
-	ds->size += sizeof(struct crtx_dict_item);
-	dict = (struct crtx_dict*) realloc(dict, ds->size);
+// 	dict->size += sizeof(struct crtx_dict_item);
+	dict->signature_length++;
+	dict->items = (struct crtx_dict_item*) realloc(dict->items, dict->signature_length*sizeof(struct crtx_dict_item));
 	
 	// TODO payload
-	return ((void*)dict) + ds->size - sizeof(struct crtx_dict_item);
+// 	return (struct crtx_dict_item *) ((char*)dict) + dict->size - sizeof(struct crtx_dict_item);
+	
+	memset(&dict->items[dict->signature_length-1], 0, sizeof(struct crtx_dict_item));
+	return &dict->items[dict->signature_length-1];
 }
 
 struct crtx_dict * crtx_init_dict(char *signature, size_t payload_size) {
@@ -266,7 +270,14 @@ struct crtx_dict * crtx_init_dict(char *signature, size_t payload_size) {
 	
 	ds->signature = signature;
 	ds->size = size;
-	ds->signature_length = 0;
+	
+	if (signature) {
+		ds->signature_length = strlen(signature);
+		ds->items = (struct crtx_dict_item *) ((char*) ds) + sizeof(struct crtx_dict);
+	} else {
+		ds->signature_length = 0;
+		ds->items = 0;
+	}
 	
 	return ds;
 }
@@ -345,17 +356,17 @@ void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level) {
 		return;
 	}
 	
-	for (j=0;j<level;j++) printf("  ");
-	INFO("sign: %s (%zu==%u)\n", ds->signature, strlen(ds->signature), ds->signature_length);
+	for (j=0;j<level-1;j++) INFO("   ");
+	INFO("dict: %s (%zu==%u)\n", ds->signature, ds->signature?strlen(ds->signature):0, ds->signature_length);
 	
 	i=0;
 	s = ds->signature;
 	di = ds->items;
-	while (*s) {
-		for (j=0;j<level;j++) INFO("  "); // indent
+	while ( s?*s:1 && (!s)? i<ds->signature_length:1 ) {
+		for (j=0;j<level;j++) INFO("   "); // indent
 		INFO("%u: %s = ", i, di->key);
 		
-		if (*s != di->type)
+		if (s && *s != di->type)
 			INFO("error type %c != %c\n", *s, di->type);
 		
 		switch (di->type) {
@@ -369,14 +380,14 @@ void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level) {
 				break;
 		}
 		
-		s++;
+		if (s) s++;
 		di++;
 		i++;
 	}
 }
 
 void crtx_print_dict(struct crtx_dict *ds) {
-	crtx_print_dict_rec(ds, 0);
+	crtx_print_dict_rec(ds, 1);
 }
 
 char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size) {

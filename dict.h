@@ -28,7 +28,8 @@ struct crtx_dict {
 	unsigned char signature_length;
 	unsigned long size;
 	
-	struct crtx_dict_item items[0];
+// 	struct crtx_dict_item items[0];
+	struct crtx_dict_item *items;
 };
 
 struct crtx_dict_transformation {

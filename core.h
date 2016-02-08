@@ -164,7 +164,7 @@ extern struct crtx_graph *crtx_ctrl_graph;
 
 
 
-char *stracpy(char *str, size_t *str_length);
+char *stracpy(const char *str, size_t *str_length);
 struct crtx_event *new_event();
 void free_event(struct crtx_event *event);
 void crtx_init();
