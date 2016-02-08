@@ -494,6 +494,12 @@ void add_raw_event(struct crtx_event *event) {
 	
 	graph = find_graph_for_event_type(event->type);
 	
+	if (!graph && !strcmp(event->type, CRTX_EVT_NOTIFICATION)) {
+		crtx_init_notification_listeners(&crtx_root->notification_listeners_handle);
+		
+		graph = find_graph_for_event_type(event->type);
+	}
+	
 	if (!graph) {
 		ERROR("did not find graph for event type %s\n", event->type);
 		return;
@@ -687,6 +693,9 @@ void crtx_finish() {
 	i=0;
 	while (static_modules[i].id) { i++; }
 	i--;
+	
+	if (crtx_root->notification_listeners_handle)
+		crtx_finish_notification_listeners(crtx_root->notification_listeners_handle);
 	
 	// stop threads first
 	static_modules[0].finish();

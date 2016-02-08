@@ -20,7 +20,6 @@
 
 static struct crtx_inotify_listener *listeners = 0;
 size_t n_listeners = 0;
-void *notifier_data = 0;
 
 // struct crtx_dict_transformation to_notification[] = {
 // 	{ "title", 's', 0, "Inotify" },
@@ -30,10 +29,9 @@ void *notifier_data = 0;
 struct crtx_transform_dict_handler *transformations = 0;
 size_t n_transformations = 0;
 
-
-// struct crtx_transform_dict_handler transform_task;
 struct crtx_config config;
 
+// execute script with inotify parameters
 static void exec_script_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char *script;
 	char *cmd, *pos;
@@ -44,6 +42,7 @@ static void exec_script_handler(struct crtx_event *event, void *userdata, void *
 	script = (char *) userdata;
 	in_event = (struct inotify_event *) event->data.raw;
 	
+	// calculate required string length
 	ret = crtx_inotify_mask2string(in_event->mask, 0, &mask_size);
 	if (!ret)
 		return;
@@ -75,8 +74,6 @@ char init() {
 	
 	config.name = "control_inotify_batch";
 	crtx_load_config(&config);
-	
-	crtx_init_notification_listeners(&notifier_data);
 	
 	crtx_get_value(config.data, "monitors", 'D', &monitors, sizeof(void*));
 	crtx_get_value(config.data, "transforms", 'D', &transforms, sizeof(void*));
@@ -113,6 +110,7 @@ char init() {
 			listeners = (struct crtx_inotify_listener *) realloc(listeners, sizeof(struct crtx_inotify_listener)*n_listeners);
 			listener = &listeners[n_listeners-1];
 		}
+		memset(listener, 0, sizeof(struct crtx_inotify_listener));
 		listener->path = path;
 		listener->mask = in_mask;
 		
@@ -165,7 +163,7 @@ char init() {
 				
 				transform_rules = crtx_get_dict(transform_def, "rules");
 				
-				transformation->signature = (char*) malloc(transform_rules->signature_length);
+				transformation->signature = (char*) malloc(transform_rules->signature_length+1);
 				transformation->transformation = (struct crtx_dict_transformation *) calloc(1, sizeof(struct crtx_dict_transformation)*transform_rules->signature_length);
 				
 				for (k=0; k < transform_rules->signature_length; k++) {
@@ -226,6 +224,4 @@ void finish() {
 	
 	for (i=0; i < n_listeners; i++)
 		free_listener(&listeners[i].parent);
-	
-	crtx_finish_notification_listeners(notifier_data);
 }

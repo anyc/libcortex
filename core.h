@@ -152,6 +152,8 @@ struct crtx_root {
 	MUTEX_TYPE graphs_mutex;
 	
 	struct crtx_graph *crtx_ctrl_graph;
+	
+	void *notification_listeners_handle;
 };
 
 extern struct crtx_module static_modules[];

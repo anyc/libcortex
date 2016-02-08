@@ -85,7 +85,7 @@ struct crtx_dict * crtx_init_dict(char *signature, size_t payload_size) {
 	size = sizeof(struct crtx_dict) + payload_size;
 	
 	if (signature)
-		size = strlen(signature) * sizeof(struct crtx_dict_item);
+		size += strlen(signature) * sizeof(struct crtx_dict_item);
 	
 	ds = (struct crtx_dict*) malloc(size);
 	
@@ -94,7 +94,7 @@ struct crtx_dict * crtx_init_dict(char *signature, size_t payload_size) {
 	
 	if (signature) {
 		ds->signature_length = strlen(signature);
-		ds->items = (struct crtx_dict_item *) ((char*) ds) + sizeof(struct crtx_dict);
+		ds->items = (struct crtx_dict_item *) ((char*) ds + sizeof(struct crtx_dict));
 	} else {
 		ds->signature_length = 0;
 		ds->items = 0;
@@ -255,7 +255,7 @@ struct crtx_dict_item * crtx_get_item(struct crtx_dict *ds, char *key) {
 	di = ds->items;
 // 	while (*s) {
 	for (i=0; i < ds->signature_length; i++) {
-		if (!strcmp(di->key, key)) {
+		if (di->key && !strcmp(di->key, key)) {
 			return di;
 		}
 		
@@ -398,7 +398,7 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 							s = di->string;
 							len = strlen(s);
 							
-							*alloc += len;
+							*alloc += len + 1;
 							*result = (char*) realloc(*result, *alloc);
 							
 							*rlen += sprintf( &((*result)[*rlen]), "%s", s);
@@ -467,11 +467,14 @@ struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, 
 	struct crtx_dict *ds;
 	struct crtx_dict_item *di;
 	size_t alloc;
+	size_t i;
 	
 	ds = crtx_init_dict(signature, 0);
 	
 	di = ds->items;
-	for (pit = transf; pit && pit->type; pit++) {
+	pit = transf;
+// 	for (pit = transf; pit && pit->type; pit++) {
+	for (i=0; i<strlen(signature); i++) {
 		di->type = pit->type;
 		di->key = pit->key;
 		
@@ -496,6 +499,7 @@ struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, 
 		di->string[di->size] = 0;
 		
 		di++;
+		pit++;
 // 		ds->signature_length++;
 	}
 	di--;
