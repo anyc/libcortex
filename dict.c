@@ -7,185 +7,6 @@
 #include "core.h"
 #include "dict.h"
 
-static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_t *rlen, size_t *alloc) {
-	char *f, *e;
-	char *key;
-	char *s;
-	size_t len;
-	char *fmt;
-	char buf[32]; // assume primitive data types fit in 32 chars
-	unsigned char min;
-	struct crtx_dict_item *di;
-	
-	f = format;
-	while (*f) {
-		if (*f == '%' && *(f+1) != '%') {
-			/*
-			 * first, get the [key]
-			 */
-			
-			if (*(f+1) != '[') {
-				ERROR("character after %% neither %% nor [: %c\n", *(f+1));
-				return 0;
-			}
-			
-			e = f;
-			while (*e != ']')
-			{
-				e++;
-			}
-			min = e - (f+2);
-			e++;
-			
-			key = (char*) malloc(min+1);
-			strncpy(key, f+2, min);
-			key[min] = 0;
-			
-			// do we print selected or all items?
-			if (*key != '*')
-				di = crtx_get_item(ds, key);
-			else
-				di = crtx_get_first_item(ds);
-			
-			free(key);
-			
-			if (*e == '(') {
-				char *fmt_start;
-				
-				fmt_start = e;
-				while (*e != ')')
-				{
-					e++;
-				}
-				min = e - (fmt_start+1);
-				
-				fmt = (char*) malloc(min+1);
-				strncpy(fmt, fmt_start+1, min);
-				fmt[min] = 0;
-				
-				char ret;
-				ret = dict_printf(di->ds, fmt, result, rlen, alloc);
-				
-				free(fmt);
-				if (!ret)
-					return 0;
-			} else {
-				while (*e != 's' &&
-					*e != 'd' &&
-					*e != 'D' &&
-					*e != 'u')
-				{
-					e++;
-				}
-				min = e - f + 1;
-				
-				fmt = (char*) malloc(min+1);
-				strncpy(fmt, f, min);
-				fmt[min] = 0;
-				
-				switch (*e) {
-					case 's':
-						do {
-							if (!di || di->type != 's') {
-								ERROR("get_value failed\n");
-								return 0;
-							}
-							
-							s = di->string;
-							len = strlen(s);
-							
-							*alloc += len;
-							*result = (char*) realloc(*result, *alloc);
-							
-							*rlen += sprintf( &((*result)[*rlen]), "%s", s);
-							
-							di = crtx_get_next_item(di);
-						} while (fmt[1] == '*' && di);
-						
-						break;
-					case 'd':
-					case 'u':
-						if (!di || (di->type != 's' && di->type != 'u')) {
-							ERROR("get_value failed\n");
-							return 0;
-						}
-						
-						snprintf(buf, 32, fmt, di->uint32);
-						len = strlen(buf);
-						
-						*alloc += len;
-						*result = (char*) realloc(*result, *alloc);
-						
-						*rlen += sprintf( &((*result)[*rlen]), "%s", buf);
-						
-						break;
-					default:
-						ERROR("%c unknown", *e);
-						return 0;
-				}
-			}
-			f = e;
-		} else {
-			if (*rlen >= (*alloc)-1) {
-				*alloc += 24;
-				*result = (char*) realloc(*result, *alloc);
-			}
-			
-			(*result)[*rlen] = *f;
-			
-			(*rlen)++;
-			
-			if (*f == '%' && *(f+1) == '%')
-				f++;
-		}
-		f++;
-	}
-	
-	return 1;
-}
-
-struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, struct crtx_dict_transformation *transf) {
-	struct crtx_dict_transformation *pit;
-	struct crtx_dict *ds;
-	struct crtx_dict_item *di;
-	size_t alloc;
-	
-	ds = crtx_init_dict(signature, 0);
-	
-	di = ds->items;
-	for (pit = transf; pit && pit->outtype; pit++) {
-		di->type = pit->outtype;
-		di->key = pit->outkey;
-		
-		alloc = 24;
-		di->size = 0;
-		di->string = (char*) malloc(alloc);
-		
-		if (pit->outtype == 's') {
-			dict_printf(dict, pit->format, &di->string, &di->size, &alloc);
-		} else
-		if (pit->outtype == 'D') {
-			
-		} else {
-			
-		}
-		
-		di->flags = pit->outflag;
-		
-		if (di->size >= alloc-1)
-			di->string = (char*) realloc(di->string, alloc+1);
-		
-		di->string[di->size] = 0;
-		
-		di++;
-		ds->signature_length++;
-	}
-	di--;
-	di->flags |= DIF_LAST;
-	
-	return ds;
-}
-
 
 char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 	// 	if (ds) {
@@ -415,7 +236,7 @@ char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size
 }
 
 struct crtx_dict_item *crtx_get_first_item(struct crtx_dict *ds) {
-	return ds->items;
+	return ds?ds->items:0;
 }
 
 struct crtx_dict_item *crtx_get_next_item(struct crtx_dict_item *di) {
@@ -423,32 +244,271 @@ struct crtx_dict_item *crtx_get_next_item(struct crtx_dict_item *di) {
 }
 
 struct crtx_dict_item * crtx_get_item(struct crtx_dict *ds, char *key) {
-	char *s;
+// 	char *s;
+	uint32_t i;
 	struct crtx_dict_item *di;
 	
 	if (!ds)
 		return 0;
 	
-	s = ds->signature;
+// 	s = ds->signature;
 	di = ds->items;
-	while (*s) {
+// 	while (*s) {
+	for (i=0; i < ds->signature_length; i++) {
 		if (!strcmp(di->key, key)) {
 			return di;
 		}
 		
-		s++;
+// 		s++;
 		di++;
 	}
 	
 	return 0;
 }
 
-char crtx_get_value(struct crtx_dict *ds, char *key, void *buffer, size_t buffer_size) {
+char crtx_get_value(struct crtx_dict *ds, char *key, char type, void *buffer, size_t buffer_size) {
 	struct crtx_dict_item *di;
 	
 	di = crtx_get_item(ds, key);
 	if (!di)
 		return 0;
 	
+	if (type > 0 && di->type != type) {
+		ERROR("type mismatch for \"%s\": %c != %c\n", key, type, di->type);
+		return 0;
+	}
+	
 	return crtx_copy_value(di, buffer, buffer_size);
+}
+
+struct crtx_dict *crtx_get_dict(struct crtx_dict *ds, char *key) {
+	struct crtx_dict *dict;
+	char ret;
+	
+	ret = crtx_get_value(ds, key, 'D', &dict, sizeof(struct crtx_dict *));
+	return ret?dict:0;
+}
+
+char *crtx_get_string(struct crtx_dict *ds, char *key) {
+	char *s;
+	char ret;
+	
+	ret = crtx_get_value(ds, key, 's', &s, sizeof(char *));
+	return ret?s:0;
+}
+
+
+static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_t *rlen, size_t *alloc) {
+	char *f, *e;
+	char *key;
+	char *s;
+	size_t len;
+	char *fmt;
+	char buf[32]; // assume primitive data types fit in 32 chars
+	unsigned char min;
+	struct crtx_dict_item *di;
+	
+	f = format;
+	while (*f) {
+		if (*f == '%' && *(f+1) != '%') {
+			/*
+			 * first, get the [key]
+			 */
+			
+			if (*(f+1) != '[') {
+				ERROR("character after %% neither %% nor [: %c\n", *(f+1));
+				return 0;
+			}
+			
+			e = f;
+			while (*e != ']')
+			{
+				e++;
+			}
+			min = e - (f+2);
+			e++;
+			
+			key = (char*) malloc(min+1);
+			strncpy(key, f+2, min);
+			key[min] = 0;
+			
+			// do we print selected or all items?
+			if (*key != '*')
+				di = crtx_get_item(ds, key);
+			else
+// 				di = crtx_get_first_item(ds);
+				di = &ds->items[0];
+			printf("key %s %s\n", key, ds->signature);
+			free(key);
+			
+			if (*e == '(') {
+				char *fmt_start;
+				
+				fmt_start = e;
+				while (*e != ')')
+				{
+					e++;
+				}
+				min = e - (fmt_start+1);
+				
+				fmt = (char*) malloc(min+1);
+				strncpy(fmt, fmt_start+1, min);
+				fmt[min] = 0;
+				
+				char ret;
+				ret = dict_printf(di->ds, fmt, result, rlen, alloc);
+				
+				free(fmt);
+				if (!ret)
+					return 0;
+			} else {
+				uint32_t i;
+				
+				while (*e != 's' &&
+					*e != 'd' &&
+					*e != 'D' &&
+					*e != 'u')
+				{
+					e++;
+				}
+				min = e - f + 1;
+				
+				fmt = (char*) malloc(min+1);
+				strncpy(fmt, f, min);
+				fmt[min] = 0;
+				
+				switch (*e) {
+					case 's':
+						i = 0;
+						do {
+							if (di->type != 's') {
+								ERROR("unexpected type in array of strings: %c\n", di->type);
+								return 0;
+							}
+							
+							s = di->string;
+							len = strlen(s);
+							
+							*alloc += len;
+							*result = (char*) realloc(*result, *alloc);
+							
+							*rlen += sprintf( &((*result)[*rlen]), "%s", s);
+							
+// 							di = crtx_get_next_item(di);
+							i++;
+							di = &ds->items[i];
+						} while (fmt[1] == '*' && i < ds->signature_length);
+						
+						break;
+					case 'd':
+					case 'u':
+						if (!di || (di->type != 's' && di->type != 'u')) {
+							ERROR("get_value failed\n");
+							return 0;
+						}
+						
+						snprintf(buf, 32, fmt, di->uint32);
+						len = strlen(buf);
+						
+						*alloc += len;
+						*result = (char*) realloc(*result, *alloc);
+						
+						*rlen += sprintf( &((*result)[*rlen]), "%s", buf);
+						
+						break;
+					default:
+						ERROR("%c unknown", *e);
+						return 0;
+				}
+			}
+			f = e;
+		} else {
+			if (*rlen >= (*alloc)-1) {
+				*alloc += 24;
+				*result = (char*) realloc(*result, *alloc);
+			}
+			
+			(*result)[*rlen] = *f;
+			
+			(*rlen)++;
+			
+			if (*f == '%' && *(f+1) == '%')
+				f++;
+		}
+		f++;
+	}
+	
+	return 1;
+}
+
+struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, struct crtx_dict_transformation *transf) {
+	struct crtx_dict_transformation *pit;
+	struct crtx_dict *ds;
+	struct crtx_dict_item *di;
+	size_t alloc;
+	
+	ds = crtx_init_dict(signature, 0);
+	
+	di = ds->items;
+	for (pit = transf; pit && pit->type; pit++) {
+		di->type = pit->type;
+		di->key = pit->key;
+		
+		alloc = 24;
+		di->size = 0;
+		di->string = (char*) malloc(alloc);
+		
+		if (pit->type == 's') {
+			dict_printf(dict, pit->format, &di->string, &di->size, &alloc);
+		} else
+			if (pit->type == 'D') {
+				
+			} else {
+				
+			}
+			
+			di->flags = pit->flag;
+		
+		if (di->size >= alloc-1)
+			di->string = (char*) realloc(di->string, alloc+1);
+		
+		di->string[di->size] = 0;
+		
+		di++;
+// 		ds->signature_length++;
+	}
+	di--;
+	di->flags |= DIF_LAST;
+	
+	return ds;
+}
+
+void crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_dict *dict;
+	struct crtx_event *new_event;
+	struct crtx_transform_dict_handler *trans;
+	
+	if (!event->data.dict)
+		event->data.raw_to_dict(&event->data);
+	
+	if (!event->data.dict) {
+		ERROR("cannot convert %s to dict", event->type);
+		return;
+	}
+	
+	trans = (struct crtx_transform_dict_handler*) userdata;
+	
+	dict = crtx_dict_transform(event->data.dict, trans->signature, trans->transformation);
+	
+	new_event = create_event(trans->type, 0, 0);
+	new_event->data.dict = dict;
+	
+	if (trans->graph)
+		add_event(trans->graph, new_event);
+	else
+		add_raw_event(new_event);
+}
+
+struct crtx_task *crtx_create_transform_task(struct crtx_graph *in_graph, char *name, struct crtx_transform_dict_handler *trans) {
+	return crtx_create_task(in_graph, 0, "inotify_event_handler", &crtx_transform_dict_handler, trans);
 }

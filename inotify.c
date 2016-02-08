@@ -37,8 +37,68 @@ struct inotify_event_dict {
 	EV(UNMOUNT),
 	EV(Q_OVERFLOW),
 	EV(IGNORED),
+	
+	EV(DONT_FOLLOW),
+	EV(EXCL_UNLINK),
+	EV(MASK_ADD),
+	EV(ONESHOT),
+	EV(ONLYDIR),
+	EV(IGNORED),
+	EV(ISDIR),
+	EV(Q_OVERFLOW),
+	EV(UNMOUNT),
 	{0, 0}
 };
+
+uint32_t crtx_inotify_string2mask(char *mask_string) {
+	struct inotify_event_dict *dictit;
+	
+	if (mask_string) {
+		dictit = event_dict;
+		while (dictit->name) {
+			if (!strcmp(dictit->name, mask_string)) {
+				return dictit->type;
+			}
+			dictit++;
+		}
+	}
+	
+	ERROR("inotify: no mask \"%s\" found\n", mask_string);
+	return 0;
+}
+
+char crtx_inotify_mask2string(uint32_t mask, char *string, size_t *string_size) {
+	struct inotify_event_dict *dictit;
+	char *pos;
+	
+	if (mask && string_size) {
+		pos = string;
+		
+		if (!string)
+			*string_size = 0;
+		
+		dictit = event_dict;
+		while (dictit->name) {
+			if (dictit->type & mask) {
+				if (string) {
+					pos += snprintf(pos, *string_size - (pos-string), "%s ", dictit->name);
+				} else {
+					*string_size += dictit->name_size - 1 + 1; // without \0 but with ","
+				}
+			}
+			dictit++;
+		}
+// 		*string_size += 1 - 1; // add final \0, remove last " "
+		// remove last " "
+		if (pos > string)
+			pos[-1] = 0; // we request 1 byte more than necessary
+		
+		return 1;
+	} else {
+		ERROR("error while executing crtx_inotify_string2mask\n");
+		return 0;
+	}
+}
 
 void inotify_to_dict(struct crtx_event_data *data) {
 	struct inotify_event *iev;

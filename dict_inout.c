@@ -19,7 +19,7 @@ struct serialized_dict_item {
 };
 
 struct serialized_dict {
-	uint8_t signature_length;
+	uint32_t signature_length;
 };
 
 

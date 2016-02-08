@@ -105,7 +105,7 @@ static void fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 			
 			wait_on_event(notif_event);
 			
-			if (!crtx_get_value(notif_event->response.dict, "action", &chosen_action, sizeof(chosen_action))) {
+			if (!crtx_get_value(notif_event->response.dict, "action", 's', &chosen_action, sizeof(chosen_action))) {
 				printf("received invalid response:\n");
 				crtx_print_dict(notif_event->response.dict);
 				

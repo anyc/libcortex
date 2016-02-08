@@ -1,0 +1,23 @@
+{
+	"monitors" : [
+			{
+				"path": ".",
+				"mask": [ "CREATE", "DELETE" ],
+				"actions" :
+					{
+						"scripts": [ "examples/control_inotify_batch.sh" ],
+						"transforms" : [ "inotify2notify" ]
+					}
+			}
+		],
+	"transforms" : {
+			"inotify2notify": {
+				"graph": "",
+				"etype": "cortexd.notification",
+				"rules": [
+					{ "key": "title", "type": "s", "flag": "0", "format": "Inotify" },
+					{ "key": "message", "type": "s", "flag": "0", "format": "Event \"%[mask](%[*]s)\" for file \"%[name]s\"" }
+					],
+			}
+		}
+}

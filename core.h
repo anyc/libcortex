@@ -17,7 +17,7 @@
 #ifndef DDEBUG
 #define DBG(fmt, ...) do { fprintf(stderr, fmt, ##__VA_ARGS__); } while (0)
 #else
-#define DDBG(fmt, ...) do { fprintf(stderr, "%s:%d:%s(): " fmt, __FILE__, __LINE__, __func__, ##__VA_ARGS__); } while (0)
+#define DBG(fmt, ...) do { fprintf(stderr, "%s:%d:%s(): " fmt, __FILE__, __LINE__, __func__, ##__VA_ARGS__); } while (0)
 #endif
 
 #define ERROR(fmt, ...) do { fprintf(stderr, "\x1b[31m"); fprintf(stderr, fmt, ##__VA_ARGS__); fprintf(stderr, "\x1b[0m"); } while (0)
@@ -143,14 +143,6 @@ struct crtx_module {
 	void (*finish)();
 };
 
-struct crtx_transform_dict_handler {
-	char *signature;
-	struct crtx_dict_transformation *transformation;
-	
-	struct crtx_graph *graph;
-	char *type;
-};
-
 extern struct crtx_module static_modules[];
 extern struct crtx_graph *cortexd_graph;
 
@@ -205,7 +197,5 @@ void *crtx_copy_raw_data(struct crtx_event_data *data);
 
 void crtx_init_notification_listeners(void **data);
 void crtx_finish_notification_listeners(void *data);
-
-struct crtx_task *crtx_create_transform_task(struct crtx_graph *in_graph, char *name, struct crtx_transform_dict_handler *trans);
 
 #endif

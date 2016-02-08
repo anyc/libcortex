@@ -61,19 +61,19 @@ static void rl_notify_send_handler(struct crtx_event *event, void *userdata, voi
 	struct crtx_dict *data, *actions_dict;
 	char **actions;
 	
-	ret = crtx_get_value(event->data.dict, "title", &title, sizeof(void*));
+	ret = crtx_get_value(event->data.dict, "title", 's', &title, sizeof(void*));
 	if (!ret) {
 		printf("error parsing event\n");
 		return;
 	}
 	
-	ret = crtx_get_value(event->data.dict, "message", &msg, sizeof(void*));
+	ret = crtx_get_value(event->data.dict, "message", 's', &msg, sizeof(void*));
 	if (!ret) {
 		printf("error parsing event\n");
 		return;
 	}
 	
-	ret = crtx_get_value(event->data.dict, "actions", &actions_dict, sizeof(void*));
+	ret = crtx_get_value(event->data.dict, "actions", 'D', &actions_dict, sizeof(void*));
 	if (ret && actions_dict) {
 		struct crtx_dict_item *di;
 		unsigned char i;
