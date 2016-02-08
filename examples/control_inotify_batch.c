@@ -216,9 +216,16 @@ char init() {
 }
 
 void finish() {
-// 	crtx_store_config(&config);
+	size_t i;
+	
+	for (i=0; i < n_transformations; i++) {
+		free(transformations[i].signature);
+		free(transformations[i].transformation);
+	}
+	free(transformations);
+	
+	for (i=0; i < n_listeners; i++)
+		free_listener(&listeners[i].parent);
 	
 	crtx_finish_notification_listeners(notifier_data);
-	
-// 	free_listener(in_base);
 }
