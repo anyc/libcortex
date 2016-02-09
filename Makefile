@@ -6,7 +6,8 @@ local_mk_rules ?= Makefile.local_rules
 APP=cortexd
 
 OBJS+=cortexd.o core.o socket.o readline.o controls.o fanotify.o inotify.o \
-	event_comm.o cache.o threads.o signals.o dict.o dict_inout.o dict_config.o
+	event_comm.o cache.o threads.o signals.o dict.o dict_inout.o \
+	dict_config.o llist.o dllist.o
 
 CFLAGS+=$(DEBUG_CFLAGS) -D_FILE_OFFSET_BITS=64
 
@@ -36,6 +37,10 @@ clean:
 
 debug:
 	$(MAKE) $(MAKEFILE) DEBUG_CFLAGS="-g -g3 -gdwarf-2 -DDEBUG -Wall" #-Werror 
+
+dllist.o: CFLAGS+=-DCRTX_DLL
+dllist.o: llist.c
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 examples/libcrtx_%.so: examples/control_%.c
 	$(CC) -shared -o $@ -fPIC $< $(LDFLAGS) $(CFLAGS) -I. $(LDLIBS)

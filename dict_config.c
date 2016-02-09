@@ -51,12 +51,6 @@ void crtx_load_config(struct crtx_config *config) {
 	
 	snprintf(file_path, PATH_MAX, "%s%s.json", config_path?config_path:"", config->name);
 	
-// 	int f = open(file_path, O_RDONLY);
-// 	if (f == -1) {
-// 		printf("error %s\n", strerror(errno));
-// 		return;
-// 	}
-	
 	s = crtx_readfile(file_path);
 	if (!s)
 		return;
@@ -67,20 +61,18 @@ void crtx_load_config(struct crtx_config *config) {
 	crtx_load_json_config(config, s);
 	#endif
 	
-// 	close(f);
-	
 	crtx_print_dict(config->data);
 }
 
 void crtx_store_config(struct crtx_config *config) {
-	int f = open(config->name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP);
-	if (f == -1) {
-		printf("error %s\n", strerror(errno));
-		return;
-	}
+// 	int f = open(config->name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP);
+// 	if (f == -1) {
+// 		printf("error %s\n", strerror(errno));
+// 		return;
+// 	}
 	
-	// 	send_dict(crtx_wrapper_write, &f, d);
+// 	send_dict(crtx_wrapper_write, &f, d);
 	
-	close(f);
+// 	close(f);
 }
 

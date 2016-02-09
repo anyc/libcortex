@@ -535,5 +535,5 @@ void crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void 
 }
 
 struct crtx_task *crtx_create_transform_task(struct crtx_graph *in_graph, char *name, struct crtx_transform_dict_handler *trans) {
-	return crtx_create_task(in_graph, 0, "inotify_event_handler", &crtx_transform_dict_handler, trans);
+	return crtx_create_task(in_graph, 0, name, &crtx_transform_dict_handler, trans);
 }

@@ -17,9 +17,13 @@
 #include "dict.h"
 #include "dict_config.h"
 #include "event_comm.h"
+#include "linkedlist.h"
+#include "linkedlist.h"
 
-static struct crtx_inotify_listener *listeners = 0;
-size_t n_listeners = 0;
+// static struct crtx_inotify_listener *listeners = 0;
+// size_t n_listeners = 0;
+struct crtx_ll *listeners = 0;
+struct crtx_dll *dlisteners = 0;
 
 // struct crtx_dict_transformation to_notification[] = {
 // 	{ "title", 's', 0, "Inotify" },
@@ -75,8 +79,14 @@ char init() {
 	config.name = "control_inotify_batch";
 	crtx_load_config(&config);
 	
+	monitors = transforms = 0;
 	crtx_get_value(config.data, "monitors", 'D', &monitors, sizeof(void*));
 	crtx_get_value(config.data, "transforms", 'D', &transforms, sizeof(void*));
+	
+	if (!monitors) {
+		DBG("control_inotify_batch: no monitors in config\n");
+		return 1;
+	}
 	
 	for (i=0;i < monitors->signature_length; i++) {
 		if (monitors->items[i].type != 'D')
@@ -101,16 +111,18 @@ char init() {
 			in_mask |= crtx_inotify_string2mask(mask->items[j].string);
 		}
 		
-		if (!listeners) {
-			listeners = (struct crtx_inotify_listener *) malloc(sizeof(struct crtx_inotify_listener));
-			n_listeners = 1;
-			listener = listeners;
-		} else {
-			n_listeners++;
-			listeners = (struct crtx_inotify_listener *) realloc(listeners, sizeof(struct crtx_inotify_listener)*n_listeners);
-			listener = &listeners[n_listeners-1];
-		}
-		memset(listener, 0, sizeof(struct crtx_inotify_listener));
+// 		if (!listeners) {
+// 			listeners = (struct crtx_inotify_listener *) malloc(sizeof(struct crtx_inotify_listener));
+// 			n_listeners = 1;
+// 			listener = listeners;
+// 		} else {
+// 			n_listeners++;
+// 			listeners = (struct crtx_inotify_listener *) realloc(listeners, sizeof(struct crtx_inotify_listener)*n_listeners);
+// 			listener = &listeners[n_listeners-1];
+// 		}
+		
+		listener = (struct crtx_inotify_listener *) calloc(1, sizeof(struct crtx_inotify_listener));
+		crtx_ll_append_new(&listeners, listener);
 		listener->path = path;
 		listener->mask = in_mask;
 		
@@ -129,83 +141,87 @@ char init() {
 			scripts = crtx_get_dict(actions, "scripts");
 			transform_actions = crtx_get_dict(actions, "transforms");
 			
-			for (j=0; j < scripts->signature_length; j++) {
-				if (scripts->items[j].type != 's')
-					continue;
-				
-				crtx_create_task(in_base->graph, 0, "exec_script_handler", &exec_script_handler, scripts->items[j].string);
+			if (scripts) {
+				for (j=0; j < scripts->signature_length; j++) {
+					if (scripts->items[j].type != 's')
+						continue;
+					
+					crtx_create_task(in_base->graph, 0, "exec_script_handler", &exec_script_handler, scripts->items[j].string);
+				}
 			}
 			
-			for (j=0; j < transform_actions->signature_length; j++) {
-				struct crtx_dict *transform_def, *transform_rules;
-				uint32_t k;
-				struct crtx_dict_transformation *t;
-				
-				if (transform_actions->items[j].type != 's')
-					continue;
-				
-				transform_id = transform_actions->items[j].string;
-				
-				if (!transformations) {
-					transformations = (struct crtx_transform_dict_handler *) malloc(sizeof(struct crtx_transform_dict_handler));
-					transformation = transformations;
-				} else {
-					n_transformations++;
-					transformations = (struct crtx_transform_dict_handler *) realloc(transformations, sizeof(struct crtx_transform_dict_handler)*n_transformations);
-					transformation = &transformations[n_transformations-1];
-				}
-				
-				transform_def = crtx_get_dict(transforms, transform_id);
-				
-				transformation->graph = 0; // TODO
-				transformation->type = crtx_get_string(transform_def, "etype");
-				transformation->transformation = 0;
-				
-				transform_rules = crtx_get_dict(transform_def, "rules");
-				
-				transformation->signature = (char*) malloc(transform_rules->signature_length+1);
-				transformation->transformation = (struct crtx_dict_transformation *) calloc(1, sizeof(struct crtx_dict_transformation)*transform_rules->signature_length);
-				
-				for (k=0; k < transform_rules->signature_length; k++) {
-					char *key, *type, *flag, *format;
-					struct crtx_dict *trule;
+			if (transform_actions) {
+				for (j=0; j < transform_actions->signature_length; j++) {
+					struct crtx_dict *transform_def, *transform_rules;
+					uint32_t k;
+					struct crtx_dict_transformation *t;
 					
-					if (transform_rules->items[k].type != 'D')
+					if (transform_actions->items[j].type != 's')
 						continue;
 					
-					trule = transform_rules->items[k].ds;
+					transform_id = transform_actions->items[j].string;
 					
-					key = crtx_get_string(trule, "key");
-					type = crtx_get_string(trule, "type");
-					flag = crtx_get_string(trule, "flag");
-					format = crtx_get_string(trule, "format");
-					
-					if (!key || !type || !flag || !format) {
-						ERROR("invalid transformation rule\n");
-						crtx_print_dict(transform_rules);
-						continue;
+					if (!transformations) {
+						transformations = (struct crtx_transform_dict_handler *) malloc(sizeof(struct crtx_transform_dict_handler));
+						transformation = transformations;
+					} else {
+						n_transformations++;
+						transformations = (struct crtx_transform_dict_handler *) realloc(transformations, sizeof(struct crtx_transform_dict_handler)*n_transformations);
+						transformation = &transformations[n_transformations-1];
 					}
 					
-					switch (type[0]) {
-						case 's':
-						case 'D':
-							break;
-						default:
-							ERROR("invalid transformation rule: unknown type %c\n", type[0]);
+					transform_def = crtx_get_dict(transforms, transform_id);
+					
+					transformation->graph = 0; // TODO
+					transformation->type = crtx_get_string(transform_def, "etype");
+					transformation->transformation = 0;
+					
+					transform_rules = crtx_get_dict(transform_def, "rules");
+					
+					transformation->signature = (char*) malloc(transform_rules->signature_length+1);
+					transformation->transformation = (struct crtx_dict_transformation *) calloc(1, sizeof(struct crtx_dict_transformation)*transform_rules->signature_length);
+					
+					for (k=0; k < transform_rules->signature_length; k++) {
+						char *key, *type, *flag, *format;
+						struct crtx_dict *trule;
+						
+						if (transform_rules->items[k].type != 'D')
 							continue;
+						
+						trule = transform_rules->items[k].ds;
+						
+						key = crtx_get_string(trule, "key");
+						type = crtx_get_string(trule, "type");
+						flag = crtx_get_string(trule, "flag");
+						format = crtx_get_string(trule, "format");
+						
+						if (!key || !type || !flag || !format) {
+							ERROR("invalid transformation rule\n");
+							crtx_print_dict(transform_rules);
+							continue;
+						}
+						
+						switch (type[0]) {
+							case 's':
+							case 'D':
+								break;
+							default:
+								ERROR("invalid transformation rule: unknown type %c\n", type[0]);
+								continue;
+						}
+						
+						t = &transformation->transformation[k];
+						
+						t->key = key;
+						t->type = type[0];
+						transformation->signature[k] = t->type;
+						t->flag = 0; // TODO
+						t->format = format;
 					}
+					transformation->signature[k] = 0;
 					
-					t = &transformation->transformation[k];
-					
-					t->key = key;
-					t->type = type[0];
-					transformation->signature[k] = t->type;
-					t->flag = 0; // TODO
-					t->format = format;
+					crtx_create_transform_task(in_base->graph, "transform_task_handler", transformation);
 				}
-				transformation->signature[k] = 0;
-				
-				crtx_create_transform_task(in_base->graph, "transform_task_handler", transformation);
 			}
 		}
 	}
@@ -215,6 +231,7 @@ char init() {
 
 void finish() {
 	size_t i;
+	struct crtx_ll *llit, *llitn;
 	
 	for (i=0; i < n_transformations; i++) {
 		free(transformations[i].signature);
@@ -222,6 +239,10 @@ void finish() {
 	}
 	free(transformations);
 	
-	for (i=0; i < n_listeners; i++)
-		free_listener(&listeners[i].parent);
+// 	for (i=0; i < n_listeners; i++)
+	for (llit=listeners;llit;llit=llitn) {
+		llitn = llit->next;
+// 		free_listener(&((struct crtx_inotify_listener*)llit->data)->parent);
+		free_listener(&llit->in_listener->parent);
+	}
 }

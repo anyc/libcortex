@@ -6,6 +6,13 @@
 			"actions" :
 				{
 					"scripts": [ "examples/control_inotify_batch.sh" ],
+				}
+		},
+		{
+			"path": "/tmp/",
+			"mask": [ "CREATE", "DELETE" ],
+			"actions" :
+				{
 					"transforms" : [ "inotify2notify" ]
 				}
 		}
