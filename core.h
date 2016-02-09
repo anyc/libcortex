@@ -39,9 +39,13 @@ extern char *crtx_evt_outbox[];
 
 struct crtx_event;
 
+#define CRTX_EVF_DONT_FREE_RAW 1<<0
+
 struct crtx_event_data {
 	void *raw;
 	size_t raw_size;
+	
+	char flags;
 	
 	void *(*copy_raw)(struct crtx_event_data *data);
 	void (*raw_to_dict)(struct crtx_event_data *data);
@@ -150,6 +154,8 @@ struct crtx_root {
 	struct crtx_graph **graphs;
 	unsigned int n_graphs;
 	MUTEX_TYPE graphs_mutex;
+	
+	char shutdown;
 	
 	struct crtx_graph *crtx_ctrl_graph;
 	

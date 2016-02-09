@@ -145,20 +145,14 @@ void *graph_consumer_main(void *arg) {
 	
 	LOCK(graph->queue_mutex);
 	
-// 	while (graph->n_queue_entries == 0)
-// 		pthread_cond_wait(&graph->queue_cond, &graph->queue_mutex);
-	
 	while (!graph->stop) {
-		for (qe = graph->equeue; qe && qe->in_process && qe->event->error; qe = qe->next) {}
+		for (qe = graph->equeue; qe && (qe->in_process || qe->event->error); qe = qe->next) {}
 		if (qe && !qe->in_process && !qe->event->error) {
 			qe->in_process = 1;
 			break;
 		}
 		pthread_cond_wait(&graph->queue_cond, &graph->queue_mutex);
 	}
-// 	qe = graph->equeue;
-// 	graph->equeue = graph->equeue->next;
-// 	graph->n_queue_entries--;
 	
 	UNLOCK(graph->queue_mutex);
 	
@@ -273,14 +267,20 @@ void graph_consumer_stop(struct crtx_thread *t, void *data) {
 }
 
 void add_event(struct crtx_graph *graph, struct crtx_event *event) {
-	unsigned int new_n_consumers;
+// 	unsigned int new_n_consumers;
+	
+	// we do not accept new events if shutdown has begun
+	if (crtx_root->shutdown) {
+		DBG("ignoring new events (%s) after shutdown signal\n", event->type);
+		return;
+	}
 	
 	reference_event_release(event);
 	reference_event_response(event);
 	
 	pthread_mutex_lock(&graph->mutex);
 	
-	DBG("add event %s (%p) to graph\n", event->type, event);
+	DBG("add event %s (%p) to graph %p\n", event->type, event, graph);
 	
 	if (!graph->tasks) {
 		INFO("dropping event as graph is empty\n");
@@ -299,8 +299,8 @@ void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	
 	UNLOCK(graph->queue_mutex);
 	
-	new_n_consumers = ATOMIC_FETCH_ADD(graph->n_consumers, 1);
-	if (!graph->n_max_consumers || new_n_consumers < graph->n_max_consumers) {
+// 	new_n_consumers = ATOMIC_FETCH_ADD(graph->n_consumers, 1);
+// 	if (!graph->n_max_consumers || new_n_consumers < graph->n_max_consumers) {
 		struct crtx_thread *t;
 		
 		t = get_thread(&graph_consumer_main, graph, 0);
@@ -311,11 +311,11 @@ void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 			
 			start_thread(t);
 		} else {
-			ATOMIC_FETCH_SUB(graph->n_consumers, 1);
+// 			ATOMIC_FETCH_SUB(graph->n_consumers, 1);
 		}
-	} else {
-		ATOMIC_FETCH_SUB(graph->n_consumers, 1);
-	}
+// 	} else {
+// 		ATOMIC_FETCH_SUB(graph->n_consumers, 1);
+// 	}
 	
 	pthread_mutex_unlock(&graph->mutex);
 }
@@ -407,7 +407,7 @@ struct crtx_event *new_event() {
 }
 
 void free_event_data(struct crtx_event_data *ed) {
-	if (ed->raw)
+	if (ed->raw && !(ed->flags & CRTX_EVF_DONT_FREE_RAW))
 		free(ed->raw);
 	if (ed->dict)
 		free_dict(ed->dict);
@@ -647,6 +647,7 @@ static void handle_shutdown(struct crtx_event *event, void *userdata, void **ses
 	t = (struct crtx_task *) userdata;
 	t->handle = 0;
 	
+	crtx_root->shutdown = 1;
 // 	crtx_finish();
 	crtx_threads_stop();
 	crtx_flush_events();

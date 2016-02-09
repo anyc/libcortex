@@ -13,8 +13,6 @@ struct crtx_inotify_listener {
 	int wd;
 	uint32_t mask;
 	char *path;
-	
-	char stop;
 };
 
 struct crtx_listener_base *crtx_new_inotify_listener(void *options);

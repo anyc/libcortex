@@ -96,6 +96,12 @@ struct crtx_listener_base *crtx_new_signals_listener(void *options) {
 static void sigterm_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event *newe;
 	
+// 	struct sigaction new_action;
+// 	new_action.sa_handler = SIG_DFL;
+// 	sigemptyset(&new_action.sa_mask);
+// 	new_action.sa_flags = 0;
+// 	sigaction(SIGTERM, &new_action, 0);
+	
 	newe = create_event(CRTX_EVT_SHUTDOWN, 0, 0);
 	
 	add_event(crtx_root->crtx_ctrl_graph, newe);

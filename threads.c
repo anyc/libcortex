@@ -218,8 +218,10 @@ void crtx_threads_finish() {
 	for (t=pool; t; t = tnext) {
 		tnext = t->next;
 		
-		if (t->handle)
+		if (t->handle) {
+			pthread_kill(t->handle, 2);
 			pthread_join(t->handle, 0);
+		}
 		
 		free(t);
 	}

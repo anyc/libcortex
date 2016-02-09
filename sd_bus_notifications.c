@@ -206,7 +206,7 @@ void crtx_send_notification(char *icon, char *title, char *text, char **actions,
 		
 		free(it);
 	} else {
-		sd_bus_send_notification(icon, title, text, actions);
+		sd_bus_send_notification(icon, title, text, 0);
 	}
 }
 
