@@ -28,6 +28,7 @@ CRTX_DLL_TYPE {
 	union {
 		void *data;
 		struct crtx_inotify_listener *in_listener;
+		struct crtx_transform_dict_handler *transform_handler;
 	};
 };
 

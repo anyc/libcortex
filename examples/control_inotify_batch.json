@@ -2,7 +2,7 @@
 	"monitors" : [
 		{
 			"path": ".",
-			"mask": [ "CREATE", "DELETE" ],
+			"mask": [ "CLOSE_WRITE" ],
 			"actions" :
 				{
 					"scripts": [ "examples/control_inotify_batch.sh" ],

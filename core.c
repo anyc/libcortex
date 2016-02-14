@@ -132,7 +132,7 @@ void traverse_graph_r(struct crtx_task *ti, struct crtx_event *event) {
 		traverse_graph_r(ti->next, event);
 	
 	if (ti->cleanup)
-		ti->cleanup(event, ti->userdata, sessiondata);
+		ti->cleanup(event, ti->userdata, &sessiondata);
 }
 
 void crtx_traverse_graph(struct crtx_graph *graph, struct crtx_event *event) {

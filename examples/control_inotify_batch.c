@@ -23,15 +23,16 @@
 // static struct crtx_inotify_listener *listeners = 0;
 // size_t n_listeners = 0;
 struct crtx_ll *listeners = 0;
-struct crtx_dll *dlisteners = 0;
+// struct crtx_dll *dlisteners = 0;
 
 // struct crtx_dict_transformation to_notification[] = {
 // 	{ "title", 's', 0, "Inotify" },
 // 	{ "message", 's', 0, "Event \"%[mask](%[*]s)\" for file \"%[name]s\"" }
 // };
 
-struct crtx_transform_dict_handler *transformations = 0;
-size_t n_transformations = 0;
+// struct crtx_transform_dict_handler *transformations = 0;
+// size_t n_transformations = 0;
+struct crtx_ll *transformations = 0;
 
 struct crtx_config config;
 
@@ -161,14 +162,17 @@ char init() {
 					
 					transform_id = transform_actions->items[j].string;
 					
-					if (!transformations) {
-						transformations = (struct crtx_transform_dict_handler *) malloc(sizeof(struct crtx_transform_dict_handler));
-						transformation = transformations;
-					} else {
-						n_transformations++;
-						transformations = (struct crtx_transform_dict_handler *) realloc(transformations, sizeof(struct crtx_transform_dict_handler)*n_transformations);
-						transformation = &transformations[n_transformations-1];
-					}
+// 					if (!transformations) {
+// 						transformations = (struct crtx_transform_dict_handler *) malloc(sizeof(struct crtx_transform_dict_handler));
+// 						transformation = transformations;
+// 					} else {
+// 						n_transformations++;
+// 						transformations = (struct crtx_transform_dict_handler *) realloc(transformations, sizeof(struct crtx_transform_dict_handler)*n_transformations);
+// 						transformation = &transformations[n_transformations-1];
+// 					}
+					
+					transformation = (struct crtx_transform_dict_handler *) malloc(sizeof(struct crtx_transform_dict_handler));
+					crtx_ll_append_new(&transformations, transformation);
 					
 					transform_def = crtx_get_dict(transforms, transform_id);
 					
@@ -230,19 +234,24 @@ char init() {
 }
 
 void finish() {
-	size_t i;
+// 	size_t i;
 	struct crtx_ll *llit, *llitn;
 	
-	for (i=0; i < n_transformations; i++) {
-		free(transformations[i].signature);
-		free(transformations[i].transformation);
+// 	for (i=0; i < n_transformations; i++) {
+	for (llit=transformations;llit;llit=llitn) {
+		llitn = llit->next;
+		
+		free(llit->transform_handler->signature);
+		free(llit->transform_handler->transformation);
+		free(llit);
 	}
-	free(transformations);
+// 	free(transformations);
 	
 // 	for (i=0; i < n_listeners; i++)
 	for (llit=listeners;llit;llit=llitn) {
 		llitn = llit->next;
 // 		free_listener(&((struct crtx_inotify_listener*)llit->data)->parent);
 		free_listener(&llit->in_listener->parent);
+		free(llit);
 	}
 }

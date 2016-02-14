@@ -79,6 +79,9 @@ struct filter_set ip_blacklist;
 struct filter_set host_whitelist;
 struct filter_set host_blacklist;
 
+struct filter_set host_nocachelist;
+struct filter_set ip_nocachelist;
+
 struct filter_set resolvelist;
 
 void print_filter_set(struct filter_set *fset, char *name) {
@@ -506,6 +509,21 @@ static void pfw_rules_filter(struct crtx_event *event, void *userdata, void **se
 		return;
 	}
 	
+	SET_MARK(event, PFW_DEFAULT);
+}
+
+char host_cache_add_cb(struct crtx_cache_task *ct, void *key, struct crtx_event *event) {
+	if (match_regexp_list(key, &host_nocachelist))
+		return 0;
+	else
+		return 1;
+}
+
+char ip_cache_add_cb(struct crtx_cache_task *ct, void *key, struct crtx_event *event) {
+	if (match_regexp_list(key, &ip_nocachelist))
+		return 0;
+	else
+		return 1;
 }
 
 char init() {
@@ -549,6 +567,10 @@ char init() {
 	
 	load_list(&resolvelist, PFW_DATA_DIR "resolvelist.txt");
 	
+	load_list(&host_nocachelist, PFW_DATA_DIR "hnocachelist.txt");
+	load_list(&ip_nocachelist, PFW_DATA_DIR "ipnocachelist.txt");
+	
+	
 	int i;
 // 	for (i=0; i<host_blacklist.length; i++) {
 // 		add_ips_to_list(&ip_blacklist, host_blacklist.list[i]);
@@ -567,12 +589,15 @@ char init() {
 	print_filter_set(&ip_whitelist, "ip blacklist");
 	
 	
+	print_filter_set(&host_nocachelist, "host nocachelist");
+	
 	new_eventgraph(&newp_graph, 0, newp_event_types);
 	crtx_create_task(newp_graph, 0, "pfw_print_packet", &pfw_print_packet, 0);
 	
 	
 	rcache_host = create_response_cache_task("su", pfw_rcache_create_key_host);
 	((struct crtx_cache_task*) rcache_host->userdata)->match_event = &rcache_match_cb_t_regex;
+	((struct crtx_cache_task*) rcache_host->userdata)->on_add = &host_cache_add_cb;
 	rcache_host->id = "rcache_host";
 	
 // 	prefill_rcache( ((struct crtx_cache*) rcache_host->userdata), PFW_DATA_DIR "rcache_host.txt");
@@ -581,6 +606,7 @@ char init() {
 	
 	rcache_ip = create_response_cache_task("su", pfw_rcache_create_key_ip);
 	((struct crtx_cache_task*) rcache_ip->userdata)->match_event = &rcache_match_cb_t_regex;
+	((struct crtx_cache_task*) rcache_host->userdata)->on_add = &ip_cache_add_cb;
 	rcache_ip->id = "rcache_ip";
 	
 // 	prefill_rcache( ((struct crtx_cache*) rcache_ip->userdata), PFW_DATA_DIR "rcache_ip.txt");
@@ -621,6 +647,9 @@ void finish() {
 	free_list(&ip_blacklist);
 	free_list(&ip_whitelist);
 	free_list(&resolvelist);
+	
+	free_list(&host_nocachelist);
+	free_list(&ip_nocachelist);
 	
 	for (ipi = local_ips; ipi; ipi=ipin) {
 		ipin=ipi->next;

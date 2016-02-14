@@ -94,24 +94,33 @@ void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void 
 		return;
 	}
 	
+	printf("check %p %p\n", *sessiondata, event->response.raw);
 	if (!*sessiondata && event->response.raw) {
+		char do_add;
+		
 		pthread_mutex_lock(&dc->mutex);
 		
-		dc->n_entries++;
-		dc->entries = (struct crtx_cache_entry *) realloc(dc->entries, sizeof(struct crtx_cache_entry)*dc->n_entries);
-		
-		memset(&dc->entries[dc->n_entries-1], 0, sizeof(struct crtx_cache_entry));
-		dc->entries[dc->n_entries-1].key = key;
-		if (event->response.copy_raw) {
-			dc->entries[dc->n_entries-1].value = event->response.copy_raw(&event->response);
-			dc->entries[dc->n_entries-1].copied = 1;
-		} else {
-			dc->entries[dc->n_entries-1].value = event->response.raw;
-			dc->entries[dc->n_entries-1].copied = 0;
+		do_add = 1;
+		if (ct->on_add)
+			do_add = ct->on_add(ct, key, event);
+		printf("add %d\n", do_add);
+		if (do_add) {
+			dc->n_entries++;
+			dc->entries = (struct crtx_cache_entry *) realloc(dc->entries, sizeof(struct crtx_cache_entry)*dc->n_entries);
+			
+			memset(&dc->entries[dc->n_entries-1], 0, sizeof(struct crtx_cache_entry));
+			dc->entries[dc->n_entries-1].key = key;
+			if (event->response.copy_raw) {
+				dc->entries[dc->n_entries-1].value = event->response.copy_raw(&event->response);
+				dc->entries[dc->n_entries-1].copied = 1;
+			} else {
+				dc->entries[dc->n_entries-1].value = event->response.raw;
+				dc->entries[dc->n_entries-1].copied = 0;
+			}
+			dc->entries[dc->n_entries-1].value_size = event->response.raw_size;
+			
+			pthread_mutex_unlock(&dc->mutex);
 		}
-		dc->entries[dc->n_entries-1].value_size = event->response.raw_size;
-		
-		pthread_mutex_unlock(&dc->mutex);
 	} else {
 		free(key);
 	}
