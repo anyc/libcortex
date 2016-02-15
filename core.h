@@ -11,21 +11,36 @@
 #define STRINGIFYB(x) #x
 #define STRINGIFY(x) STRINGIFYB(x)
 
-#define ASSERT(x) do { if (!(x)) { printf(__FILE__ ":" STRINGIFY(__LINE__) " assertion failed: " #x "\n"); exit(1); } } while (0)
+#define CRTX_INFO 1<<0
+#define CRTX_DBG 1<<1
+#define CRTX_ERR 1<<2
 
-#define ASSERT_STR(x, msg, ...) do { if (!(x)) { printf(__FILE__ ":" STRINGIFY(__LINE__) " " msg " " #x "failed\n", __VA_ARGS__); exit(1); } } while (0)
-
-#define INFO(fmt, ...) do { fprintf(stderr, fmt, ##__VA_ARGS__); } while (0)
+#define INFO(fmt, ...) do { crtx_printf(CRTX_INFO, fmt, ##__VA_ARGS__); } while (0)
 
 #ifndef DDEBUG
-#define DBG(fmt, ...) do { fprintf(stderr, fmt, ##__VA_ARGS__); } while (0)
+#define DBG(fmt, ...) do { crtx_printf(CRTX_DBG, fmt, ##__VA_ARGS__); } while (0)
 #else
-#define DBG(fmt, ...) do { fprintf(stderr, "%s:%d:%s(): " fmt, __FILE__, __LINE__, __func__, ##__VA_ARGS__); } while (0)
+#define DBG(fmt, ...) do { crtx_printf(CRTX_DBG, "%s:%d:%s(): " fmt, __FILE__, __LINE__, __func__, ##__VA_ARGS__); } while (0)
 #endif
 
-#define ERROR(fmt, ...) do { fprintf(stderr, "\x1b[31m"); fprintf(stderr, fmt, ##__VA_ARGS__); fprintf(stderr, "\x1b[0m"); } while (0)
+#define ERROR(fmt, ...) do { crtx_printf(CRTX_ERR, "\x1b[31m"); crtx_printf(CRTX_DBG, fmt, ##__VA_ARGS__); crtx_printf(CRTX_DBG, "\x1b[0m"); } while (0)
+
+
+#define ASSERT(x) do { if (!(x)) { ERROR(__FILE__ ":" STRINGIFY(__LINE__) " assertion failed: " #x "\n"); exit(1); } } while (0)
+
+#define ASSERT_STR(x, msg, ...) do { if (!(x)) { ERROR(__FILE__ ":" STRINGIFY(__LINE__) " " msg " " #x "failed\n", __VA_ARGS__); exit(1); } } while (0)
 
 #define POPCOUNT32(x) __builtin_popcount(x);
+
+#define CRTX_TEST_MAIN(mainfct) \
+	int main(int argc, char **argv) { \
+		int i; \
+		crtx_init(); \
+		crtx_handle_std_signals(); \
+		i = mainfct(argc, argv); \
+		crtx_finish(); \
+		return i; \
+	}
 
 
 #define CRTX_EVT_NOTIFICATION "cortexd.notification"
@@ -174,7 +189,7 @@ extern struct crtx_module static_modules[];
 extern struct crtx_root *crtx_root;
 
 
-
+void crtx_printf(char level, char *format, ...);
 char *stracpy(const char *str, size_t *str_length);
 struct crtx_event *new_event();
 void free_event(struct crtx_event *event);

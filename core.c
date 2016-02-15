@@ -27,6 +27,7 @@
 #include "sd_bus_notifications.h"
 #include "threads.h"
 #include "signals.h"
+#include "timer.h"
 
 
 struct crtx_root crtx_global_root;
@@ -63,6 +64,7 @@ struct crtx_listener_repository listener_factory[] = {
 #endif
 	{"signals", &crtx_new_signals_listener},
 	{"readline", &crtx_new_readline_listener},
+	{"timer", &crtx_new_timer_listener},
 	{0, 0}
 };
 
@@ -88,6 +90,24 @@ char *stracpy(const char *str, size_t *str_length) {
 	snprintf(r, length+1, "%s", str);
 	
 	return r;
+}
+
+void crtx_printf_va(char level, char *format, va_list va) {
+	if (level == CRTX_ERR) {
+		vfprintf(stderr, format, va);
+	} else {
+		vfprintf(stdout, format, va);
+	}
+}
+
+void crtx_printf(char level, char *format, ...) {
+	va_list va;
+	
+	va_start(va, format);
+	
+	crtx_printf_va(level, format, va);
+	
+	va_end(va);
 }
 
 struct crtx_listener_base *create_listener(char *id, void *options) {
