@@ -140,19 +140,19 @@ void free_listener(struct crtx_listener_base *listener) {
 }
 
 void traverse_graph_r(struct crtx_task *ti, struct crtx_event *event) {
-	void *sessiondata = 0;
+	void *sessiondata[3];
 	
 	if (ti->handle && (!ti->event_type_match || !strcmp(ti->event_type_match, event->type))) {
 		INFO("execute task %s with event %s (%p)\n", ti->id, event->type, event);
 		
-		ti->handle(event, ti->userdata, &sessiondata);
+		ti->handle(event, ti->userdata, sessiondata);
 	}
 	
 	if (ti->next)
 		traverse_graph_r(ti->next, event);
 	
 	if (ti->cleanup)
-		ti->cleanup(event, ti->userdata, &sessiondata);
+		ti->cleanup(event, ti->userdata, sessiondata);
 }
 
 void crtx_traverse_graph(struct crtx_graph *graph, struct crtx_event *event) {

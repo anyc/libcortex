@@ -8,79 +8,125 @@
 #include "cache.h"
 #include "threads.h"
 
-char rcache_match_cb_t_strcmp(struct crtx_cache *rc, void *key, struct crtx_event *event, struct crtx_cache_entry *c_entry) {
-	return !strcmp( (char*) key, (char*) c_entry->key);
+struct crtx_dict_item * rcache_match_cb_t_strcmp(struct crtx_cache *rc, void *key, struct crtx_event *event) {
+// 	size_t i;
+	
+// 	for (i=0; i < ct->cache->n_entries; i++) {
+// // 		if (!strcmp( (char*) key, (char*) c_entry->key))
+// 		if (!strcmp( (char*) key, ct->cache->entries[i]))
+// 			
+// 			return 1;
+// 	}
+	
+	return crtx_get_item(rc->entries, key);
 }
 
-char rcache_match_cb_t_regex(struct crtx_cache *rc, void *key, struct crtx_event *event, struct crtx_cache_entry *c_entry) {
+struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache *rc, void *key, struct crtx_event *event) {
 	int ret;
-	char msgbuf[128];
+// 	size_t i;
+	struct crtx_cache_regex *rex;
+	struct crtx_dict_item *ditem;
 	
-	if (!c_entry->regex_initialized) {
-		ret = regcomp(&c_entry->key_regex, (char*) c_entry->key, 0);
-		if (ret) {
-			fprintf(stderr, "Could not compile regex %s\n", (char*) c_entry->key);
-			exit(1);
-		}
-		c_entry->regex_initialized = 1;
-	}
-	
-	ret = regexec( &c_entry->key_regex, (char *) key, 0, NULL, 0);
-	if (!ret) {
-		return 1;
-	} else if (ret == REG_NOMATCH) {
+	if (!rc->regexps)
 		return 0;
-	} else {
-		regerror(ret, &c_entry->key_regex, msgbuf, sizeof(msgbuf));
-		fprintf(stderr, "Regex match failed: %s\n", msgbuf);
-		exit(1);
+	
+// 	for (i=0; i < rc->n_regexps; i++) {
+// 	for (i=0; i < rc->n_regexps; i++) {
+	ditem = crtx_get_first_item(rc->entries);
+	rex = &rc->regexps[0];
+	
+	while (ditem) {
+		if (!rex->key_is_regex && !strcmp(ditem->key, key))
+			return ditem;
+		
+		if (rex->key_is_regex) {
+			if (!rex->initialized) {
+				ret = regcomp(&rex->regex, ditem->key, 0);
+				if (ret) {
+					ERROR("Could not compile regex %s\n", ditem->key);
+					exit(1);
+				}
+				rex->initialized = 1;
+			}
+			
+			ret = regexec( &rex->regex, (char *) key, 0, NULL, 0);
+			if (!ret) {
+				return ditem;
+			} else
+			if (ret == REG_NOMATCH) {
+				return 0;
+			} else {
+				char msgbuf[128];
+				
+				regerror(ret, &rex->regex, msgbuf, sizeof(msgbuf));
+				ERROR("Regex match failed: %s\n", msgbuf);
+				
+				return 0;
+			}
+		}
+		
+		rex++;
+		ditem = crtx_get_next_item(rc->entries, ditem);
 	}
+	
+	return 0;
 }
 
-void response_cache_on_hit(struct crtx_cache_task *rc, void **key, struct crtx_event *event, struct crtx_cache_entry *c_entry) {
-	struct crtx_cache *dc = rc->cache;
+void response_cache_on_hit(struct crtx_cache_task *rc, void **key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
+// 	struct crtx_cache *dc = rc->cache;
 	
-	event->response.raw = c_entry->value;
-	event->response.raw_size = c_entry->value_size;
+	if (c_entry->type != 'p') {
+		ERROR("cache type mismatch: %c != %c\n", c_entry->type, 'p');
+		return;
+	}
 	
-	printf("value found in cache: ");
-	if (dc->signature[0] == 's')
-		printf("key %s ", (char*) c_entry->key);
-	printf("\n");
+	event->response.raw = c_entry->pointer;
+	event->response.raw_size = c_entry->size;
+	
+// 	printf("value found in cache: ");
+// 	if (dc->signature[0] == 's')
+// 		printf("key %s ", (char*) c_entry->key);
+// 	printf("\n");
 }
 
 void response_cache_task(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_cache_task *ct = (struct crtx_cache_task*) userdata;
-	size_t i;
+// 	size_t i;
 	void *key;
+	struct crtx_dict_item *ditem;
 	
 	key = ct->create_key(event);
+	sessiondata[0] = key;
+	sessiondata[1] = 0;
+	
 	if (!key) {
 		printf("error, key creation failed\n");
 		return;
 	}
 	
 	pthread_mutex_lock(&ct->cache->mutex);
-	for (i=0; i < ct->cache->n_entries; i++) { //printf("\"%s\" \"%s\"\n", key, ct->cache->entries[i].key);
-		if (ct->match_event(ct->cache, key, event, &ct->cache->entries[i])) {
-			ct->on_hit(ct, &key, event, &ct->cache->entries[i]);
+// 	for (i=0; i < ct->cache->n_entries; i++) { //printf("\"%s\" \"%s\"\n", key, ct->cache->entries[i].key);
+// 		if (ct->match_event(ct->cache, key, event, &ct->cache->entries[i])) {
+		ditem = ct->match_event(ct->cache, key, event);
+		if (ditem) {
+			ct->on_hit(ct, &key, event, ditem);
 			
-			*sessiondata = &ct->cache->entries[i];
+			sessiondata[1] = ditem;
 			
 			pthread_mutex_unlock(&ct->cache->mutex);
 			
-			if (key)
-				free(key);
+// 			if (key)
+// 				free(key);
 			return;
 		}
-	}
+// 	}
 	pthread_mutex_unlock(&ct->cache->mutex);
 	
 	if (ct->on_miss)
 		ct->on_miss(ct, &key, event);
 	
-	if (key)
-		free(key);
+// 	if (key)
+// 		free(key);
 }
 
 void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -88,14 +134,15 @@ void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void 
 	struct crtx_cache *dc = ct->cache;
 	void *key;
 	
-	key = ct->create_key(event);
-	if (!key) {
-		printf("error, key creation failed\n");
-		return;
-	}
+// 	key = ct->create_key(event);
+// 	if (!key) {
+// 		printf("error, key creation failed\n");
+// 		return;
+// 	}
+	key = sessiondata[0];
 	
-	printf("check %p %p\n", *sessiondata, event->response.raw);
-	if (!*sessiondata && event->response.raw) {
+// 	printf("check %p %p\n", *sessiondata, event->response.raw);
+	if (!sessiondata[1] && event->response.raw) {
 		char do_add;
 		
 		pthread_mutex_lock(&dc->mutex);
@@ -103,24 +150,31 @@ void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void 
 		do_add = 1;
 		if (ct->on_add)
 			do_add = ct->on_add(ct, key, event);
-		printf("add %d\n", do_add);
+		
 		if (do_add) {
-			dc->n_entries++;
-			dc->entries = (struct crtx_cache_entry *) realloc(dc->entries, sizeof(struct crtx_cache_entry)*dc->n_entries);
+			struct crtx_dict_item *ditem;
 			
-			memset(&dc->entries[dc->n_entries-1], 0, sizeof(struct crtx_cache_entry));
-			dc->entries[dc->n_entries-1].key = key;
+			dc->n_regexps++;
+			dc->regexps = (struct crtx_cache_regex *) realloc(dc->regexps, sizeof(struct crtx_cache_regex)*dc->n_regexps);
+			memset(&dc->entries[dc->n_regexps-1], 0, sizeof(struct crtx_cache_regex));
+			
+			ditem = crtx_alloc_item(dc->entries);
+			
+			ditem->key = key;
+			ditem->flags |= DIF_KEY_ALLOCATED;
+			ditem->type = 'p';
+			
 			if (event->response.copy_raw) {
-				dc->entries[dc->n_entries-1].value = event->response.copy_raw(&event->response);
-				dc->entries[dc->n_entries-1].copied = 1;
+				ditem->pointer = event->response.copy_raw(&event->response);
+// 				dc->entries[dc->n_entries-1].copied = 1;
 			} else {
-				dc->entries[dc->n_entries-1].value = event->response.raw;
-				dc->entries[dc->n_entries-1].copied = 0;
+				ditem->pointer = event->response.raw;
+				ditem->flags |= DIF_DATA_UNALLOCATED;
 			}
-			dc->entries[dc->n_entries-1].value_size = event->response.raw_size;
-			
-			pthread_mutex_unlock(&dc->mutex);
+			ditem->size = event->response.raw_size;
 		}
+		
+		pthread_mutex_unlock(&dc->mutex);
 	} else {
 		free(key);
 	}
@@ -153,63 +207,63 @@ void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void 
 // 	return ret;
 // }
 
-void prefill_rcache(struct crtx_cache *rcache, char *file) {
-	FILE *f;
-	char buf[1024];
-	char *indent;
-	size_t slen;
-	
-	// 	if (strcmp(rcache->signature, "ss")) {
-	// 		printf("rcache signature %s != ss\n", rcache->signature);
-	// 		return;
-	// 	}
-	
-	f = fopen(file, "r");
-	
-	if (!f)
-		return;
-	
-	while (fgets(buf, sizeof(buf), f)) {
-		if (buf[0] == '#')
-			continue;
-		
-		indent = strchr(buf, '\t');
-		
-		if (!indent)
-			continue;
-		
-		rcache->n_entries++;
-		rcache->entries = (struct crtx_cache_entry *) realloc(rcache->entries, sizeof(struct crtx_cache_entry)*rcache->n_entries);
-		memset(&rcache->entries[rcache->n_entries-1], 0, sizeof(struct crtx_cache_entry));
-		
-		slen = indent - buf;
-		rcache->entries[rcache->n_entries-1].key = stracpy(buf, &slen);
-		// 		printf("asd %s\n", (char*)rcache->entries[rcache->n_entries-1].key);
-		if (rcache->signature[1] == 's') {
-			slen = strlen(buf) - slen - 1;
-			if (buf[strlen(buf)-1] == '\n')
-				slen--;
-			rcache->entries[rcache->n_entries-1].value = stracpy(indent+1, &slen);;
-			rcache->entries[rcache->n_entries-1].value_size = slen;
-			// 			printf("asd %s\n", (char*)rcache->entries[rcache->n_entries-1].response);
-		} else
-			if (rcache->signature[1] == 'u') {
-				uint32_t uint;
-				rcache->entries[rcache->n_entries-1].value_size = strlen(buf) - slen - 2;
-				
-				sscanf(indent+1, "%"PRIu32,  &uint);
-				// 			printf("%"PRIu32"\n", uint);
-				rcache->entries[rcache->n_entries-1].value = (void*)(uintptr_t) uint;
-			}
-	}
-	
-	if (ferror(stdin)) {
-		fprintf(stderr,"Oops, error reading stdin\n");
-		exit(1);
-	}
-	
-	fclose(f);
-}
+// void prefill_rcache(struct crtx_cache *rcache, char *file) {
+// 	FILE *f;
+// 	char buf[1024];
+// 	char *indent;
+// 	size_t slen;
+// 	
+// 	// 	if (strcmp(rcache->signature, "ss")) {
+// 	// 		printf("rcache signature %s != ss\n", rcache->signature);
+// 	// 		return;
+// 	// 	}
+// 	
+// 	f = fopen(file, "r");
+// 	
+// 	if (!f)
+// 		return;
+// 	
+// 	while (fgets(buf, sizeof(buf), f)) {
+// 		if (buf[0] == '#')
+// 			continue;
+// 		
+// 		indent = strchr(buf, '\t');
+// 		
+// 		if (!indent)
+// 			continue;
+// 		
+// 		rcache->n_entries++;
+// 		rcache->entries = (struct crtx_cache_entry *) realloc(rcache->entries, sizeof(struct crtx_cache_entry)*rcache->n_entries);
+// 		memset(&rcache->entries[rcache->n_entries-1], 0, sizeof(struct crtx_cache_entry));
+// 		
+// 		slen = indent - buf;
+// 		rcache->entries[rcache->n_entries-1].key = stracpy(buf, &slen);
+// 		// 		printf("asd %s\n", (char*)rcache->entries[rcache->n_entries-1].key);
+// 		if (rcache->signature[1] == 's') {
+// 			slen = strlen(buf) - slen - 1;
+// 			if (buf[strlen(buf)-1] == '\n')
+// 				slen--;
+// 			rcache->entries[rcache->n_entries-1].value = stracpy(indent+1, &slen);;
+// 			rcache->entries[rcache->n_entries-1].value_size = slen;
+// 			// 			printf("asd %s\n", (char*)rcache->entries[rcache->n_entries-1].response);
+// 		} else
+// 			if (rcache->signature[1] == 'u') {
+// 				uint32_t uint;
+// 				rcache->entries[rcache->n_entries-1].value_size = strlen(buf) - slen - 2;
+// 				
+// 				sscanf(indent+1, "%"PRIu32,  &uint);
+// 				// 			printf("%"PRIu32"\n", uint);
+// 				rcache->entries[rcache->n_entries-1].value = (void*)(uintptr_t) uint;
+// 			}
+// 	}
+// 	
+// 	if (ferror(stdin)) {
+// 		fprintf(stderr,"Oops, error reading stdin\n");
+// 		exit(1);
+// 	}
+// 	
+// 	fclose(f);
+// }
 
 
 struct crtx_task *create_response_cache_task(char *signature, create_key_cb_t create_key) {
@@ -221,7 +275,7 @@ struct crtx_task *create_response_cache_task(char *signature, create_key_cb_t cr
 	task = new_task();
 	
 	dc = (struct crtx_cache*) calloc(1, sizeof(struct crtx_cache));
-	dc->signature = signature;
+// 	dc->signature = signature;
 	
 	ret = pthread_mutex_init(&dc->mutex, 0); ASSERT(ret >= 0);
 	
@@ -245,15 +299,17 @@ struct crtx_task *create_response_cache_task(char *signature, create_key_cb_t cr
 void free_response_cache(struct crtx_cache *dc) {
 	size_t i;
 	
-	for (i=0; i<dc->n_entries; i++) {
-		free(dc->entries[i].key);
-		if (dc->entries[i].value_size > 0 && dc->entries[i].copied)
-			free(dc->entries[i].value);
+	free_dict(dc->entries);
+	
+	for (i=0; i<dc->n_regexps; i++) {
+// 		free(dc->entries[i].key);
+// 		if (dc->entries[i].value_size > 0 && dc->entries[i].copied)
+// 			free(dc->entries[i].value);
 		
-		if (dc->entries[i].regex_initialized)
-			regfree(&dc->entries[i].key_regex);
+		if (dc->regexps[i].initialized)
+			regfree(&dc->regexps[i].regex);
 	}
 	
-	free(dc->entries);
+	free(dc->regexps);
 	free(dc);
 }

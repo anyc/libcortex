@@ -239,7 +239,7 @@ struct crtx_dict_item *crtx_get_first_item(struct crtx_dict *ds) {
 	return ds?ds->items:0;
 }
 
-struct crtx_dict_item *crtx_get_next_item(struct crtx_dict_item *di) {
+struct crtx_dict_item *crtx_get_next_item(struct crtx_dict *ds, struct crtx_dict_item *di) {
 	return di+1;
 }
 
@@ -264,6 +264,10 @@ struct crtx_dict_item * crtx_get_item(struct crtx_dict *ds, char *key) {
 	}
 	
 	return 0;
+}
+
+struct crtx_dict_item * crtx_get_item_by_idx(struct crtx_dict *ds, size_t idx) {
+	return &ds->items[idx];
 }
 
 char crtx_get_value(struct crtx_dict *ds, char *key, char type, void *buffer, size_t buffer_size) {

@@ -254,7 +254,7 @@ static void notify_send_handler(struct crtx_event *event, void *userdata, void *
 				return;
 			}
 			
-			di = crtx_get_next_item(di);
+			di = crtx_get_next_item(actions_dict, di);
 			i++;
 		}
 		actions[4] = 0;

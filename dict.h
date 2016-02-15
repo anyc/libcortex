@@ -1,4 +1,7 @@
 
+#ifndef CRTX_DICT_H
+#define CRTX_DICT_H
+
 #define DIF_KEY_ALLOCATED 1<<0
 #define DIF_DATA_UNALLOCATED 1<<1
 #define DIF_LAST 1<<7
@@ -61,9 +64,13 @@ char crtx_get_value(struct crtx_dict *ds, char *key, char type, void *buffer, si
 char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size);
 void crtx_print_dict(struct crtx_dict *ds);
 struct crtx_dict_item *crtx_get_first_item(struct crtx_dict *ds);
-struct crtx_dict_item *crtx_get_next_item(struct crtx_dict_item *di);
+struct crtx_dict_item *crtx_get_next_item(struct crtx_dict *ds, struct crtx_dict_item *di);
 
 char *crtx_get_string(struct crtx_dict *ds, char *key);
 struct crtx_dict *crtx_get_dict(struct crtx_dict *ds, char *key);
 
 struct crtx_task *crtx_create_transform_task(struct crtx_graph *in_graph, char *name, struct crtx_transform_dict_handler *trans);
+
+struct crtx_dict_item * crtx_get_item_by_idx(struct crtx_dict *ds, size_t idx);
+
+#endif

@@ -41,10 +41,6 @@ static void *timer_tmain(void *data) {
 	return 0;
 }
 
-void crtx_free_timer_listener(struct crtx_listener_base *data) {
-	
-}
-
 static void stop_thread(struct crtx_thread *thread, void *data) {
 	struct crtx_timer_listener *tlist;
 	
@@ -52,6 +48,10 @@ static void stop_thread(struct crtx_thread *thread, void *data) {
 	
 	tlist->stop = 1;
 	close(tlist->fd);
+}
+
+void crtx_free_timer_listener(struct crtx_listener_base *data) {
+	stop_thread(0, data);
 }
 
 struct crtx_listener_base *crtx_new_timer_listener(void *options) {
