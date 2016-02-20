@@ -120,6 +120,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		event = create_event(nfq_list->parent.graph->types[0], pkt, data_size);
 // 		event->response.raw = &pkt->mark_out;
 // 		event->response.raw_size = sizeof(u_int32_t);
+		event->data.raw.flags |= DIF_DATA_UNALLOCATED;
 		
 		reference_event_release(event);
 		
@@ -127,8 +128,8 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		wait_on_event(event);
 		
-		if (event->response.raw && event->response.raw != &pkt->mark_out)
-			pkt->mark_out = *((u_int32_t*) event->response.raw);
+		if (event->response.raw.pointer && event->response.raw.pointer != &pkt->mark_out)
+			pkt->mark_out = *((u_int32_t*) event->response.raw.pointer);
 		
 // 		nfq_list->default_policy
 		printf("packet mark: %" PRIu32 "\n", pkt->mark_out);
@@ -136,7 +137,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 // 		int ret = nfq_set_verdict2(qh, pkt->id, NF_REPEAT, (u_int32_t) event->response.raw, 0, NULL);
 		ret = nfq_set_verdict2(qh, pkt->id, NF_REPEAT, pkt->mark_out, 0, NULL);
 		
-		event->response.raw = 0;
+// 		event->response.raw = 0;
 		dereference_event_release(event);
 		
 		return ret;

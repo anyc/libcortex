@@ -48,7 +48,7 @@ static void inotify_event_handler(struct crtx_event *event, void *userdata, void
 	struct inotify_event *in_event;
 	char buf[1024];
 	
-	in_event = (struct inotify_event *) event->data.raw;
+	in_event = (struct inotify_event *) event->data.raw.pointer;
 	if (in_event->len) {
 		if (in_event->mask & IN_CREATE) {
 			if (in_event->mask & IN_ISDIR) {

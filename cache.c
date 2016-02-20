@@ -106,8 +106,8 @@ void response_cache_on_hit(struct crtx_cache_task *rc, struct crtx_dict_item *ke
 	DBG("cache hit for key ");
 	crtx_print_dict_item(key, 0);
 	
-	event->response.raw = c_entry->pointer;
-	event->response.raw_size = c_entry->size;
+	event->response.raw.pointer = c_entry->pointer;
+	event->response.raw.size = c_entry->size;
 }
 
 void response_cache_task(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -172,10 +172,10 @@ void crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key
 			if (event->response.copy_raw) {
 				ditem->pointer = event->response.copy_raw(&event->response);
 			} else {
-				ditem->pointer = event->response.raw;
+				ditem->pointer = event->response.raw.pointer;
 				ditem->flags |= DIF_DATA_UNALLOCATED;
 			}
-			ditem->size = event->response.raw_size;
+			ditem->size = event->response.raw.size;
 		} else {
 			char sign[3];
 			ditem->type = 'D';
@@ -187,7 +187,7 @@ void crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key
 			ditem->ds = crtx_init_dict(sign, 0);
 			memcpy(crtx_get_item_by_idx(ditem->ds, 0), key, sizeof(struct crtx_dict_item));
 			crtx_get_item_by_idx(ditem->ds, 0)->key = "key";
-			crtx_fill_data_item(crtx_get_item_by_idx(ditem->ds, 1), 'p', "value", 0, event->response.raw_size, 0);
+			crtx_fill_data_item(crtx_get_item_by_idx(ditem->ds, 1), 'p', "value", 0, event->response.raw.size, 0);
 			
 			if (key->type == 's') {
 				ditem->key = key->string;
@@ -197,7 +197,7 @@ void crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key
 			if (event->response.copy_raw) {
 				crtx_get_item_by_idx(ditem->ds, 1)->pointer = event->response.copy_raw(&event->response);
 			} else {
-				crtx_get_item_by_idx(ditem->ds, 1)->pointer = event->response.raw;
+				crtx_get_item_by_idx(ditem->ds, 1)->pointer = event->response.raw.pointer;
 				crtx_get_item_by_idx(ditem->ds, 1)->flags |= DIF_DATA_UNALLOCATED;
 			}
 		}
@@ -214,7 +214,7 @@ void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void 
 	
 	key = &ct->key;
 	
-	if (!ct->cache_entry && event->response.raw) {
+	if (!ct->cache_entry && event->response.raw.pointer) {
 		crtx_cache_add_entry(ct, key, event);
 	}
 	

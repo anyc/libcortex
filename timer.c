@@ -32,7 +32,9 @@ static void *timer_tmain(void *data) {
 		}
 		
 		event = create_event(CRTX_EVT_TIMER, 0, 0);
-		event->data.raw = (void*)(uintptr_t) exp;
+// 		event->data.raw = (void*)(uintptr_t) exp;
+		event->data.raw.uint32 = (uint32_t) exp;
+		event->data.raw.type = 'u';
 		event->data.flags = CRTX_EVF_DONT_FREE_RAW;
 		
 		add_event(tlist->parent.graph, event);

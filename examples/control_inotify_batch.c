@@ -45,7 +45,7 @@ static void exec_script_handler(struct crtx_event *event, void *userdata, void *
 	size_t mask_size, cmd_size;
 	
 	script = (char *) userdata;
-	in_event = (struct inotify_event *) event->data.raw;
+	in_event = (struct inotify_event *) event->data.raw.pointer;
 	
 	// calculate required string length
 	ret = crtx_inotify_mask2string(in_event->mask, 0, &mask_size);

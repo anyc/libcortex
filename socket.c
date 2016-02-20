@@ -48,12 +48,12 @@ static void setup_response_event_cb(struct crtx_event *event) {
 	slist = (struct crtx_socket_listener*) event->cb_before_release_data;
 	
 	// copy the data from the original event
-	resp_event = create_event("cortex.socket.response", event->response.raw, event->response.raw_size);
+	resp_event = create_event("cortex.socket.response", event->response.raw.pointer, event->response.raw.size);
 	resp_event->data.dict = event->response.dict;
 	resp_event->original_event_id = event->original_event_id;
 	
 	// strip original event to prevent release of data
-	event->response.raw = 0;
+	event->response.raw.pointer = 0;
 	event->response.dict = 0;
 	
 	add_event(slist->outbox, resp_event);

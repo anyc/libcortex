@@ -151,7 +151,7 @@ void traverse_graph_r(struct crtx_graph *graph, struct crtx_task *ti, struct crt
 		ti->handle(event, ti->userdata, sessiondata);
 	}
 	
-	if (ti->next && ((!event->response.raw && !event->response.dict) || (graph->flags & CRTX_GRAPH_KEEP_GOING)) )
+	if (ti->next && ((!event->response.raw.pointer && !event->response.dict) || (graph->flags & CRTX_GRAPH_KEEP_GOING)) )
 		traverse_graph_r(graph, ti->next, event);
 	
 	if (ti->cleanup) {
@@ -351,8 +351,8 @@ struct crtx_event *create_event(char *type, void *data, size_t data_size) {
 	
 	event = new_event();
 	event->type = type;
-	event->data.raw = data;
-	event->data.raw_size = data_size;
+	event->data.raw.pointer = data;
+	event->data.raw.size = data_size;
 	
 	return event;
 }
@@ -433,8 +433,9 @@ struct crtx_event *new_event() {
 }
 
 void free_event_data(struct crtx_event_data *ed) {
-	if (ed->raw && !(ed->flags & CRTX_EVF_DONT_FREE_RAW))
-		free(ed->raw);
+// 	if (ed->raw.pointer && !(ed->flags & CRTX_EVF_DONT_FREE_RAW))
+// 		free(ed->raw);
+	crtx_free_dict_item(&ed->raw);
 	if (ed->dict)
 		free_dict(ed->dict);
 }
@@ -805,8 +806,8 @@ char *get_username() {
 void *crtx_copy_raw_data(struct crtx_event_data *data) {
 	void *new_data;
 	
-	new_data = malloc(data->raw_size);
-	memcpy(new_data, data->raw, data->raw_size);
+	new_data = malloc(data->raw.size);
+	memcpy(new_data, data->raw.pointer, data->raw.size);
 	
 	return new_data;
 }

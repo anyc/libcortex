@@ -116,7 +116,7 @@ void inotify_to_dict(struct crtx_event_data *data) {
 	struct inotify_event_dict *dictit;
 	struct crtx_dict_item *di;
 	
-	iev = (struct inotify_event*) data->raw;
+	iev = (struct inotify_event*) data->raw.pointer;
 	len = strlen(iev->name);
 	
 	mlen = POPCOUNT32(iev->mask);

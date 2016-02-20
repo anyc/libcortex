@@ -6,6 +6,7 @@
 #include <regex.h>
 
 #include "threads.h"
+#include "dict.h"
 
 
 #define STRINGIFYB(x) #x
@@ -60,8 +61,9 @@ struct crtx_event;
 #define CRTX_EVF_DONT_FREE_RAW 1<<0
 
 struct crtx_event_data {
-	void *raw;
-	size_t raw_size;
+// 	void *raw;
+// 	size_t raw_size;
+	struct crtx_dict_item raw;
 	
 	char flags;
 	

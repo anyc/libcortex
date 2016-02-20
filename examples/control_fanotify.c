@@ -56,7 +56,7 @@ static void fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 	struct crtx_dict *data, *actions_dict;
 	size_t title_len, buf_len;
 	
-	metadata = (struct fanotify_event_metadata *) event->data.raw;
+	metadata = (struct fanotify_event_metadata *) event->data.raw.pointer;
 	
 	if ( (metadata->mask & FAN_OPEN_PERM) || (metadata->mask & FAN_OPEN) ) {
 		// replace %s with the file path and store the string in buf

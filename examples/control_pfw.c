@@ -148,19 +148,19 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 	struct crtx_event *newp_raw_event, *newp_event;
 	struct crtx_nfq_packet *ev;
 	
-	if (event->data.raw_size < sizeof(struct crtx_nfq_packet))
+	if (event->data.raw.size < sizeof(struct crtx_nfq_packet))
 		return;
 	
-	ev = (struct crtx_nfq_packet*) event->data.raw;
+	ev = (struct crtx_nfq_packet*) event->data.raw.pointer;
 	
 	// if someone set a response already, ignore
-	if (event->response.raw && event->response.raw != &ev->mark_out)
+	if (event->response.raw.pointer && event->response.raw.pointer != &ev->mark_out)
 		return;
 	
 	ev->mark_out = PFW_DEFAULT;
 	
 	if (newp_raw_graph && newp_raw_graph->tasks) {
-		newp_raw_event = create_event(PFW_NEWPACKET_ETYPE, event->data.raw, event->data.raw_size);
+		newp_raw_event = create_event(PFW_NEWPACKET_ETYPE, event->data.raw.pointer, event->data.raw.size);
 		
 		add_event(newp_graph, newp_raw_event);
 		
@@ -257,8 +257,8 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 		
 		newp_event = create_event(PFW_NEWPACKET_ETYPE, 0, 0);
 		newp_event->data.dict = ds;
-		newp_event->data.raw = event->data.raw;
-		newp_event->data.raw_size = event->data.raw_size;
+		newp_event->data.raw.pointer = event->data.raw.pointer;
+		newp_event->data.raw.size = event->data.raw.size;
 		newp_event->response.copy_raw = &crtx_copy_raw_data;
 		
 		reference_event_release(newp_event);
@@ -267,12 +267,12 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 		
 		wait_on_event(newp_event);
 		
-		if (newp_event->response.raw && newp_event->response.raw != &ev->mark_out)
-			ev->mark_out = *((u_int32_t*) newp_event->response.raw);
+		if (newp_event->response.raw.pointer && newp_event->response.raw.pointer != &ev->mark_out)
+			ev->mark_out = *((u_int32_t*) newp_event->response.raw.pointer);
 		
 		// do not free as referenced data does not belong to us
-		newp_event->data.raw = 0; 
-		newp_event->response.raw = 0;
+		newp_event->data.raw.pointer = 0; 
+		newp_event->response.raw.pointer = 0;
 		dereference_event_release(newp_event);
 	}
 }
@@ -491,7 +491,7 @@ static void pfw_rules_filter(struct crtx_event *event, void *userdata, void **se
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
-	if (event->response.raw)
+	if (event->response.raw.pointer)
 		return;
 	
 	ds = event->data.dict;
@@ -499,9 +499,9 @@ static void pfw_rules_filter(struct crtx_event *event, void *userdata, void **se
 	pfw_get_remote_part(ds, &remote_ip, &remote_host);
 	
 	#define SET_MARK(event, mark) { \
-			(event)->response.raw = &((struct crtx_nfq_packet*) (event)->data.raw)->mark_out; \
-			(event)->response.raw_size = sizeof(u_int32_t); \
-			((struct crtx_nfq_packet*) (event)->data.raw)->mark_out = (mark); \
+			(event)->response.raw.pointer = &((struct crtx_nfq_packet*) (event)->data.raw.pointer)->mark_out; \
+			(event)->response.raw.size = sizeof(u_int32_t); \
+			((struct crtx_nfq_packet*) (event)->data.raw.pointer)->mark_out = (mark); \
 		}
 	if (match_regexp_list(remote_host, &host_blacklist)) {
 		SET_MARK(event, PFW_REJECT);

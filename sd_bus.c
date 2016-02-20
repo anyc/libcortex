@@ -89,6 +89,7 @@ static int sd_bus_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *r
 	listener = (struct crtx_listener_base_data*) userdata;
 	
 	event = create_event(listener->event_type, m, 0);
+	event->data.raw.flags |= DIF_DATA_UNALLOCATED;
 	
 	sd_bus_print_msg(m);
 	
@@ -98,7 +99,7 @@ static int sd_bus_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *r
 	
 	wait_on_event(event);
 	
-	event->data.raw = 0;
+// 	event->data.raw = 0;
 	
 	dereference_event_release(event);
 	
