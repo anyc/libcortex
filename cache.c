@@ -8,42 +8,77 @@
 #include "cache.h"
 #include "threads.h"
 
+void * rcache_get_key(struct crtx_dict_item *ditem) {
+	struct crtx_dict_item *key_item;
+	
+	if (ditem->key)
+		return ditem->key;
+	
+	if (ditem->type != 'D') {
+		ERROR("wrong dictionary structure for simple cache layout\n");
+		return 0;
+	}
+	
+	key_item = crtx_get_item(ditem->ds, "key");
+	
+	return key_item->string;
+}
+
 struct crtx_dict_item * rcache_match_cb_t_strcmp(struct crtx_cache *rc, void *key, struct crtx_event *event) {
-// 	size_t i;
+	struct crtx_dict_item *ditem;
+	void *rkey;
 	
-// 	for (i=0; i < ct->cache->n_entries; i++) {
-// // 		if (!strcmp( (char*) key, (char*) c_entry->key))
-// 		if (!strcmp( (char*) key, ct->cache->entries[i]))
-// 			
-// 			return 1;
-// 	}
+// 	if (rc->simple)
+// 		return crtx_get_item(rc->entries, key);
 	
-	return crtx_get_item(rc->entries, key);
+	ditem = crtx_get_first_item(rc->entries);
+	
+	while (ditem) {
+// 		if (ditem->key && !strcmp(ditem->key, key))
+// 			return ditem;
+// 		
+// 		if (ditem->type != 'D') {
+// 			ERROR("wrong dictionary structure for simple cache layout\n");
+// 			continue;
+// 		}
+// 		
+// 		key_item = crtx_get_item(ditem->ds, "key");
+		
+		rkey = rcache_get_key(ditem);
+		
+		if (rkey && !strcmp(key, rkey)) {
+			return ditem;
+		}
+		
+		ditem = crtx_get_next_item(rc->entries, ditem);
+	}
+	
+	return 0;
 }
 
 struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache *rc, void *key, struct crtx_event *event) {
 	int ret;
-// 	size_t i;
 	struct crtx_cache_regex *rex;
 	struct crtx_dict_item *ditem;
+	void *rkey;
 	
 	if (!rc->regexps)
 		return 0;
 	
-// 	for (i=0; i < rc->n_regexps; i++) {
-// 	for (i=0; i < rc->n_regexps; i++) {
 	ditem = crtx_get_first_item(rc->entries);
 	rex = &rc->regexps[0];
 	
 	while (ditem) {
-		if (!rex->key_is_regex && !strcmp(ditem->key, key))
+		rkey = rcache_get_key(ditem);
+		
+		if (!rex->key_is_regex && !strcmp(key, rkey))
 			return ditem;
 		
 		if (rex->key_is_regex) {
 			if (!rex->initialized) {
-				ret = regcomp(&rex->regex, ditem->key, 0);
+				ret = regcomp(&rex->regex, rkey, 0);
 				if (ret) {
-					ERROR("Could not compile regex %s\n", ditem->key);
+					ERROR("Could not compile regex %s\n", rkey);
 					exit(1);
 				}
 				rex->initialized = 1;
@@ -73,25 +108,22 @@ struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache *rc, void *key
 }
 
 void response_cache_on_hit(struct crtx_cache_task *rc, void **key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
-// 	struct crtx_cache *dc = rc->cache;
+	if (rc->cache->complex)
+		c_entry = crtx_get_item(c_entry->ds, "value");
 	
 	if (c_entry->type != 'p') {
 		ERROR("cache type mismatch: %c != %c\n", c_entry->type, 'p');
 		return;
 	}
-	printf("hit\n");
+	
+	DBG("cache hit for key \"%s\"\n", *key);
+	
 	event->response.raw = c_entry->pointer;
 	event->response.raw_size = c_entry->size;
-	
-// 	printf("value found in cache: ");
-// 	if (dc->signature[0] == 's')
-// 		printf("key %s ", (char*) c_entry->key);
-// 	printf("\n");
 }
 
 void response_cache_task(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_cache_task *ct = (struct crtx_cache_task*) userdata;
-// 	size_t i;
 	void *key;
 	struct crtx_dict_item *ditem;
 	
@@ -103,31 +135,24 @@ void response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 		ERROR("error, key creation failed\n");
 		return;
 	}
-	printf("key %s\n", (char*) key);
+	
 	pthread_mutex_lock(&ct->cache->mutex);
-// 	for (i=0; i < ct->cache->n_entries; i++) { //printf("\"%s\" \"%s\"\n", key, ct->cache->entries[i].key);
-// 		if (ct->match_event(ct->cache, key, event, &ct->cache->entries[i])) {
-		ditem = ct->match_event(ct->cache, key, event);
-		if (ditem) {printf("match\n");
-			ct->on_hit(ct, &key, event, ditem);
-			
-			sessiondata[1] = ditem;
-			
-			pthread_mutex_unlock(&ct->cache->mutex);
-			
-// 			if (key)
-// 				free(key);
-			return;
-		}
-		printf("no match\n");
-// 	}
+	
+	ditem = ct->match_event(ct->cache, key, event);
+	if (ditem) {
+		ct->on_hit(ct, &key, event, ditem);
+		
+		sessiondata[1] = ditem;
+		
+		pthread_mutex_unlock(&ct->cache->mutex);
+		
+		return;
+	}
+	
 	pthread_mutex_unlock(&ct->cache->mutex);
 	
 	if (ct->on_miss)
 		ct->on_miss(ct, &key, event);
-	
-// 	if (key)
-// 		free(key);
 }
 
 void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -135,14 +160,8 @@ void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void 
 	struct crtx_cache *dc = ct->cache;
 	void *key;
 	
-// 	key = ct->create_key(event);
-// 	if (!key) {
-// 		printf("error, key creation failed\n");
-// 		return;
-// 	}
 	key = sessiondata[0];
 	
-// 	printf("check %p %p\n", *sessiondata, event->response.raw);
 	if (!sessiondata[1] && event->response.raw) {
 		char do_add;
 		
@@ -163,16 +182,32 @@ void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void 
 			
 			ditem->key = key;
 			ditem->flags |= DIF_KEY_ALLOCATED;
-			ditem->type = 'p';
 			
-			if (event->response.copy_raw) {
-				ditem->pointer = event->response.copy_raw(&event->response);
-// 				dc->entries[dc->n_entries-1].copied = 1;
+			if (!dc->complex) {
+				ditem->type = 'p';
+				
+				if (event->response.copy_raw) {
+					ditem->pointer = event->response.copy_raw(&event->response);
+				} else {
+					ditem->pointer = event->response.raw;
+					ditem->flags |= DIF_DATA_UNALLOCATED;
+				}
+				ditem->size = event->response.raw_size;
 			} else {
-				ditem->pointer = event->response.raw;
-				ditem->flags |= DIF_DATA_UNALLOCATED;
+				ditem->type = 'D';
+				
+				ditem->ds = crtx_create_dict("sp", 
+							"key", key, strlen(key)+1, 0,
+							"value", 0, event->response.raw_size, 0
+						);
+				
+				if (event->response.copy_raw) {
+					crtx_get_item_by_idx(ditem->ds, 1)->pointer = event->response.copy_raw(&event->response);
+				} else {
+					crtx_get_item_by_idx(ditem->ds, 1)->pointer = event->response.raw;
+					crtx_get_item_by_idx(ditem->ds, 1)->flags |= DIF_DATA_UNALLOCATED;
+				}
 			}
-			ditem->size = event->response.raw_size;
 		}
 		
 		pthread_mutex_unlock(&dc->mutex);
@@ -276,7 +311,6 @@ struct crtx_task *create_response_cache_task(char *signature, create_key_cb_t cr
 	task = new_task();
 	
 	dc = (struct crtx_cache*) calloc(1, sizeof(struct crtx_cache));
-// 	dc->signature = signature;
 	
 	ret = pthread_mutex_init(&dc->mutex, 0); ASSERT(ret >= 0);
 	
@@ -304,10 +338,6 @@ void free_response_cache(struct crtx_cache *dc) {
 	free_dict(dc->entries);
 	
 	for (i=0; i<dc->n_regexps; i++) {
-// 		free(dc->entries[i].key);
-// 		if (dc->entries[i].value_size > 0 && dc->entries[i].copied)
-// 			free(dc->entries[i].value);
-		
 		if (dc->regexps[i].initialized)
 			regfree(&dc->regexps[i].regex);
 	}

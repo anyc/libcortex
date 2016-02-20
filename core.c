@@ -96,7 +96,8 @@ void crtx_printf_va(char level, char *format, va_list va) {
 	if (level == CRTX_ERR) {
 		vfprintf(stderr, format, va);
 	} else {
-		vfprintf(stdout, format, va);
+		if (level < CRTX_VDBG)
+			vfprintf(stdout, format, va);
 	}
 }
 
@@ -355,7 +356,7 @@ void reference_event_release(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
 	event->refs_before_release++;
-	DBG("ref release of event %s (%p) (now %d)\n", event->type, event, event->refs_before_release);
+	VDBG("ref release of event %s (%p) (now %d)\n", event->type, event, event->refs_before_release);
 	
 	pthread_mutex_unlock(&event->mutex);
 }
@@ -363,7 +364,7 @@ void reference_event_release(struct crtx_event *event) {
 void dereference_event_release(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
-	DBG("deref release of event %s (%p) (remaining %d)\n", event->type, event, event->refs_before_release);
+	VDBG("deref release of event %s (%p) (remaining %d)\n", event->type, event, event->refs_before_release);
 	
 	if (event->refs_before_release > 0)
 		event->refs_before_release--;
@@ -382,7 +383,7 @@ void reference_event_response(struct crtx_event *event) {
 	
 	if (!event->error) {
 		event->refs_before_response++;
-		DBG("ref response of event %s (%p) (now %d)\n", event->type, event, event->refs_before_response);
+		VDBG("ref response of event %s (%p) (now %d)\n", event->type, event, event->refs_before_response);
 	}
 	
 	pthread_mutex_unlock(&event->mutex);
@@ -391,7 +392,7 @@ void reference_event_response(struct crtx_event *event) {
 void dereference_event_response(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
-	DBG("ref response of event %s (%p) (remaining %d)\n", event->type, event, event->refs_before_response);
+	VDBG("ref response of event %s (%p) (remaining %d)\n", event->type, event, event->refs_before_response);
 	
 	if (event->refs_before_response > 0)
 		event->refs_before_response--;
@@ -434,7 +435,6 @@ void free_event_data(struct crtx_event_data *ed) {
 }
 
 void crtx_invalidate_event(struct crtx_event *event) {
-	printf("invalidate %p\n", event);
 	pthread_mutex_lock(&event->mutex);
 	event->error = 1;
 	event->refs_before_response = 0;

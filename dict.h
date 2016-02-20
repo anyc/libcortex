@@ -13,7 +13,7 @@ struct crtx_dict_item {
 	unsigned long size;
 	
 	char type;
-	char flags;
+	unsigned char flags;
 	
 	union {
 		char *string; // s

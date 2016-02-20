@@ -12,21 +12,6 @@ typedef void (*miss_cb_t)(struct crtx_cache_task *ct, void **key, struct crtx_ev
 typedef char (*add_cb_t)(struct crtx_cache_task *ct, void *key, struct crtx_event *event);
 
 
-// struct crtx_cache_entry {
-// 	void *key;
-// 	union {
-// 		regex_t key_regex;
-// 	};
-// 	union {
-// 		char regex_initialized;
-// 	};
-// 	char type;
-// 	
-// 	void *value;
-// 	size_t value_size;
-// 	char copied;
-// };
-
 struct crtx_cache_regex {
 	regex_t regex;
 	char key_is_regex;
@@ -36,10 +21,8 @@ struct crtx_cache_regex {
 };
 
 struct crtx_cache {
-// 	char *signature;
+	char complex;
 	
-// 	struct crtx_cache_entry *entries;
-// 	size_t n_entries;
 	struct crtx_dict *entries;
 	
 	struct crtx_cache_regex *regexps;

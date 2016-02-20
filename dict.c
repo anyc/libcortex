@@ -75,6 +75,9 @@ struct crtx_dict_item * crtx_alloc_item(struct crtx_dict *dict) {
 // 	return (struct crtx_dict_item *) ((char*)dict) + dict->size - sizeof(struct crtx_dict_item);
 	
 	memset(&dict->items[dict->signature_length-1], 0, sizeof(struct crtx_dict_item));
+	if (dict->signature_length > 1)
+		dict->items[dict->signature_length-2].flags &= ~((char)DIF_LAST);
+	dict->items[dict->signature_length-1].flags = DIF_LAST;
 	return &dict->items[dict->signature_length-1];
 }
 
@@ -242,7 +245,10 @@ struct crtx_dict_item *crtx_get_first_item(struct crtx_dict *ds) {
 }
 
 struct crtx_dict_item *crtx_get_next_item(struct crtx_dict *ds, struct crtx_dict_item *di) {
-	return di+1;
+	if (! DIF_IS_LAST(di))
+		return di+1;
+	else
+		return 0;
 }
 
 struct crtx_dict_item * crtx_get_item(struct crtx_dict *ds, char *key) {

@@ -12,15 +12,18 @@
 #define STRINGIFY(x) STRINGIFYB(x)
 
 #define CRTX_INFO 1<<0
-#define CRTX_DBG 1<<1
-#define CRTX_ERR 1<<2
+#define CRTX_ERR 1<<1
+#define CRTX_DBG 1<<2
+#define CRTX_VDBG 1<<3
 
 #define INFO(fmt, ...) do { crtx_printf(CRTX_INFO, fmt, ##__VA_ARGS__); } while (0)
 
-#ifndef DDEBUG
+#ifndef DEVDEBUG
 #define DBG(fmt, ...) do { crtx_printf(CRTX_DBG, fmt, ##__VA_ARGS__); } while (0)
+#define VDBG(fmt, ...) do { crtx_printf(CRTX_VDBG, fmt, ##__VA_ARGS__); } while (0)
 #else
 #define DBG(fmt, ...) do { crtx_printf(CRTX_DBG, "%s:%d:%s(): " fmt, __FILE__, __LINE__, __func__, ##__VA_ARGS__); } while (0)
+#define VDBG(fmt, ...) do { crtx_printf(CRTX_VDBG, "%s:%d:%s(): " fmt, __FILE__, __LINE__, __func__, ##__VA_ARGS__); } while (0)
 #endif
 
 #define ERROR(fmt, ...) do { crtx_printf(CRTX_ERR, "\x1b[31m"); crtx_printf(CRTX_DBG, fmt, ##__VA_ARGS__); crtx_printf(CRTX_DBG, "\x1b[0m"); } while (0)
@@ -127,7 +130,7 @@ struct crtx_graph {
 	char *name;
 	
 	char stop;
-	char flags;
+	unsigned char flags;
 	
 	char **types;
 	unsigned int n_types;
