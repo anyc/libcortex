@@ -41,7 +41,6 @@ struct crtx_dict_transformation {
 	char flag;
 	
 	char *format;
-// 	char **inkeys;
 };
 
 struct crtx_transform_dict_handler {

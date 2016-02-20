@@ -11,9 +11,6 @@
 struct crtx_dict_item * rcache_get_key(struct crtx_dict_item *ditem) {
 	struct crtx_dict_item *key_item;
 	
-// 	if (ditem->key)
-// 		return ditem;
-	
 	if (ditem->type != 'D') {
 		ERROR("wrong dictionary structure for simple cache layout: %c != %c\n", ditem->type, 'D');
 		return 0;
@@ -28,22 +25,9 @@ struct crtx_dict_item * rcache_match_cb_t_strcmp(struct crtx_cache *rc, struct c
 	struct crtx_dict_item *ditem;
 	struct crtx_dict_item *rkey;
 	
-// 	if (rc->simple)
-// 		return crtx_get_item(rc->entries, key);
-	
 	ditem = crtx_get_first_item(rc->entries);
 	
 	while (ditem) {
-// 		if (ditem->key && !strcmp(ditem->key, key))
-// 			return ditem;
-// 		
-// 		if (ditem->type != 'D') {
-// 			ERROR("wrong dictionary structure for simple cache layout\n");
-// 			continue;
-// 		}
-// 		
-// 		key_item = crtx_get_item(ditem->ds, "key");
-		
 		if (key->type == 's' && ditem->key && !strcmp(ditem->key, key->string))
 			return ditem;
 		
@@ -72,11 +56,6 @@ struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache *rc, struct cr
 	rex = &rc->regexps[0];
 	
 	while (ditem) {
-// 		rkey = rcache_get_key(ditem);
-		
-// 		if (!rex->key_is_regex && !crtx_cmp_item(key, rkey))
-// 			return ditem;
-		
 		if (!rex->key_is_regex && key->type == 's' && ditem->key && !strcmp(ditem->key, key->string))
 			return ditem;
 		
@@ -133,7 +112,6 @@ void response_cache_on_hit(struct crtx_cache_task *rc, struct crtx_dict_item *ke
 
 void response_cache_task(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_cache_task *ct = (struct crtx_cache_task*) userdata;
-// 	struct crtx_dict_item *key;
 	struct crtx_dict_item *ditem;
 	char ret;
 	
@@ -142,13 +120,6 @@ void response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 		ERROR("error creating key\n");
 		return;
 	}
-// 	sessiondata[0] = key;
-// 	sessiondata[1] = 0;
-	
-// 	if (!key) {
-// 		ERROR("error, key creation failed\n");
-// 		return;
-// 	}
 	
 	pthread_mutex_lock(&ct->cache->mutex);
 	
@@ -188,9 +159,6 @@ void crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key
 		memset(&dc->regexps[dc->n_regexps-1], 0, sizeof(struct crtx_cache_regex));
 		
 		ditem = crtx_alloc_item(dc->entries);
-		
-		// 			ditem->key = key;
-		// 			ditem->flags |= DIF_KEY_ALLOCATED;
 		
 		if (dc->simple) {
 			if (key->type != 's')
@@ -242,18 +210,15 @@ void crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key
 
 void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_cache_task *ct = (struct crtx_cache_task*) userdata;
-// 	struct crtx_cache *dc = ct->cache;
 	struct crtx_dict_item *key;
 	
 	key = &ct->key;
-	printf("%p %p\n", ct->cache_entry, event->response.raw);
+	
 	if (!ct->cache_entry && event->response.raw) {
 		crtx_cache_add_entry(ct, key, event);
-	} 
-// 	else {
-// 		free(key);
-		crtx_free_dict_item(key);
-// 	}
+	}
+	
+	crtx_free_dict_item(key);
 }
 
 // char * crtx_get_trim_copy(char * str, unsigned int maxlen) {
