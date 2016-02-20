@@ -596,7 +596,7 @@ char init() {
 	
 	
 	rcache_host = create_response_cache_task("su", pfw_rcache_create_key_host);
-	((struct crtx_cache_task*) rcache_host->userdata)->match_event = &rcache_match_cb_t_regex;
+// 	((struct crtx_cache_task*) rcache_host->userdata)->match_event = &rcache_match_cb_t_regex;
 	((struct crtx_cache_task*) rcache_host->userdata)->on_add = &host_cache_add_cb;
 	rcache_host->id = "rcache_host";
 	
@@ -605,7 +605,7 @@ char init() {
 	
 	
 	rcache_ip = create_response_cache_task("su", pfw_rcache_create_key_ip);
-	((struct crtx_cache_task*) rcache_ip->userdata)->match_event = &rcache_match_cb_t_regex;
+// 	((struct crtx_cache_task*) rcache_ip->userdata)->match_event = &rcache_match_cb_t_regex;
 	((struct crtx_cache_task*) rcache_host->userdata)->on_add = &ip_cache_add_cb;
 	rcache_ip->id = "rcache_ip";
 	
@@ -637,8 +637,8 @@ char init() {
 void finish() {
 	struct ip_ll *ipi, *ipin;
 	
-	free_response_cache(((struct crtx_cache*) rcache_host->userdata));
-	free_response_cache(((struct crtx_cache*) rcache_ip->userdata));
+	free_response_cache(((struct crtx_cache_task*) rcache_host->userdata)->cache);
+	free_response_cache(((struct crtx_cache_task*) rcache_ip->userdata)->cache);
 	free_task(rcache_host);
 	free_task(rcache_ip);
 	

@@ -136,14 +136,16 @@ struct crtx_dict * crtx_create_dict(char *signature, ...) {
 
 void free_dict(struct crtx_dict *ds) {
 	struct crtx_dict_item *di;
-	char *s;
+// 	char *s;
+	size_t i;
 	
 	if (!ds)
 		return;
 	
-	s = ds->signature;
+// 	s = ds->signature;
 	di = ds->items;
-	while (*s) {
+// 	while (*s) {
+	for (i=0; i < ds->signature_length; i++) {
 		if (di->flags & DIF_KEY_ALLOCATED)
 			free(di->key);
 		
@@ -161,7 +163,7 @@ void free_dict(struct crtx_dict *ds) {
 			break;
 		
 		di++;
-		s++;
+// 		s++;
 	}
 	
 	free(ds);

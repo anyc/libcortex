@@ -139,7 +139,7 @@ void free_listener(struct crtx_listener_base *listener) {
 // 	}
 }
 
-void traverse_graph_r(struct crtx_task *ti, struct crtx_event *event) {
+void traverse_graph_r(struct crtx_graph *graph, struct crtx_task *ti, struct crtx_event *event) {
 	void *sessiondata[3];
 	
 	if (ti->handle && (!ti->event_type_match || !strcmp(ti->event_type_match, event->type))) {
@@ -148,15 +148,15 @@ void traverse_graph_r(struct crtx_task *ti, struct crtx_event *event) {
 		ti->handle(event, ti->userdata, sessiondata);
 	}
 	
-	if (ti->next)
-		traverse_graph_r(ti->next, event);
+	if (ti->next && ((!event->response.raw && !event->response.dict) || (graph->flags & CRTX_GRAPH_KEEP_GOING)) )
+		traverse_graph_r(graph, ti->next, event);
 	
 	if (ti->cleanup)
 		ti->cleanup(event, ti->userdata, sessiondata);
 }
 
 void crtx_traverse_graph(struct crtx_graph *graph, struct crtx_event *event) {
-	traverse_graph_r(graph->tasks, event);
+	traverse_graph_r(graph, graph->tasks, event);
 }
 
 void *graph_consumer_main(void *arg) {
@@ -177,7 +177,7 @@ void *graph_consumer_main(void *arg) {
 	UNLOCK(graph->queue_mutex);
 	
 	if (graph->tasks)
-		traverse_graph_r(graph->tasks, qe->event);
+		traverse_graph_r(graph, graph->tasks, qe->event);
 	else
 		INFO("no task in graph %s\n", graph->types[0]);
 	

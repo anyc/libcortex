@@ -209,9 +209,9 @@ void *nfq_tmain(void *data) {
 }
 
 void free_nf_queue_listener(struct crtx_listener_base *data) {
-	struct crtx_nfq_listener *nfq_listata = (struct crtx_nfq_listener *) data;
+// 	struct crtx_nfq_listener *nfq_listata = (struct crtx_nfq_listener *) data;
 	
-	free_eventgraph(nfq_listata->parent.graph);
+// 	free_eventgraph(nfq_listata->parent.graph);
 	
 // 	pthread_join(nfq_listata->thread, 0);
 	

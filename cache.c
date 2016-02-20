@@ -79,7 +79,7 @@ void response_cache_on_hit(struct crtx_cache_task *rc, void **key, struct crtx_e
 		ERROR("cache type mismatch: %c != %c\n", c_entry->type, 'p');
 		return;
 	}
-	
+	printf("hit\n");
 	event->response.raw = c_entry->pointer;
 	event->response.raw_size = c_entry->size;
 	
@@ -100,15 +100,15 @@ void response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 	sessiondata[1] = 0;
 	
 	if (!key) {
-		printf("error, key creation failed\n");
+		ERROR("error, key creation failed\n");
 		return;
 	}
-	
+	printf("key %s\n", (char*) key);
 	pthread_mutex_lock(&ct->cache->mutex);
 // 	for (i=0; i < ct->cache->n_entries; i++) { //printf("\"%s\" \"%s\"\n", key, ct->cache->entries[i].key);
 // 		if (ct->match_event(ct->cache, key, event, &ct->cache->entries[i])) {
 		ditem = ct->match_event(ct->cache, key, event);
-		if (ditem) {
+		if (ditem) {printf("match\n");
 			ct->on_hit(ct, &key, event, ditem);
 			
 			sessiondata[1] = ditem;
@@ -119,6 +119,7 @@ void response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 // 				free(key);
 			return;
 		}
+		printf("no match\n");
 // 	}
 	pthread_mutex_unlock(&ct->cache->mutex);
 	
@@ -156,7 +157,7 @@ void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void 
 			
 			dc->n_regexps++;
 			dc->regexps = (struct crtx_cache_regex *) realloc(dc->regexps, sizeof(struct crtx_cache_regex)*dc->n_regexps);
-			memset(&dc->entries[dc->n_regexps-1], 0, sizeof(struct crtx_cache_regex));
+			memset(&dc->regexps[dc->n_regexps-1], 0, sizeof(struct crtx_cache_regex));
 			
 			ditem = crtx_alloc_item(dc->entries);
 			
@@ -279,6 +280,7 @@ struct crtx_task *create_response_cache_task(char *signature, create_key_cb_t cr
 	
 	ret = pthread_mutex_init(&dc->mutex, 0); ASSERT(ret >= 0);
 	
+	dc->entries = crtx_init_dict(0, 0);
 	
 	ct = (struct crtx_cache_task*) calloc(1, sizeof(struct crtx_cache_task));
 	ct->create_key = create_key;

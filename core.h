@@ -121,10 +121,13 @@ struct crtx_task {
 	struct crtx_task *next;
 };
 
+#define CRTX_GRAPH_KEEP_GOING 1<<0
+
 struct crtx_graph {
 	char *name;
 	
 	char stop;
+	char flags;
 	
 	char **types;
 	unsigned int n_types;
