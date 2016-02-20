@@ -87,6 +87,8 @@ char *stracpy(const char *str, size_t *str_length) {
 	}
 	
 	r = (char*) malloc(length+1);
+	if (!r)
+		return 0;
 	snprintf(r, length+1, "%s", str);
 	
 	return r;
@@ -152,8 +154,11 @@ void traverse_graph_r(struct crtx_graph *graph, struct crtx_task *ti, struct crt
 	if (ti->next && ((!event->response.raw && !event->response.dict) || (graph->flags & CRTX_GRAPH_KEEP_GOING)) )
 		traverse_graph_r(graph, ti->next, event);
 	
-	if (ti->cleanup)
+	if (ti->cleanup) {
+		INFO("execute task %s with event %s (%p)\n", ti->id, event->type, event);
+		
 		ti->cleanup(event, ti->userdata, sessiondata);
+	}
 }
 
 void crtx_traverse_graph(struct crtx_graph *graph, struct crtx_event *event) {

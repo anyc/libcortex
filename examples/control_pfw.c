@@ -324,7 +324,7 @@ void pfw_get_remote_part(struct crtx_dict *ds, char **remote_ip, char **remote_h
 	*remote_ip = ds->items[i_remote_ip].string;
 }
 
-char * pfw_rcache_create_key_ip(struct crtx_event *event) {
+char pfw_rcache_create_key_ip(struct crtx_event *event, struct crtx_dict_item *key) {
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
@@ -332,10 +332,17 @@ char * pfw_rcache_create_key_ip(struct crtx_event *event) {
 	
 	pfw_get_remote_part(ds, &remote_ip, &remote_host);
 	
-	return stracpy(remote_ip, 0);
+	key->type = 's';
+	key->string = stracpy(remote_ip, 0);
+	if (!key->string)
+		return 0;
+	key->flags |= DIF_KEY_ALLOCATED;
+	
+	return 1;
+// 	return stracpy(remote_ip, 0);
 }
 
-char * pfw_rcache_create_key_host(struct crtx_event *event) {
+char pfw_rcache_create_key_host(struct crtx_event *event, struct crtx_dict_item *key) {
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
@@ -343,7 +350,14 @@ char * pfw_rcache_create_key_host(struct crtx_event *event) {
 	
 	pfw_get_remote_part(ds, &remote_ip, &remote_host);
 	
-	return stracpy(remote_host, 0);
+	key->type = 's';
+	key->string = stracpy(remote_host, 0);
+	if (!key->string)
+		return 0;
+	key->flags |= DIF_KEY_ALLOCATED;
+	
+	return 1;
+// 	return stracpy(remote_host, 0);
 }
 
 static void pfw_print_packet(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -512,15 +526,15 @@ static void pfw_rules_filter(struct crtx_event *event, void *userdata, void **se
 	SET_MARK(event, PFW_DEFAULT);
 }
 
-char host_cache_add_cb(struct crtx_cache_task *ct, void *key, struct crtx_event *event) {
-	if (match_regexp_list(key, &host_nocachelist))
+char host_cache_add_cb(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
+	if (match_regexp_list(key->string, &host_nocachelist))
 		return 0;
 	else
 		return 1;
 }
 
-char ip_cache_add_cb(struct crtx_cache_task *ct, void *key, struct crtx_event *event) {
-	if (match_regexp_list(key, &ip_nocachelist))
+char ip_cache_add_cb(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
+	if (match_regexp_list(key->string, &ip_nocachelist))
 		return 0;
 	else
 		return 1;

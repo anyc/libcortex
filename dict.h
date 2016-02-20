@@ -73,4 +73,8 @@ struct crtx_task *crtx_create_transform_task(struct crtx_graph *in_graph, char *
 
 struct crtx_dict_item * crtx_get_item_by_idx(struct crtx_dict *ds, size_t idx);
 
+char crtx_cmp_item(struct crtx_dict_item *a, struct crtx_dict_item *b);
+void crtx_print_dict_item(struct crtx_dict_item *di, unsigned char level);
+void crtx_free_dict_item(struct crtx_dict_item *di);
+
 #endif

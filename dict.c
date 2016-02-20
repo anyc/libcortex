@@ -39,6 +39,11 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 			
 			di->size = va_arg(va, size_t) + 1; // add space for \0 delimiter
 			break;
+		case 'p':
+			di->pointer = va_arg(va, void*);
+			
+			di->size = va_arg(va, size_t);
+			break;
 		case 'D':
 			di->ds = va_arg(va, struct crtx_dict*);
 			di->size = va_arg(va, size_t);
@@ -136,6 +141,20 @@ struct crtx_dict * crtx_create_dict(char *signature, ...) {
 	return ds;
 }
 
+void crtx_free_dict_item(struct crtx_dict_item *di) {
+	if (di->key && di->flags & DIF_KEY_ALLOCATED)
+		free(di->key);
+	
+	switch (di->type) {
+		case 's':
+			if (di->string && !(di->flags & DIF_DATA_UNALLOCATED))
+				free(di->string);
+			break;
+		case 'D':
+			free_dict(di->ds);
+			break;
+	}
+}
 
 void free_dict(struct crtx_dict *ds) {
 	struct crtx_dict_item *di;
@@ -149,18 +168,7 @@ void free_dict(struct crtx_dict *ds) {
 	di = ds->items;
 // 	while (*s) {
 	for (i=0; i < ds->signature_length; i++) {
-		if (di->flags & DIF_KEY_ALLOCATED)
-			free(di->key);
-		
-		switch (di->type) {
-			case 's':
-				if (!(di->flags & DIF_DATA_UNALLOCATED))
-					free(di->string);
-				break;
-			case 'D':
-				free_dict(di->ds);
-				break;
-		}
+		crtx_free_dict_item(di);
 		
 		if (DIF_IS_LAST(di))
 			break;
@@ -170,6 +178,25 @@ void free_dict(struct crtx_dict *ds) {
 	}
 	
 	free(ds);
+}
+
+void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level);
+void crtx_print_dict_item(struct crtx_dict_item *di, unsigned char level) {
+	INFO("%s = ", di->key?di->key:"\"\"");
+	
+	switch (di->type) {
+		case 'u': INFO("(uint32_t) %d\n", di->uint32); break;
+		case 'i': INFO("(int32_t) %d\n", di->int32); break;
+		case 's': INFO("(char*) %s\n", di->string); break;
+		case 'p': INFO("(void*) %p\n", di->pointer); break;
+		case 'D':
+			// 				INFO("(dict) \n");
+			if (di->ds)
+				crtx_print_dict_rec(di->ds, level+1);
+			break;
+		default: ERROR("print_dict: unknown type %c\n", di->type); break;
+	}
+	
 }
 
 void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level) {
@@ -190,21 +217,13 @@ void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level) {
 	di = ds->items;
 	while ( s?*s:1 && (!s)? i<ds->signature_length:1 ) {
 		for (j=0;j<level;j++) INFO("   "); // indent
-		INFO("%u: %s = ", i, di->key?di->key:"\"\"");
+		
+		INFO("%u: ", i);
+		
+		crtx_print_dict_item(di, level);
 		
 		if (s && *s != di->type)
-			INFO("error type %c != %c\n", *s, di->type);
-		
-		switch (di->type) {
-			case 'u': INFO("(uint32_t) %d\n", di->uint32); break;
-			case 'i': INFO("(int32_t) %d\n", di->int32); break;
-			case 's': INFO("(char*) %s\n", di->string); break;
-			case 'D':
-// 				INFO("(dict) \n");
-				if (di->ds)
-					crtx_print_dict_rec(di->ds, level+1);
-				break;
-		}
+			ERROR("error type %c != %c\n", *s, di->type);
 		
 		if (s) s++;
 		di++;
@@ -548,4 +567,43 @@ void crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void 
 
 struct crtx_task *crtx_create_transform_task(struct crtx_graph *in_graph, char *name, struct crtx_transform_dict_handler *trans) {
 	return crtx_create_task(in_graph, 0, name, &crtx_transform_dict_handler, trans);
+}
+
+#define MY_CMP(a, b) ( (a) < (b) ? -1 : (a) > (b) ? 1 : 0 )
+char crtx_cmp_item(struct crtx_dict_item *a, struct crtx_dict_item *b) {
+	int res;
+	struct crtx_dict_item *ia, *ib;
+	
+	res = memcmp(&a->type, &b->type, 1);
+	if (res)
+		return res;
+	
+	switch (a->type) {
+		case 's':
+			return strcmp(a->string, b->string);
+		case 'u':
+			return MY_CMP(a->uint32, b->uint32);
+		case 'i':
+			return MY_CMP(a->int32, b->int32);
+		case 'D':
+			ia = crtx_get_first_item(a->ds);
+			ib = crtx_get_first_item(b->ds);
+			
+			while (ia && ib) {
+				res = crtx_cmp_item(ia, ib);
+				if (res)
+					return res;
+				
+				ia = crtx_get_next_item(a->ds, ia);
+				ib = crtx_get_next_item(b->ds, ib);
+			}
+			if (!ia && !ib)
+				return 0;
+			if (!ia)
+				return -1;
+			if (!ib)
+				return 1;
+		default: ERROR("TODO");
+			return 1;
+	}
 }

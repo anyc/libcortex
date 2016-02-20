@@ -128,33 +128,51 @@ static void inbox_dispatch_handler(struct crtx_event *event, void *userdata, voi
 	add_raw_event(event);
 }
 
-static char *in_create_key_cb(struct crtx_event *event) {
-	char *key = 0;
-	
+static char in_create_key_cb(struct crtx_event *event, struct crtx_dict_item *key) {
 	if (event->original_event_id) {
-		key = (char*) malloc(sizeof(uint64_t)*2+1);
-		snprintf(key, sizeof(uint64_t)*2+1, "%" PRIu64, (uint64_t) (uintptr_t) event->original_event_id);
+		char *skey = 0;
+		
+		skey = (char*) malloc(sizeof(uint64_t)*2+1);
+		if (!skey)
+			return 0;
+		snprintf(skey, sizeof(uint64_t)*2+1, "%" PRIu64, (uint64_t) (uintptr_t) event->original_event_id);
+		
+		key->type = 's';
+		key->string = skey;
+		key->flags |= DIF_KEY_ALLOCATED;
+		
+		return 1;
 	}
 	
-	return key;
+	return 0;
+	
+// 	return key;
 }
 
-static char *out_create_key_cb(struct crtx_event *event) {
-	char *key;
+static char out_create_key_cb(struct crtx_event *event, struct crtx_dict_item *key) {
+	char *skey;
 	
-	key = (char*) malloc(sizeof(uint64_t)*2+1);
-	snprintf(key, sizeof(uint64_t)*2+1, "%" PRIu64, (uint64_t) (uintptr_t) event);
+	skey = (char*) malloc(sizeof(uint64_t)*2+1);
+	if (!skey)
+		return 0;
+	snprintf(skey, sizeof(uint64_t)*2+1, "%" PRIu64, (uint64_t) (uintptr_t) event);
 	
-	return key;
+	key->type = 's';
+	key->string = skey;
+	key->flags |= DIF_KEY_ALLOCATED;
+	
+	return 1;
+	
+// 	return key;
 }
 
-static void out_cache_on_hit(struct crtx_cache_task *ct, void **key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
+static void out_cache_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
 	printf("ERROR duplicate event ID\n");
 }
 
-static void out_cache_on_miss(struct crtx_cache_task *ct, void **key, struct crtx_event *event) {
-	struct crtx_cache *dc = ct->cache;
-	struct crtx_dict_item *ditem;
+static void out_cache_on_miss(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
+// 	struct crtx_cache *dc = ct->cache;
+// 	struct crtx_dict_item *ditem;
 	
 	printf("add event outlist\n");
 	
@@ -164,27 +182,33 @@ static void out_cache_on_miss(struct crtx_cache_task *ct, void **key, struct crt
 	
 	reference_event_response(event);
 	
-	pthread_mutex_lock(&dc->mutex);
 	
-// 	dc->n_entries++;
-// 	dc->entries = (struct crtx_cache_entry *) realloc(dc->entries, sizeof(struct crtx_cache_entry)*dc->n_entries);
+	
+	crtx_cache_add_entry(ct, key, event);
+	
+	
+	
+// 	pthread_mutex_lock(&dc->mutex);
 // 	
-// 	memset(&dc->entries[dc->n_entries-1], 0, sizeof(struct crtx_cache_entry));
-// 	dc->entries[dc->n_entries-1].key = *key;
-// 	dc->entries[dc->n_entries-1].value = event;
-// 	dc->entries[dc->n_entries-1].value_size = sizeof(void*);
-	
-	ditem = crtx_alloc_item(dc->entries);
-	ditem->key = *key;
-	ditem->pointer = event;
-	ditem->type = 'p';
-	
-	pthread_mutex_unlock(&dc->mutex);
-	
-	*key = 0;
+// // 	dc->n_entries++;
+// // 	dc->entries = (struct crtx_cache_entry *) realloc(dc->entries, sizeof(struct crtx_cache_entry)*dc->n_entries);
+// // 	
+// // 	memset(&dc->entries[dc->n_entries-1], 0, sizeof(struct crtx_cache_entry));
+// // 	dc->entries[dc->n_entries-1].key = *key;
+// // 	dc->entries[dc->n_entries-1].value = event;
+// // 	dc->entries[dc->n_entries-1].value_size = sizeof(void*);
+// 	
+// 	ditem = crtx_alloc_item(dc->entries);
+// 	ditem->key = key;
+// 	ditem->pointer = event;
+// 	ditem->type = 'p';
+// 	
+// 	pthread_mutex_unlock(&dc->mutex);
+// 	
+// 	*key = 0;
 }
 
-static void in_cache_on_hit(struct crtx_cache_task *ct, void **key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
+static void in_cache_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
 	struct crtx_event *orig_event;
 	
 	printf("in_cache_on_hit\n");
@@ -199,7 +223,7 @@ static void in_cache_on_hit(struct crtx_cache_task *ct, void **key, struct crtx_
 	}
 }
 
-static void in_cache_on_miss(struct crtx_cache_task *ct, void **key, struct crtx_event *event) {
+static void in_cache_on_miss(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
 	if (!strcmp(event->type, "cortex.socket.response")) {
 		// drop response
 	}printf("in_cache_on_miss\n");
