@@ -122,7 +122,8 @@ void response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 	
 	ret = ct->create_key(event, &ct->key);
 	if (!ret) {
-		ERROR("error creating key\n");
+		DBG("no key created for \"%s\", ignoring\n", event->type);
+		ct->key.string = 0;
 		return;
 	}
 	
@@ -244,6 +245,9 @@ void response_cache_task_cleanup(struct crtx_event *event, void *userdata, void 
 	struct crtx_dict_item *key;
 	
 	key = &ct->key;
+	
+	if (!ct->key.string)
+		return;
 	
 	if (!ct->cache_entry && event->response.raw.pointer) {
 		crtx_cache_add_entry(ct, key, event);

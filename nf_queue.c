@@ -1,20 +1,27 @@
 
+/*
+ * Setup an iptables rule like the following to use nfqueue:
+ *
+ * iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW  -m mark --mark 0 -j NFQUEUE --queue-num 0
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <netinet/in.h>
+
+#include <arpa/inet.h>
+#include <inttypes.h>
 #include <linux/types.h>
 #include <libnetfilter_queue/libnetfilter_queue.h>
 #include <linux/netfilter.h>
-#include <inttypes.h>
-
+#include <netdb.h>
+#include <netinet/in.h>
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
 #include <netinet/ip.h>
-#include <arpa/inet.h>
 #include <sys/socket.h>
-#include <netdb.h>
 
 #include "core.h"
 #include "nf_queue.h"
@@ -22,12 +29,10 @@
 
 char *nfq_packet_msg_etype[] = { NFQ_PACKET_MSG_ETYPE, 0 };
 
-// iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW  -m mark --mark 0 -j NFQUEUE --queue-num 0
-
 static void nfq_raw2dict(struct crtx_event_data *data) {
 	struct crtx_nfq_packet *ev;
 	int res;
-	char host[256];
+	char host[NI_MAXHOST];
 	struct iphdr *iph;
 	size_t slen;
 	struct crtx_dict_item *di;
@@ -56,9 +61,10 @@ static void nfq_raw2dict(struct crtx_event_data *data) {
 		crtx_fill_data_item(di, 's', "src_ip", stracpy(inet_ntoa(*(struct in_addr *)&iph->saddr), &slen), slen, 0); di++;
 		
 		sa.sin_addr = *(struct in_addr *)&iph->saddr;
-		res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
+		res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, NI_NAMEREQD);
 		if (res) {
-			printf("getnameinfo failed %d\n", res);
+			if (res != EAI_NONAME)
+				printf("getnameinfo failed: %d %s\n", res, gai_strerror(res));
 			host[0] = 0;
 		}
 		
@@ -71,9 +77,10 @@ static void nfq_raw2dict(struct crtx_event_data *data) {
 		crtx_fill_data_item(di, 's', "dst_ip", stracpy(inet_ntoa(*(struct in_addr *)&iph->daddr), &slen), slen, 0); di++;
 		
 		sa.sin_addr = *(struct in_addr *)&iph->daddr;
-		res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
+		res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, NI_NAMEREQD);
 		if (res) {
-			printf("getnameinfo failed %d\n", res);
+			if (res != EAI_NONAME)
+				printf("getnameinfo failed: %d %s\n", res, gai_strerror(res));
 			host[0] = 0;
 		}
 		
@@ -116,6 +123,8 @@ static void nfq_raw2dict(struct crtx_event_data *data) {
 // 		fprintf(stdout,"UDP{sport=%u; dport=%u; len=%u}\n",
 // 				ntohs(udp->source), ntohs(udp->dest), udp->len);
 	}
+	
+	crtx_print_dict(ds);
 }
 
 static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
@@ -214,8 +223,6 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		pkt->mark_out = nfq_list->default_mark;
 		
 		event = create_event(nfq_list->parent.graph->types[0], pkt, data_size);
-// 		event->response.raw = &pkt->mark_out;
-// 		event->response.raw_size = sizeof(u_int32_t);
 		event->data.raw.flags |= DIF_DATA_UNALLOCATED;
 		event->data.raw_to_dict = &nfq_raw2dict;
 		
@@ -225,21 +232,15 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		wait_on_event(event);
 		
-// 		if (event->response.raw.pointer && event->response.raw.pointer != &pkt->mark_out)
-// 			pkt->mark_out = *((u_int32_t*) event->response.raw.pointer);
-		
 		if (event->response.raw.type == 'u')
 			pkt->mark_out = event->response.raw.uint32;
 		else
 			pkt->mark_out = nfq_list->default_mark;
 		
-// 		nfq_list->default_policy
 		printf("packet mark: %" PRIu32 "\n", pkt->mark_out);
 		
-// 		int ret = nfq_set_verdict2(qh, pkt->id, NF_REPEAT, (u_int32_t) event->response.raw, 0, NULL);
 		ret = nfq_set_verdict2(qh, pkt->id, NF_REPEAT, pkt->mark_out, 0, NULL);
 		
-// 		event->response.raw = 0;
 		dereference_event_release(event);
 		
 		return ret;
@@ -254,7 +255,6 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		else
 			return 0;
 		
-// 		return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL);
 		return nfq_set_verdict2(qh, id, NF_REPEAT, nfq_list->default_mark, 0, NULL);
 	}
 	
@@ -312,13 +312,6 @@ void *nfq_tmain(void *data) {
 }
 
 void free_nf_queue_listener(struct crtx_listener_base *data) {
-// 	struct crtx_nfq_listener *nfq_listata = (struct crtx_nfq_listener *) data;
-	
-// 	free_eventgraph(nfq_listata->parent.graph);
-	
-// 	pthread_join(nfq_listata->thread, 0);
-	
-// 	free(nfq_listata);
 }
 
 struct crtx_listener_base *crtx_new_nf_queue_listener(void *options) {
@@ -329,7 +322,6 @@ struct crtx_listener_base *crtx_new_nf_queue_listener(void *options) {
 	
 	new_eventgraph(&nfq_listata->parent.graph, 0, nfq_packet_msg_etype);
 	
-// 	pthread_create(&nfq_listata->thread, NULL, nfq_tmain, nfq_listata);
 	get_thread(nfq_tmain, nfq_listata, 1);
 	
 	return &nfq_listata->parent;

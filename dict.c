@@ -9,16 +9,16 @@
 
 
 char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
-	// 	if (ds) {
-	// 		size_t idx;
-	// 		
-	// 		idx = di - ds->items;
-	// 		printf("idx %zu\n", idx);
-	// 		if (ds->signature[idx] != type) {
-	// 			printf("type mismatch %c %c\n", ds->signature[idx], type);
-	// 			return -1;
-	// 		}
-	// 	}
+// 	if (ds) {
+// 		size_t idx;
+// 		
+// 		idx = di - ds->items;
+// 		printf("idx %zu\n", idx);
+// 		if (ds->signature[idx] != type) {
+// 			printf("type mismatch %c %c\n", ds->signature[idx], type);
+// 			return -1;
+// 		}
+// 	}
 	
 	di->type = type;
 	di->key = va_arg(va, char*);
@@ -190,9 +190,11 @@ void crtx_print_dict_item(struct crtx_dict_item *di, unsigned char level) {
 		case 's': INFO("(char*) %s\n", di->string); break;
 		case 'p': INFO("(void*) %p\n", di->pointer); break;
 		case 'D':
-			// 				INFO("(dict) \n");
+// 			INFO("(dict) \n");
 			if (di->ds)
 				crtx_print_dict_rec(di->ds, level+1);
+			else
+				INFO("(null)\n");
 			break;
 		default: ERROR("print_dict: unknown type %c\n", di->type); break;
 	}
