@@ -34,6 +34,15 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 				return 0;
 			}
 			break;
+		case 'z':
+			di->uint64 = va_arg(va, uint64_t);
+			
+			di->size = va_arg(va, size_t);
+			if (di->size > 0 && di->size != sizeof(uint64_t)) {
+				ERROR("size mismatch %zu %zu\n", di->size, sizeof(uint64_t));
+				return 0;
+			}
+			break;
 		case 's':
 			di->string = va_arg(va, char*);
 			
@@ -110,6 +119,30 @@ struct crtx_dict * crtx_init_dict(char *signature, uint32_t sign_length, size_t 
 	return ds;
 }
 
+char crtx_add_item(struct crtx_dict **dict, char type, ...) {
+	char ret;
+	va_list va;
+	struct crtx_dict_item *item;
+	
+	if (!*dict) {
+		*dict = crtx_init_dict(0, 1, 0);
+		item = crtx_get_first_item(*dict);
+	} else {
+		item = crtx_alloc_item(*dict);
+	}
+	
+	if (!item)
+		return 0;
+	
+	va_start(va, type);
+	
+	ret = crtx_fill_data_item_va(item, type, va);
+	
+	va_end(va);
+	
+	return ret;
+}
+
 struct crtx_dict * crtx_create_dict(char *signature, ...) {
 	struct crtx_dict *ds;
 	struct crtx_dict_item *di;
@@ -146,12 +179,19 @@ void crtx_free_dict_item(struct crtx_dict_item *di) {
 		free(di->key);
 	
 	switch (di->type) {
+		case 'p':
+			if (di->pointer && !(di->flags & DIF_DATA_UNALLOCATED))
+				free(di->pointer);
+			di->pointer = 0;
+			break;
 		case 's':
 			if (di->string && !(di->flags & DIF_DATA_UNALLOCATED))
 				free(di->string);
+			di->string = 0;
 			break;
 		case 'D':
 			free_dict(di->ds);
+			di->ds = 0;
 			break;
 	}
 }
@@ -185,10 +225,11 @@ void crtx_print_dict_item(struct crtx_dict_item *di, unsigned char level) {
 	INFO("%s = ", di->key?di->key:"\"\"");
 	
 	switch (di->type) {
-		case 'u': INFO("(uint32_t) %d\n", di->uint32); break;
+		case 'u': INFO("(uint32_t) %u\n", di->uint32); break;
 		case 'i': INFO("(int32_t) %d\n", di->int32); break;
 		case 's': INFO("(char*) %s\n", di->string); break;
 		case 'p': INFO("(void*) %p\n", di->pointer); break;
+		case 'z': INFO("(uint64_t) %zu\n", di->uint64); break;
 		case 'D':
 // 			INFO("(dict) \n");
 			if (di->ds)
@@ -245,6 +286,13 @@ char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size
 				memcpy(buffer, &di->uint32, buffer_size);
 				return 1;
 			}
+			break;
+		case 'z':
+			if (buffer_size == sizeof(uint64_t)) {
+				memcpy(buffer, &di->uint64, buffer_size);
+				return 1;
+			}
+			break;
 		case 's':
 		case 'D':
 			if (buffer_size == sizeof(void*)) {

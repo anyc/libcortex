@@ -10,7 +10,7 @@ typedef struct crtx_dict_item * (*match_cb_t)(struct crtx_cache *rc, struct crtx
 typedef void (*hit_cb_t)(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry);
 typedef void (*miss_cb_t)(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event);
 typedef char (*add_cb_t)(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event);
-
+typedef void (*get_time_cb_t)(struct crtx_dict_item *item);
 
 struct crtx_cache_regex {
 	regex_t regex;
@@ -20,10 +20,16 @@ struct crtx_cache_regex {
 	struct crtx_dict_item *dict_item;
 };
 
+#define CRTX_CACHE_SIMPLE_LAYOUT 1<<0
+#define CRTX_CACHE_NO_TIMES 1<<1
+#define CRTX_CACHE_REGEXP 1<<2
+
 struct crtx_cache {
-	char simple;
+	char flags;
 	
 	struct crtx_dict *entries;
+	
+	struct crtx_dict *config;
 	
 	struct crtx_cache_regex *regexps;
 	size_t n_regexps;
@@ -34,6 +40,7 @@ struct crtx_cache {
 struct crtx_cache_task {
 	struct crtx_cache *cache;
 	
+	// temporary data
 	struct crtx_dict_item key;
 	struct crtx_dict_item *cache_entry;
 	
@@ -42,6 +49,8 @@ struct crtx_cache_task {
 	hit_cb_t on_hit;
 	miss_cb_t on_miss;
 	add_cb_t on_add; // can prevent adding entries to the cache
+	
+	get_time_cb_t get_time;
 };
 
 void response_cache_task(struct crtx_event *event, void *userdata, void **sessiondata);

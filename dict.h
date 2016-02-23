@@ -64,6 +64,7 @@ char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size
 void crtx_print_dict(struct crtx_dict *ds);
 struct crtx_dict_item *crtx_get_first_item(struct crtx_dict *ds);
 struct crtx_dict_item *crtx_get_next_item(struct crtx_dict *ds, struct crtx_dict_item *di);
+char crtx_add_item(struct crtx_dict **dict, char type, ...);
 
 char *crtx_get_string(struct crtx_dict *ds, char *key);
 struct crtx_dict *crtx_get_dict(struct crtx_dict *ds, char *key);
