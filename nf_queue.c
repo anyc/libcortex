@@ -124,7 +124,7 @@ static void nfq_raw2dict(struct crtx_event_data *data) {
 // 				ntohs(udp->source), ntohs(udp->dest), udp->len);
 	}
 	
-	crtx_print_dict(ds);
+// 	crtx_print_dict(ds);
 }
 
 static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,

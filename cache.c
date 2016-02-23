@@ -130,7 +130,6 @@ void response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 		struct crtx_dict_item *creation, *last_match, now;
 		uint64_t timeout;
 		
-		crtx_print_dict(ct->cache->config);
 		ret = crtx_get_value(ct->cache->config, "timeout", 'z', &timeout, sizeof(timeout));
 		if (ret) {
 			// check if 

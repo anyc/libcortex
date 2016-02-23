@@ -479,22 +479,22 @@ char init() {
 	
 	crtx_create_task(nfq_list.parent.graph, 0, "pfw_print_packet", &pfw_print_packet, 0);
 	
+	// host
 	rcache_host = create_response_cache_task("su", pfw_rcache_create_key_host);
 	((struct crtx_cache_task*) rcache_host->userdata)->on_add = &host_cache_add_cb;
 	rcache_host->id = "rcache_host";
-// 	cfg = crtx_alloc_item( ((struct crtx_cache_task*) rcache_host->userdata)->cache->config );
-// 	cfg->key = "timeout";
-// 	cfg->type = 'z';
-// 	cfg->uint64 = 1e10; //1000000000
+	
 	crtx_add_item(&((struct crtx_cache_task*) rcache_host->userdata)->cache->config,
 			'z', "timeout", (uint64_t) 1e10, 0, 0);
 	
 	add_task(nfq_list.parent.graph, rcache_host);
 	
 	
+	// IP
 	rcache_ip = create_response_cache_task("su", pfw_rcache_create_key_ip);
 	((struct crtx_cache_task*) rcache_ip->userdata)->on_add = &ip_cache_add_cb;
 	rcache_ip->id = "rcache_ip";
+	
 	crtx_add_item(&((struct crtx_cache_task*) rcache_ip->userdata)->cache->config,
 			    'z', "timeout", (uint64_t) 1e10, 0, 0);
 	
