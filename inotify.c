@@ -124,7 +124,7 @@ void inotify_to_dict(struct crtx_event_data *data) {
 	memset(mask_signature, 's', mlen);
 	mask_signature[mlen] = 0;
 	
-	mask_dict = crtx_init_dict(mask_signature, 0);
+	mask_dict = crtx_init_dict(mask_signature, mlen, 0);
 	
 	dictit = event_dict;
 	di = mask_dict->items;

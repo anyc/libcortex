@@ -86,27 +86,26 @@ struct crtx_dict_item * crtx_alloc_item(struct crtx_dict *dict) {
 	return &dict->items[dict->signature_length-1];
 }
 
-struct crtx_dict * crtx_init_dict(char *signature, size_t payload_size) {
+struct crtx_dict * crtx_init_dict(char *signature, uint32_t sign_length, size_t payload_size) {
 	struct crtx_dict *ds;
 	size_t size;
 	
 	size = sizeof(struct crtx_dict) + payload_size;
 	
-	if (signature)
-		size += strlen(signature) * sizeof(struct crtx_dict_item);
+	if (sign_length == 0 && signature)
+		sign_length = strlen(signature);
 	
-	ds = (struct crtx_dict*) malloc(size);
+	if (sign_length)
+		size += sign_length * sizeof(struct crtx_dict_item);
+	
+	ds = (struct crtx_dict*) calloc(1, size);
 	
 	ds->signature = signature;
+	ds->signature_length = sign_length;
 	ds->size = size;
 	
-	if (signature) {
-		ds->signature_length = strlen(signature);
+	if (sign_length)
 		ds->items = (struct crtx_dict_item *) ((char*) ds + sizeof(struct crtx_dict));
-	} else {
-		ds->signature_length = 0;
-		ds->items = 0;
-	}
 	
 	return ds;
 }
@@ -116,9 +115,10 @@ struct crtx_dict * crtx_create_dict(char *signature, ...) {
 	struct crtx_dict_item *di;
 	char *s, ret;
 	va_list va;
+	uint32_t sign_length;
 	
-	
-	ds = crtx_init_dict(signature, 0);
+	sign_length = strlen(signature);
+	ds = crtx_init_dict(signature, sign_length, 0);
 	
 	va_start(va, signature);
 	
@@ -499,13 +499,15 @@ struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, 
 	struct crtx_dict_item *di;
 	size_t alloc;
 	size_t i;
+	uint32_t sign_length;
 	
-	ds = crtx_init_dict(signature, 0);
+	sign_length = strlen(signature);
+	ds = crtx_init_dict(signature, sign_length, 0);
 	
 	di = ds->items;
 	pit = transf;
 // 	for (pit = transf; pit && pit->type; pit++) {
-	for (i=0; i<strlen(signature); i++) {
+	for (i=0; i<sign_length; i++) {
 		di->type = pit->type;
 		di->key = pit->key;
 		
@@ -606,4 +608,77 @@ char crtx_cmp_item(struct crtx_dict_item *a, struct crtx_dict_item *b) {
 		default: ERROR("TODO");
 			return 1;
 	}
+}
+
+char crtx_dict_calc_payload_size(struct crtx_dict *orig, size_t *size) {
+	struct crtx_dict_item *di;
+	size_t lsize;
+	char ret, result;
+	
+	di = crtx_get_first_item(orig);
+	
+	result = 1;
+	lsize = 0;
+	while (di) {
+		if (di->type == 'D') {
+			ret = crtx_dict_calc_payload_size(di->ds, &lsize);
+			if (!ret)
+				result = 0;
+		} else
+		if (di->type == 'p' || di->type == 's') {
+			if (di->size == 0)
+				DBG("calc_payload_size: size of item \"%s\" (t %c) = 0\n", di->key, di->type);
+			lsize += di->size;
+		}
+		
+		di = crtx_get_next_item(orig, di);
+	}
+	
+	*size += lsize;
+	
+	return result;
+}
+
+struct crtx_dict *crtx_dict_copy(struct crtx_dict *orig) {
+	size_t psize;
+	char ret;
+	struct crtx_dict *dict;
+	struct crtx_dict_item *oitem, *nitem;
+	
+	printf("coipy\n");
+	
+	psize = 0;
+	ret = crtx_dict_calc_payload_size(orig, &psize);
+	if (!ret)
+		ERROR("error while calculating dict payload size (sign \"%s\")\n", orig->signature);
+	
+	dict = crtx_init_dict(orig->signature, orig->signature_length, psize);
+	
+	oitem = crtx_get_first_item(orig);
+	nitem = crtx_get_first_item(dict);
+	while (oitem) {
+		memcpy(nitem, oitem, sizeof(struct crtx_dict_item));
+		
+		if (oitem->key && (oitem->flags & DIF_KEY_ALLOCATED))
+			nitem->key = stracpy(oitem->key, 0);
+		
+		if (oitem->type == 'D') {
+			nitem->ds = crtx_dict_copy(oitem->ds);
+		} else
+		if (oitem->type == 's') {
+			if ( !(oitem->flags & DIF_DATA_UNALLOCATED) )
+				nitem->string = stracpy(oitem->string, 0);
+		} else
+		if (oitem->type == 'p') {
+			if ( !(oitem->flags & DIF_DATA_UNALLOCATED) ) {
+				nitem->pointer = malloc(oitem->size);
+				memcpy(nitem->pointer, oitem->pointer, oitem->size);
+			}
+		}
+		
+		oitem = crtx_get_next_item(orig, oitem);
+		nitem = crtx_get_next_item(dict, nitem);
+	}
+	
+	return dict;
 }

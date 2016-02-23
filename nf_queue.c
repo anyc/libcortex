@@ -128,8 +128,13 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		wait_on_event(event);
 		
-		if (event->response.raw.pointer && event->response.raw.pointer != &pkt->mark_out)
-			pkt->mark_out = *((u_int32_t*) event->response.raw.pointer);
+// 		if (event->response.raw.pointer && event->response.raw.pointer != &pkt->mark_out)
+// 			pkt->mark_out = *((u_int32_t*) event->response.raw.pointer);
+		
+		if (event->response.raw.type == 'u')
+			pkt->mark_out = event->response.raw.uint32;
+		else
+			pkt->mark_out = nfq_list->default_mark;
 		
 // 		nfq_list->default_policy
 		printf("packet mark: %" PRIu32 "\n", pkt->mark_out);

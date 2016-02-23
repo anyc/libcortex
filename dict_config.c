@@ -55,7 +55,7 @@ void crtx_load_config(struct crtx_config *config) {
 	if (!s)
 		return;
 	
-	config->data = crtx_init_dict(0, 0);
+	config->data = crtx_init_dict(0, 0, 0);
 	
 	#ifdef WITH_JSON
 	crtx_load_json_config(config, s);

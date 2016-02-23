@@ -154,8 +154,8 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 	ev = (struct crtx_nfq_packet*) event->data.raw.pointer;
 	
 	// if someone set a response already, ignore
-	if (event->response.raw.pointer && event->response.raw.pointer != &ev->mark_out)
-		return;
+// 	if (event->response.raw.pointer && event->response.raw.pointer != &ev->mark_out)
+// 		return;
 	
 	ev->mark_out = PFW_DEFAULT;
 	
@@ -182,7 +182,7 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 		iph = (struct iphdr*)ev->payload;
 		sa.sin_family = AF_INET;
 		
-		ds = crtx_init_dict(PFW_NEWPACKET_SIGNATURE, 0);
+		ds = crtx_init_dict(PFW_NEWPACKET_SIGNATURE, strlen(PFW_NEWPACKET_SIGNATURE), 0);
 		di = ds->items;
 		
 		crtx_fill_data_item(di, 'u', "protocol", iph->protocol, 0, 0); di++;
@@ -225,7 +225,7 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 			
 			tcp = (struct tcphdr *) (ev->payload + (iph->ihl << 2));
 			
-			di->ds = crtx_init_dict(PFW_NEWPACKET_TCP_SIGNATURE, 0);
+			di->ds = crtx_init_dict(PFW_NEWPACKET_TCP_SIGNATURE, strlen(PFW_NEWPACKET_TCP_SIGNATURE), 0);
 			pdi = di->ds->items;
 			
 			crtx_fill_data_item(pdi, 'u', "src_port", ntohs(tcp->source), 0, 0); pdi++;
@@ -242,7 +242,7 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 			
 			udp = (struct udphdr *) (ev->payload + (iph->ihl << 2));
 			
-			di->ds = crtx_init_dict(PFW_NEWPACKET_UDP_SIGNATURE, 0);
+			di->ds = crtx_init_dict(PFW_NEWPACKET_UDP_SIGNATURE, strlen(PFW_NEWPACKET_UDP_SIGNATURE), 0);
 			pdi = di->ds->items;
 			
 			crtx_fill_data_item(pdi, 'u', "src_port", ntohs(udp->source), 0, 0); pdi++;
@@ -267,11 +267,13 @@ static void pfw_main_handler(struct crtx_event *event, void *userdata, void **se
 		
 		wait_on_event(newp_event);
 		
-		if (newp_event->response.raw.pointer && newp_event->response.raw.pointer != &ev->mark_out)
-			ev->mark_out = *((u_int32_t*) newp_event->response.raw.pointer);
+// 		if (newp_event->response.raw.pointer && newp_event->response.raw.pointer != &ev->mark_out)
+// 			ev->mark_out = *((u_int32_t*) newp_event->response.raw.pointer);
+		event->response.raw.uint32 = newp_event->response.raw.uint32;
+		event->response.raw.type = 'u';
 		
 		// do not free as referenced data does not belong to us
-		newp_event->data.raw.pointer = 0; 
+		newp_event->data.raw.pointer = 0;
 		newp_event->response.raw.pointer = 0;
 		dereference_event_release(newp_event);
 	}
@@ -498,11 +500,14 @@ static void pfw_rules_filter(struct crtx_event *event, void *userdata, void **se
 	
 	pfw_get_remote_part(ds, &remote_ip, &remote_host);
 	
-	#define SET_MARK(event, mark) { \
-			(event)->response.raw.pointer = &((struct crtx_nfq_packet*) (event)->data.raw.pointer)->mark_out; \
-			(event)->response.raw.size = sizeof(u_int32_t); \
-			((struct crtx_nfq_packet*) (event)->data.raw.pointer)->mark_out = (mark); \
-		}
+/* 	#define SET_MARK(event, mark) { \
+// 			(event)->response.raw.pointer = &((struct crtx_nfq_packet*) (event)->data.raw.pointer)->mark_out; \
+// 			(event)->response.raw.size = sizeof(u_int32_t); \
+// 			((struct crtx_nfq_packet*) (event)->data.raw.pointer)->mark_out = (mark); \
+//  		}
+*/
+	
+	#define SET_MARK(event, mark) { (event)->response.raw.type = 'u'; (event)->response.raw.uint32 = (mark); }
 	if (match_regexp_list(remote_host, &host_blacklist)) {
 		SET_MARK(event, PFW_REJECT);
 		return;

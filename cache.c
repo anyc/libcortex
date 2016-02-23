@@ -143,6 +143,7 @@ void response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 
 void crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
 	struct crtx_cache *dc = ct->cache;
+	struct crtx_dict_item *cache_item;
 	char do_add;
 	
 	pthread_mutex_lock(&dc->mutex);
@@ -169,22 +170,23 @@ void crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key
 			ditem->type = 'p';
 			key->string = 0;
 			
-			if (event->response.copy_raw) {
-				ditem->pointer = event->response.copy_raw(&event->response);
-			} else {
-				ditem->pointer = event->response.raw.pointer;
-				ditem->flags |= DIF_DATA_UNALLOCATED;
-			}
-			ditem->size = event->response.raw.size;
+			cache_item = ditem;
+// 			if (event->response.copy_raw) {
+// 				ditem->pointer = event->response.copy_raw(&event->response);
+// 			} else {
+// 				ditem->pointer = event->response.raw.pointer;
+// 				ditem->flags |= DIF_DATA_UNALLOCATED;
+// 			}
+// 			ditem->size = event->response.raw.size;
 		} else {
-			char sign[3];
+// 			char sign[3];
 			ditem->type = 'D';
 			
-			sign[0] = key->type;
-			sign[1] = 'p';
-			sign[2] = 0;
+// 			sign[0] = key->type;
+// 			sign[1] = 'p';
+// 			sign[2] = 0;
 			
-			ditem->ds = crtx_init_dict(sign, 0);
+			ditem->ds = crtx_init_dict(0, 2, 0);
 			memcpy(crtx_get_item_by_idx(ditem->ds, 0), key, sizeof(struct crtx_dict_item));
 			crtx_get_item_by_idx(ditem->ds, 0)->key = "key";
 			crtx_fill_data_item(crtx_get_item_by_idx(ditem->ds, 1), 'p', "value", 0, event->response.raw.size, 0);
@@ -194,12 +196,28 @@ void crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key
 				key->string = 0;
 			}
 			
+			cache_item = crtx_get_item_by_idx(ditem->ds, 1);
+			
+// 			if (event->response.copy_raw) {
+// 				crtx_get_item_by_idx(ditem->ds, 1)->pointer = event->response.copy_raw(&event->response);
+// 			} else {
+// 				crtx_get_item_by_idx(ditem->ds, 1)->pointer = event->response.raw.pointer;
+// 				crtx_get_item_by_idx(ditem->ds, 1)->flags |= DIF_DATA_UNALLOCATED;
+// 			}
+		}
+		
+		if (event->response.dict) {
+			cache_item->type = 'D';
+			cache_item->ds = crtx_dict_copy(event->response.dict);
+		} else {
+			cache_item->type = 'p';
 			if (event->response.copy_raw) {
-				crtx_get_item_by_idx(ditem->ds, 1)->pointer = event->response.copy_raw(&event->response);
+				cache_item->pointer = event->response.copy_raw(&event->response);
 			} else {
-				crtx_get_item_by_idx(ditem->ds, 1)->pointer = event->response.raw.pointer;
-				crtx_get_item_by_idx(ditem->ds, 1)->flags |= DIF_DATA_UNALLOCATED;
+				cache_item->pointer = event->response.raw.pointer;
+				cache_item->flags |= DIF_DATA_UNALLOCATED;
 			}
+			cache_item->size = event->response.raw.size;
 		}
 		
 		crtx_print_dict(dc->entries);
@@ -319,7 +337,7 @@ struct crtx_task *create_response_cache_task(char *signature, create_key_cb_t cr
 	
 	ret = pthread_mutex_init(&dc->mutex, 0); ASSERT(ret >= 0);
 	
-	dc->entries = crtx_init_dict(0, 0);
+	dc->entries = crtx_init_dict(0, 0, 0);
 	
 	ct = (struct crtx_cache_task*) calloc(1, sizeof(struct crtx_cache_task));
 	ct->create_key = create_key;
