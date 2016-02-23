@@ -16,12 +16,14 @@ struct crtx_dict_item {
 	char type;
 	
 	union {
-		char *string; // s
 		uint32_t uint32; // u
 		int32_t int32; // i
 		uint64_t uint64; // U
 		int64_t int64; // I
-		void *pointer; // p
+		double double_fp; // d
+		
+		char *string; // s
+		void *pointer; // p		
 		struct crtx_dict *ds; // D
 // 		char payload[0]; // P
 	};

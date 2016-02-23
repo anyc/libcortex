@@ -20,7 +20,10 @@ void inspect_primitive(json_object *jobj, struct crtx_dict_item *ditem){
 			ditem->int32 = json_object_get_boolean(jobj);
 			break;
 		case json_type_double:
-			printf("TODO double %lf", json_object_get_double(jobj));
+// 			printf("TODO double %lf", json_object_get_double(jobj));
+			ditem->type = 'd';
+			ditem->size = sizeof(double);
+			ditem->double_fp = json_object_get_double(jobj);
 			break;
 		case json_type_int:
 			ditem->type = 'I';

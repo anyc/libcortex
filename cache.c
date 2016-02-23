@@ -150,7 +150,7 @@ void response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 			creation = crtx_get_item(ditem->ds, "creation");
 			
 // 			printf("%zu \n", now.uint64 - creation->uint64 + timeout);
-			if (now.uint64 > creation->uint64 + timeout) {
+			if (creation && now.uint64 > creation->uint64 + timeout) {
 				struct crtx_dict_item *key_item;
 				DBG("dropping cache entry\n");
 				
@@ -165,7 +165,8 @@ void response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 			if (ditem) {
 				// update
 				last_match = crtx_get_item(ditem->ds, "last_match");
-				ct->get_time(last_match);
+				if (last_match)
+					ct->get_time(last_match);
 			}
 		}
 	}
@@ -421,20 +422,12 @@ void free_response_cache(struct crtx_cache *dc) {
 char crtx_load_cache(struct crtx_cache *cache, char *path) {
 	char ret;
 	struct crtx_dict_item *cfg, *entries;
-// 	char *conf_id;
-// 	size_t id_len;
-// 	
-// 	id_len = strlen(cache->entries->id);
-// 	conf_id = (char*) malloc(id_len);
-// 	sprintf(conf_id, "%s.config", 
 	
 	ret = crtx_load_dict(&cache->dict, path, cache->dict->id);
 	if (!ret) {
 		DBG("loading cache dict %s failed\n", cache->dict->id);
 		return 0;
 	}
-	
-	crtx_print_dict(cache->dict);
 	
 	cfg = crtx_get_item(cache->dict, "config");
 	if (cfg)
@@ -444,9 +437,7 @@ char crtx_load_cache(struct crtx_cache *cache, char *path) {
 	if (entries)
 		cache->entries = entries->ds;
 	
-// 	ret = crtx_load_dict(cache->entries, path, cache->entries->id);
-// 	if (!ret)
-// 		ERROR("loading cache data failed\n", cache->entries->id);
+	crtx_print_dict(cache->dict);
 	
 	return 1;
 }

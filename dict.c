@@ -46,6 +46,15 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 				return 0;
 			}
 			break;
+		case 'd':
+			di->double_fp = va_arg(va, double);
+			
+			di->size = va_arg(va, size_t);
+			if (di->size > 0 && di->size != sizeof(double)) {
+				ERROR("size mismatch %zu %zu\n", di->size, sizeof(double));
+				return 0;
+			}
+			break;
 		case 's':
 			di->string = va_arg(va, char*);
 			
@@ -237,6 +246,7 @@ void crtx_print_dict_item(struct crtx_dict_item *di, unsigned char level) {
 		case 'p': INFO("(void*) %p\n", di->pointer); break;
 		case 'U': INFO("(uint64_t) %zu\n", di->uint64); break;
 		case 'I': INFO("(int64_t) %d\n", di->int32); break;
+		case 'd': INFO("(double) %f\n", di->double_fp); break;
 		case 'D':
 // 			INFO("(dict) \n");
 			if (di->ds)
@@ -301,6 +311,12 @@ char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size
 				return 1;
 			}
 			break;
+		case 'd':
+			if (buffer_size == sizeof(double)) {
+				memcpy(buffer, &di->double_fp, buffer_size);
+				return 1;
+			}
+			break;
 		case 's':
 		case 'D':
 			if (buffer_size == sizeof(void*)) {
@@ -358,7 +374,7 @@ struct crtx_dict_item * crtx_get_item_by_idx(struct crtx_dict *ds, size_t idx) {
 char crtx_conv_value(char dtype,  void *dbuffer, size_t dbuffer_size, char stype,  void *sbuffer, size_t sbuffer_size) {
 	int ret;
 	
-	DBG("convert %c to %c\n", stype, dtype);
+	VDBG("convert %c to %c\n", stype, dtype);
 	
 	if (stype == dtype) {
 		memcpy(dbuffer, sbuffer, dbuffer_size);
@@ -439,13 +455,63 @@ char crtx_conv_value(char dtype,  void *dbuffer, size_t dbuffer_size, char stype
 			return 0;
 		}
 	} else
+	if (stype == 'I' && dtype == 'U') {
+		uint64_t u64;
+		int64_t i64;
+		
+		memcpy(&i64, sbuffer, sizeof(int64_t));
+		if (i64 >= 0) {
+			u64 = i64;
+		} else {
+			ERROR("cannot convert %" PRId64 " to uint64_t\n", i64);
+			return 0;
+		}
+		if (sizeof(uint64_t) <= dbuffer_size) {
+			memcpy(dbuffer, &u64, sizeof(uint64_t));
+			return 1;
+		} else {
+			ERROR("crtx_get_item_value insufficient size: %zu > %zu\n", sizeof(uint64_t), dbuffer_size);
+			return 0;
+		}
+	} else
+	if (stype == 'd' && dtype == 'I') {
+		double d;
+		int64_t i64;
+		
+		memcpy(&d, sbuffer, sizeof(double));
+		if (d < INT64_MAX && INT64_MIN < d) {
+			i64 = d;
+		} else {
+			ERROR("cannot convert %f to int64_t\n", d);
+			return 0;
+		}
+		if (sizeof(int64_t) <= dbuffer_size) {
+			memcpy(dbuffer, &i64, sizeof(int64_t));
+			return 1;
+		} else {
+			ERROR("crtx_get_item_value insufficient size: %zu > %zu\n", sizeof(int64_t), dbuffer_size);
+			return 0;
+		}
+	} else
 	if (stype == 'I' && dtype == 'u') {
 		int32_t i32;
 		
 		ret = crtx_conv_value('i', &i32, sizeof(int32_t), stype, sbuffer, sbuffer_size);
 		if (!ret)
 			return 0;
-		crtx_conv_value(dtype, dbuffer, dbuffer_size, 'i', &i32, sizeof(int32_t));
+		ret = crtx_conv_value(dtype, dbuffer, dbuffer_size, 'i', &i32, sizeof(int32_t));
+		if (!ret)
+			return 0;
+		
+		return 1;
+	} else
+	if (stype == 'd' && dtype == 'U') {
+		int64_t i64;
+		
+		ret = crtx_conv_value('I', &i64, sizeof(int64_t), stype, sbuffer, sbuffer_size);
+		if (!ret)
+			return 0;
+		ret = crtx_conv_value(dtype, dbuffer, dbuffer_size, 'I', &i64, sizeof(int64_t));
 		if (!ret)
 			return 0;
 		
@@ -470,8 +536,10 @@ char crtx_get_item_value(struct crtx_dict_item *di, char type,  void *buffer, si
 		case 'I':
 		case 'U':
 			return crtx_conv_value(type, buffer, buffer_size, di->type, &di->uint64, sizeof(uint64_t));
+		case 'd':
+			return crtx_conv_value(type, buffer, buffer_size, di->type, &di->double_fp, sizeof(uint64_t));
 		default:
-			ERROR("TODO conversion %c -> %c\n", di->type, type);
+			ERROR("TODO conversion2 %c -> %c\n", di->type, type);
 			return 0;
 	}
 }
@@ -483,12 +551,14 @@ char crtx_get_value(struct crtx_dict *ds, char *key, char type, void *buffer, si
 	if (!di)
 		return 0;
 	
-	if (type > 0 && di->type != type) {
-		ERROR("type mismatch for \"%s\": %c != %c\n", key, type, di->type);
-		return 0;
-	}
+	return crtx_get_item_value(di, type, buffer, buffer_size);
 	
-	return crtx_copy_value(di, buffer, buffer_size);
+// 	if (type > 0 && di->type != type) {
+// 		ERROR("type mismatch for \"%s\": %c != %c\n", key, type, di->type);
+// 		return 0;
+// 	}
+	
+// 	return crtx_copy_value(di, buffer, buffer_size);
 }
 
 struct crtx_dict *crtx_get_dict(struct crtx_dict *ds, char *key) {
