@@ -1,2 +1,2 @@
 
-void crtx_load_json_config(struct crtx_config *config, char *string);
+void crtx_load_dict_json(struct crtx_dict *dict, char *string);

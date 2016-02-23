@@ -6,9 +6,12 @@
 #include <inttypes.h>
 #include <unistd.h>
 
+#include <linux/limits.h>
+
 #include "core.h"
 #include "dict.h"
 #include "dict_inout.h"
+#include "dict_inout_json.h"
 
 struct serialized_dict_item {
 	uint64_t key_length;
@@ -228,3 +231,70 @@ struct crtx_dict *crtx_read_dict(read_fct read, void *conn_id) {
 	
 	return ds;
 }
+
+char *crtx_readfile(char *path) {
+	FILE *f;
+	size_t size, read_size;
+	char *s;
+	
+	f = fopen(path, "r");
+	if (!f) {
+		printf("error reading file \"%s\": %s\n", path, strerror(errno));
+		return 0;
+	}
+	
+	fseek(f, 0L, SEEK_END);
+	size = ftell(f);
+	fseek(f, 0L, SEEK_SET);
+	
+	s = (char*) malloc(size + 1);
+	read_size = fread(s, 1, size, f);
+	if (read_size != size) {
+		printf("error while reading file %s\n", path);
+		return 0;
+	}
+	
+	fclose(f);
+	
+	return s;
+}
+
+void crtx_load_dict(struct crtx_dict *dict, char *dictdb_path) {
+	char *s;
+	char file_path[PATH_MAX];
+	char *path;
+	
+	if (!dictdb_path)
+		dictdb_path = CRTX_DICT_DB_PATH;
+	
+	path = getenv("CRTX_DICTDB_PATH");
+	if (path)
+		dictdb_path = path;
+	
+	snprintf(file_path, PATH_MAX, "%s%s.json", dictdb_path?dictdb_path:"", dict->id);
+	
+	s = crtx_readfile(file_path);
+	if (!s)
+		return;
+	
+	dict = crtx_init_dict(0, 0, 0);
+	
+	#ifdef WITH_JSON
+	crtx_load_dict_json(dict, s);
+	#endif
+	
+	crtx_print_dict(dict);
+}
+
+void crtx_store_dict(struct crtx_dict *dict) {
+// 	int f = open(config->name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP);
+// 	if (f == -1) {
+// 		printf("error %s\n", strerror(errno));
+// 		return;
+// 	}
+
+// 	send_dict(crtx_wrapper_write, &f, d);
+
+// 	close(f);
+}
+

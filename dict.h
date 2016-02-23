@@ -27,6 +27,8 @@ struct crtx_dict_item {
 };
 
 struct crtx_dict {
+	char *id;
+	
 	char *signature;
 	uint32_t signature_length;
 	unsigned long size;

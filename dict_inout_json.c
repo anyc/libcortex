@@ -6,7 +6,6 @@
 
 #include "core.h"
 #include "dict.h"
-#include "dict_config.h"
 
 static void inspect_obj(json_object * jobj, struct crtx_dict *dict);
 
@@ -109,11 +108,11 @@ static void inspect_obj(json_object * jobj, struct crtx_dict *dict) {
 	}
 }
 
-void crtx_load_json_config(struct crtx_config *config, char *string) {
+void crtx_load_dict_json(struct crtx_dict *dict, char *string) {
 	json_object * jobj = json_tokener_parse(string);
 	
 	if (!jobj)
 		return;
 	
-	inspect_obj(jobj, config->data);
+	inspect_obj(jobj, dict);
 }

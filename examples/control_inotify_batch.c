@@ -15,26 +15,14 @@
 #include "inotify.h"
 #include "sd_bus_notifications.h"
 #include "dict.h"
-#include "dict_config.h"
 #include "event_comm.h"
 #include "linkedlist.h"
 #include "linkedlist.h"
 
-// static struct crtx_inotify_listener *listeners = 0;
-// size_t n_listeners = 0;
+
 struct crtx_ll *listeners = 0;
-// struct crtx_dll *dlisteners = 0;
-
-// struct crtx_dict_transformation to_notification[] = {
-// 	{ "title", 's', 0, "Inotify" },
-// 	{ "message", 's', 0, "Event \"%[mask](%[*]s)\" for file \"%[name]s\"" }
-// };
-
-// struct crtx_transform_dict_handler *transformations = 0;
-// size_t n_transformations = 0;
 struct crtx_ll *transformations = 0;
 
-struct crtx_config config;
 
 // execute script with inotify parameters
 static void exec_script_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -69,7 +57,7 @@ static void exec_script_handler(struct crtx_event *event, void *userdata, void *
 }
 
 char init() {
-	struct crtx_dict *monitors, *monitor, *mask, *actions;
+	struct crtx_dict config, *monitors, *monitor, *mask, *actions;
 	struct crtx_dict *transforms;
 	struct crtx_inotify_listener *listener;
 	struct crtx_listener_base *in_base;
@@ -77,12 +65,12 @@ char init() {
 	char *path;
 	uint32_t in_mask;
 	
-	config.name = "control_inotify_batch";
-	crtx_load_config(&config);
+	config.id = "control_inotify_batch";
+	crtx_load_dict(&config, 0);
 	
 	monitors = transforms = 0;
-	crtx_get_value(config.data, "monitors", 'D', &monitors, sizeof(void*));
-	crtx_get_value(config.data, "transforms", 'D', &transforms, sizeof(void*));
+	crtx_get_value(&config, "monitors", 'D', &monitors, sizeof(void*));
+	crtx_get_value(&config, "transforms", 'D', &transforms, sizeof(void*));
 	
 	if (!monitors) {
 		DBG("control_inotify_batch: no monitors in config\n");
@@ -111,16 +99,6 @@ char init() {
 				continue;
 			in_mask |= crtx_inotify_string2mask(mask->items[j].string);
 		}
-		
-// 		if (!listeners) {
-// 			listeners = (struct crtx_inotify_listener *) malloc(sizeof(struct crtx_inotify_listener));
-// 			n_listeners = 1;
-// 			listener = listeners;
-// 		} else {
-// 			n_listeners++;
-// 			listeners = (struct crtx_inotify_listener *) realloc(listeners, sizeof(struct crtx_inotify_listener)*n_listeners);
-// 			listener = &listeners[n_listeners-1];
-// 		}
 		
 		listener = (struct crtx_inotify_listener *) calloc(1, sizeof(struct crtx_inotify_listener));
 		crtx_ll_append_new(&listeners, listener);
@@ -161,15 +139,6 @@ char init() {
 						continue;
 					
 					transform_id = transform_actions->items[j].string;
-					
-// 					if (!transformations) {
-// 						transformations = (struct crtx_transform_dict_handler *) malloc(sizeof(struct crtx_transform_dict_handler));
-// 						transformation = transformations;
-// 					} else {
-// 						n_transformations++;
-// 						transformations = (struct crtx_transform_dict_handler *) realloc(transformations, sizeof(struct crtx_transform_dict_handler)*n_transformations);
-// 						transformation = &transformations[n_transformations-1];
-// 					}
 					
 					transformation = (struct crtx_transform_dict_handler *) malloc(sizeof(struct crtx_transform_dict_handler));
 					crtx_ll_append_new(&transformations, transformation);
@@ -234,10 +203,8 @@ char init() {
 }
 
 void finish() {
-// 	size_t i;
 	struct crtx_ll *llit, *llitn;
 	
-// 	for (i=0; i < n_transformations; i++) {
 	for (llit=transformations;llit;llit=llitn) {
 		llitn = llit->next;
 		
@@ -245,12 +212,9 @@ void finish() {
 		free(llit->transform_handler->transformation);
 		free(llit);
 	}
-// 	free(transformations);
 	
-// 	for (i=0; i < n_listeners; i++)
 	for (llit=listeners;llit;llit=llitn) {
 		llitn = llit->next;
-// 		free_listener(&((struct crtx_inotify_listener*)llit->data)->parent);
 		free_listener(&llit->in_listener->parent);
 		free(llit);
 	}

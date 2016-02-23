@@ -47,49 +47,61 @@ struct crtx_dict_item * rcache_match_cb_t_strcmp(struct crtx_cache *rc, struct c
 
 struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache *rc, struct crtx_dict_item *key, struct crtx_event *event) {
 	int ret;
-	struct crtx_cache_regex *rex;
+// 	struct crtx_cache_regex *rex;
 	struct crtx_dict_item *ditem;
-	struct crtx_dict_item *rkey;
+	struct crtx_dict_item *rkey, *regex;
 	
-	if (!rc->regexps)
-		return 0;
+// 	if (!rc->regexps)
+// 		return 0;
 	
 	ditem = crtx_get_first_item(rc->entries);
-	rex = &rc->regexps[0];
+// 	rex = &rc->regexps[0];
 	
 	while (ditem) {
-		if (!rex->key_is_regex && key->type == 's' && ditem->key && !strcmp(ditem->key, key->string))
-			return ditem;
+// 		if (!rex->key_is_regex && key->type == 's' && ditem->key && !strcmp(ditem->key, key->string))
+// 			return ditem;
+		
+		regex = crtx_get_item(ditem->ds, "regexp");
 		
 		rkey = rcache_get_key(ditem);
 		
-		if (rex->key_is_regex) {
-			if (!rex->initialized) {
-				ret = regcomp(&rex->regex, rkey->string, 0);
-				if (ret) {
-					ERROR("Could not compile regex %s\n", rkey->string);
-					exit(1);
-				}
-				rex->initialized = 1;
-			}
-			
-			ret = regexec( &rex->regex, (char *) key, 0, NULL, 0);
-			if (!ret) {
+		if (!regex) {
+			if (key->type == 's' && ditem->key && !strcmp(ditem->key, key->string))
 				return ditem;
-			} else
-			if (ret == REG_NOMATCH) {
-				return 0;
-			} else {
-				char msgbuf[128];
-				
-				regerror(ret, &rex->regex, msgbuf, sizeof(msgbuf));
-				ERROR("Regex match failed: %s\n", msgbuf);
-				
-				return 0;
-			}
+			
+			if (rkey && !crtx_cmp_item(key, rkey))
+				return ditem;
+			
+			continue;
 		}
 		
-		rex++;
+// 		if (!rex->initialized) {
+// 			ret = regcomp(&rex->regex, rkey->string, 0);
+// 			if (ret) {
+// 				ERROR("Could not compile regex %s\n", rkey->string);
+// 				exit(1);
+// 			}
+// 			rex->initialized = 1;
+// 		}
+		
+// 		ret = regexec( &rex->regex, (char *) key, 0, NULL, 0);
+		
+		ret = regexec( (regex_t*) regex->pointer, (char *) key, 0, NULL, 0);
+		if (!ret) {
+			return ditem;
+		} else
+		if (ret == REG_NOMATCH) {
+			return 0;
+		} else {
+			char msgbuf[128];
+			
+			regerror(ret, (regex_t*) regex->pointer, msgbuf, sizeof(msgbuf));
+			ERROR("Regex match failed: %s\n", msgbuf);
+			
+			return 0;
+		}
+		
+// 		rex++;
 		ditem = crtx_get_next_item(rc->entries, ditem);
 	}
 	
@@ -191,11 +203,14 @@ void crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key
 	if (do_add) {
 		struct crtx_dict_item *ditem;
 		
-		if (dc->flags & CRTX_CACHE_REGEXP) {
-			dc->n_regexps++;
-			dc->regexps = (struct crtx_cache_regex *) realloc(dc->regexps, sizeof(struct crtx_cache_regex)*dc->n_regexps);
-			memset(&dc->regexps[dc->n_regexps-1], 0, sizeof(struct crtx_cache_regex));
-		}
+		DBG("new cache entry ");
+		crtx_print_dict_item(key, 0);
+		
+// 		if (dc->flags & CRTX_CACHE_REGEXP) {
+// 			dc->n_regexps++;
+// 			dc->regexps = (struct crtx_cache_regex *) realloc(dc->regexps, sizeof(struct crtx_cache_regex)*dc->n_regexps);
+// 			memset(&dc->regexps[dc->n_regexps-1], 0, sizeof(struct crtx_cache_regex));
+// 		}
 		
 		if (dc->flags & CRTX_CACHE_SIMPLE_LAYOUT) {
 			if (key->type != 's')
@@ -219,7 +234,7 @@ void crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key
 		} else {
 			unsigned char n_items;
 			
-			
+			// check if there is an empty cache entry
 			ditem = crtx_get_first_item(dc->entries);
 			while (ditem) {
 				struct crtx_dict_item *it;
@@ -286,7 +301,7 @@ void crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key
 			crtx_dict_copy_item(cache_item, &event->response.raw, 1);
 		}
 		
-		crtx_print_dict(dc->entries);
+// 		crtx_print_dict(dc->entries);
 	}
 	
 	pthread_mutex_unlock(&dc->mutex);
@@ -407,7 +422,7 @@ void crtx_cache_gettime_rt(struct crtx_dict_item *item) {
 	item->uint64 = tp.tv_sec * 1000000000 + tp.tv_nsec;
 }
 
-struct crtx_task *create_response_cache_task(char *signature, create_key_cb_t create_key) {
+struct crtx_task *create_response_cache_task(char *id, create_key_cb_t create_key) {
 	struct crtx_cache *dc;
 	struct crtx_cache_task *ct;
 	struct crtx_task *task;
@@ -439,15 +454,15 @@ struct crtx_task *create_response_cache_task(char *signature, create_key_cb_t cr
 }
 
 void free_response_cache(struct crtx_cache *dc) {
-	size_t i;
+// 	size_t i;
 	
 	free_dict(dc->entries);
 	
-	for (i=0; i<dc->n_regexps; i++) {
-		if (dc->regexps[i].initialized)
-			regfree(&dc->regexps[i].regex);
-	}
+// 	for (i=0; i<dc->n_regexps; i++) {
+// 		if (dc->regexps[i].initialized)
+// 			regfree(&dc->regexps[i].regex);
+// 	}
 	
-	free(dc->regexps);
+// 	free(dc->regexps);
 	free(dc);
 }

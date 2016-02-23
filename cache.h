@@ -12,13 +12,13 @@ typedef void (*miss_cb_t)(struct crtx_cache_task *ct, struct crtx_dict_item *key
 typedef char (*add_cb_t)(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event);
 typedef void (*get_time_cb_t)(struct crtx_dict_item *item);
 
-struct crtx_cache_regex {
-	regex_t regex;
-	char key_is_regex;
-	char initialized;
-	
-	struct crtx_dict_item *dict_item;
-};
+// struct crtx_cache_regex {
+// 	regex_t regex;
+// 	char key_is_regex;
+// 	char initialized;
+// 	
+// 	struct crtx_dict_item *dict_item;
+// };
 
 #define CRTX_CACHE_SIMPLE_LAYOUT 1<<0
 #define CRTX_CACHE_NO_TIMES 1<<1
@@ -31,8 +31,8 @@ struct crtx_cache {
 	
 	struct crtx_dict *config;
 	
-	struct crtx_cache_regex *regexps;
-	size_t n_regexps;
+// 	struct crtx_cache_regex *regexps;
+// 	size_t n_regexps;
 	
 	pthread_mutex_t mutex;
 };

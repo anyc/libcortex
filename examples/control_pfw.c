@@ -480,7 +480,7 @@ char init() {
 	crtx_create_task(nfq_list.parent.graph, 0, "pfw_print_packet", &pfw_print_packet, 0);
 	
 	// host
-	rcache_host = create_response_cache_task("su", pfw_rcache_create_key_host);
+	rcache_host = create_response_cache_task("rcache_host", pfw_rcache_create_key_host);
 	((struct crtx_cache_task*) rcache_host->userdata)->on_add = &host_cache_add_cb;
 	rcache_host->id = "rcache_host";
 	
@@ -491,7 +491,7 @@ char init() {
 	
 	
 	// IP
-	rcache_ip = create_response_cache_task("su", pfw_rcache_create_key_ip);
+	rcache_ip = create_response_cache_task("rcache_host", pfw_rcache_create_key_ip);
 	((struct crtx_cache_task*) rcache_ip->userdata)->on_add = &ip_cache_add_cb;
 	rcache_ip->id = "rcache_ip";
 	

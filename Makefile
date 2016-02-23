@@ -7,7 +7,7 @@ APP=cortexd
 
 OBJS+=cortexd.o core.o socket.o readline.o controls.o fanotify.o inotify.o \
 	event_comm.o cache.o threads.o signals.o dict.o dict_inout.o \
-	dict_config.o llist.o dllist.o timer.o
+	llist.o dllist.o timer.o
 
 TESTS+=timer.test
 

@@ -1,6 +1,8 @@
 
 # CFLAGS+=-DCONTROLDIR=\"/usr/lib/cortexd/controls/\"
 
+# CFLAGS+=-DCRTX_DICT_DB_PATH=\"/var/lib/cortex/dict_db/\"
+
 # CFLAGS+=-DSEGV_ON_ERROR
 
 # OBJS+=dict_inout_json.o
