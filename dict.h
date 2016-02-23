@@ -19,7 +19,8 @@ struct crtx_dict_item {
 		char *string; // s
 		uint32_t uint32; // u
 		int32_t int32; // i
-		uint64_t uint64; // z
+		uint64_t uint64; // U
+		int64_t int64; // I
 		void *pointer; // p
 		struct crtx_dict *ds; // D
 // 		char payload[0]; // P
@@ -80,6 +81,5 @@ void crtx_print_dict_item(struct crtx_dict_item *di, unsigned char level);
 void crtx_free_dict_item(struct crtx_dict_item *di);
 struct crtx_dict *crtx_dict_copy(struct crtx_dict *orig);
 void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src, char data_only);
-// void crtx_dict_copy_item_data(struct crtx_dict_item *dst, struct crtx_dict_item *src);
-
+char crtx_get_item_value(struct crtx_dict_item *di, char type,  void *buffer, size_t buffer_size);
 #endif

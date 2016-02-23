@@ -12,13 +12,6 @@ typedef void (*miss_cb_t)(struct crtx_cache_task *ct, struct crtx_dict_item *key
 typedef char (*add_cb_t)(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event);
 typedef void (*get_time_cb_t)(struct crtx_dict_item *item);
 
-// struct crtx_cache_regex {
-// 	regex_t regex;
-// 	char key_is_regex;
-// 	char initialized;
-// 	
-// 	struct crtx_dict_item *dict_item;
-// };
 
 #define CRTX_CACHE_SIMPLE_LAYOUT 1<<0
 #define CRTX_CACHE_NO_TIMES 1<<1
@@ -27,12 +20,11 @@ typedef void (*get_time_cb_t)(struct crtx_dict_item *item);
 struct crtx_cache {
 	char flags;
 	
-	struct crtx_dict *entries;
+	struct crtx_dict *dict;
 	
+	// pointers into $dict
 	struct crtx_dict *config;
-	
-// 	struct crtx_cache_regex *regexps;
-// 	size_t n_regexps;
+	struct crtx_dict *entries;
 	
 	pthread_mutex_t mutex;
 };
@@ -56,7 +48,7 @@ struct crtx_cache_task {
 void response_cache_task(struct crtx_event *event, void *userdata, void **sessiondata);
 struct crtx_task *create_response_cache_task(char *signature, create_key_cb_t create_key);
 void free_response_cache(struct crtx_cache *dc);
-// void prefill_rcache(struct crtx_cache *rcache, char *file);
 struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache *rc, struct crtx_dict_item *key, struct crtx_event *event);
 struct crtx_dict_item * rcache_match_cb_t_strcmp(struct crtx_cache *rc, struct crtx_dict_item *key, struct crtx_event *event);
 void crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event);
+char crtx_load_cache(struct crtx_cache *cache, char *path);

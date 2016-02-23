@@ -14,7 +14,7 @@ void inspect_primitive(json_object *jobj, struct crtx_dict_item *ditem){
 	
 	type = json_object_get_type(jobj);
 	switch (type) {
-		case json_type_boolean: 
+		case json_type_boolean:
 			ditem->type = 'i';
 			ditem->size = sizeof(int32_t);
 			ditem->int32 = json_object_get_boolean(jobj);
@@ -22,10 +22,10 @@ void inspect_primitive(json_object *jobj, struct crtx_dict_item *ditem){
 		case json_type_double:
 			printf("TODO double %lf", json_object_get_double(jobj));
 			break;
-		case json_type_int: 
-			ditem->type = 'i';
-			ditem->size = sizeof(int32_t);
-			ditem->int32 = json_object_get_int(jobj);
+		case json_type_int:
+			ditem->type = 'I';
+			ditem->size = sizeof(int64_t);
+			ditem->int64 = json_object_get_int64(jobj);
 			break;
 		case json_type_string: 
 			ditem->type = 's';
@@ -109,10 +109,14 @@ static void inspect_obj(json_object * jobj, struct crtx_dict *dict) {
 }
 
 void crtx_load_dict_json(struct crtx_dict *dict, char *string) {
-	json_object * jobj = json_tokener_parse(string);
+	enum json_tokener_error error;
+// 	json_object * jobj = json_tokener_parse(string);
+	json_object * jobj = json_tokener_parse_verbose(string, &error);
 	
-	if (!jobj)
+	if (!jobj) {
+		ERROR("parsing json failed:\n%s\n-----\n%s", json_tokener_error_desc(error), string);
 		return;
+	}
 	
 	inspect_obj(jobj, dict);
 }

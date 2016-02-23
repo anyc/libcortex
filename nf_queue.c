@@ -232,9 +232,11 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		wait_on_event(event);
 		
-		if (event->response.raw.type == 'u')
-			pkt->mark_out = event->response.raw.uint32;
-		else
+// 		if (event->response.raw.type == 'U')
+// 			pkt->mark_out = event->response.raw.uint64;
+		
+		ret = crtx_get_item_value(&event->response.raw, 'u', &pkt->mark_out, sizeof(pkt->mark_out));
+		if (!ret)
 			pkt->mark_out = nfq_list->default_mark;
 		
 		printf("packet mark: %" PRIu32 "\n", pkt->mark_out);

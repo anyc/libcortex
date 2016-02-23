@@ -432,10 +432,10 @@ char init() {
 	freeifaddrs(addrs);
 	
 	
-	load_list(&host_blacklist, PFW_DATA_DIR "hblack.txt");
-	load_list(&host_whitelist, PFW_DATA_DIR "hwhite.txt");
-	load_list(&ip_blacklist, PFW_DATA_DIR "ipblack.txt");
-	load_list(&ip_whitelist, PFW_DATA_DIR "ipwhite.txt");
+// 	load_list(&host_blacklist, PFW_DATA_DIR "hblack.txt");
+// 	load_list(&host_whitelist, PFW_DATA_DIR "hwhite.txt");
+// 	load_list(&ip_blacklist, PFW_DATA_DIR "ipblack.txt");
+// 	load_list(&ip_whitelist, PFW_DATA_DIR "ipwhite.txt");
 	
 	load_list(&resolvelist, PFW_DATA_DIR "resolvelist.txt");
 	
@@ -455,10 +455,10 @@ char init() {
 		add_ips_to_list(&ip_whitelist, resolvelist.list[i]);
 	}
 	
-	print_filter_set(&host_blacklist, "host blacklist");
-	print_filter_set(&ip_blacklist, "ip blacklist");
-	print_filter_set(&host_whitelist, "host whitelist");
-	print_filter_set(&ip_whitelist, "ip blacklist");
+// 	print_filter_set(&host_blacklist, "host blacklist");
+// 	print_filter_set(&ip_blacklist, "ip blacklist");
+// 	print_filter_set(&host_whitelist, "host whitelist");
+// 	print_filter_set(&ip_whitelist, "ip blacklist");
 	
 	
 	print_filter_set(&host_nocachelist, "host nocachelist");
@@ -479,26 +479,33 @@ char init() {
 	
 	crtx_create_task(nfq_list.parent.graph, 0, "pfw_print_packet", &pfw_print_packet, 0);
 	
+	#define TASK2CTASK(task) ((struct crtx_cache_task*) (task)->userdata)
+	
 	// host
 	rcache_host = create_response_cache_task("rcache_host", pfw_rcache_create_key_host);
-	((struct crtx_cache_task*) rcache_host->userdata)->on_add = &host_cache_add_cb;
+	TASK2CTASK(rcache_host)->on_add = &host_cache_add_cb;
 	rcache_host->id = "rcache_host";
 	
-	crtx_add_item(&((struct crtx_cache_task*) rcache_host->userdata)->cache->config,
-			'z', "timeout", (uint64_t) 1e10, 0, 0);
+// 	crtx_add_item(&TASK2CTASK(rcache_host)->cache->config,
+// 			'z', "timeout", (uint64_t) 1e10, 0, 0);
+	crtx_load_cache(TASK2CTASK(rcache_host)->cache, PFW_DATA_DIR);
 	
 	add_task(nfq_list.parent.graph, rcache_host);
 	
 	
+	
 	// IP
-	rcache_ip = create_response_cache_task("rcache_host", pfw_rcache_create_key_ip);
-	((struct crtx_cache_task*) rcache_ip->userdata)->on_add = &ip_cache_add_cb;
+	rcache_ip = create_response_cache_task("rcache_ip", pfw_rcache_create_key_ip);
+	TASK2CTASK(rcache_ip)->on_add = &ip_cache_add_cb;
 	rcache_ip->id = "rcache_ip";
 	
-	crtx_add_item(&((struct crtx_cache_task*) rcache_ip->userdata)->cache->config,
-			    'z', "timeout", (uint64_t) 1e10, 0, 0);
+// 	crtx_add_item(&TASK2CTASK(rcache_ip)->cache->config,
+// 			    'z', "timeout", (uint64_t) 1e10, 0, 0);
+	crtx_load_cache(TASK2CTASK(rcache_ip)->cache, PFW_DATA_DIR);
 	
 	add_task(nfq_list.parent.graph, rcache_ip);
+	
+	
 	
 	crtx_create_task(nfq_list.parent.graph, 0, "pfw_rules_filter", &pfw_rules_filter, 0);
 	

@@ -247,10 +247,16 @@ char *crtx_readfile(char *path) {
 	size = ftell(f);
 	fseek(f, 0L, SEEK_SET);
 	
+	if (size == 0)
+		return 0;
+	
 	s = (char*) malloc(size + 1);
 	read_size = fread(s, 1, size, f);
+	s[size] = 0;
+	
 	if (read_size != size) {
 		printf("error while reading file %s\n", path);
+		free(s);
 		return 0;
 	}
 	
@@ -259,7 +265,7 @@ char *crtx_readfile(char *path) {
 	return s;
 }
 
-void crtx_load_dict(struct crtx_dict *dict, char *dictdb_path) {
+char crtx_load_dict(struct crtx_dict **dict, char *dictdb_path, char *id) {
 	char *s;
 	char file_path[PATH_MAX];
 	char *path;
@@ -271,19 +277,22 @@ void crtx_load_dict(struct crtx_dict *dict, char *dictdb_path) {
 	if (path)
 		dictdb_path = path;
 	
-	snprintf(file_path, PATH_MAX, "%s%s.json", dictdb_path?dictdb_path:"", dict->id);
+	snprintf(file_path, PATH_MAX, "%s%s.json", dictdb_path?dictdb_path:"", id);
 	
 	s = crtx_readfile(file_path);
 	if (!s)
-		return;
+		return 0;
 	
-	dict = crtx_init_dict(0, 0, 0);
+	if (!*dict)
+		*dict = crtx_init_dict(0, 0, 0);
 	
 	#ifdef WITH_JSON
-	crtx_load_dict_json(dict, s);
+	crtx_load_dict_json(*dict, s);
 	#endif
 	
-	crtx_print_dict(dict);
+	crtx_print_dict(*dict);
+	
+	return 1;
 }
 
 void crtx_store_dict(struct crtx_dict *dict) {

@@ -57,7 +57,7 @@ static void exec_script_handler(struct crtx_event *event, void *userdata, void *
 }
 
 char init() {
-	struct crtx_dict config, *monitors, *monitor, *mask, *actions;
+	struct crtx_dict *config, *monitors, *monitor, *mask, *actions;
 	struct crtx_dict *transforms;
 	struct crtx_inotify_listener *listener;
 	struct crtx_listener_base *in_base;
@@ -65,12 +65,11 @@ char init() {
 	char *path;
 	uint32_t in_mask;
 	
-	config.id = "control_inotify_batch";
-	crtx_load_dict(&config, 0);
+	crtx_load_dict(&config, 0, "control_inotify_batch");
 	
 	monitors = transforms = 0;
-	crtx_get_value(&config, "monitors", 'D', &monitors, sizeof(void*));
-	crtx_get_value(&config, "transforms", 'D', &transforms, sizeof(void*));
+	crtx_get_value(config, "monitors", 'D', &monitors, sizeof(void*));
+	crtx_get_value(config, "transforms", 'D', &transforms, sizeof(void*));
 	
 	if (!monitors) {
 		DBG("control_inotify_batch: no monitors in config\n");
