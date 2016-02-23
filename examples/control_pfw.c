@@ -481,6 +481,19 @@ char init() {
 	
 	#define TASK2CTASK(task) ((struct crtx_cache_task*) (task)->userdata)
 	
+	// IP
+	rcache_ip = create_response_cache_task("rcache_ip", pfw_rcache_create_key_ip);
+	TASK2CTASK(rcache_ip)->on_add = &ip_cache_add_cb;
+	rcache_ip->id = "rcache_ip";
+	
+	// 	crtx_add_item(&TASK2CTASK(rcache_ip)->cache->config,
+	// 			    'z', "timeout", (uint64_t) 1e10, 0, 0);
+	crtx_load_cache(TASK2CTASK(rcache_ip)->cache, PFW_DATA_DIR);
+	
+	add_task(nfq_list.parent.graph, rcache_ip);
+	
+	
+	
 	// host
 	rcache_host = create_response_cache_task("rcache_host", pfw_rcache_create_key_host);
 	TASK2CTASK(rcache_host)->on_add = &host_cache_add_cb;
@@ -492,18 +505,6 @@ char init() {
 	
 	add_task(nfq_list.parent.graph, rcache_host);
 	
-	
-	
-	// IP
-	rcache_ip = create_response_cache_task("rcache_ip", pfw_rcache_create_key_ip);
-	TASK2CTASK(rcache_ip)->on_add = &ip_cache_add_cb;
-	rcache_ip->id = "rcache_ip";
-	
-// 	crtx_add_item(&TASK2CTASK(rcache_ip)->cache->config,
-// 			    'z', "timeout", (uint64_t) 1e10, 0, 0);
-	crtx_load_cache(TASK2CTASK(rcache_ip)->cache, PFW_DATA_DIR);
-	
-	add_task(nfq_list.parent.graph, rcache_ip);
 	
 	
 	
