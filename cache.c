@@ -98,22 +98,27 @@ void response_cache_on_hit(struct crtx_cache_task *rc, struct crtx_dict_item *ke
 	if (!rc->cache->simple)
 		c_entry = crtx_get_item(c_entry->ds, "value");
 	
-	if (c_entry->type != 'p') {
-		ERROR("cache type mismatch: %c != %c\n", c_entry->type, 'p');
-		return;
-	}
+// 	if (c_entry->type != 'p') {
+// 		ERROR("cache type mismatch: %c != p\n", c_entry->type);
+// 		return;
+// 	}
 	
 	DBG("cache hit for key ");
 	crtx_print_dict_item(key, 0);
 	
-	event->response.raw.pointer = c_entry->pointer;
-	event->response.raw.size = c_entry->size;
+// 	event->response.raw.pointer = c_entry->pointer;
+// 	event->response.raw.size = c_entry->size;
+	crtx_dict_copy_item(&event->response.raw, c_entry, 0);
 }
 
 void response_cache_task(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_cache_task *ct = (struct crtx_cache_task*) userdata;
 	struct crtx_dict_item *ditem;
 	char ret;
+	
+	
+// 	if (event->data.raw.type == 'p' && !event->data.dict)
+// 		event->data.raw_to_dict(&event->data);
 	
 	ret = ct->create_key(event, &ct->key);
 	if (!ret) {
@@ -210,14 +215,22 @@ void crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key
 			cache_item->type = 'D';
 			cache_item->ds = crtx_dict_copy(event->response.dict);
 		} else {
-			cache_item->type = 'p';
-			if (event->response.copy_raw) {
-				cache_item->pointer = event->response.copy_raw(&event->response);
-			} else {
-				cache_item->pointer = event->response.raw.pointer;
-				cache_item->flags |= DIF_DATA_UNALLOCATED;
-			}
-			cache_item->size = event->response.raw.size;
+			cache_item->type = event->response.raw.type;
+			
+			crtx_dict_copy_item(cache_item, &event->response.raw, 1);
+			
+// 			if (event->response.raw.type == 's') {
+// 				
+// 			} else
+// 			if (event->response.raw.type == 'p') {
+// 				if (event->response.copy_raw) {
+// 					cache_item->pointer = event->response.copy_raw(&event->response);
+// 				} else {
+// 					cache_item->pointer = event->response.raw.pointer;
+// 					cache_item->flags |= DIF_DATA_UNALLOCATED;
+// 				}
+// 				cache_item->size = event->response.raw.size;
+// 			}
 		}
 		
 		crtx_print_dict(dc->entries);

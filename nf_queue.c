@@ -9,18 +9,114 @@
 #include <linux/netfilter.h>
 #include <inttypes.h>
 
+#include <netinet/udp.h>
 #include <netinet/tcp.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 #include "core.h"
 #include "nf_queue.h"
 #include "threads.h"
 
-#define NFQ_PACKET_MSG_ETYPE "nf_queue/packet_msg"
 char *nfq_packet_msg_etype[] = { NFQ_PACKET_MSG_ETYPE, 0 };
 
 // iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW  -m mark --mark 0 -j NFQUEUE --queue-num 0
+
+static void nfq_raw2dict(struct crtx_event_data *data) {
+	struct crtx_nfq_packet *ev;
+	int res;
+	char host[256];
+	struct iphdr *iph;
+	size_t slen;
+	struct crtx_dict_item *di;
+	struct crtx_dict *ds;
+	struct sockaddr_in sa;
+	
+	
+	if (data->raw.size < sizeof(struct crtx_nfq_packet))
+		return;
+	
+	VDBG("convert nfq raw2dict\n");
+	
+	ev = (struct crtx_nfq_packet*) data->raw.pointer;
+	
+	iph = (struct iphdr*)ev->payload;
+	sa.sin_family = AF_INET;
+	
+	ds = crtx_init_dict(PFW_NEWPACKET_SIGNATURE, strlen(PFW_NEWPACKET_SIGNATURE), 0);
+	data->dict = ds;
+	di = ds->items;
+	
+	crtx_fill_data_item(di, 'u', "protocol", iph->protocol, 0, 0); di++;
+	
+	{
+		slen = 0;
+		crtx_fill_data_item(di, 's', "src_ip", stracpy(inet_ntoa(*(struct in_addr *)&iph->saddr), &slen), slen, 0); di++;
+		
+		sa.sin_addr = *(struct in_addr *)&iph->saddr;
+		res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
+		if (res) {
+			printf("getnameinfo failed %d\n", res);
+			host[0] = 0;
+		}
+		
+		slen = strlen(host);
+		crtx_fill_data_item(di, 's', "src_hostname", stracpy(host, &slen), slen, 0); di++;
+	}
+	
+	{
+		slen = 0;
+		crtx_fill_data_item(di, 's', "dst_ip", stracpy(inet_ntoa(*(struct in_addr *)&iph->daddr), &slen), slen, 0); di++;
+		
+		sa.sin_addr = *(struct in_addr *)&iph->daddr;
+		res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, 0);
+		if (res) {
+			printf("getnameinfo failed %d\n", res);
+			host[0] = 0;
+		}
+		
+		slen = strlen(host);
+		crtx_fill_data_item(di, 's', "dst_hostname", stracpy(host, &slen), slen, 0); di++;
+	}
+	
+	crtx_fill_data_item(di, 'D', "payload", 0, 0, DIF_LAST);
+	
+	if (iph->protocol == 6) {
+		struct crtx_dict_item *pdi;
+		struct tcphdr *tcp;
+		
+		tcp = (struct tcphdr *) (ev->payload + (iph->ihl << 2));
+		
+		di->ds = crtx_init_dict(PFW_NEWPACKET_TCP_SIGNATURE, strlen(PFW_NEWPACKET_TCP_SIGNATURE), 0);
+		pdi = di->ds->items;
+		
+		crtx_fill_data_item(pdi, 'u', "src_port", ntohs(tcp->source), 0, 0); pdi++;
+		
+		crtx_fill_data_item(pdi, 'u', "dst_port", ntohs(tcp->dest), 0, DIF_LAST);
+		
+// 		fprintf(stdout, "TCP{sport=%u; dport=%u; seq=%u; ack_seq=%u; flags=u%ua%up%ur%us%uf%u; window=%u; urg=%u}\n",
+// 				ntohs(tcp->source), ntohs(tcp->dest), ntohl(tcp->seq), ntohl(tcp->ack_seq)
+// 				,tcp->urg, tcp->ack, tcp->psh, tcp->rst, tcp->syn, tcp->fin, ntohs(tcp->window), tcp->urg_ptr);
+	} else
+	if (iph->protocol == 17) {
+		struct crtx_dict_item *pdi;
+		struct udphdr *udp;
+		
+		udp = (struct udphdr *) (ev->payload + (iph->ihl << 2));
+		
+		di->ds = crtx_init_dict(PFW_NEWPACKET_UDP_SIGNATURE, strlen(PFW_NEWPACKET_UDP_SIGNATURE), 0);
+		pdi = di->ds->items;
+		
+		crtx_fill_data_item(pdi, 'u', "src_port", ntohs(udp->source), 0, 0); pdi++;
+		
+		crtx_fill_data_item(pdi, 'u', "dst_port", ntohs(udp->dest), 0, DIF_LAST);
+		
+// 		fprintf(stdout,"UDP{sport=%u; dport=%u; len=%u}\n",
+// 				ntohs(udp->source), ntohs(udp->dest), udp->len);
+	}
+}
 
 static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		    struct nfq_data *tb, void *data)
@@ -121,6 +217,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 // 		event->response.raw = &pkt->mark_out;
 // 		event->response.raw_size = sizeof(u_int32_t);
 		event->data.raw.flags |= DIF_DATA_UNALLOCATED;
+		event->data.raw_to_dict = &nfq_raw2dict;
 		
 		reference_event_release(event);
 		

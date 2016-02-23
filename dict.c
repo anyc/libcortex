@@ -639,6 +639,91 @@ char crtx_dict_calc_payload_size(struct crtx_dict *orig, size_t *size) {
 	return result;
 }
 
+// void crtx_dict_copy_item_data(struct crtx_dict_item *dst, struct crtx_dict_item *src) {
+// 	struct crtx_dict_item tmp;
+// 	
+// 	
+// 	dst->type = src->type;
+// 	dst->size = src->size;
+// 	
+// 	if (src->type == 'D') {
+// 		dst->ds = crtx_dict_copy(src->ds);
+// 	} else
+// 	if (src->type == 's') {
+// 		if ( !(src->flags & DIF_DATA_UNALLOCATED) )
+// 			dst->string = stracpy(src->string, 0);
+// 	} else
+// 	if (src->type == 'p') {
+// 		if ( !(src->flags & DIF_DATA_UNALLOCATED) ) {
+// 			dst->pointer = malloc(src->size);
+// 			memcpy(dst->pointer, src->pointer, src->size);
+// 			
+// // 			if (src->copy_raw) {
+// // 				dst->pointer = src->copy_raw(&event->response);
+// // 			} else {
+// // 				dst->pointer = src->pointer;
+// // 				dst->flags |= DIF_DATA_UNALLOCATED;
+// // 			}
+// 			dst->size = src->size;
+// 		}
+// 	} else {
+// 		memcpy(&tmp, dst, sizeof(struct crtx_dict_item));
+// 		memcpy(dst, src, sizeof(struct crtx_dict_item));
+// 		dst->key = tmp.key;
+// 		dst->flags = tmp.flags;
+// 	}
+// }
+
+void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src, char data_only) {
+// 	memcpy(dst, src, sizeof(struct crtx_dict_item));
+	
+// 	crtx_dict_copy_item_data(dst, src);
+	
+	switch (src->type) {
+		case 'D':
+			dst->ds = crtx_dict_copy(src->ds);
+			break;
+		case 's':
+// 			if ( !(src->flags & DIF_DATA_UNALLOCATED) )
+				dst->string = stracpy(src->string, 0);
+			break;
+		case 'p':
+// 			if ( !(src->flags & DIF_DATA_UNALLOCATED) ) {
+				dst->pointer = malloc(src->size);
+				memcpy(dst->pointer, src->pointer, src->size);
+				
+				dst->size = src->size;
+// 			}
+			break;
+		default:
+			{
+				char *key;
+				unsigned char flags;
+				
+				key = dst->key;
+				flags = dst->flags;
+				
+				// copy complete struct as we can't copy the anonymous union
+				memcpy(dst, src, sizeof(struct crtx_dict_item));
+				
+				dst->key = key;
+				dst->flags = flags;
+			}
+			return;
+	}
+	
+	if (!data_only) {
+		dst->flags = src->flags;
+		
+		if (src->key && (src->flags & DIF_KEY_ALLOCATED)) {
+			dst->key = stracpy(src->key, 0);
+		}
+	}
+	
+	dst->type = src->type;
+	dst->size = src->size;
+}
+
 struct crtx_dict *crtx_dict_copy(struct crtx_dict *orig) {
 	size_t psize;
 	char ret;
@@ -657,24 +742,7 @@ struct crtx_dict *crtx_dict_copy(struct crtx_dict *orig) {
 	oitem = crtx_get_first_item(orig);
 	nitem = crtx_get_first_item(dict);
 	while (oitem) {
-		memcpy(nitem, oitem, sizeof(struct crtx_dict_item));
-		
-		if (oitem->key && (oitem->flags & DIF_KEY_ALLOCATED))
-			nitem->key = stracpy(oitem->key, 0);
-		
-		if (oitem->type == 'D') {
-			nitem->ds = crtx_dict_copy(oitem->ds);
-		} else
-		if (oitem->type == 's') {
-			if ( !(oitem->flags & DIF_DATA_UNALLOCATED) )
-				nitem->string = stracpy(oitem->string, 0);
-		} else
-		if (oitem->type == 'p') {
-			if ( !(oitem->flags & DIF_DATA_UNALLOCATED) ) {
-				nitem->pointer = malloc(oitem->size);
-				memcpy(nitem->pointer, oitem->pointer, oitem->size);
-			}
-		}
+		crtx_dict_copy_item(nitem, oitem, 0);
 		
 		oitem = crtx_get_next_item(orig, oitem);
 		nitem = crtx_get_next_item(dict, nitem);

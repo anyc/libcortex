@@ -155,7 +155,7 @@ void traverse_graph_r(struct crtx_graph *graph, struct crtx_task *ti, struct crt
 		traverse_graph_r(graph, ti->next, event);
 	
 	if (ti->cleanup) {
-		INFO("execute task %s with event %s (%p)\n", ti->id, event->type, event);
+		INFO("execute task %s with event %s (%p) cleanup\n", ti->id, event->type, event);
 		
 		ti->cleanup(event, ti->userdata, sessiondata);
 	}
@@ -353,6 +353,7 @@ struct crtx_event *create_event(char *type, void *data, size_t data_size) {
 	event->type = type;
 	event->data.raw.pointer = data;
 	event->data.raw.size = data_size;
+	event->data.raw.type = 'p';
 	
 	return event;
 }
