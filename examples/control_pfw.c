@@ -32,6 +32,11 @@ struct crtx_listener_base *nfq_list_base;
 struct crtx_graph *rl_graph, *newp_graph;
 struct crtx_task *rcache_host, *rcache_ip;
 
+
+struct crtx_timer_listener tlist;
+struct itimerspec newtimer;
+struct crtx_listener_base *blist;
+
 #define PFW_DEFAULT 3
 #define PFW_ACCEPT 2
 #define PFW_REJECT 1
@@ -46,6 +51,7 @@ char *newp_event_types[] = { PFW_NEWPACKET_ETYPE, 0 };
 #define PFW_NEWPACKET_RAW_ETYPE "pfw/newpacket_raw"
 char *newp_raw_event_types[] = { PFW_NEWPACKET_RAW_ETYPE, 0 };
 
+#define TASK2CACHETASK(task) ((struct crtx_cache_task*) (task)->userdata)
 
 struct ip_ll {
 	struct ip_ll *next;
@@ -404,7 +410,44 @@ static char pfw_rules_filter(struct crtx_event *event, void *userdata, void **se
 // }
 
 char pfw_on_hit_host(struct crtx_cache_task *rc, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
-	return response_cache_on_hit(rc, key, event, c_entry);
+	char ret, orig_ret;
+	
+	orig_ret = crtx_cache_on_hit(rc, key, event, c_entry);
+	
+	/*
+	 * The IP cache is configured to not add new entries itself. We add new
+	 * entries here, if the host cache entry has no cache_ip property or it
+	 * equals 1
+	 */
+	
+	if (c_entry->type == 'D') {
+		struct crtx_dict_item ip, *cache_ip;
+		
+		ip.key = 0;
+		cache_ip = crtx_get_item(c_entry->ds, "cache_ip");
+		
+		if (!cache_ip || CRTX_DICT_GET_NUMBER(cache_ip) == 1) {
+// 			struct crtx_dict_item *timeout, *ip_c_entry;
+			
+			DBG("create IP cache entry\n");
+			
+			// generate key with IP
+			ret = pfw_rcache_create_key_ip(event, &ip);
+			if (!ret) {
+				ERROR("cannot create key for IP cache\n");
+				return 1;
+			}
+			
+// 			crtx_print_dict_item(&ip, 0);
+			
+			// add entry to IP cache
+			/* ip_c_entry = */ crtx_cache_add_entry(TASK2CACHETASK(rcache_ip), &ip, event);
+// 			timeout = crtx_get_item(c_entry->ds, "timeout");
+		}
+	} else
+		ERROR("pfw_on_hit_host received ditem.type %c != 'D'\n", c_entry->type);
+	
+	return orig_ret;
 }
 
 static char resolve_ips_timer(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -483,9 +526,6 @@ char init() {
 		/*
 		 * from test in timer.c
 		 */
-		struct crtx_timer_listener tlist;
-		struct itimerspec newtimer;
-		struct crtx_listener_base *blist;
 		
 		// set time for (first) alarm
 		newtimer.it_value.tv_sec = 1;
@@ -499,13 +539,13 @@ char init() {
 		tlist.settime_flags = 0; // absolute (TFD_TIMER_ABSTIME), or relative (0) time, see: man timerfd_settime()
 		tlist.newtimer = &newtimer;
 		
-		blist = create_listener("timer", &tlist);
-		if (!blist) {
-			ERROR("create_listener(timer) failed\n");
-			exit(1);
-		}
-		
-		crtx_create_task(blist->graph, 0, "resolve_ips", resolve_ips_timer, 0);
+// 		blist = create_listener("timer", &tlist);
+// 		if (!blist) {
+// 			ERROR("create_listener(timer) failed\n");
+// 			exit(1);
+// 		}
+// 		
+// 		crtx_create_task(blist->graph, 0, "resolve_ips", resolve_ips_timer, 0);
 	}
 	
 	/*
@@ -524,15 +564,13 @@ char init() {
 	
 	crtx_create_task(nfq_list.parent.graph, 0, "pfw_print_packet", &pfw_print_packet, 0);
 	
-	#define TASK2CTASK(task) ((struct crtx_cache_task*) (task)->userdata)
-	
 	// IP
 	rcache_ip = create_response_cache_task("rcache_ip", pfw_rcache_create_key_ip);
 // 	TASK2CTASK(rcache_ip)->on_add = &ip_cache_add_cb;
-// 	TASK2CTASK(rcache_ip)->on_add = &crtx_cache_no_add;
+	TASK2CACHETASK(rcache_ip)->on_add = &crtx_cache_no_add;
 	rcache_ip->id = "rcache_ip";
 	
-	crtx_load_cache(TASK2CTASK(rcache_ip)->cache, PFW_DATA_DIR);
+	crtx_load_cache(TASK2CACHETASK(rcache_ip)->cache, PFW_DATA_DIR);
 	
 	add_task(nfq_list.parent.graph, rcache_ip);
 	
@@ -542,11 +580,11 @@ char init() {
 	rcache_host = create_response_cache_task("rcache_host", pfw_rcache_create_key_host);
 // 	TASK2CTASK(rcache_host)->on_add = &host_cache_add_cb;
 // 	TASK2CTASK(rcache_host)->on_add = &crtx_cache_no_add;
-	TASK2CTASK(rcache_host)->on_hit = &pfw_on_hit_host;
+	TASK2CACHETASK(rcache_host)->on_hit = &pfw_on_hit_host;
 	
 	rcache_host->id = "rcache_host";
 	
-	crtx_load_cache(TASK2CTASK(rcache_host)->cache, PFW_DATA_DIR);
+	crtx_load_cache(TASK2CACHETASK(rcache_host)->cache, PFW_DATA_DIR);
 	
 	add_task(nfq_list.parent.graph, rcache_host);
 	

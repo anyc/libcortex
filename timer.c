@@ -79,7 +79,7 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 		ERROR("timerfd_settime failed: %s\n", strerror(errno));
 		return 0;
 	}
-	
+	printf("tlist %p\n", tlist->parent.graph);
 	t = get_thread(timer_tmain, tlist, 0);
 	t->do_stop = &stop_thread;
 	start_thread(t);
