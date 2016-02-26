@@ -105,14 +105,16 @@ int timer_main(int argc, char **argv) {
 	struct itimerspec newtimer;
 	struct crtx_listener_base *blist;
 	
+	// set time for (first) alarm
 	newtimer.it_value.tv_sec = 1;
 	newtimer.it_value.tv_nsec = 0;
 	
+	// set interval for repeating alarm, set to 0 to disable repetition
 	newtimer.it_interval.tv_sec = 1;
 	newtimer.it_interval.tv_nsec = 0;
 	
-	tlist.clockid = CLOCK_REALTIME;
-	tlist.settime_flags = TFD_TIMER_ABSTIME;
+	tlist.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
+	tlist.settime_flags = 0; // absolute (TFD_TIMER_ABSTIME), or relative (0) time, see: man timerfd_settime()
 	tlist.newtimer = &newtimer;
 	
 	blist = create_listener("timer", &tlist);

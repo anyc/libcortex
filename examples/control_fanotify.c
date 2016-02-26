@@ -48,7 +48,7 @@ struct crtx_socket_listener sock_listener;
 char *sock_path = 0;
 
 /// this function will be called for each fanotify event
-static void fanotify_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char fanotify_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct fanotify_event_metadata *metadata;
 	char *buf, *chosen_action;
 	char title[32];
@@ -110,7 +110,7 @@ static void fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 				crtx_print_dict(notif_event->response.dict);
 				
 				free(buf);
-				return;
+				return 1;
 			}
 			
 			access.fd = metadata->fd;
@@ -127,6 +127,8 @@ static void fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 	}
 	
 	free(buf);
+	
+	return 1;
 }
 
 char init() {

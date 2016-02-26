@@ -134,29 +134,29 @@ struct crtx_dict * crtx_init_dict(char *signature, uint32_t sign_length, size_t 
 	return ds;
 }
 
-char crtx_add_item(struct crtx_dict **dict, char type, ...) {
-	char ret;
-	va_list va;
-	struct crtx_dict_item *item;
-	
-	if (!*dict) {
-		*dict = crtx_init_dict(0, 1, 0);
-		item = crtx_get_first_item(*dict);
-	} else {
-		item = crtx_alloc_item(*dict);
-	}
-	
-	if (!item)
-		return 0;
-	
-	va_start(va, type);
-	
-	ret = crtx_fill_data_item_va(item, type, va);
-	
-	va_end(va);
-	
-	return ret;
-}
+// char crtx_add_item(struct crtx_dict **dict, char type, ...) {
+// 	char ret;
+// 	va_list va;
+// 	struct crtx_dict_item *item;
+// 	
+// 	if (!*dict) {
+// 		*dict = crtx_init_dict(0, 1, 0);
+// 		item = crtx_get_first_item(*dict);
+// 	} else {
+// 		item = crtx_alloc_item(*dict);
+// 	}
+// 	
+// 	if (!item)
+// 		return 0;
+// 	
+// 	va_start(va, type);
+// 	
+// 	ret = crtx_fill_data_item_va(item, type, va);
+// 	
+// 	va_end(va);
+// 	
+// 	return ret;
+// }
 
 struct crtx_dict * crtx_create_dict(char *signature, ...) {
 	struct crtx_dict *ds;
@@ -240,21 +240,21 @@ void crtx_print_dict_item(struct crtx_dict_item *di, unsigned char level) {
 	INFO("%s = ", di->key?di->key:"\"\"");
 	
 	switch (di->type) {
-		case 'u': INFO("(uint32_t) %u\n", di->uint32); break;
-		case 'i': INFO("(int32_t) %d\n", di->int32); break;
-		case 's': INFO("(char*) %s\n", di->string); break;
-		case 'p': INFO("(void*) %p\n", di->pointer); break;
-		case 'U': INFO("(uint64_t) %zu\n", di->uint64); break;
-		case 'I': INFO("(int64_t) %d\n", di->int32); break;
-		case 'd': INFO("(double) %f\n", di->double_fp); break;
+		case 'u': INFO("(uint32_t) %u", di->uint32); break;
+		case 'i': INFO("(int32_t) %d", di->int32); break;
+		case 's': INFO("(char*) %s", di->string); break;
+		case 'p': INFO("(void*) %p", di->pointer); break;
+		case 'U': INFO("(uint64_t) %zu", di->uint64); break;
+		case 'I': INFO("(int64_t) %d", di->int32); break;
+		case 'd': INFO("(double) %f", di->double_fp); break;
 		case 'D':
-// 			INFO("(dict) \n");
+// 			INFO("(dict) ");
 			if (di->ds)
 				crtx_print_dict_rec(di->ds, level+1);
 			else
-				INFO("(null)\n");
+				INFO("(null)");
 			break;
-		default: ERROR("print_dict: unknown type %c\n", di->type); break;
+		default: ERROR("print_dict: unknown type %c", di->type); break;
 	}
 	
 }
@@ -281,6 +281,7 @@ void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level) {
 		INFO("%u: ", i);
 		
 		crtx_print_dict_item(di, level);
+		INFO("\n");
 		
 		if (s && *s != di->type)
 			ERROR("error type %c != %c\n", *s, di->type);
@@ -790,7 +791,7 @@ struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, 
 	return ds;
 }
 
-void crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+char crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *dict;
 	struct crtx_event *new_event;
 	struct crtx_transform_dict_handler *trans;
@@ -800,7 +801,7 @@ void crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void 
 	
 	if (!event->data.dict) {
 		ERROR("cannot convert %s to dict", event->type);
-		return;
+		return 1;
 	}
 	
 	trans = (struct crtx_transform_dict_handler*) userdata;
@@ -814,6 +815,8 @@ void crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void 
 		add_event(trans->graph, new_event);
 	else
 		add_raw_event(new_event);
+	
+	return 1;
 }
 
 struct crtx_task *crtx_create_transform_task(struct crtx_graph *in_graph, char *name, struct crtx_transform_dict_handler *trans) {

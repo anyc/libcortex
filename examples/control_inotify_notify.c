@@ -44,7 +44,7 @@ static void send_notification(char *msg) {
 }
 
 /// this function is called for every inotify event
-static void inotify_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char inotify_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct inotify_event *in_event;
 	char buf[1024];
 	
@@ -75,6 +75,8 @@ static void inotify_event_handler(struct crtx_event *event, void *userdata, void
 			}
 		}
 	}
+	
+	return 1;
 }
 
 char init() {

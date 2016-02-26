@@ -25,6 +25,7 @@
 #include "nf_queue.h"
 #include "controls.h"
 #include "dict.h"
+#include "timer.h"
 
 struct crtx_nfq_listener nfq_list;
 struct crtx_listener_base *nfq_list_base;
@@ -220,7 +221,7 @@ char pfw_rcache_create_key_host(struct crtx_event *event, struct crtx_dict_item 
 	return 1;
 }
 
-static void pfw_print_packet(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char pfw_print_packet(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *ds, *pds;
 	char src_local, dst_local;
 	
@@ -228,7 +229,7 @@ static void pfw_print_packet(struct crtx_event *event, void *userdata, void **se
 	
 	if (strcmp(ds->signature, PFW_NEWPACKET_SIGNATURE)) {
 		printf("error, signature mismatch: %s %s\n", ds->signature, PFW_NEWPACKET_SIGNATURE);
-		return;
+		return 1;
 	}
 	
 	if (pfw_is_ip_local(ds->items[PFW_NEWP_SRC_IP].string)) {
@@ -258,7 +259,7 @@ static void pfw_print_packet(struct crtx_event *event, void *userdata, void **se
 		
 		if (strcmp(pds->signature, PFW_NEWPACKET_TCP_SIGNATURE)) {
 			printf("error, signature mismatch: %s %s\n", pds->signature, PFW_NEWPACKET_TCP_SIGNATURE);
-			return;
+			return 1;
 		}
 		
 		printf("%u %u ", pds->items[PFW_NEWP_TCP_SPORT].uint32, pds->items[PFW_NEWP_TCP_DPORT].uint32);
@@ -268,12 +269,14 @@ static void pfw_print_packet(struct crtx_event *event, void *userdata, void **se
 		
 		if (strcmp(pds->signature, PFW_NEWPACKET_UDP_SIGNATURE)) {
 			printf("error, signature mismatch: %s %s\n", pds->signature, PFW_NEWPACKET_UDP_SIGNATURE);
-			return;
+			return 1;
 		}
 		
 		printf("%u %u ", pds->items[PFW_NEWP_UDP_SPORT].uint32, pds->items[PFW_NEWP_UDP_DPORT].uint32);
 	}
 	printf("\n");
+	
+	return 1;
 }
 
 void free_list(struct filter_set *fset) {
@@ -346,12 +349,12 @@ static char match_regexp_list(char *input, struct filter_set *fset) {
 	return 0;
 }
 
-static void pfw_rules_filter(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char pfw_rules_filter(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
 	if (event->response.raw.pointer)
-		return;
+		return 1;
 	
 	if (!event->data.dict)
 		event->data.raw_to_dict(&event->data);
@@ -363,39 +366,51 @@ static void pfw_rules_filter(struct crtx_event *event, void *userdata, void **se
 	#define SET_MARK(event, mark) { (event)->response.raw.type = 'u'; (event)->response.raw.uint32 = (mark); }
 	if (match_regexp_list(remote_host, &host_blacklist)) {
 		SET_MARK(event, PFW_REJECT);
-		return;
+		return 1;
 	}
 	
 	if (match_regexp_list(remote_ip, &ip_blacklist)) {
 		SET_MARK(event, PFW_REJECT);
-		return;
+		return 1;
 	}
 	
 	if (match_regexp_list(remote_host, &host_whitelist)) {
 		SET_MARK(event, PFW_ACCEPT);
-		return;
+		return 1;
 	}
 	
 	if (match_regexp_list(remote_ip, &ip_whitelist)) {
 		SET_MARK(event, PFW_ACCEPT);
-		return;
+		return 1;
 	}
 	
 	SET_MARK(event, PFW_DEFAULT);
+	
+	return 1;
 }
 
-char host_cache_add_cb(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
-	if (match_regexp_list(key->string, &host_nocachelist))
-		return 0;
-	else
-		return 1;
+// char host_cache_add_cb(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
+// 	if (match_regexp_list(key->string, &host_nocachelist))
+// 		return 0;
+// 	else
+// 		return 1;
+// }
+// 
+// char ip_cache_add_cb(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
+// 	if (match_regexp_list(key->string, &ip_nocachelist))
+// 		return 0;
+// 	else
+// 		return 1;
+// }
+
+char pfw_on_hit_host(struct crtx_cache_task *rc, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
+	return response_cache_on_hit(rc, key, event, c_entry);
 }
 
-char ip_cache_add_cb(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
-	if (match_regexp_list(key->string, &ip_nocachelist))
-		return 0;
-	else
-		return 1;
+static char resolve_ips_timer(struct crtx_event *event, void *userdata, void **sessiondata) {
+// 	printf("received timer event: %lu\n", (uintptr_t) event->data.raw);
+	
+	return 1;
 }
 
 char init() {
@@ -463,6 +478,36 @@ char init() {
 	
 	print_filter_set(&host_nocachelist, "host nocachelist");
 	
+	
+	{
+		/*
+		 * from test in timer.c
+		 */
+		struct crtx_timer_listener tlist;
+		struct itimerspec newtimer;
+		struct crtx_listener_base *blist;
+		
+		// set time for (first) alarm
+		newtimer.it_value.tv_sec = 1;
+		newtimer.it_value.tv_nsec = 0;
+		
+		// set interval for repeating alarm, set to 0 to disable repetition
+		newtimer.it_interval.tv_sec = 1;
+		newtimer.it_interval.tv_nsec = 0;
+		
+		tlist.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
+		tlist.settime_flags = 0; // absolute (TFD_TIMER_ABSTIME), or relative (0) time, see: man timerfd_settime()
+		tlist.newtimer = &newtimer;
+		
+		blist = create_listener("timer", &tlist);
+		if (!blist) {
+			ERROR("create_listener(timer) failed\n");
+			exit(1);
+		}
+		
+		crtx_create_task(blist->graph, 0, "resolve_ips", resolve_ips_timer, 0);
+	}
+	
 	/*
 	 * create nfqueue listener
 	 */
@@ -483,11 +528,10 @@ char init() {
 	
 	// IP
 	rcache_ip = create_response_cache_task("rcache_ip", pfw_rcache_create_key_ip);
-	TASK2CTASK(rcache_ip)->on_add = &ip_cache_add_cb;
+// 	TASK2CTASK(rcache_ip)->on_add = &ip_cache_add_cb;
+// 	TASK2CTASK(rcache_ip)->on_add = &crtx_cache_no_add;
 	rcache_ip->id = "rcache_ip";
 	
-	// 	crtx_add_item(&TASK2CTASK(rcache_ip)->cache->config,
-	// 			    'z', "timeout", (uint64_t) 1e10, 0, 0);
 	crtx_load_cache(TASK2CTASK(rcache_ip)->cache, PFW_DATA_DIR);
 	
 	add_task(nfq_list.parent.graph, rcache_ip);
@@ -496,11 +540,12 @@ char init() {
 	
 	// host
 	rcache_host = create_response_cache_task("rcache_host", pfw_rcache_create_key_host);
-	TASK2CTASK(rcache_host)->on_add = &host_cache_add_cb;
+// 	TASK2CTASK(rcache_host)->on_add = &host_cache_add_cb;
+// 	TASK2CTASK(rcache_host)->on_add = &crtx_cache_no_add;
+	TASK2CTASK(rcache_host)->on_hit = &pfw_on_hit_host;
+	
 	rcache_host->id = "rcache_host";
 	
-// 	crtx_add_item(&TASK2CTASK(rcache_host)->cache->config,
-// 			'z', "timeout", (uint64_t) 1e10, 0, 0);
 	crtx_load_cache(TASK2CTASK(rcache_host)->cache, PFW_DATA_DIR);
 	
 	add_task(nfq_list.parent.graph, rcache_host);

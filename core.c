@@ -144,15 +144,22 @@ void free_listener(struct crtx_listener_base *listener) {
 
 void traverse_graph_r(struct crtx_graph *graph, struct crtx_task *ti, struct crtx_event *event) {
 	void *sessiondata[3];
+	char keep_going=1;
 	
 	if (ti->handle && (!ti->event_type_match || !strcmp(ti->event_type_match, event->type))) {
 		INFO("execute task %s with event %s (%p)\n", ti->id, event->type, event);
 		
-		ti->handle(event, ti->userdata, sessiondata);
+		keep_going = ti->handle(event, ti->userdata, sessiondata);
 	}
 	
-	if (ti->next && ((!event->response.raw.pointer && !event->response.dict) || (graph->flags & CRTX_GRAPH_KEEP_GOING)) )
+	if (ti->next && (
+			(!event->response.raw.pointer && !event->response.dict) ||
+			keep_going ||
+			(graph->flags & CRTX_GRAPH_KEEP_GOING))
+		)
+	{
 		traverse_graph_r(graph, ti->next, event);
+	}
 	
 	if (ti->cleanup) {
 		INFO("execute task %s with event %s (%p) cleanup\n", ti->id, event->type, event);
@@ -665,7 +672,7 @@ void crtx_flush_events() {
 	}
 }
 
-static void handle_shutdown(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char handle_shutdown(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_task *t;
 	
 	INFO("shutdown crtx\n");
@@ -678,6 +685,8 @@ static void handle_shutdown(struct crtx_event *event, void *userdata, void **ses
 // 	crtx_finish();
 	crtx_threads_stop();
 	crtx_flush_events();
+	
+	return 1;
 }
 
 void crtx_init() {

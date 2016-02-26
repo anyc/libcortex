@@ -54,7 +54,7 @@ void crtx_readline_show_notification(char *title, char *text, char **actions, ch
 }
 
 /// extract necessary information from the cortex dict to call send_notification
-static void rl_notify_send_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char rl_notify_send_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char *title, *msg, *answer;
 	char ret;
 	size_t answer_length;
@@ -64,13 +64,13 @@ static void rl_notify_send_handler(struct crtx_event *event, void *userdata, voi
 	ret = crtx_get_value(event->data.dict, "title", 's', &title, sizeof(void*));
 	if (!ret) {
 		printf("error parsing event\n");
-		return;
+		return 1;
 	}
 	
 	ret = crtx_get_value(event->data.dict, "message", 's', &msg, sizeof(void*));
 	if (!ret) {
 		printf("error parsing event\n");
-		return;
+		return 1;
 	}
 	
 	ret = crtx_get_value(event->data.dict, "actions", 'D', &actions_dict, sizeof(void*));
@@ -84,7 +84,7 @@ static void rl_notify_send_handler(struct crtx_event *event, void *userdata, voi
 		if (!di) {
 			printf("error parsing event\n");
 			free(actions);
-			return;
+			return 1;
 		}
 		i = 0;
 		
@@ -93,7 +93,7 @@ static void rl_notify_send_handler(struct crtx_event *event, void *userdata, voi
 			if (!ret) {
 				printf("error parsing event\n");
 				free(actions);
-				return;
+				return 1;
 			}
 			
 			di = crtx_get_next_item(actions_dict, di);
@@ -121,6 +121,8 @@ static void rl_notify_send_handler(struct crtx_event *event, void *userdata, voi
 	}
 	
 	event->response.dict = data;
+	
+	return 1;
 }
 
 struct crtx_listener_base *crtx_new_readline_listener(void *options) {

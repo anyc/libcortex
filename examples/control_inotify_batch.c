@@ -25,7 +25,7 @@ struct crtx_ll *transformations = 0;
 
 
 // execute script with inotify parameters
-static void exec_script_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char exec_script_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char *script;
 	char *cmd, *pos;
 	struct inotify_event *in_event;
@@ -38,7 +38,7 @@ static void exec_script_handler(struct crtx_event *event, void *userdata, void *
 	// calculate required string length
 	ret = crtx_inotify_mask2string(in_event->mask, 0, &mask_size);
 	if (!ret)
-		return;
+		return 1;
 	
 	cmd_size = strlen(script) + 1 + strlen(in_event->name) + 1 + 10 /*uint32*/ + 1 + mask_size - 1 + 1;
 	
@@ -54,6 +54,8 @@ static void exec_script_handler(struct crtx_event *event, void *userdata, void *
 	system(cmd);
 	
 	free(cmd);
+	
+	return 1;
 }
 
 char init() {

@@ -105,7 +105,7 @@ static u_int32_t sd_bus_send_notification(char *icon, char *title, char *text, c
 	return res;
 }
 
-static void notification_signal_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char notification_signal_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	sd_bus_message *m = (sd_bus_message *) event->data.raw.pointer;
 	struct wait_list_item *it;
 	char *s;
@@ -138,6 +138,8 @@ static void notification_signal_handler(struct crtx_event *event, void *userdata
 		}
 	}
 	pthread_mutex_unlock(&wait_list_mutex);
+	
+	return 1;
 }
 
 void crtx_send_notification(char *icon, char *title, char *text, char **actions, char**chosen_action) {
@@ -211,7 +213,7 @@ void crtx_send_notification(char *icon, char *title, char *text, char **actions,
 }
 
 /// extract necessary information from the cortex dict to call send_notification
-static void notify_send_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char notify_send_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char *title, *msg, *answer;
 	char ret;
 	size_t answer_length;
@@ -221,13 +223,13 @@ static void notify_send_handler(struct crtx_event *event, void *userdata, void *
 	ret = crtx_get_value(event->data.dict, "title", 's', &title, sizeof(void*));
 	if (!ret) {
 		printf("error parsing event\n");
-		return;
+		return 1;
 	}
 	
 	ret = crtx_get_value(event->data.dict, "message", 's', &msg, sizeof(void*));
 	if (!ret) {
 		printf("error parsing event\n");
-		return;
+		return 1;
 	}
 	
 	actions = 0;
@@ -242,7 +244,7 @@ static void notify_send_handler(struct crtx_event *event, void *userdata, void *
 		if (!di) {
 			printf("error parsing event\n");
 			free(actions);
-			return;
+			return 1;
 		}
 		i = 0;
 		
@@ -251,7 +253,7 @@ static void notify_send_handler(struct crtx_event *event, void *userdata, void *
 			if (!ret) {
 				printf("error parsing event\n");
 				free(actions);
-				return;
+				return 1;
 			}
 			
 			di = crtx_get_next_item(actions_dict, di);
@@ -279,6 +281,8 @@ static void notify_send_handler(struct crtx_event *event, void *userdata, void *
 	}
 	
 	event->response.dict = data;
+	
+	return 1;
 }
 
 struct crtx_listener_base *crtx_new_sd_bus_notification_listener(void *options) {

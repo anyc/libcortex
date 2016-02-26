@@ -2,6 +2,15 @@
 #ifndef CRTX_DICT_H
 #define CRTX_DICT_H
 
+#define CRTX_DICT_GET_NUMBER(dict_item) ( \
+	(dict_item)->type == 'u' ? (dict_item)->uint32 : \
+	(dict_item)->type == 'i' ? (dict_item)->int32 : \
+	(dict_item)->type == 'U' ? (dict_item)->uint64 : \
+	(dict_item)->type == 'I' ? (dict_item)->int64 : \
+	(dict_item)->type == 'd' ? (dict_item)->double_fp : \
+	( crtx_printf(CRTX_ERR, "invalid type %c for get_int32\n", (dict_item)->type), 0) \
+	)
+
 #define DIF_KEY_ALLOCATED 1<<0
 #define DIF_DATA_UNALLOCATED 1<<1
 #define DIF_LAST 1<<7
@@ -69,7 +78,7 @@ char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size
 void crtx_print_dict(struct crtx_dict *ds);
 struct crtx_dict_item *crtx_get_first_item(struct crtx_dict *ds);
 struct crtx_dict_item *crtx_get_next_item(struct crtx_dict *ds, struct crtx_dict_item *di);
-char crtx_add_item(struct crtx_dict **dict, char type, ...);
+// char crtx_add_item(struct crtx_dict **dict, char type, ...);
 
 char *crtx_get_string(struct crtx_dict *ds, char *key);
 struct crtx_dict *crtx_get_dict(struct crtx_dict *ds, char *key);

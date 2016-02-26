@@ -158,13 +158,15 @@ struct sd_bus_signal {
 struct sd_bus_signal *signals = 0;
 unsigned int n_signals = 0;
 
-void submit_signal(struct crtx_event *event, void *userdata, void **sessiondata) {
+char submit_signal(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct sd_bus_signal *args;
 	
 	args = (struct sd_bus_signal*) userdata;
 	
 	printf("submit signal\n");
 	sd_bus_emit_signal(args->bus, args->path, "org.cortexd.dbus.signal", "new_event", "ss", event->type, "TODO event data");
+	
+	return 1;
 }
 
 static int sd_bus_add_signal(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {

@@ -124,8 +124,10 @@ struct crtx_event *read_event_as_dict(read_fct read, void *conn_id) {
 	return event;
 }
 
-static void inbox_dispatch_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char inbox_dispatch_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	add_raw_event(event);
+	
+	return 1;
 }
 
 static char in_create_key_cb(struct crtx_event *event, struct crtx_dict_item *key) {
@@ -166,8 +168,10 @@ static char out_create_key_cb(struct crtx_event *event, struct crtx_dict_item *k
 // 	return key;
 }
 
-static void out_cache_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
+static char out_cache_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
 	printf("ERROR duplicate event ID\n");
+	
+	return 1;
 }
 
 static void out_cache_on_miss(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
@@ -208,7 +212,7 @@ static void out_cache_on_miss(struct crtx_cache_task *ct, struct crtx_dict_item 
 // 	*key = 0;
 }
 
-static void in_cache_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
+static char in_cache_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
 	struct crtx_event *orig_event;
 	
 	printf("in_cache_on_hit\n");
@@ -221,6 +225,8 @@ static void in_cache_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *k
 		
 		dereference_event_response(orig_event);
 	}
+	
+	return 1;
 }
 
 static void in_cache_on_miss(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {

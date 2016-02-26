@@ -111,7 +111,7 @@ struct crtx_event_ll {
 	struct crtx_event_ll *next;
 };
 
-typedef void (*crtx_handle_task_t)(struct crtx_event *event, void *userdata, void **sessiondata);
+typedef char (*crtx_handle_task_t)(struct crtx_event *event, void *userdata, void **sessiondata);
 
 struct crtx_graph;
 struct crtx_task {

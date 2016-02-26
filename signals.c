@@ -93,7 +93,7 @@ struct crtx_listener_base *crtx_new_signals_listener(void *options) {
 	return &signal_list.parent;
 }
 
-static void sigterm_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char sigterm_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event *newe;
 	
 // 	struct sigaction new_action;
@@ -105,14 +105,18 @@ static void sigterm_handler(struct crtx_event *event, void *userdata, void **ses
 	newe = create_event(CRTX_EVT_SHUTDOWN, 0, 0);
 	
 	add_event(crtx_root->crtx_ctrl_graph, newe);
+	
+	return 1;
 }
 
-static void sigint_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char sigint_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event *newe;
 	
 	newe = create_event(CRTX_EVT_SHUTDOWN, 0, 0);
 	
 	add_event(crtx_root->crtx_ctrl_graph, newe);
+	
+	return 1;
 }
 
 

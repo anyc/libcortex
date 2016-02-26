@@ -239,7 +239,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		if (!ret)
 			pkt->mark_out = nfq_list->default_mark;
 		
-		printf("packet mark: %" PRIu32 "\n", pkt->mark_out);
+		INFO("packet mark: %" PRIu32 "\n", pkt->mark_out);
 		
 		ret = nfq_set_verdict2(qh, pkt->id, NF_REPEAT, pkt->mark_out, 0, NULL);
 		

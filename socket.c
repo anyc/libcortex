@@ -59,7 +59,7 @@ static void setup_response_event_cb(struct crtx_event *event) {
 	add_event(slist->outbox, resp_event);
 }
 
-static void outbound_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char outbound_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_socket_listener *slistener;
 	
 	slistener = (struct crtx_socket_listener *) userdata;
@@ -71,9 +71,11 @@ static void outbound_event_handler(struct crtx_event *event, void *userdata, voi
 	crtx_traverse_graph(slistener->crtx_outbox, event);
 	
 	write_event_as_dict(event, crtx_wrapper_write, &slistener->sockfd);
+	
+	return 1;
 }
 
-static void inbound_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char inbound_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_socket_listener *slistener;
 	
 	slistener = (struct crtx_socket_listener *) userdata;
@@ -83,6 +85,8 @@ static void inbound_event_handler(struct crtx_event *event, void *userdata, void
 	
 	// write inbound event to the main inbox graph
 	add_event(slistener->crtx_inbox, event);
+	
+	return 1;
 }
 
 /// thread for a connection of a server socket
