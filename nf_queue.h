@@ -43,4 +43,5 @@ struct crtx_listener_base *crtx_new_nf_queue_listener(void *options);
 void crtx_nf_queue_init();
 void crtx_nf_queue_finish();
 
+char crtx_nfq_print_packet(struct crtx_dict *ds);
 char *crtx_nfq_proto2str(u_int16_t protocol);

@@ -1,23 +1,17 @@
 
-
-// iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW  -m mark --mark 0 -j NFQUEUE --queue-num 0
-// iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW -m mark --mark 1 -j REJECT
-// iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW -m mark --mark 2 -j ACCEPT
-// iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW -m mark --mark 3 -j
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <ctype.h>
 #include <errno.h>
 #include <regex.h>
-#include <ctype.h>
 
 #include <arpa/inet.h>
 #include <ifaddrs.h>
+#include <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netdb.h>
 
 
 #include "core.h"
@@ -27,70 +21,65 @@
 #include "dict.h"
 #include "timer.h"
 
-struct crtx_nfq_listener nfq_list;
-struct crtx_listener_base *nfq_list_base;
-struct crtx_graph *rl_graph, *newp_graph;
-struct crtx_task *rcache_host, *rcache_ip, *rcache_resolved;
+/*
+ * To send packets to this tool, add an iptables rule that contains:
+ *
+ * 		-m mark --mark 0 -j NFQUEUE --queue-num $PFW_QUEUE_NUM
+ *
+ * It will re-enqueue the processed packet with a changed mark. The mark will
+ * be equal to the value in the config file or PFW_DEFAULT_MARK if there is no
+ * setting in the config.
+ */
 
+/*
+ * Example
+ * -------
+ *
+ * With the following commands, the first packet of a new outgoing connection -
+ * opened by the user with UID 1000 - will be passed over queue 0 to this tool.
+ * You can set a mark 1 or 2 in the config which will reject or accept the
+ * connection, respectively. If no item in the config applies, the packet is
+ * marked as 2 which causes the connection to be accepted.
+ *
+ * # PFW_QUEUE_NUM=0 PFW_DEFAULT_MARK=2 ./cortex-pfw
+ *
+ * iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW -m mark --mark 0 -j NFQUEUE --queue-num 0
+ * iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW -m mark --mark 1 -j REJECT
+ * iptables -A OUTPUT -m owner --uid-owner 1000 -m state --state NEW -m mark --mark 2 -j ACCEPT
+ *
+ */
 
-struct crtx_timer_listener tlist;
-struct itimerspec newtimer;
-struct crtx_listener_base *blist;
-
-#define PFW_DEFAULT 3
-#define PFW_ACCEPT 2
-#define PFW_REJECT 1
-
-#ifndef PFW_DATA_DIR
-#define PFW_DATA_DIR "/etc/cortexd/pfw/"
+#ifndef PFW_CFG_DIR
+#define PFW_CFG_DIR "/etc/cortexd/pfw/"
 #endif
 
-#define PFW_NEWPACKET_ETYPE "pfw/newpacket"
-char *newp_event_types[] = { PFW_NEWPACKET_ETYPE, 0 };
+// listener for the nf_queue
+struct crtx_nfq_listener nfq_list;
+struct crtx_listener_base *nfq_list_base;
 
-#define PFW_NEWPACKET_RAW_ETYPE "pfw/newpacket_raw"
-char *newp_raw_event_types[] = { PFW_NEWPACKET_RAW_ETYPE, 0 };
+// listener for the timer events
+struct crtx_timer_listener tlist;
+struct crtx_listener_base *blist;
+struct itimerspec newtimer;
+
+// cache tasks that contain the configuration
+struct crtx_task *rcache_host;
+struct crtx_task *rcache_ip;
+struct crtx_task *rcache_resolve;
+
 
 #define TASK2CACHETASK(task) ((struct crtx_cache_task*) (task)->userdata)
 
-struct ip_ll {
-	struct ip_ll *next;
+// linked list that contains the local IPs
+struct pfw_ip_ll {
+	struct pfw_ip_ll *next;
 	
 	char ip[0];
 };
-struct ip_ll *local_ips = 0;
+struct pfw_ip_ll *local_ips = 0;
 
-
-// struct filter_set {
-// 	char **list;
-// 	regex_t *rlist;
-// 	
-// 	size_t length;
-// };
-// 
-// struct filter_set ip_whitelist;
-// struct filter_set ip_blacklist;
-// struct filter_set host_whitelist;
-// struct filter_set host_blacklist;
-// 
-// struct filter_set host_nocachelist;
-// struct filter_set ip_nocachelist;
-// 
-// struct filter_set resolvelist;
-
-
-// void print_filter_set(struct filter_set *fset, char *name) {
-// 	size_t i;
-// 	
-// 	printf("%s:\n", name);
-// 	
-// 	for (i=0; i<fset->length; i++) {
-// 		printf("  %s\n", fset->list[i]);
-// 	}
-// 	printf("\n");
-// }
-
-void update_ip_entry(struct crtx_cache_task *ct, struct crtx_dict_item *entry) {
+/// update the IP in the given resolve cache entry
+static void pfw_update_ip_entry(struct crtx_cache_task *ct, struct crtx_dict_item *entry) {
 	struct addrinfo* result;
 	struct addrinfo* res;
 	int error;
@@ -125,11 +114,6 @@ void update_ip_entry(struct crtx_cache_task *ct, struct crtx_dict_item *entry) {
 		
 		key->string = stracpy(s, &size);
 		
-// 		ditem.key = 0;
-// 		ditem.type = 's';
-// 		ditem.string = stracpy(s, size);
-// 		crtx_cache_add_entry(ct, stracpy(s, size), 0, &ditem);
-		
 		if (res->ai_next) {
 // 			INFO("TODO multiple resolved IPs per host %s (%s)\n", hostname->string, key->string);
 			break;
@@ -140,8 +124,9 @@ void update_ip_entry(struct crtx_cache_task *ct, struct crtx_dict_item *entry) {
 	return;
 }
 
-char pfw_is_ip_local(char *ip) {
-	struct ip_ll *iit;
+/// check if $ip is in the list of local IPs
+static char pfw_is_ip_local(char *ip) {
+	struct pfw_ip_ll *iit;
 	
 	for (iit=local_ips; iit; iit=iit->next) {
 		if (!strcmp(iit->ip, ip))
@@ -151,7 +136,8 @@ char pfw_is_ip_local(char *ip) {
 	return 0;
 }
 
-void pfw_get_remote_part(struct crtx_dict *ds, char **remote_ip, char **remote_host) {
+/// determine the remote IP and hostname in the given packet dict
+static void pfw_get_remote_part(struct crtx_dict *ds, char **remote_ip, char **remote_host) {
 	char src_local, dst_local;
 	unsigned int i_remote_ip, i_remote_host;
 	
@@ -187,7 +173,8 @@ void pfw_get_remote_part(struct crtx_dict *ds, char **remote_ip, char **remote_h
 	*remote_ip = ds->items[i_remote_ip].string;
 }
 
-char pfw_rcache_create_key_ip(struct crtx_event *event, struct crtx_dict_item *key) {
+/// create a key item for the IP cache from the given event structure
+static char pfw_rcache_create_key_ip(struct crtx_event *event, struct crtx_dict_item *key) {
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
@@ -207,7 +194,8 @@ char pfw_rcache_create_key_ip(struct crtx_event *event, struct crtx_dict_item *k
 	return 1;
 }
 
-char pfw_rcache_create_key_host(struct crtx_event *event, struct crtx_dict_item *key) {
+/// create a key item for the hostname cache from the given event structure
+static char pfw_rcache_create_key_hostname(struct crtx_event *event, struct crtx_dict_item *key) {
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
@@ -230,189 +218,7 @@ char pfw_rcache_create_key_host(struct crtx_event *event, struct crtx_dict_item 
 	return 1;
 }
 
-static char pfw_print_packet(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_dict *ds, *pds;
-	char src_local, dst_local;
-	
-	ds = event->data.dict;
-	
-	if (strcmp(ds->signature, PFW_NEWPACKET_SIGNATURE)) {
-		printf("error, signature mismatch: %s %s\n", ds->signature, PFW_NEWPACKET_SIGNATURE);
-		return 1;
-	}
-	
-	if (pfw_is_ip_local(ds->items[PFW_NEWP_SRC_IP].string)) {
-		src_local = 1;
-	} else {
-		src_local = 0;
-		if (pfw_is_ip_local(ds->items[PFW_NEWP_DST_IP].string))
-			dst_local = 1;
-		else
-			dst_local = 0;
-	}
-	
-	printf("%s ", crtx_nfq_proto2str(ds->items[PFW_NEWP_PROTOCOL].uint32));
-	
-	if (!src_local && !dst_local) {
-		printf("brd %s %s ", ds->items[PFW_NEWP_SRC_IP].string, ds->items[PFW_NEWP_SRC_HOST].string);
-	} else {
-		if (src_local) {
-			printf("dst %s %s ", ds->items[PFW_NEWP_DST_IP].string, ds->items[PFW_NEWP_DST_HOST].string);
-		} else {
-			printf("src %s %s ", ds->items[PFW_NEWP_SRC_IP].string, ds->items[PFW_NEWP_SRC_HOST].string);
-		}
-	}
-	
-	if (ds->items[PFW_NEWP_PROTOCOL].uint32 == 6) {
-		pds = ds->items[PFW_NEWP_PAYLOAD].ds;
-		
-		if (strcmp(pds->signature, PFW_NEWPACKET_TCP_SIGNATURE)) {
-			printf("error, signature mismatch: %s %s\n", pds->signature, PFW_NEWPACKET_TCP_SIGNATURE);
-			return 1;
-		}
-		
-		printf("%u %u ", pds->items[PFW_NEWP_TCP_SPORT].uint32, pds->items[PFW_NEWP_TCP_DPORT].uint32);
-	} else
-	if (ds->items[PFW_NEWP_PROTOCOL].uint32 == 17) {
-		pds = ds->items[PFW_NEWP_PAYLOAD].ds;
-		
-		if (strcmp(pds->signature, PFW_NEWPACKET_UDP_SIGNATURE)) {
-			printf("error, signature mismatch: %s %s\n", pds->signature, PFW_NEWPACKET_UDP_SIGNATURE);
-			return 1;
-		}
-		
-		printf("%u %u ", pds->items[PFW_NEWP_UDP_SPORT].uint32, pds->items[PFW_NEWP_UDP_DPORT].uint32);
-	}
-	printf("\n");
-	
-	return 1;
-}
-
-// void free_list(struct filter_set *fset) {
-// 	size_t i;
-// 	
-// 	for (i=0; i<fset->length; i++) {
-// 		free(fset->list[i]);
-// 		regfree(&fset->rlist[i]);
-// 	}
-// 	free(fset->list);
-// 	free(fset->rlist);
-// }
-
-// void load_list(struct filter_set *fset, char *file) {
-// 	FILE *f;
-// 	int ret;
-// 	char buf[1024];
-// 	char *c;
-// 	
-// 	f = fopen(file, "r");
-// 	
-// 	if (!f)
-// 		return;
-// 	
-// 	while (fgets(buf, sizeof(buf), f)) {
-// 		c=buf;
-// 		while (*c && isspace(*c))
-// 			c++;
-// 		
-// 		if (! *c)
-// 			continue;
-// 		
-// 		fset->length++;
-// 		fset->list = (char**) realloc(fset->list, sizeof(char*)*fset->length);
-// 		fset->rlist = (regex_t*) realloc(fset->rlist, sizeof(regex_t)*fset->length);
-// 		size_t slen = strlen(buf)-1; // don't copy newline
-// 		fset->list[fset->length-1] = stracpy(buf, &slen);
-// 		
-// 		ret = regcomp(&fset->rlist[fset->length-1], fset->list[fset->length-1], 0);
-// 		if (ret) {
-// 			fprintf(stderr, "Could not compile regex %s\n", fset->list[fset->length-1]);
-// 			exit(1);
-// 		}
-// 	}
-// 	
-// 	if (ferror(stdin)) {
-// 		fprintf(stderr,"Oops, error reading stdin\n");
-// 		exit(1);
-// 	}
-// 	
-// 	fclose(f);
-// }
-
-// static char match_regexp_list(char *input, struct filter_set *fset) {
-// 	int i, ret;
-// 	char msgbuf[128];
-// 	
-// 	for (i=0; i<fset->length; i++) {
-// 		ret = regexec(&fset->rlist[i], input, 0, NULL, 0);
-// 		if (!ret) {
-// 			return 1;
-// 		} else if (ret == REG_NOMATCH) {
-// 			
-// 		} else {
-// 			regerror(ret, &fset->rlist[i], msgbuf, sizeof(msgbuf));
-// 			fprintf(stderr, "Regex match failed: %s\n", msgbuf);
-// 			exit(1);
-// 		}
-// 	}
-// 	return 0;
-// }
-
-// static char pfw_rules_filter(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	struct crtx_dict *ds;
-// 	char *remote_ip, *remote_host;
-// 	
-// 	if (event->response.raw.pointer)
-// 		return 1;
-// 	
-// 	if (!event->data.dict)
-// 		event->data.raw_to_dict(&event->data);
-// 	
-// 	ds = event->data.dict;
-// 	
-// 	pfw_get_remote_part(ds, &remote_ip, &remote_host);
-// 	
-// 	#define SET_MARK(event, mark) { (event)->response.raw.type = 'u'; (event)->response.raw.uint32 = (mark); }
-// 	if (match_regexp_list(remote_host, &host_blacklist)) {
-// 		SET_MARK(event, PFW_REJECT);
-// 		return 1;
-// 	}
-// 	
-// 	if (match_regexp_list(remote_ip, &ip_blacklist)) {
-// 		SET_MARK(event, PFW_REJECT);
-// 		return 1;
-// 	}
-// 	
-// 	if (match_regexp_list(remote_host, &host_whitelist)) {
-// 		SET_MARK(event, PFW_ACCEPT);
-// 		return 1;
-// 	}
-// 	
-// 	if (match_regexp_list(remote_ip, &ip_whitelist)) {
-// 		SET_MARK(event, PFW_ACCEPT);
-// 		return 1;
-// 	}
-// 	
-// 	SET_MARK(event, PFW_DEFAULT);
-// 	
-// 	return 1;
-// }
-
-// char host_cache_add_cb(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
-// 	if (match_regexp_list(key->string, &host_nocachelist))
-// 		return 0;
-// 	else
-// 		return 1;
-// }
-// 
-// char ip_cache_add_cb(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
-// 	if (match_regexp_list(key->string, &ip_nocachelist))
-// 		return 0;
-// 	else
-// 		return 1;
-// }
-
-char pfw_on_hit_host(struct crtx_cache_task *rc, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
+static char pfw_on_hit_host(struct crtx_cache_task *rc, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
 	char ret, orig_ret;
 	
 	orig_ret = crtx_cache_on_hit(rc, key, event, c_entry);
@@ -451,7 +257,7 @@ char pfw_on_hit_host(struct crtx_cache_task *rc, struct crtx_dict_item *key, str
 	return orig_ret;
 }
 
-static char resolve_ips_timer(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char pfw_resolve_IPs_timer(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_cache_task *ct;
 	struct crtx_dict_item *ditem;
 	
@@ -461,7 +267,7 @@ static char resolve_ips_timer(struct crtx_event *event, void *userdata, void **s
 	
 	ditem = crtx_get_first_item(ct->cache->entries);
 	while (ditem) {
-		update_ip_entry(ct, ditem);
+		pfw_update_ip_entry(ct, ditem);
 		
 		ditem = crtx_get_next_item(ct->cache->entries, ditem);
 	}
@@ -473,9 +279,9 @@ static char resolve_ips_timer(struct crtx_event *event, void *userdata, void **s
 	return 1;
 }
 
-char init() {
+char pfw_start(unsigned int queue_num, unsigned int default_mark) {
 	struct ifaddrs *addrs, *tmp;
-	struct ip_ll *iit;
+	struct pfw_ip_ll *iit;
 	char *s;
 	
 	getifaddrs(&addrs);
@@ -490,10 +296,10 @@ char init() {
 			
 			for (iit=local_ips; iit && iit->next; iit=iit->next) {}
 			if (!iit) {
-				local_ips = (struct ip_ll *) malloc(sizeof(struct ip_ll)+strlen(s)+1);
+				local_ips = (struct pfw_ip_ll *) malloc(sizeof(struct pfw_ip_ll)+strlen(s)+1);
 				iit = local_ips;
 			} else {
-				iit->next = (struct ip_ll *) malloc(sizeof(struct ip_ll)+strlen(s)+1);
+				iit->next = (struct pfw_ip_ll *) malloc(sizeof(struct pfw_ip_ll)+strlen(s)+1);
 				iit = iit->next;
 			}
 			iit->next = 0;
@@ -507,44 +313,12 @@ char init() {
 	freeifaddrs(addrs);
 	
 	
-// 	load_list(&host_blacklist, PFW_DATA_DIR "hblack.txt");
-// 	load_list(&host_whitelist, PFW_DATA_DIR "hwhite.txt");
-// 	load_list(&ip_blacklist, PFW_DATA_DIR "ipblack.txt");
-// 	load_list(&ip_whitelist, PFW_DATA_DIR "ipwhite.txt");
-	
-// 	load_list(&resolvelist, PFW_DATA_DIR "resolvelist.txt");
-// 	
-// 	load_list(&host_nocachelist, PFW_DATA_DIR "hnocachelist.txt");
-// 	load_list(&ip_nocachelist, PFW_DATA_DIR "ipnocachelist.txt");
-	
-	
-// 	int i;
-// 	for (i=0; i<host_blacklist.length; i++) {
-// 		add_ips_to_list(&ip_blacklist, host_blacklist.list[i]);
-// 	}
-	
-// 	for (i=0; i<host_whitelist.length; i++) {
-// 		add_ips_to_list(&ip_whitelist, host_whitelist.list[i]);
-// 	}
-// 	for (i=0; i<resolvelist.length; i++) {
-// 		add_ips_to_list(&ip_whitelist, resolvelist.list[i]);
-// 	}
-	
-// 	print_filter_set(&host_blacklist, "host blacklist");
-// 	print_filter_set(&ip_blacklist, "ip blacklist");
-// 	print_filter_set(&host_whitelist, "host whitelist");
-// 	print_filter_set(&ip_whitelist, "ip blacklist");
-	
-	
-// 	print_filter_set(&host_nocachelist, "host nocachelist");
-	
-	
 	/*
 	 * create nfqueue listener
 	 */
 	
-	nfq_list.queue_num = 0;
-	nfq_list.default_mark = PFW_DEFAULT;
+	nfq_list.queue_num = queue_num;
+	nfq_list.default_mark = default_mark;
 	
 	nfq_list_base = create_listener("nf_queue", &nfq_list);
 	if (!nfq_list_base) {
@@ -557,13 +331,13 @@ char init() {
 	
 	{
 		// resolved IP
-		rcache_resolved = create_response_cache_task("rcache_resolved", pfw_rcache_create_key_ip);
-		TASK2CACHETASK(rcache_resolved)->on_add = &crtx_cache_no_add;
-		rcache_resolved->id = "rcache_resolved";
+		rcache_resolve = create_response_cache_task("rcache_resolve", pfw_rcache_create_key_ip);
+		TASK2CACHETASK(rcache_resolve)->on_add = &crtx_cache_no_add;
+		rcache_resolve->id = "rcache_resolve";
 		
-		crtx_load_cache(TASK2CACHETASK(rcache_resolved)->cache, PFW_DATA_DIR);
+		crtx_load_cache(TASK2CACHETASK(rcache_resolve)->cache, PFW_DATA_DIR);
 		
-		add_task(nfq_list.parent.graph, rcache_resolved);
+		add_task(nfq_list.parent.graph, rcache_resolve);
 	}
 	
 	{
@@ -589,7 +363,7 @@ char init() {
 			exit(1);
 		}
 		
-		crtx_create_task(blist->graph, 0, "resolve_ips", resolve_ips_timer, TASK2CACHETASK(rcache_resolved));
+		crtx_create_task(blist->graph, 0, "resolve_ips", pfw_resolve_IPs_timer, TASK2CACHETASK(rcache_resolve));
 	}
 	
 	{
@@ -605,7 +379,7 @@ char init() {
 	
 	{
 		// host
-		rcache_host = create_response_cache_task("rcache_host", pfw_rcache_create_key_host);
+		rcache_host = create_response_cache_task("rcache_host", pfw_rcache_create_key_hostname);
 		TASK2CACHETASK(rcache_host)->on_hit = &pfw_on_hit_host;
 		
 		rcache_host->id = "rcache_host";
@@ -615,36 +389,52 @@ char init() {
 		add_task(nfq_list.parent.graph, rcache_host);
 	}
 	
-	
 // 	print_tasks(nfq_list.parent.graph);
 	
 	return 1;
 }
 
+char init() {
+	unsigned int queue_num, default_mark;
+	char *s;
+	
+	s = getenv("PFW_QUEUE_NUM");
+	if (s) {
+		queue_num = atoi(s);
+	} else
+		queue_num = 0;
+	
+	s = getenv("PFW_DEFAULT_MARK");
+	if (s) {
+		default_mark = atoi(s);
+	} else
+		default_mark = 1;
+	
+	return pfw_start(queue_num, default_mark);
+}
+
 void finish() {
-	struct ip_ll *ipi, *ipin;
+	struct pfw_ip_ll *ipi, *ipin;
 	
 	free_response_cache(((struct crtx_cache_task*) rcache_host->userdata)->cache);
 	free_response_cache(((struct crtx_cache_task*) rcache_ip->userdata)->cache);
+	free_response_cache(((struct crtx_cache_task*) rcache_resolve->userdata)->cache);
 	free_task(rcache_host);
 	free_task(rcache_ip);
-	
-// 	free_list(&host_blacklist);
-// 	free_list(&host_whitelist);
-// 	free_list(&ip_blacklist);
-// 	free_list(&ip_whitelist);
-// 	free_list(&resolvelist);
-// 	
-// 	free_list(&host_nocachelist);
-// 	free_list(&ip_nocachelist);
+	free_task(rcache_resolve);
 	
 	for (ipi = local_ips; ipi; ipi=ipin) {
 		ipin=ipi->next;
 		free(ipi);
 	}
 	
-	free_eventgraph(newp_graph);
-	
 	free_listener(nfq_list_base);
-// 	regfree(&regex);
 }
+
+#ifdef PFW_STANDALONE
+int main(int argc, char **argv) {
+	init();
+	
+	return 0;
+}
+#endif

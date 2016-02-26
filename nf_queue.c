@@ -29,6 +29,65 @@
 
 char *nfq_packet_msg_etype[] = { NFQ_PACKET_MSG_ETYPE, 0 };
 
+
+char crtx_nfq_print_packet(struct crtx_dict *ds) {
+	struct crtx_dict *pds;
+	char src_local, dst_local;
+	
+	ds = event->data.dict;
+	
+	if (strcmp(ds->signature, PFW_NEWPACKET_SIGNATURE)) {
+		printf("error, signature mismatch: %s %s\n", ds->signature, PFW_NEWPACKET_SIGNATURE);
+		return 1;
+	}
+	
+	if (pfw_is_ip_local(ds->items[PFW_NEWP_SRC_IP].string)) {
+		src_local = 1;
+	} else {
+		src_local = 0;
+		if (pfw_is_ip_local(ds->items[PFW_NEWP_DST_IP].string))
+			dst_local = 1;
+		else
+			dst_local = 0;
+	}
+	
+	printf("%s ", crtx_nfq_proto2str(ds->items[PFW_NEWP_PROTOCOL].uint32));
+	
+	if (!src_local && !dst_local) {
+		printf("brd %s %s ", ds->items[PFW_NEWP_SRC_IP].string, ds->items[PFW_NEWP_SRC_HOST].string);
+	} else {
+		if (src_local) {
+			printf("dst %s %s ", ds->items[PFW_NEWP_DST_IP].string, ds->items[PFW_NEWP_DST_HOST].string);
+		} else {
+			printf("src %s %s ", ds->items[PFW_NEWP_SRC_IP].string, ds->items[PFW_NEWP_SRC_HOST].string);
+		}
+	}
+	
+	if (ds->items[PFW_NEWP_PROTOCOL].uint32 == 6) {
+		pds = ds->items[PFW_NEWP_PAYLOAD].ds;
+		
+		if (strcmp(pds->signature, PFW_NEWPACKET_TCP_SIGNATURE)) {
+			printf("error, signature mismatch: %s %s\n", pds->signature, PFW_NEWPACKET_TCP_SIGNATURE);
+			return 1;
+		}
+		
+		printf("%u %u ", pds->items[PFW_NEWP_TCP_SPORT].uint32, pds->items[PFW_NEWP_TCP_DPORT].uint32);
+	} else
+	if (ds->items[PFW_NEWP_PROTOCOL].uint32 == 17) {
+		pds = ds->items[PFW_NEWP_PAYLOAD].ds;
+		
+		if (strcmp(pds->signature, PFW_NEWPACKET_UDP_SIGNATURE)) {
+			printf("error, signature mismatch: %s %s\n", pds->signature, PFW_NEWPACKET_UDP_SIGNATURE);
+			return 1;
+		}
+		
+		printf("%u %u ", pds->items[PFW_NEWP_UDP_SPORT].uint32, pds->items[PFW_NEWP_UDP_DPORT].uint32);
+	}
+	printf("\n");
+	
+	return 1;
+}
+
 static void nfq_raw2dict(struct crtx_event_data *data) {
 	struct crtx_nfq_packet *ev;
 	int res;
