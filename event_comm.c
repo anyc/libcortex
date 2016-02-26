@@ -188,7 +188,7 @@ static void out_cache_on_miss(struct crtx_cache_task *ct, struct crtx_dict_item 
 	
 	
 	
-	crtx_cache_add_entry(ct, key, event);
+	crtx_cache_add_entry(ct, key, event, 0);
 	
 	
 	

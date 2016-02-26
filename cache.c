@@ -237,7 +237,7 @@ char crtx_cache_no_add(struct crtx_cache_task *ct, struct crtx_dict_item *key, s
 	return 0;
 }
 
-struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
+struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *entry_data) {
 	struct crtx_cache *dc = ct->cache;
 	struct crtx_dict_item *c_entry;
 	struct crtx_dict_item *value_item;
@@ -352,13 +352,19 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache_task *ct, struct 
 // 			}
 	}
 	
-	if (event->response.dict) {
-		value_item->type = 'D';
-		value_item->ds = crtx_dict_copy(event->response.dict);
-	} else {
-		value_item->type = event->response.raw.type;
+	if (entry_data) {
+		value_item->type = entry_data->type;
 		
-		crtx_dict_copy_item(value_item, &event->response.raw, 1);
+		crtx_dict_copy_item(value_item, entry_data, 1);
+	} else {
+		if (event->response.dict) {
+			value_item->type = 'D';
+			value_item->ds = crtx_dict_copy(event->response.dict);
+		} else {
+			value_item->type = event->response.raw.type;
+			
+			crtx_dict_copy_item(value_item, &event->response.raw, 1);
+		}
 	}
 	
 // 		crtx_print_dict(dc->entries);
@@ -384,7 +390,7 @@ char response_cache_task_cleanup(struct crtx_event *event, void *userdata, void 
 			do_add = ct->on_add(ct, &ct->key, event);
 		
 		if (do_add)
-			crtx_cache_add_entry(ct, key, event);
+			crtx_cache_add_entry(ct, key, event, 0);
 	}
 	
 	crtx_free_dict_item(key);
@@ -468,9 +474,12 @@ struct crtx_task *create_response_cache_task(char *id, create_key_cb_t create_ke
 	return task;
 }
 
-void free_response_cache(struct crtx_cache *dc) {
+void crtx_flush_entries(struct crtx_cache *dc) {
 	free_dict(dc->entries);
-	
+}
+
+void free_response_cache(struct crtx_cache *dc) {
+	crtx_flush_entries(dc);
 	free(dc);
 }
 

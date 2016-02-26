@@ -235,9 +235,11 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 // 		if (event->response.raw.type == 'U')
 // 			pkt->mark_out = event->response.raw.uint64;
 		
-		ret = crtx_get_item_value(&event->response.raw, 'u', &pkt->mark_out, sizeof(pkt->mark_out));
-		if (!ret)
-			pkt->mark_out = nfq_list->default_mark;
+		if (event->response.raw.type != 0) {
+			crtx_get_item_value(&event->response.raw, 'u', &pkt->mark_out, sizeof(pkt->mark_out));
+// 			if (!ret)
+// 				pkt->mark_out = nfq_list->default_mark;
+		}
 		
 		INFO("packet mark: %" PRIu32 "\n", pkt->mark_out);
 		
