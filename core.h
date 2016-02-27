@@ -61,14 +61,14 @@ extern char *crtx_evt_outbox[];
 
 struct crtx_event;
 
-#define CRTX_EVF_DONT_FREE_RAW 1<<0
+// #define CRTX_EVF_DONT_FREE_RAW 1<<0
 
 struct crtx_event_data {
 // 	void *raw;
 // 	size_t raw_size;
 	struct crtx_dict_item raw;
 	
-	char flags;
+// 	char flags;
 	
 	void *(*copy_raw)(struct crtx_event_data *data);
 	void (*raw_to_dict)(struct crtx_event_data *data);
@@ -167,7 +167,7 @@ struct crtx_listener_base {
 	// TODO: add (*start)() to start listener after tasks have been added?
 	
 	struct crtx_thread *thread;
-	void (*start_listener)(struct crtx_listener_base *listener);
+	char (*start_listener)(struct crtx_listener_base *listener);
 	
 	struct crtx_graph *graph;
 };
@@ -229,6 +229,7 @@ void free_listener(struct crtx_listener_base *listener);
 struct crtx_event *create_event(char *type, void *data, size_t data_size);
 struct crtx_task *crtx_create_task(struct crtx_graph *graph, unsigned char position, char *id, crtx_handle_task_t handler, void *userdata);
 
+char crtx_start_listener(struct crtx_listener_base *listener);
 void print_tasks(struct crtx_graph *graph);
 void hexdump(unsigned char *buffer, size_t index);
 
@@ -245,5 +246,7 @@ void *crtx_copy_raw_data(struct crtx_event_data *data);
 
 void crtx_init_notification_listeners(void **data);
 void crtx_finish_notification_listeners(void *data);
+
+void crtx_handle_std_signals();
 
 #endif

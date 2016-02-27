@@ -1,5 +1,6 @@
 *.o
 *.so
 *.local*
+*.test
 cortexd
 socket_client

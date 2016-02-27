@@ -242,7 +242,7 @@ void crtx_print_dict_item(struct crtx_dict_item *di, unsigned char level) {
 	switch (di->type) {
 		case 'u': INFO("(uint32_t) %u", di->uint32); break;
 		case 'i': INFO("(int32_t) %d", di->int32); break;
-		case 's': INFO("(char*) %s", di->string); break;
+		case 's': INFO("(char*) \"%s\"", di->string); break;
 		case 'p': INFO("(void*) %p", di->pointer); break;
 		case 'U': INFO("(uint64_t) %zu", di->uint64); break;
 		case 'I': INFO("(int64_t) %d", di->int32); break;

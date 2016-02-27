@@ -235,16 +235,18 @@ static void stop_thread(struct crtx_thread *thread, void *data) {
 	close(inotify_fd);
 }
 
-static void start_listener(struct crtx_listener_base *listener) {
+static char start_listener(struct crtx_listener_base *listener) {
 	struct crtx_inotify_listener *inlist;
 	
-	inlist = (struct crtx_inotify_listener*) options;
+	inlist = (struct crtx_inotify_listener*) listener;
 	
 	inlist->wd = inotify_add_watch(inotify_fd, inlist->path, inlist->mask);
 	if (inlist->wd == -1) {
-		printf("inotify_add_watch(\"%s\") failed with %d: %s\n", (char*) options, errno, strerror(errno));
+		printf("inotify_add_watch(\"%s\") failed with %d: %s\n", inlist->path, errno, strerror(errno));
 		return 0;
 	}
+	
+	return 1;
 }
 
 struct crtx_listener_base *crtx_new_inotify_listener(void *options) {

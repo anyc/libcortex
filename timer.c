@@ -44,9 +44,9 @@ static void *timer_tmain(void *data) {
 		}
 		
 		event = create_event(CRTX_EVT_TIMER, 0, 0);
-		event->data.raw.uint32 = (uint32_t) exp;
+		event->data.raw.uint32 = exp;
 		event->data.raw.type = 'u';
-		event->data.flags = CRTX_EVF_DONT_FREE_RAW;
+		event->data.raw.flags = DIF_DATA_UNALLOCATED;
 		
 		add_event(tlist->parent.graph, event);
 		
@@ -104,8 +104,10 @@ void crtx_timer_finish() {
 }
 
 #ifdef CRTX_TEST
-static void timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	printf("received timer event: %lu\n", (uintptr_t) event->data.raw);
+static char timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	printf("received timer event: %u\n", event->data.raw.uint32);
+	
+	return 1;
 }
 
 int timer_main(int argc, char **argv) {
@@ -133,7 +135,11 @@ int timer_main(int argc, char **argv) {
 	
 	crtx_create_task(blist->graph, 0, "timertest", timertest_handler, 0);
 	
+	crtx_start_listener(blist);
+	
 	crtx_loop();
+	
+	return 0;
 }
 
 CRTX_TEST_MAIN(timer_main);

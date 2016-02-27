@@ -8,6 +8,5 @@ struct crtx_signal_listener {
 };
 
 struct crtx_listener_base *crtx_new_signals_listener(void *options);
-void crtx_handle_std_signals();
 void crtx_signals_init();
 void crtx_signals_finish();

@@ -7,9 +7,9 @@ APP=cortexd
 
 OBJS+=cortexd.o core.o socket.o readline.o controls.o fanotify.o inotify.o \
 	event_comm.o cache.o threads.o signals.o dict.o dict_inout.o \
-	llist.o dllist.o timer.o
+	llist.o dllist.o timer.o netlink.o
 
-TESTS+=timer.test
+TESTS+=timer.test netlink.test
 
 CFLAGS+=$(DEBUG_CFLAGS) -D_FILE_OFFSET_BITS=64 -fPIC
 
@@ -52,14 +52,15 @@ examples/libcrtx_%.so: examples/control_%.c
 libcrtx.so: $(OBJS)
 	$(CC) -shared -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS)
 
-tests: $(TESTS)
+tests: libcrtx.so $(TESTS)
 
-%.test: CFLAGS+=-DCRTX_TEST
+%.test: CFLAGS+=-DCRTX_TEST -g -g3 -gdwarf-2 -DDEBUG -Wall
 %.test: %.c
 	rm -f $(<:.c=.o)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $< -o $@ $(LDFLAGS) $(LDLIBS) -L. -lcrtx
 	rm -f $(<:.c=.o)
 # 	LD_LIBRARY_PATH=. ./$@ > /dev/null
+
 
 # timer.test: CFLAGS+=-DCRTX_TEST
 # timer.test: timer.o

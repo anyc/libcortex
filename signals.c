@@ -51,7 +51,7 @@ static void signal_handler(int signum) {
 	add_event(signal_list.parent.graph, event);
 }
 
-static void start_listener(struct crtx_listener_base *listener) {
+static char start_listener(struct crtx_listener_base *listener) {
 	struct crtx_signal_listener *slistener;
 	struct sigaction new_action, old_action;
 	int *i;
@@ -87,6 +87,7 @@ static void start_listener(struct crtx_listener_base *listener) {
 		i++;
 	}
 	
+	return 1;
 }
 
 struct crtx_listener_base *crtx_new_signals_listener(void *options) {

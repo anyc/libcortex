@@ -28,6 +28,7 @@
 #include "threads.h"
 #include "signals.h"
 #include "timer.h"
+#include "netlink.h"
 
 
 struct crtx_root crtx_global_root;
@@ -48,6 +49,7 @@ struct crtx_module static_modules[] = {
 	{"fanotify", &crtx_fanotify_init, &crtx_fanotify_finish},
 	{"inotify", &crtx_inotify_init, &crtx_inotify_finish},
 	{"controls", &crtx_controls_init, &crtx_controls_finish},
+	{"netlink", &crtx_netlink_init, &crtx_netlink_finish},
 	{0, 0}
 };
 
@@ -65,6 +67,7 @@ struct crtx_listener_repository listener_factory[] = {
 	{"signals", &crtx_new_signals_listener},
 	{"readline", &crtx_new_readline_listener},
 	{"timer", &crtx_new_timer_listener},
+	{"netlink", &crtx_new_netlink_listener},
 	{0, 0}
 };
 
@@ -115,8 +118,7 @@ void crtx_printf(char level, char *format, ...) {
 
 char crtx_start_listener(struct crtx_listener_base *listener) {
 	if (listener->start_listener) {
-		listener->start_listener(listener);
-		return 1;
+		return listener->start_listener(listener);
 	}
 	
 	if (listener->thread)

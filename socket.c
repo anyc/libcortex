@@ -322,7 +322,6 @@ struct crtx_listener_base *crtx_new_socket_server_listener(void *options) {
 
 struct crtx_listener_base *crtx_new_socket_client_listener(void *options) {
 	struct crtx_socket_listener *slistener;
-// 	struct crtx_thread *t;
 	
 	slistener = (struct crtx_socket_listener *) options;
 	
