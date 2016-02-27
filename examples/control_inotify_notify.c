@@ -104,6 +104,8 @@ char init() {
 	// setup a task that will process the inotify events
 	crtx_create_task(in_base->graph, 0, "inotify_event_handler", &inotify_event_handler, in_base);
 	
+	crtx_start_listener(in_base);
+	
 	return 1;
 }
 

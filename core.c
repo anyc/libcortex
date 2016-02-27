@@ -113,6 +113,18 @@ void crtx_printf(char level, char *format, ...) {
 	va_end(va);
 }
 
+char crtx_start_listener(struct crtx_listener_base *listener) {
+	if (listener->start_listener) {
+		listener->start_listener(listener);
+		return 1;
+	}
+	
+	if (listener->thread)
+		start_thread(listener->thread);
+	
+	return 1;
+}
+
 struct crtx_listener_base *create_listener(char *id, void *options) {
 	struct crtx_listener_repository *l;
 	

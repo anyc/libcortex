@@ -12,6 +12,18 @@
 
 #define CRTX_EVT_TIMER "cortex.timer"
 
+static void stop_thread(struct crtx_thread *thread, void *data) {
+	struct crtx_timer_listener *tlist;
+	
+	tlist = (struct crtx_timer_listener*) data;
+	
+	tlist->stop = 1;
+	if (tlist->fd > 0) {
+		close(tlist->fd);
+		tlist->fd = 0;
+	}
+}
+
 static void *timer_tmain(void *data) {
 	struct crtx_timer_listener *tlist;
 	uint64_t exp;
@@ -32,24 +44,19 @@ static void *timer_tmain(void *data) {
 		}
 		
 		event = create_event(CRTX_EVT_TIMER, 0, 0);
-// 		event->data.raw = (void*)(uintptr_t) exp;
 		event->data.raw.uint32 = (uint32_t) exp;
 		event->data.raw.type = 'u';
 		event->data.flags = CRTX_EVF_DONT_FREE_RAW;
 		
 		add_event(tlist->parent.graph, event);
+		
+		if (tlist->newtimer->it_interval.tv_sec == 0 && tlist->newtimer->it_interval.tv_nsec == 0)
+			break;
 	}
 	
+	stop_thread(0, data);
+	
 	return 0;
-}
-
-static void stop_thread(struct crtx_thread *thread, void *data) {
-	struct crtx_timer_listener *tlist;
-	
-	tlist = (struct crtx_timer_listener*) data;
-	
-	tlist->stop = 1;
-	close(tlist->fd);
 }
 
 void crtx_free_timer_listener(struct crtx_listener_base *data) {
@@ -59,7 +66,7 @@ void crtx_free_timer_listener(struct crtx_listener_base *data) {
 struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 	struct crtx_timer_listener *tlist;
 	int ret;
-	struct crtx_thread *t;
+// 	struct crtx_thread *t;
 	
 	tlist = (struct crtx_timer_listener *) options;
 	
@@ -79,10 +86,11 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 		ERROR("timerfd_settime failed: %s\n", strerror(errno));
 		return 0;
 	}
-	printf("tlist %p\n", tlist->parent.graph);
-	t = get_thread(timer_tmain, tlist, 0);
-	t->do_stop = &stop_thread;
-	start_thread(t);
+	
+	tlist->parent.start_listener = 0;
+	tlist->parent.thread = get_thread(timer_tmain, tlist, 0);
+	tlist->parent.thread->do_stop = &stop_thread;
+// 	start_thread(t);
 	
 	tlist->parent.free = &crtx_free_timer_listener;
 	

@@ -166,6 +166,9 @@ struct crtx_listener_base {
 	
 	// TODO: add (*start)() to start listener after tasks have been added?
 	
+	struct crtx_thread *thread;
+	void (*start_listener)(struct crtx_listener_base *listener);
+	
 	struct crtx_graph *graph;
 };
 

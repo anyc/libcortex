@@ -279,6 +279,12 @@ static char pfw_resolve_IPs_timer(struct crtx_event *event, void *userdata, void
 	return 1;
 }
 
+static char pfw_print_packet(struct crtx_event *event, void *userdata, void **sessiondata) {
+	crtx_nfq_print_packet(event->data.dict);
+	
+	return 1;
+}
+
 char pfw_start(unsigned int queue_num, unsigned int default_mark) {
 	struct ifaddrs *addrs, *tmp;
 	struct pfw_ip_ll *iit;
@@ -364,6 +370,8 @@ char pfw_start(unsigned int queue_num, unsigned int default_mark) {
 		}
 		
 		crtx_create_task(blist->graph, 0, "resolve_ips", pfw_resolve_IPs_timer, TASK2CACHETASK(rcache_resolve));
+		
+		crtx_start_listener(blist);
 	}
 	
 	{
@@ -388,6 +396,8 @@ char pfw_start(unsigned int queue_num, unsigned int default_mark) {
 		
 		add_task(nfq_list.parent.graph, rcache_host);
 	}
+	
+	crtx_start_listener(nfq_list_base);
 	
 // 	print_tasks(nfq_list.parent.graph);
 	

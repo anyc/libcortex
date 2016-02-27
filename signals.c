@@ -51,16 +51,13 @@ static void signal_handler(int signum) {
 	add_event(signal_list.parent.graph, event);
 }
 
-struct crtx_listener_base *crtx_new_signals_listener(void *options) {
+static void start_listener(struct crtx_listener_base *listener) {
 	struct crtx_signal_listener *slistener;
 	struct sigaction new_action, old_action;
 	int *i;
 	
+	slistener = (struct crtx_signal_listener *) listener;
 	
-	slistener = (struct crtx_signal_listener *) options;
-	
-	if (!slistener->signals)
-		return 0;
 	
 	new_action.sa_handler = signal_handler;
 	sigemptyset(&new_action.sa_mask);
@@ -80,7 +77,7 @@ struct crtx_listener_base *crtx_new_signals_listener(void *options) {
 			
 			signal_list.parent.graph->n_types++;
 			signal_list.parent.graph->types = (char**) realloc(signal_list.parent.graph->types,
-													sizeof(char*) * signal_list.parent.graph->n_types);
+													 sizeof(char*) * signal_list.parent.graph->n_types);
 			
 			signal_list.parent.graph->types[signal_list.parent.graph->n_types-1] = smap->etype;
 			
@@ -89,6 +86,19 @@ struct crtx_listener_base *crtx_new_signals_listener(void *options) {
 		
 		i++;
 	}
+	
+}
+
+struct crtx_listener_base *crtx_new_signals_listener(void *options) {
+	struct crtx_signal_listener *slistener;
+	
+	slistener = (struct crtx_signal_listener *) options;
+	
+	if (!slistener->signals)
+		return 0;
+	
+	signal_list.parent.thread = 0;
+	signal_list.parent.start_listener = &start_listener;
 	
 	return &signal_list.parent;
 }

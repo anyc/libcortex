@@ -32,36 +32,39 @@ char *nfq_packet_msg_etype[] = { NFQ_PACKET_MSG_ETYPE, 0 };
 
 char crtx_nfq_print_packet(struct crtx_dict *ds) {
 	struct crtx_dict *pds;
-	char src_local, dst_local;
+// 	char src_local, dst_local;
 	
-	ds = event->data.dict;
+// 	ds = event->data.dict;
 	
 	if (strcmp(ds->signature, PFW_NEWPACKET_SIGNATURE)) {
 		printf("error, signature mismatch: %s %s\n", ds->signature, PFW_NEWPACKET_SIGNATURE);
 		return 1;
 	}
 	
-	if (pfw_is_ip_local(ds->items[PFW_NEWP_SRC_IP].string)) {
-		src_local = 1;
-	} else {
-		src_local = 0;
-		if (pfw_is_ip_local(ds->items[PFW_NEWP_DST_IP].string))
-			dst_local = 1;
-		else
-			dst_local = 0;
-	}
+// 	if (pfw_is_ip_local(ds->items[PFW_NEWP_SRC_IP].string)) {
+// 		src_local = 1;
+// 	} else {
+// 		src_local = 0;
+// 		if (pfw_is_ip_local(ds->items[PFW_NEWP_DST_IP].string))
+// 			dst_local = 1;
+// 		else
+// 			dst_local = 0;
+// 	}
 	
 	printf("%s ", crtx_nfq_proto2str(ds->items[PFW_NEWP_PROTOCOL].uint32));
 	
-	if (!src_local && !dst_local) {
-		printf("brd %s %s ", ds->items[PFW_NEWP_SRC_IP].string, ds->items[PFW_NEWP_SRC_HOST].string);
-	} else {
-		if (src_local) {
-			printf("dst %s %s ", ds->items[PFW_NEWP_DST_IP].string, ds->items[PFW_NEWP_DST_HOST].string);
-		} else {
-			printf("src %s %s ", ds->items[PFW_NEWP_SRC_IP].string, ds->items[PFW_NEWP_SRC_HOST].string);
-		}
-	}
+// 	if (!src_local && !dst_local) {
+// 		printf("brd %s %s ", ds->items[PFW_NEWP_SRC_IP].string, ds->items[PFW_NEWP_SRC_HOST].string);
+// 	} else {
+// 		if (src_local) {
+// 			printf("dst %s %s ", ds->items[PFW_NEWP_DST_IP].string, ds->items[PFW_NEWP_DST_HOST].string);
+// 		} else {
+// 			printf("src %s %s ", ds->items[PFW_NEWP_SRC_IP].string, ds->items[PFW_NEWP_SRC_HOST].string);
+// 		}
+// 	}
+	
+	printf("src %s %s ", ds->items[PFW_NEWP_SRC_IP].string, ds->items[PFW_NEWP_SRC_HOST].string);
+	printf("dst %s %s ", ds->items[PFW_NEWP_DST_IP].string, ds->items[PFW_NEWP_DST_HOST].string);
 	
 	if (ds->items[PFW_NEWP_PROTOCOL].uint32 == 6) {
 		pds = ds->items[PFW_NEWP_PAYLOAD].ds;
@@ -385,7 +388,8 @@ struct crtx_listener_base *crtx_new_nf_queue_listener(void *options) {
 	
 	new_eventgraph(&nfq_listata->parent.graph, 0, nfq_packet_msg_etype);
 	
-	get_thread(nfq_tmain, nfq_listata, 1);
+	nfq_listata->parent.thread = get_thread(nfq_tmain, nfq_listata, 0);
+	nfq_listata->parent.start_listener = 0;
 	
 	return &nfq_listata->parent;
 }

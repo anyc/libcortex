@@ -181,6 +181,8 @@ char init() {
 		return 0;
 	}
 	
+	crtx_start_listener(sock_list);
+	
 	/*
 	 * setup the fanotiy listener
 	 */
@@ -213,6 +215,8 @@ char init() {
 	
 	// add function that will process a fanotify event
 	crtx_create_task(fa->graph, 0, "fanotify_event_handler", &fanotify_event_handler, fa);
+	
+	crtx_start_listener(fa);
 	
 	printf("fanotify path \"%s\", sending events to \"%s\"\n", fanotify_path, sock_path);
 	

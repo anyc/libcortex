@@ -198,6 +198,8 @@ char init() {
 				}
 			}
 		}
+		
+		crtx_start_listener(in_base);
 	}
 	
 	return 1;

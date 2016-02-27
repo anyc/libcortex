@@ -307,21 +307,22 @@ static void stop_thread(struct crtx_thread *t, void *data) {
 
 struct crtx_listener_base *crtx_new_socket_server_listener(void *options) {
 	struct crtx_socket_listener *slistener;
-	struct crtx_thread *t;
+// 	struct crtx_thread *t;
 	
 	slistener = (struct crtx_socket_listener *) options;
 	
 	create_in_out_box();
 	
-	t = get_thread(socket_server_tmain, slistener, 1);
-	t->do_stop = &stop_thread;
+	slistener->parent.start_listener = 0;
+	slistener->parent.thread = get_thread(socket_server_tmain, slistener, 0);
+	slistener->parent.thread->do_stop = &stop_thread;
 	
 	return &slistener->parent;
 }
 
 struct crtx_listener_base *crtx_new_socket_client_listener(void *options) {
 	struct crtx_socket_listener *slistener;
-	struct crtx_thread *t;
+// 	struct crtx_thread *t;
 	
 	slistener = (struct crtx_socket_listener *) options;
 	
@@ -333,8 +334,9 @@ struct crtx_listener_base *crtx_new_socket_client_listener(void *options) {
 	crtx_create_task(slistener->parent.graph, 200, "inbound_event_handler", &inbound_event_handler, slistener);
 	crtx_create_task(slistener->outbox, 200, "outbound_event_handler", &outbound_event_handler, slistener);
 	
-	t = get_thread(socket_client_tmain, slistener, 1);
-	t->do_stop = &stop_thread;
+	slistener->parent.start_listener = 0;
+	slistener->parent.thread = get_thread(socket_client_tmain, slistener, 0);
+	slistener->parent.thread->do_stop = &stop_thread;
 	
 	return &slistener->parent;
 }

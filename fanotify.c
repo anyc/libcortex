@@ -134,8 +134,8 @@ struct crtx_listener_base *crtx_new_fanotify_listener(void *options) {
 	
 	new_eventgraph(&falist->parent.graph, 0, fanotify_msg_etype);
 	
-	t = get_thread(fanotify_tmain, falist, 1);
-	t->do_stop = &stop_thread;
+	falist->parent.thread = get_thread(fanotify_tmain, falist, 0);
+	falist->parent.thread->do_stop = &stop_thread;
 	
 	return &falist->parent;
 }
