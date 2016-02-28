@@ -12,9 +12,9 @@
 #include "netlink.h"
 
 
-struct crtx_dict *crtx_netlink_raw2dict_ifaddr(struct nlmsghdr *nlh) {
+struct crtx_dict *crtx_netlink_raw2dict_ifaddr(struct crtx_netlink_listener *nl_listener, struct nlmsghdr *nlh) {
 	struct crtx_dict *dict;
-	struct crtx_dict_item *di;
+	struct crtx_dict_item *di, *cdi;
 	const char *s;
 	size_t slen;
 	
@@ -24,6 +24,7 @@ struct crtx_dict *crtx_netlink_raw2dict_ifaddr(struct nlmsghdr *nlh) {
 	struct sockaddr_storage addr;
 	struct ifaddrmsg *ifa;
 	struct rtattr *rth;
+	struct ifa_cacheinfo *cinfo;
 	int rtl;
 	
 	
@@ -46,10 +47,33 @@ struct crtx_dict *crtx_netlink_raw2dict_ifaddr(struct nlmsghdr *nlh) {
 			crtx_fill_data_item(di, 's', "type", "del", 0, DIF_DATA_UNALLOCATED);
 	}
 	
+	if (nl_listener->all_fields) {
+		di = crtx_alloc_item(dict);
+		
+		switch (ifa->ifa_scope) {
+			case RT_SCOPE_UNIVERSE:
+				crtx_fill_data_item(di, 's', "scope", "global", 0, DIF_DATA_UNALLOCATED);
+				break;
+			case RT_SCOPE_SITE:
+				crtx_fill_data_item(di, 's', "scope", "site", 0, DIF_DATA_UNALLOCATED);
+				break;
+			case RT_SCOPE_LINK:
+				crtx_fill_data_item(di, 's', "scope", "link", 0, DIF_DATA_UNALLOCATED);
+				break;
+			case RT_SCOPE_HOST:
+				crtx_fill_data_item(di, 's', "scope", "host", 0, DIF_DATA_UNALLOCATED);
+				break;
+			case RT_SCOPE_NOWHERE:
+				crtx_fill_data_item(di, 's', "scope", "nowhere", 0, DIF_DATA_UNALLOCATED);
+				break;
+		}
+	}
 	
-	while (rtl && RTA_OK(rth, rtl)) { printf("rta %d %d %d %d\n", rth->rta_type, IFA_LOCAL, IFA_LABEL, IFA_ADDRESS);
+	while (rtl && RTA_OK(rth, rtl)) { printf("rta %d %d %d %d\n", rth->rta_type, IFA_LOCAL, IFA_LABEL, __IFA_MAX);
 		switch (rth->rta_type) {
 			case IFA_LABEL:
+				di = crtx_alloc_item(dict);
+				
 				s = (char*) RTA_DATA(rth);
 				
 				slen = strlen(s);
@@ -59,6 +83,7 @@ struct crtx_dict *crtx_netlink_raw2dict_ifaddr(struct nlmsghdr *nlh) {
 			
 			case IFA_ANYCAST:
 			case IFA_BROADCAST:
+			case IFA_MULTICAST:
 			case IFA_ADDRESS:
 			case IFA_LOCAL:
 				di = crtx_alloc_item(dict);
@@ -98,6 +123,7 @@ struct crtx_dict *crtx_netlink_raw2dict_ifaddr(struct nlmsghdr *nlh) {
 					switch (rth->rta_type) {
 						case IFA_ANYCAST: key = "anycast"; break;
 						case IFA_BROADCAST: key = "broadcast"; break;
+						case IFA_MULTICAST: key = "multicast"; break;
 						case IFA_ADDRESS: key = "address"; break;
 						case IFA_LOCAL: key = "local"; break;
 					}
@@ -107,6 +133,69 @@ struct crtx_dict *crtx_netlink_raw2dict_ifaddr(struct nlmsghdr *nlh) {
 				}
 				
 				break;
+			
+			case IFA_CACHEINFO:
+				if (nl_listener->all_fields) {
+					di = crtx_alloc_item(dict);
+					di->type = 'D';
+					di->key = "cache";
+					
+					di->ds = crtx_init_dict("uuuu", 4, 0);
+					
+					cinfo = (struct ifa_cacheinfo*) RTA_DATA(rth);
+					
+					cdi = crtx_get_first_item(di->ds);
+					crtx_fill_data_item(cdi, 'u', "valid_lft", cinfo->ifa_valid, 0, 0);
+					cdi = crtx_get_next_item(di->ds, cdi);
+					crtx_fill_data_item(cdi, 'u', "preferred_lft", cinfo->ifa_prefered, 0, 0);
+					cdi = crtx_get_next_item(di->ds, cdi);
+					crtx_fill_data_item(cdi, 'u', "cstamp", cinfo->cstamp, 0, 0);
+					cdi = crtx_get_next_item(di->ds, cdi);
+					crtx_fill_data_item(cdi, 'u', "tstamp", cinfo->tstamp, 0, 0);
+					
+					cdi->flags |= DIF_LAST;
+				}
+				
+				// 0xFFFFFFFFUL == forever
+				
+				break;
+			
+			case IFA_FLAGS:
+				{
+					di = crtx_alloc_item(dict);
+					di->type = 'D';
+					di->key = "flags";
+					
+					di->ds = crtx_init_dict(0, 0, 0);
+					
+					unsigned int *flags = (unsigned int*) RTA_DATA(rth);
+					
+					#define IFA_FLAG(name) \
+						if (*flags & IFA_F_ ## name) { \
+							cdi = crtx_alloc_item(di->ds); \
+							crtx_fill_data_item(cdi, 's', 0, #name, 0, DIF_DATA_UNALLOCATED); \
+						}
+					
+					cdi = 0;
+					
+					IFA_FLAG(TEMPORARY);
+					IFA_FLAG(NODAD);
+					IFA_FLAG(OPTIMISTIC);
+					IFA_FLAG(DADFAILED);
+					IFA_FLAG(HOMEADDRESS);
+					IFA_FLAG(DEPRECATED);
+					IFA_FLAG(TENTATIVE);
+					IFA_FLAG(PERMANENT);
+					IFA_FLAG(MANAGETEMPADDR);
+					IFA_FLAG(NOPREFIXROUTE);
+					IFA_FLAG(MCAUTOJOIN);
+					IFA_FLAG(STABLE_PRIVACY);
+					
+					if (cdi)
+						cdi->flags |= DIF_LAST;
+				}
+				break;
+			
 			default:
 				DBG("netlink: unhandled rta_type %d\n", rth->rta_type);
 		}
@@ -149,7 +238,8 @@ static void *netlink_tmain(void *data) {
 	
 	nlh = (struct nlmsghdr *) buffer;
 	
-	while (!nl_listener->stop && (len = recv(nl_listener->sockfd, nlh, 4096, 0)) > 0 ) {
+	len = recv(nl_listener->sockfd, nlh, 4096, 0);
+	while (!nl_listener->stop && len > 0) {
 		while ((NLMSG_OK(nlh, len)) && (nlh->nlmsg_type != NLMSG_DONE)) {
 			uint16_t *it;
 			
@@ -178,7 +268,7 @@ static void *netlink_tmain(void *data) {
 					// we copy the data and we do not have to wait
 					
 					event->data.raw.type = 'D';
-					event->data.raw.ds = nl_listener->raw2dict(nlh);
+					event->data.raw.ds = nl_listener->raw2dict(nl_listener, nlh);
 					
 					add_event(nl_listener->parent.graph, event);
 				}
@@ -186,6 +276,12 @@ static void *netlink_tmain(void *data) {
 			
 			nlh = NLMSG_NEXT(nlh, len);
 		}
+		
+		len = recv(nl_listener->sockfd, nlh, 4096, 0);
+	}
+	printf("asd %d\n", len);
+	if (len < 0) {
+		ERROR("netlink recv failed: %s\n", strerror(errno));
 	}
 	
 	return 0;
@@ -256,12 +352,17 @@ int netlink_main(int argc, char **argv) {
 	struct crtx_listener_base *lbase;
 	char ret;
 	
+	memset(&nl_listener, 0, sizeof(struct crtx_netlink_listener));
+	
+	// setup a netlink listener
 	nl_listener.socket_protocol = NETLINK_ROUTE;
 	nl_listener.nl_family = AF_NETLINK;
-	nl_listener.nl_groups = RTMGRP_IPV4_IFADDR;
+	// e.g., RTMGRP_LINK, RTMGRP_NEIGH, RTMGRP_IPV4_IFADDR, RTMGRP_IPV6_IFADDR
+	nl_listener.nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
 	nl_listener.nlmsg_types = nlmsg_types;
 	
 	nl_listener.raw2dict = &crtx_netlink_raw2dict_ifaddr;
+	nl_listener.all_fields = 1;
 	
 	lbase = create_listener("netlink", &nl_listener);
 	if (!lbase) {
@@ -277,23 +378,21 @@ int netlink_main(int argc, char **argv) {
 		return 1;
 	}
 	
+	
 	struct {
 		struct nlmsghdr n;
 		struct ifaddrmsg r;
 	} req;
-// 	struct rtattr *rta;
 	
 	memset(&req, 0, sizeof(req));
 	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ROOT;
+	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
 	req.n.nlmsg_type = RTM_GETADDR;
-// 	req.r.ifa_family = AF_INET;
-// 
-// 	rta = (struct rtattr *)(((char *)&req) + NLMSG_ALIGN(req.n.nlmsg_len));
-// 	rta->rta_len = RTA_LENGTH(16);
+// 	req.r.ifa_family = AF_INET; // e.g., AF_INET (IPv4-only) or AF_INET6 (IPv6-only)
 	
 	crtx_netlink_send_req(&nl_listener, &req.n);
 	
+	// start processing responses
 	crtx_loop();
 	
 	return 0;

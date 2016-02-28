@@ -14,9 +14,8 @@ struct crtx_netlink_listener {
 	
 	uint16_t *nlmsg_types;
 	
-	struct crtx_dict *(*raw2dict)(struct nlmsghdr *nlh);
-	
-	
+	struct crtx_dict *(*raw2dict)(struct crtx_netlink_listener *nl_listener, struct nlmsghdr *nlh);
+	char all_fields;
 	
 	int sockfd;
 	char stop;
