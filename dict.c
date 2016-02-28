@@ -281,7 +281,8 @@ void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level) {
 		INFO("%u: ", i);
 		
 		crtx_print_dict_item(di, level);
-		INFO("\n");
+		if (di->type != 'D')
+			INFO("\n");
 		
 		if (s && *s != di->type)
 			ERROR("error type %c != %c\n", *s, di->type);

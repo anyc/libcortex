@@ -17,6 +17,8 @@ struct crtx_netlink_listener {
 	struct crtx_dict *(*raw2dict)(struct crtx_netlink_listener *nl_listener, struct nlmsghdr *nlh);
 	char all_fields;
 	
+	struct crtx_signal msg_done;
+	
 	int sockfd;
 	char stop;
 };
