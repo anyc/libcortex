@@ -13,9 +13,6 @@
 
 
 struct crtx_dict *crtx_netlink_raw2dict_ifaddr(struct nlmsghdr *nlh) {
-	struct ifaddrmsg *ifa;
-	struct rtattr *rth;
-	int rtl;
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di;
 	const char *s;
@@ -23,8 +20,12 @@ struct crtx_dict *crtx_netlink_raw2dict_ifaddr(struct nlmsghdr *nlh) {
 	
 	char got_ifname;
 	char ifname[IFNAMSIZ];
-	struct sockaddr_storage addr;
 	char s_addr[INET6_ADDRSTRLEN];
+	struct sockaddr_storage addr;
+	struct ifaddrmsg *ifa;
+	struct rtattr *rth;
+	int rtl;
+	
 	
 	ifa = (struct ifaddrmsg *) NLMSG_DATA(nlh);
 	rth = IFA_RTA(ifa);
@@ -34,21 +35,16 @@ struct crtx_dict *crtx_netlink_raw2dict_ifaddr(struct nlmsghdr *nlh) {
 	
 	dict = crtx_init_dict(0, 0, 0);
 	
-// 	entry = crtx_alloc_item(dict);
-// 	entry = crtx_init_dict(0, 0, 0);
-// 	entry->type = 'D';
-// 	entry->ds = crtx_init_dict(0, 1, 0);
-	
-	
-// 	di = crtx_get_first_item(dict);
-	di = crtx_alloc_item(dict);
-	
-	if (nlh->nlmsg_type == RTM_NEWADDR)
-		crtx_fill_data_item(di, 's', "type", "add", 0, DIF_DATA_UNALLOCATED);
-	else
-	if (nlh->nlmsg_type == RTM_DELADDR)
-		crtx_fill_data_item(di, 's', "type", "del", 0, DIF_DATA_UNALLOCATED);
-	
+	// new or deleted address?
+	{
+		di = crtx_alloc_item(dict);
+		
+		if (nlh->nlmsg_type == RTM_NEWADDR)
+			crtx_fill_data_item(di, 's', "type", "add", 0, DIF_DATA_UNALLOCATED);
+		else
+		if (nlh->nlmsg_type == RTM_DELADDR)
+			crtx_fill_data_item(di, 's', "type", "del", 0, DIF_DATA_UNALLOCATED);
+	}
 	
 	
 	while (rtl && RTA_OK(rth, rtl)) { printf("rta %d %d %d %d\n", rth->rta_type, IFA_LOCAL, IFA_LABEL, IFA_ADDRESS);
@@ -65,7 +61,6 @@ struct crtx_dict *crtx_netlink_raw2dict_ifaddr(struct nlmsghdr *nlh) {
 			case IFA_BROADCAST:
 			case IFA_ADDRESS:
 			case IFA_LOCAL:
-	// 			di = crtx_get_next_item(entry->ds, di);
 				di = crtx_alloc_item(dict);
 				
 				memset(&addr, 0, sizeof(addr));
@@ -112,6 +107,8 @@ struct crtx_dict *crtx_netlink_raw2dict_ifaddr(struct nlmsghdr *nlh) {
 				}
 				
 				break;
+			default:
+				DBG("netlink: unhandled rta_type %d\n", rth->rta_type);
 		}
 		rth = RTA_NEXT(rth, rtl);
 	}
