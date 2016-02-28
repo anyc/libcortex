@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <arpa/inet.h>
+#include <errno.h>
 #include <net/if.h>
 #include <netinet/in.h>
 
@@ -16,56 +17,128 @@ struct crtx_dict *crtx_netlink_raw2dict_ifaddr(struct nlmsghdr *nlh) {
 	struct rtattr *rth;
 	int rtl;
 	struct crtx_dict *dict;
-	struct crtx_dict_item *entry, *di;
+	struct crtx_dict_item *di;
+	const char *s;
+	size_t slen;
+	
+	char got_ifname;
+	char ifname[IFNAMSIZ];
+	struct sockaddr_storage addr;
+	char s_addr[INET6_ADDRSTRLEN];
 	
 	ifa = (struct ifaddrmsg *) NLMSG_DATA(nlh);
 	rth = IFA_RTA(ifa);
 	rtl = IFA_PAYLOAD(nlh);
 	
+	got_ifname = 0;
+	
 	dict = crtx_init_dict(0, 0, 0);
 	
-	while (rtl && RTA_OK(rth, rtl)) {
-		if (rth->rta_type == IFA_LOCAL) {
-			struct in_addr ip_addr;
-			char ifname[IFNAMSIZ];
-			size_t slen;
-			char *s;
-			
-			entry = crtx_alloc_item(dict);
-			entry->type = 'D';
-			entry->ds = crtx_init_dict(0, 3, 0);
-			
-			di = crtx_get_first_item(entry->ds);
-			
-			if (nlh->nlmsg_type == RTM_NEWADDR)
-				crtx_fill_data_item(di, 's', "type", "add", 0, DIF_DATA_UNALLOCATED);
-			else
-				if (nlh->nlmsg_type == RTM_DELADDR)
-					crtx_fill_data_item(di, 's', "type", "del", 0, DIF_DATA_UNALLOCATED);
+// 	entry = crtx_alloc_item(dict);
+// 	entry = crtx_init_dict(0, 0, 0);
+// 	entry->type = 'D';
+// 	entry->ds = crtx_init_dict(0, 1, 0);
+	
+	
+// 	di = crtx_get_first_item(dict);
+	di = crtx_alloc_item(dict);
+	
+	if (nlh->nlmsg_type == RTM_NEWADDR)
+		crtx_fill_data_item(di, 's', "type", "add", 0, DIF_DATA_UNALLOCATED);
+	else
+	if (nlh->nlmsg_type == RTM_DELADDR)
+		crtx_fill_data_item(di, 's', "type", "del", 0, DIF_DATA_UNALLOCATED);
+	
+	
+	
+	while (rtl && RTA_OK(rth, rtl)) { printf("rta %d %d %d %d\n", rth->rta_type, IFA_LOCAL, IFA_LABEL, IFA_ADDRESS);
+		switch (rth->rta_type) {
+			case IFA_LABEL:
+				s = (char*) RTA_DATA(rth);
 				
+				slen = strlen(s);
+				crtx_fill_data_item(di, 's', "interface", stracpy(s, &slen), slen, 0);
+				got_ifname = 1;
+				break;
+			
+			case IFA_ANYCAST:
+			case IFA_BROADCAST:
+			case IFA_ADDRESS:
+			case IFA_LOCAL:
+	// 			di = crtx_get_next_item(entry->ds, di);
+				di = crtx_alloc_item(dict);
 				
-				di = crtx_get_next_item(entry->ds, di);
-			
-			if_indextoname(ifa->ifa_index, ifname);
-			slen = strlen(ifname);
-			crtx_fill_data_item(di, 's', "interface", stracpy(ifname, &slen), slen, 0);
-			
-			
-			di = crtx_get_next_item(entry->ds, di);
-			
-			ip_addr.s_addr = (*((uint32_t *)RTA_DATA(rth)));
-			s = inet_ntoa(ip_addr);
-			
-			slen = strlen(s);
-			crtx_fill_data_item(di, 's', "ip", stracpy(s, &slen), slen, 0);
-			
-			
-			di->flags |= DIF_LAST;
+				memset(&addr, 0, sizeof(addr));
+				addr.ss_family = ifa->ifa_family;
+				if (addr.ss_family == AF_INET) {
+					
+					struct sockaddr_in *sin;
+					
+					sin = (struct sockaddr_in *) &addr;
+					memcpy(&sin->sin_addr, RTA_DATA(rth), sizeof(sin->sin_addr));
+					s = inet_ntop(ifa->ifa_family, &(((struct sockaddr_in *)&addr)->sin_addr), s_addr, sizeof(s_addr));
+					
+					if (!s) {
+						ERROR("inet_ntop(v4) failed: %s\n", strerror(errno));
+					}
+				} else
+				if (addr.ss_family == AF_INET6) {
+					struct sockaddr_in6 *sin6;
+					
+					sin6 = (struct sockaddr_in6 *) &addr;
+					memcpy(&sin6->sin6_addr, RTA_DATA(rth), sizeof(sin6->sin6_addr));
+					s = inet_ntop(ifa->ifa_family, &(((struct sockaddr_in6 *)&addr)->sin6_addr), s_addr, sizeof(s_addr));
+					
+					if (!s) {
+						ERROR("inet_ntop(v6) failed: %s\n", strerror(errno));
+					}
+				} else {
+					ERROR("unknown family: %d\n", addr.ss_family);
+					s = 0;
+				}
+				
+				if (s) {
+					char *key;
+					
+					switch (rth->rta_type) {
+						case IFA_ANYCAST: key = "anycast"; break;
+						case IFA_BROADCAST: key = "broadcast"; break;
+						case IFA_ADDRESS: key = "address"; break;
+						case IFA_LOCAL: key = "local"; break;
+					}
+					
+					slen = strlen(s);
+					crtx_fill_data_item(di, 's', key, stracpy(s, &slen), slen, 0);
+				}
+				
+				break;
 		}
 		rth = RTA_NEXT(rth, rtl);
 	}
 	
+	if (!got_ifname) {
+		di = crtx_alloc_item(dict);
+		
+		if_indextoname(ifa->ifa_index, ifname);
+		slen = strlen(ifname);
+		crtx_fill_data_item(di, 's', "interface", stracpy(ifname, &slen), slen, 0);
+	}
+	
+	di->flags |= DIF_LAST;
+	
 	return dict;
+}
+
+char crtx_netlink_send_req(struct crtx_netlink_listener *nl_listener, struct nlmsghdr *n) {
+	int ret;
+	
+	ret = send(nl_listener->sockfd, n, n->nlmsg_len, 0);
+	if (ret < 0) {
+		ERROR("error while sending netlink request: %s\n", strerror(errno));
+		return 0;
+	}
+	
+	return 1;
 }
 
 static void *netlink_tmain(void *data) {
@@ -206,6 +279,23 @@ int netlink_main(int argc, char **argv) {
 		ERROR("starting netlink listener failed\n");
 		return 1;
 	}
+	
+	struct {
+		struct nlmsghdr n;
+		struct ifaddrmsg r;
+	} req;
+// 	struct rtattr *rta;
+	
+	memset(&req, 0, sizeof(req));
+	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
+	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ROOT;
+	req.n.nlmsg_type = RTM_GETADDR;
+// 	req.r.ifa_family = AF_INET;
+// 
+// 	rta = (struct rtattr *)(((char *)&req) + NLMSG_ALIGN(req.n.nlmsg_len));
+// 	rta->rta_len = RTA_LENGTH(16);
+	
+	crtx_netlink_send_req(&nl_listener, &req.n);
 	
 	crtx_loop();
 	

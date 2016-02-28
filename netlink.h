@@ -23,5 +23,6 @@ struct crtx_netlink_listener {
 };
 
 struct crtx_listener_base *crtx_new_netlink_listener(void *options);
+char crtx_netlink_send_req(struct crtx_netlink_listener *nl_listener, struct nlmsghdr *n);
 void crtx_netlink_init();
 void crtx_netlink_finish();
