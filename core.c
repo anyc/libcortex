@@ -686,19 +686,26 @@ void crtx_flush_events() {
 	}
 }
 
+void crtx_init_shutdown() {
+	if (crtx_root->shutdown)
+		return;
+	
+	VDBG("init shutdown\n");
+	
+	crtx_root->shutdown = 1;
+	// 	crtx_finish();
+	crtx_threads_stop();
+	crtx_flush_events();
+}
+
 static char handle_shutdown(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_task *t;
-	
-	INFO("shutdown crtx\n");
 	
 	// TODO make sure we're only called once
 	t = (struct crtx_task *) userdata;
 	t->handle = 0;
 	
-	crtx_root->shutdown = 1;
-// 	crtx_finish();
-	crtx_threads_stop();
-	crtx_flush_events();
+	crtx_init_shutdown();
 	
 	return 1;
 }
@@ -740,6 +747,8 @@ void crtx_init() {
 
 void crtx_finish() {
 	unsigned int i;
+	
+	crtx_init_shutdown();
 	
 	i=0;
 	while (static_modules[i].id) { i++; }

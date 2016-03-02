@@ -21,6 +21,10 @@ struct crtx_signal {
 	char *condition;
 	char local_condition;
 	
+	unsigned char n_refs;
+	pthread_mutex_t ref_mutex;
+	pthread_cond_t ref_cond;
+	
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
 };
@@ -36,6 +40,7 @@ struct crtx_thread {
 	void *fct_data;
 	
 	struct crtx_signal start;
+	struct crtx_signal finished;
 	
 	void (*do_stop)(struct crtx_thread *thread, void *data);
 	
@@ -56,6 +61,8 @@ void wait_on_signal(struct crtx_signal *s);
 void send_signal(struct crtx_signal *s, char brdcst);
 void free_signal(struct crtx_signal *s);
 void reset_signal(struct crtx_signal *signal);
+void reference_signal(struct crtx_signal *s);
+void dereference_signal(struct crtx_signal *s);
 
 struct crtx_thread *get_thread(thread_fct fct, void *data, char start);
 void start_thread(struct crtx_thread *t);

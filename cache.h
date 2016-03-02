@@ -32,10 +32,6 @@ struct crtx_cache {
 struct crtx_cache_task {
 	struct crtx_cache *cache;
 	
-	// temporary data
-	struct crtx_dict_item key;
-	struct crtx_dict_item *cache_entry;
-	
 	create_key_cb_t create_key;
 	match_cb_t match_event;
 	hit_cb_t on_hit;

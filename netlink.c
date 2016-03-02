@@ -470,7 +470,7 @@ static void *netlink_tmain(void *data) {
 	nl_listener = (struct crtx_netlink_listener*) data;
 	
 	nlh = (struct nlmsghdr *) buffer;
-	
+	printf("recv1\n");
 	len = recv(nl_listener->sockfd, nlh, 4096, 0);
 	while (!nl_listener->stop && len > 0) {
 		while ((NLMSG_OK(nlh, len)) && (nlh->nlmsg_type != NLMSG_DONE)) {
@@ -500,8 +500,8 @@ static void *netlink_tmain(void *data) {
 				} else {
 					// we copy the data and we do not have to wait
 					
-					event->data.raw.type = 'D';
-					event->data.raw.ds = nl_listener->raw2dict(nl_listener, nlh);
+// 					event->data.raw.type = 'D';
+					event->data.dict = nl_listener->raw2dict(nl_listener, nlh);
 					
 					add_event(nl_listener->parent.graph, event);
 				}
@@ -512,8 +512,9 @@ static void *netlink_tmain(void *data) {
 		
 		if (nlh->nlmsg_type == NLMSG_DONE)
 			send_signal(&nl_listener->msg_done, 0);
-		
-		len = recv(nl_listener->sockfd, nlh, 4096, 0);
+		printf("recv2\n");
+		if (!nl_listener->stop)
+			len = recv(nl_listener->sockfd, nlh, 4096, 0);
 	}
 	
 	if (len < 0) {
@@ -526,19 +527,27 @@ static void *netlink_tmain(void *data) {
 static void stop_thread(struct crtx_thread *t, void *data) {
 	struct crtx_netlink_listener *nl_listener;
 	
-	DBG("stopping socket listener\n");
+	DBG("stopping netlink listener\n");
 	
 	nl_listener = (struct crtx_netlink_listener*) data;
 	
 	nl_listener->stop = 1;
+	
 	if (nl_listener->sockfd)
 		shutdown(nl_listener->sockfd, SHUT_RDWR);
+	
+	crtx_threads_interrupt_thread(nl_listener->parent.thread);
+	
+	wait_on_signal(&nl_listener->parent.thread->finished);
+	dereference_signal(&nl_listener->parent.thread->finished);
 }
 
-void free_netlink_listener(struct crtx_listener_base *data) {
+void free_netlink_listener(struct crtx_listener_base *lbase) {
 	struct crtx_netlink_listener *nl_listener;
 	
-	nl_listener = (struct crtx_netlink_listener *) data;
+	nl_listener = (struct crtx_netlink_listener *) lbase;
+	
+	stop_thread(lbase->thread, nl_listener);
 	
 	free_signal(&nl_listener->msg_done);
 }
@@ -567,9 +576,11 @@ struct crtx_listener_base *crtx_new_netlink_listener(void *options) {
 	
 	init_signal(&nl_listener->msg_done);
 	
+	nl_listener->parent.free = &free_netlink_listener;
 	nl_listener->parent.start_listener = 0;
 	nl_listener->parent.thread = get_thread(netlink_tmain, nl_listener, 0);
 	nl_listener->parent.thread->do_stop = &stop_thread;
+	reference_signal(&nl_listener->parent.thread->finished);
 	
 	return &nl_listener->parent;
 }
@@ -595,7 +606,7 @@ struct {
 } if_req;
 
 static char netlink_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	crtx_print_dict(event->data.raw.ds);
+	crtx_print_dict(event->data.dict);
 	
 	return 1;
 }
@@ -610,6 +621,7 @@ static char crtx_get_own_ip_addresses_keygen(struct crtx_event *event, struct cr
 	
 	di = crtx_get_item(event->data.dict, "address");
 	
+	key->key = 0;
 	key->type = 's';
 	key->string = stracpy(di->string, 0);
 	if (!key->string)
@@ -627,7 +639,7 @@ char crtx_get_own_ip_addresses() {
 	struct crtx_cache_task *ctask;
 	#define TASK2CACHETASK(task) ((struct crtx_cache_task*) (task)->userdata)
 	
-	
+	memset(&nl_listener, 0, sizeof(struct crtx_netlink_listener));
 	nl_listener.socket_protocol = NETLINK_ROUTE;
 	nl_listener.nl_family = AF_NETLINK;
 	nl_listener.nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
@@ -642,7 +654,7 @@ char crtx_get_own_ip_addresses() {
 		exit(1);
 	}
 	
-	crtx_create_task(lbase->graph, 0, "netlink_test", netlink_test_handler, 0);
+// 	crtx_create_task(lbase->graph, 0, "netlink_test", netlink_test_handler, 0);
 	
 	{
 		ip_cache_task = create_response_cache_task("ip_cache", crtx_get_own_ip_addresses_keygen);
@@ -675,18 +687,10 @@ char crtx_get_own_ip_addresses() {
 	wait_on_signal(&nl_listener.msg_done);
 	
 	
-	// request a list of interfaces
-	memset(&if_req, 0, sizeof(if_req));
-	if_req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
-	if_req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
-	if_req.n.nlmsg_type = RTM_GETLINK;
-	if_req.ifinfomsg.ifi_family = AF_UNSPEC;
+	sleep(5);
+	crtx_print_dict(ctask->cache->entries);
 	
-	reset_signal(&nl_listener.msg_done);
-	
-	crtx_netlink_send_req(&nl_listener, &if_req.n);
-	
-	wait_on_signal(&nl_listener.msg_done);
+	free_listener(lbase);
 	
 	return 1;
 }
@@ -696,62 +700,63 @@ int netlink_main(int argc, char **argv) {
 	struct crtx_listener_base *lbase;
 	char ret;
 	
-	memset(&nl_listener, 0, sizeof(struct crtx_netlink_listener));
+// 	memset(&nl_listener, 0, sizeof(struct crtx_netlink_listener));
+// 	
+// 	// setup a netlink listener
+// 	nl_listener.socket_protocol = NETLINK_ROUTE;
+// 	nl_listener.nl_family = AF_NETLINK;
+// 	// e.g., RTMGRP_LINK, RTMGRP_NEIGH, RTMGRP_IPV4_IFADDR, RTMGRP_IPV6_IFADDR
+// 	nl_listener.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
+// 	nl_listener.nlmsg_types = nlmsg_types;
+// 	
+// 	nl_listener.raw2dict = &crtx_netlink_raw2dict_ifaddr;
+// 	nl_listener.all_fields = 1;
+// 	
+// 	lbase = create_listener("netlink", &nl_listener);
+// 	if (!lbase) {
+// 		ERROR("create_listener(netlink) failed\n");
+// 		exit(1);
+// 	}
+// 	
+// 	crtx_create_task(lbase->graph, 0, "netlink_test", netlink_test_handler, 0);
+// 	
+// 	ret = crtx_start_listener(lbase);
+// 	if (!ret) {
+// 		ERROR("starting netlink listener failed\n");
+// 		return 1;
+// 	}
+// 	
+// 	// request a list of addresses
+// 	memset(&addr_req, 0, sizeof(addr_req));
+// 	addr_req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
+// 	addr_req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
+// 	addr_req.n.nlmsg_type = RTM_GETADDR;
+// // 	addr_req.r.ifa_family = AF_INET; // e.g., AF_INET (IPv4-only) or AF_INET6 (IPv6-only)
+// 	
+// 	reset_signal(&nl_listener.msg_done);
+// 	
+// 	crtx_netlink_send_req(&nl_listener, &addr_req.n);
+// 	
+// 	wait_on_signal(&nl_listener.msg_done);
+// 	
+// 	
+// 	// request a list of interfaces
+// 	memset(&if_req, 0, sizeof(if_req));
+// 	if_req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
+// 	if_req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
+// 	if_req.n.nlmsg_type = RTM_GETLINK;
+// 	if_req.ifinfomsg.ifi_family = AF_UNSPEC;
+// 	
+// 	reset_signal(&nl_listener.msg_done);
+// 	
+// 	crtx_netlink_send_req(&nl_listener, &if_req.n);
+// 	
+// 	wait_on_signal(&nl_listener.msg_done);
+// 	
+// 	// add the main thread to the thread pool and wait on termination
+// 	crtx_loop();
 	
-	// setup a netlink listener
-	nl_listener.socket_protocol = NETLINK_ROUTE;
-	nl_listener.nl_family = AF_NETLINK;
-	// e.g., RTMGRP_LINK, RTMGRP_NEIGH, RTMGRP_IPV4_IFADDR, RTMGRP_IPV6_IFADDR
-	nl_listener.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
-	nl_listener.nlmsg_types = nlmsg_types;
-	
-	nl_listener.raw2dict = &crtx_netlink_raw2dict_ifaddr;
-	nl_listener.all_fields = 1;
-	
-	lbase = create_listener("netlink", &nl_listener);
-	if (!lbase) {
-		ERROR("create_listener(netlink) failed\n");
-		exit(1);
-	}
-	
-	crtx_create_task(lbase->graph, 0, "netlink_test", netlink_test_handler, 0);
-	
-	ret = crtx_start_listener(lbase);
-	if (!ret) {
-		ERROR("starting netlink listener failed\n");
-		return 1;
-	}
-	
-	// request a list of addresses
-	memset(&addr_req, 0, sizeof(addr_req));
-	addr_req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
-	addr_req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
-	addr_req.n.nlmsg_type = RTM_GETADDR;
-// 	addr_req.r.ifa_family = AF_INET; // e.g., AF_INET (IPv4-only) or AF_INET6 (IPv6-only)
-	
-	reset_signal(&nl_listener.msg_done);
-	
-	crtx_netlink_send_req(&nl_listener, &addr_req.n);
-	
-	wait_on_signal(&nl_listener.msg_done);
-	
-	
-	// request a list of interfaces
-	memset(&if_req, 0, sizeof(if_req));
-	if_req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
-	if_req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
-	if_req.n.nlmsg_type = RTM_GETLINK;
-	if_req.ifinfomsg.ifi_family = AF_UNSPEC;
-	
-	reset_signal(&nl_listener.msg_done);
-	
-	crtx_netlink_send_req(&nl_listener, &if_req.n);
-	
-	wait_on_signal(&nl_listener.msg_done);
-	
-	
-	// add the main thread to the thread pool and wait on termination
-	crtx_loop();
+	crtx_get_own_ip_addresses();
 	
 	return 0;
 }

@@ -972,8 +972,11 @@ void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src,
 	if (!data_only) {
 		dst->flags = src->flags;
 		
-		if (src->key && (src->flags & DIF_KEY_ALLOCATED)) {
-			dst->key = stracpy(src->key, 0);
+		if (src->key) {
+			if (src->flags & DIF_KEY_ALLOCATED)
+				dst->key = stracpy(src->key, 0);
+			else
+				dst->key = src->key;
 		}
 	}
 	
