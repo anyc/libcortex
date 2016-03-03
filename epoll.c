@@ -10,15 +10,15 @@
 #include "core.h"
 #include "epoll.h"
 
-int crtx_epoll_add_fd(struct crtx_epoll_listener *epl, struct epoll_event *event) {
+int crtx_epoll_add_fd(struct crtx_epoll_listener *epl, int fd, struct epoll_event *event) {
 	int ret;
 	
 	event->events |= EPOLLET;
 	
 // 	s = epoll_ctl(epl->epoll_fd, EPOLL_CTL_ADD, epl->fds[i].data.fd, &epl->fds[i].data);
-	ret = epoll_ctl(epl->epoll_fd, EPOLL_CTL_ADD, event->data.fd, event);
+	ret = epoll_ctl(epl->epoll_fd, EPOLL_CTL_ADD, fd, event);
 	if (ret < 0) {
-		ERROR("epoll_ctl failed for fd %d: %s\n", event->data.fd, strerror(errno));
+		ERROR("epoll_ctl failed for fd %d: %s\n", fd, strerror(errno));
 		
 		return 0;
 	}
@@ -26,7 +26,7 @@ int crtx_epoll_add_fd(struct crtx_epoll_listener *epl, struct epoll_event *event
 	return 1;
 }
 
-static void *epoll_tmain(void *data) {
+void *crtx_epoll_main(void *data) {
 	struct crtx_epoll_listener *epl;
 	size_t i;
 	int n_rdy_events;
@@ -56,9 +56,9 @@ static void *epoll_tmain(void *data) {
 		epl->control_fd = pipe_fds[1];
 		
 		ctrl_event.events = EPOLLIN;
-		ctrl_event.data.fd = pipe_fds[0];
+		ctrl_event.data.ptr = 0;
 		
-		crtx_epoll_add_fd(epl, &ctrl_event);
+		crtx_epoll_add_fd(epl, pipe_fds[0], &ctrl_event);
 	}
 	
 	if (epl->max_n_events < 1)
@@ -80,13 +80,13 @@ static void *epoll_tmain(void *data) {
 		
 		for (i=0; i < n_rdy_events; i++) {
 			if (rec_events[i].events & EPOLLERR) {
-				ERROR("EPOLLERR for fd %d\n", rec_events[i].data.fd);
+				ERROR("epoll returned EPOLLERR\n");
 				continue;
 			} else
-			if (rec_events[i].data.fd == pipe_fds[0]) {
+			if (rec_events[i].data.ptr == 0) {
 				DBG("epoll received wake-up event\n");
 				
-				read(rec_events[i].data.fd, &ret, 1);
+				read(pipe_fds[0], &ret, 1);
 				
 				continue;
 			} else {
@@ -94,24 +94,25 @@ static void *epoll_tmain(void *data) {
 				
 				event = create_event(0, 0, 0);
 				
+				memcpy(&ev_payload->event, &rec_events[i], sizeof(struct epoll_event));
 				event->data.raw.pointer = ev_payload;
 				event->data.raw.type = 'p';
 				event->data.raw.flags = DIF_DATA_UNALLOCATED;
 				
-				add_event(ev_payload->graph, event);
+				add_event(epl->parent.graph, event);
 			}
 		}
 		
 		if (epl->process_events) {
-			struct crtx_dll *git, *tit;
+			struct crtx_dll *git, *eit;
 			
-			for (git=crtx_root->graph_queue; git; git = git->next) {
-				for (tit=git->graph->equeue; tit; tit = tit->next) {
-					
-				}
-			}
+			crtx_claim_next_event(&git, &eit);
+			
+			crtx_process_event(git->graph, eit);
 		}
 	}
+	
+	DBG("epoll stops\n");
 	
 	close(epl->control_fd);
 	close(epl->epoll_fd);
@@ -119,18 +120,25 @@ static void *epoll_tmain(void *data) {
 	return 0;
 }
 
-void free_epoll_listener(struct crtx_listener_base *lbase) {
-	struct crtx_epoll_listener *epl;
-	
-	epl = (struct crtx_epoll_listener *) lbase;
-	
+void crtx_epoll_stop(struct crtx_epoll_listener *epl) {
 	epl->stop = 1;
 	write(epl->control_fd, &epl, 1);
 }
 
+static void stop_thread(struct crtx_thread *t, void *data) {
+	struct crtx_epoll_listener *epl;
+	
+	epl = (struct crtx_epoll_listener*) data;
+	
+	crtx_epoll_stop(epl);
+}
+
+static void free_epoll_listener(struct crtx_listener_base *lbase) {
+	stop_thread(0, lbase);
+}
+
 struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	struct crtx_epoll_listener *epl;
-// 	struct sockaddr_nl addr;
 	
 	epl = (struct crtx_epoll_listener*) options;
 	
@@ -142,13 +150,17 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	
 	new_eventgraph(&epl->parent.graph, 0, 0);
 	
-// 	init_signal(&nl_listener->msg_done);
-	
 	epl->parent.free = &free_epoll_listener;
 	epl->parent.start_listener = 0;
-	epl->parent.thread = get_thread(epoll_tmain, epl, 0);
-// 	epl->parent.thread->do_stop = &stop_thread;
-// 	reference_signal(&epl->parent.thread->finished);
+	if (!epl->main_thread) {
+		epl->parent.thread = get_thread(crtx_epoll_main, epl, 0);
+		epl->parent.thread->do_stop = &stop_thread;
+	} else {
+		if (crtx_root->epoll_listener)
+			ERROR("multiple crtx_root->epoll_listener\n");
+		
+		crtx_root->epoll_listener = epl;
+	}
 	
 	return &epl->parent;
 }
@@ -161,33 +173,127 @@ void crtx_epoll_finish() {
 
 
 #ifdef CRTX_TEST
+#include <fcntl.h>
+#include "timer.h"
+
+struct crtx_timer_listener tlist;
+struct itimerspec newtimer;
+struct crtx_listener_base *blist;
+int testpipe[2];
+int count = 0;
+
+static char epoll_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	char buf[1024];
+	struct crtx_epoll_event_payload *payload;
+	ssize_t n_read;
+	
+	payload = (struct crtx_epoll_event_payload*) event->data.raw.pointer;
+	
+	n_read = read(payload->fd, buf, sizeof(buf)-1);
+	if (n_read < 0) {
+		ERROR("epoll test read failed: %s\n", strerror(errno));
+		return 1;
+	}
+	buf[n_read] = 0;
+	
+	printf("read: \"%s\" (%zd)\n", buf, n_read);
+	
+	return 1;
+}
+
+static char timer_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	if (count > 2) {
+		crtx_init_shutdown();
+	} else {
+		write(testpipe[1], "success", 7);
+		count++;
+	}
+	
+	return 1;
+}
+
+void start_timer() {
+	// set time for (first) alarm
+	newtimer.it_value.tv_sec = 1;
+	newtimer.it_value.tv_nsec = 0;
+	
+	// set interval for repeating alarm, set to 0 to disable repetition
+	newtimer.it_interval.tv_sec = 10;
+	newtimer.it_interval.tv_nsec = 0;
+	
+	tlist.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
+	tlist.settime_flags = 0; // absolute (TFD_TIMER_ABSTIME), or relative (0) time, see: man timerfd_settime()
+	tlist.newtimer = &newtimer;
+	
+	blist = create_listener("timer", &tlist);
+	if (!blist) {
+		ERROR("create_listener(timer) failed\n");
+		exit(1);
+	}
+	
+	crtx_create_task(blist->graph, 0, "timer", timer_handler, 0);
+	
+	crtx_start_listener(blist);
+}
+
 int epoll_main(int argc, char **argv) {
 	struct crtx_epoll_listener epl;
 	struct crtx_listener_base *lbase;
 	char ret;
+	struct epoll_event event;
+	struct crtx_epoll_event_payload payload;
 	
 	memset(&epl, 0, sizeof(struct crtx_epoll_listener));
+	
+	if (argc > 1) {
+		epl.main_thread = 1;
+	}
 	
 	lbase = create_listener("epoll", &epl);
 	if (!lbase) {
 		ERROR("create_listener(epoll) failed\n");
 		exit(1);
 	}
-
-// 	crtx_create_task(lbase->graph, 0, "epoll_test", epoll_test_handler, 0);
-
+	
+	ret = pipe(testpipe); // 0 read, 1 write
+	if (ret < 0) {
+		ERROR("creating test pipe failed: %s\n", strerror(errno));
+		return 1;
+	}
+	
+	memset(&payload, 0, sizeof(struct crtx_epoll_event_payload));
+	payload.fd = testpipe[0];
+	
+	event.events = EPOLLIN;
+// 	event.data.fd = fd;
+	event.data.ptr = &payload;
+	crtx_epoll_add_fd(&epl, testpipe[0], &event);
+	
+	crtx_create_task(lbase->graph, 0, "epoll_test", epoll_test_handler, 0);
+	
 	ret = crtx_start_listener(lbase);
 	if (!ret) {
 		ERROR("starting epoll listener failed\n");
 		return 1;
 	}
 	
-	sleep(5);
-	write(epl.control_fd, &ret, 1);
-	
-	sleep(1);
+	if (argc > 1) {
+		start_timer();
+		
+		crtx_loop();
+		
+		free_listener(blist);
+	} else {
+		sleep(1);
+		write(testpipe[1], "success", 7);
+		
+		sleep(1);
+		write(epl.control_fd, &ret, 1);
+	}
 	
 	free_listener(lbase);
+	
+	close(testpipe[0]);
 	
 	return 0;
 }

@@ -185,6 +185,7 @@ struct crtx_module {
 	void (*finish)();
 };
 
+struct crtx_epoll_listener;
 struct crtx_root {
 	struct crtx_graph **graphs;
 	unsigned int n_graphs;
@@ -194,6 +195,8 @@ struct crtx_root {
 	MUTEX_TYPE graph_queue_mutex;
 	
 	char shutdown;
+	
+	struct crtx_epoll_listener *epoll_listener;
 	
 	struct crtx_graph *crtx_ctrl_graph;
 	
@@ -237,6 +240,9 @@ struct crtx_listener_base *create_listener(char *id, void *options);
 void free_listener(struct crtx_listener_base *listener);
 struct crtx_event *create_event(char *type, void *data, size_t data_size);
 struct crtx_task *crtx_create_task(struct crtx_graph *graph, unsigned char position, char *id, crtx_handle_task_t handler, void *userdata);
+void crtx_claim_next_event(struct crtx_dll **graph, struct crtx_dll **event);
+void crtx_process_event(struct crtx_graph *graph, struct crtx_dll *queue_entry);
+void crtx_init_shutdown();
 
 char crtx_start_listener(struct crtx_listener_base *listener);
 void print_tasks(struct crtx_graph *graph);

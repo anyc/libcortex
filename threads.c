@@ -25,7 +25,6 @@ void init_signal(struct crtx_signal *signal) {
 	signal->local_condition = 0;
 	signal->condition = &signal->local_condition;
 	
-	
 	ret = pthread_mutex_init(&signal->ref_mutex, 0); ASSERT(ret >= 0);
 	ret = pthread_cond_init(&signal->ref_cond, NULL); ASSERT(ret >= 0);
 	
@@ -86,7 +85,10 @@ void reference_signal(struct crtx_signal *s) {
 void dereference_signal(struct crtx_signal *s) {
 	LOCK(s->ref_mutex);
 	
-	s->n_refs -= 1;
+	if (s->n_refs == 0)
+		ERROR("signal referance < 0\n");
+	else
+		s->n_refs -= 1;
 	if (s->n_refs == 0)
 		SIGNAL_BCAST(s->ref_cond);
 	

@@ -1,8 +1,8 @@
 
 struct crtx_epoll_event_payload {
-	struct epoll_event *event;
+	int fd;
+	struct epoll_event event;
 	
-	struct crtx_graph *graph;
 	void *data;
 };
 
@@ -18,6 +18,7 @@ struct crtx_epoll_listener {
 // 	struct epoll_event *fds; // malloc'ed memory
 // 	size_t n_fds;
 	
+	char main_thread;
 	char process_events;
 	char stop;
 	
@@ -39,6 +40,8 @@ struct crtx_epoll_listener {
 // 	char stop;
 };
 
+void *crtx_epoll_main(void *data);
+void crtx_epoll_stop(struct crtx_epoll_listener *epl);
 struct crtx_listener_base *crtx_new_epoll_listener(void *options);
 void crtx_epoll_init();
 void crtx_epoll_finish();

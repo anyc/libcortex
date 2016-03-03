@@ -170,8 +170,10 @@ void free_listener(struct crtx_listener_base *listener) {
 // 		free(listener);
 // 	}
 	
-	wait_on_signal(&listener->thread->finished);
-	dereference_signal(&listener->thread->finished);
+	if (listener->thread) {
+		wait_on_signal(&listener->thread->finished);
+		dereference_signal(&listener->thread->finished);
+	}
 	
 // 	wait_on_signal(&listener->finished);
 }
@@ -206,40 +208,63 @@ void crtx_traverse_graph(struct crtx_graph *graph, struct crtx_event *event) {
 	traverse_graph_r(graph, graph->tasks, event);
 }
 
-void *graph_consumer_main(void *arg) {
-// 	struct crtx_event_ll *qe;
-	struct crtx_dll *qe;
-	struct crtx_graph *graph = (struct crtx_graph*) arg;
+void crtx_claim_next_event_of_graph(struct crtx_graph *graph, struct crtx_dll **event) {
+	struct crtx_dll *eit;
+	
+	if (event && *event)
+		eit = *event;
+	else
+		eit = graph->equeue;
 	
 	LOCK(graph->queue_mutex);
-	
-	while (!graph->stop) {
-		for (qe = graph->equeue; qe && (qe->event->claimed || qe->event->error); qe = qe->next) {}
-		if (qe && !qe->event->claimed && !qe->event->error) {
-			qe->event->claimed = 1;
-			break;
-		}
-		pthread_cond_wait(&graph->queue_cond, &graph->queue_mutex);
+	for (; eit && (eit->event->claimed || eit->event->error); eit = eit->next) {}
+	if (eit && !eit->event->claimed && !eit->event->error) {
+		eit->event->claimed = 1;
 	}
-	
 	UNLOCK(graph->queue_mutex);
 	
+	if (event)
+		*event = eit;
+}
+
+void crtx_claim_next_event(struct crtx_dll **graph, struct crtx_dll **event) {
+	struct crtx_dll *git;
+	
+	if (graph && *graph)
+		git = *graph;
+	else
+		git = crtx_root->graph_queue;
+	
+	LOCK(crtx_root->graph_queue_mutex);
+	for (; git; git = git->next) {
+		crtx_claim_next_event_of_graph(git->graph, event);
+		if (*event)
+			break;
+	}
+	UNLOCK(crtx_root->graph_queue_mutex);
+	
+	if (graph)
+		*graph = git;
+}
+
+
+void crtx_process_event(struct crtx_graph *graph, struct crtx_dll *queue_entry) {
 	if (graph->tasks)
-		traverse_graph_r(graph, graph->tasks, qe->event);
+		traverse_graph_r(graph, graph->tasks, queue_entry->event);
 	else
 		INFO("no task in graph %s\n", graph->types[0]);
 	
-	dereference_event_response(qe->event);
+	dereference_event_response(queue_entry->event);
 	
-	dereference_event_release(qe->event);
+	dereference_event_release(queue_entry->event);
 	
 	LOCK(graph->queue_mutex);
-	if (qe->prev)
-		qe->prev->next = qe->next;
+	if (queue_entry->prev)
+		queue_entry->prev->next = queue_entry->next;
 	else
-		graph->equeue = qe->next;
-	if (qe->next)
-		qe->next->prev = qe->prev;
+		graph->equeue = queue_entry->next;
+	if (queue_entry->next)
+		queue_entry->next->prev = queue_entry->prev;
 	
 	if (!graph->equeue) {
 		LOCK(crtx_root->graph_queue_mutex);
@@ -249,7 +274,31 @@ void *graph_consumer_main(void *arg) {
 	
 	UNLOCK(graph->queue_mutex);
 	
-	free(qe);
+	free(queue_entry);
+}
+
+void *graph_consumer_main(void *arg) {
+	// 	struct crtx_event_ll *qe;
+	struct crtx_dll *qe;
+	struct crtx_graph *graph = (struct crtx_graph*) arg;
+	
+// 	LOCK(graph->queue_mutex);
+// 	
+// 	while (!graph->stop) {
+// 		for (qe = graph->equeue; qe && (qe->event->claimed || qe->event->error); qe = qe->next) {}
+// 		if (qe && !qe->event->claimed && !qe->event->error) {
+// 			qe->event->claimed = 1;
+// 			break;
+// 		}
+// 		pthread_cond_wait(&graph->queue_cond, &graph->queue_mutex);
+// 	}
+// 	
+// 	UNLOCK(graph->queue_mutex);
+	
+	qe = 0;
+	crtx_claim_next_event_of_graph(graph, &qe);
+	
+	crtx_process_event(graph, qe);
 	
 	return 0;
 }
@@ -728,7 +777,12 @@ void crtx_init_shutdown() {
 	VDBG("init shutdown\n");
 	
 	crtx_root->shutdown = 1;
-	// 	crtx_finish();
+	
+	if (crtx_root->epoll_listener) {
+		crtx_epoll_stop(crtx_root->epoll_listener);
+	}
+	
+// 	crtx_finish();
 	crtx_threads_stop();
 	crtx_flush_events();
 }
@@ -885,7 +939,10 @@ void *crtx_copy_raw_data(struct crtx_event_data *data) {
 // }
 
 void crtx_loop() {
-	spawn_thread(0);
+	if (crtx_root->epoll_listener)
+		crtx_epoll_main(crtx_root->epoll_listener);
+	else
+		spawn_thread(0);
 }
 
 void crtx_init_notification_listeners(void **data) {

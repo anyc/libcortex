@@ -538,8 +538,8 @@ static void stop_thread(struct crtx_thread *t, void *data) {
 	
 	crtx_threads_interrupt_thread(nl_listener->parent.thread);
 	
-	wait_on_signal(&nl_listener->parent.thread->finished);
-	dereference_signal(&nl_listener->parent.thread->finished);
+// 	wait_on_signal(&nl_listener->parent.thread->finished);
+// 	dereference_signal(&nl_listener->parent.thread->finished);
 }
 
 void free_netlink_listener(struct crtx_listener_base *lbase) {
