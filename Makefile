@@ -7,9 +7,9 @@ APP=cortexd
 
 OBJS+=cortexd.o core.o socket.o readline.o controls.o fanotify.o inotify.o \
 	event_comm.o cache.o threads.o signals.o dict.o dict_inout.o \
-	llist.o dllist.o timer.o netlink.o
+	llist.o dllist.o timer.o netlink.o epoll.o
 
-TESTS+=timer.test netlink.test
+TESTS+=timer.test netlink.test epoll.test
 
 CFLAGS+=$(DEBUG_CFLAGS) -D_FILE_OFFSET_BITS=64 -fPIC
 

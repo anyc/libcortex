@@ -27,6 +27,8 @@ CRTX_DLL_TYPE {
 // 	void *data;
 	union {
 		void *data;
+		struct crtx_event *event;
+		struct crtx_graph *graph;
 		struct crtx_inotify_listener *in_listener;
 		struct crtx_transform_dict_handler *transform_handler;
 	};
@@ -34,6 +36,7 @@ CRTX_DLL_TYPE {
 
 char CRTX_DLL_FCT(append)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item);
 CRTX_DLL_TYPE * CRTX_DLL_FCT(append_new)(CRTX_DLL_TYPE **head, void *data);
+char CRTX_DLL_FCT(unlink)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item);
 
 // #undef CRTX_DLL_PREFIX
 #endif

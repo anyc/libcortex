@@ -29,6 +29,7 @@
 #include "signals.h"
 #include "timer.h"
 #include "netlink.h"
+#include "epoll.h"
 
 
 struct crtx_root crtx_global_root;
@@ -50,6 +51,7 @@ struct crtx_module static_modules[] = {
 	{"inotify", &crtx_inotify_init, &crtx_inotify_finish},
 	{"controls", &crtx_controls_init, &crtx_controls_finish},
 	{"netlink", &crtx_netlink_init, &crtx_netlink_finish},
+	{"epoll", &crtx_epoll_init, &crtx_epoll_finish},
 	{0, 0}
 };
 
@@ -68,6 +70,7 @@ struct crtx_listener_repository listener_factory[] = {
 	{"readline", &crtx_new_readline_listener},
 	{"timer", &crtx_new_timer_listener},
 	{"netlink", &crtx_new_netlink_listener},
+	{"epoll", &crtx_new_epoll_listener},
 	{0, 0}
 };
 
@@ -129,11 +132,18 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 
 struct crtx_listener_base *create_listener(char *id, void *options) {
 	struct crtx_listener_repository *l;
+	struct crtx_listener_base *lbase;
 	
 	l = listener_factory;
 	while (l->id) {
 		if (!strcmp(l->id, id)) {
-			return l->create(options);
+			lbase = l->create(options);
+// 			init_signal(&lbase->finished);
+			
+			if (lbase->thread)
+				reference_signal(&lbase->thread->finished);
+			
+			return lbase;
 		}
 		l++;
 	}
@@ -144,8 +154,13 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 }
 
 void free_listener(struct crtx_listener_base *listener) {
+// 	reset_signal(&listener->finished);
+	
 	if (listener->free)
 		listener->free(listener);
+	
+// 	if (listener->thread)
+// 		
 	
 	if (listener->graph)
 		free_eventgraph(listener->graph);
@@ -154,6 +169,11 @@ void free_listener(struct crtx_listener_base *listener) {
 		
 // 		free(listener);
 // 	}
+	
+	wait_on_signal(&listener->thread->finished);
+	dereference_signal(&listener->thread->finished);
+	
+// 	wait_on_signal(&listener->finished);
 }
 
 void traverse_graph_r(struct crtx_graph *graph, struct crtx_task *ti, struct crtx_event *event) {
@@ -187,15 +207,16 @@ void crtx_traverse_graph(struct crtx_graph *graph, struct crtx_event *event) {
 }
 
 void *graph_consumer_main(void *arg) {
-	struct crtx_event_ll *qe;
+// 	struct crtx_event_ll *qe;
+	struct crtx_dll *qe;
 	struct crtx_graph *graph = (struct crtx_graph*) arg;
 	
 	LOCK(graph->queue_mutex);
 	
 	while (!graph->stop) {
-		for (qe = graph->equeue; qe && (qe->in_process || qe->event->error); qe = qe->next) {}
-		if (qe && !qe->in_process && !qe->event->error) {
-			qe->in_process = 1;
+		for (qe = graph->equeue; qe && (qe->event->claimed || qe->event->error); qe = qe->next) {}
+		if (qe && !qe->event->claimed && !qe->event->error) {
+			qe->event->claimed = 1;
 			break;
 		}
 		pthread_cond_wait(&graph->queue_cond, &graph->queue_mutex);
@@ -219,6 +240,13 @@ void *graph_consumer_main(void *arg) {
 		graph->equeue = qe->next;
 	if (qe->next)
 		qe->next->prev = qe->prev;
+	
+	if (!graph->equeue) {
+		LOCK(crtx_root->graph_queue_mutex);
+		crtx_dll_unlink(&crtx_root->graph_queue, &graph->ll_hdr);
+		UNLOCK(crtx_root->graph_queue_mutex);
+	}
+	
 	UNLOCK(graph->queue_mutex);
 	
 	free(qe);
@@ -277,24 +305,24 @@ struct crtx_task *crtx_create_task(struct crtx_graph *graph, unsigned char posit
 	return task;
 }
 
-void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event) {
-	struct crtx_event_ll *eit;
-	
-	for (eit=*list; eit && eit->next; eit = eit->next) {}
-	
-	if (eit) {
-		eit->next = (struct crtx_event_ll*) malloc(sizeof(struct crtx_event_ll));
-		eit->next->prev = eit;
-		eit = eit->next;
-	} else {
-		*list = (struct crtx_event_ll*) malloc(sizeof(struct crtx_event_ll));
-		eit = *list;
-		eit->prev = 0;
-	}
-	eit->event = event;
-	eit->in_process = 0;
-	eit->next = 0;
-}
+// void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event) {
+// 	struct crtx_event_ll *eit;
+// 	
+// 	for (eit=*list; eit && eit->next; eit = eit->next) {}
+// 	
+// 	if (eit) {
+// 		eit->next = (struct crtx_event_ll*) malloc(sizeof(struct crtx_event_ll));
+// 		eit->next->prev = eit;
+// 		eit = eit->next;
+// 	} else {
+// 		*list = (struct crtx_event_ll*) malloc(sizeof(struct crtx_event_ll));
+// 		eit = *list;
+// 		eit->prev = 0;
+// 	}
+// 	eit->event = event;
+// 	eit->in_process = 0;
+// 	eit->next = 0;
+// }
 
 char is_graph_empty(struct crtx_graph *graph, char *event_type) {
 	return (graph->tasks == 0);
@@ -338,9 +366,16 @@ void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	
 	LOCK(graph->queue_mutex);
 	
-	event_ll_add(&graph->equeue, event);
+	if (!graph->equeue) {
+		LOCK(crtx_root->graph_queue_mutex);
+		crtx_dll_append(&crtx_root->graph_queue, &graph->ll_hdr);
+		UNLOCK(crtx_root->graph_queue_mutex);
+	}
 	
-	graph->n_queue_entries++;
+// 	event_ll_add(&graph->equeue, event);
+	crtx_dll_append_new(&graph->equeue, event);
+	
+// 	graph->n_queue_entries++;
 	
 	pthread_cond_signal(&graph->queue_cond);
 	
@@ -599,7 +634,7 @@ void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **event_typ
 void free_eventgraph_intern(struct crtx_graph *egraph, char crtx_shutdown) {
 	size_t i;
 	struct crtx_task *t, *tnext;
-	struct crtx_event_ll *qe, *qe_next;
+	struct crtx_dll *qe, *qe_next;
 	
 	DBG("free graph %s t[0]: %s\n", egraph->name, egraph->types?egraph->types[0]:0);
 	
@@ -665,7 +700,7 @@ void crtx_flush_events() {
 	size_t i;
 	
 	for (i=0; i<crtx_root->n_graphs; i++) {
-		struct crtx_event_ll *qe, *qe_next;
+		struct crtx_dll *qe, *qe_next;
 		
 		if (!crtx_root->graphs[i])
 			continue;

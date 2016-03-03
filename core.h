@@ -7,6 +7,7 @@
 
 #include "threads.h"
 #include "dict.h"
+#include "linkedlist.h"
 
 
 #define STRINGIFYB(x) #x
@@ -85,6 +86,7 @@ struct crtx_event {
 	char response_expected;
 	
 	char error;
+	char claimed;
 	char release_in_progress;
 	
 	uint64_t original_event_id;
@@ -102,14 +104,14 @@ struct crtx_event {
 	pthread_mutex_t mutex;
 };
 
-struct crtx_event_ll {
-	struct crtx_event *event;
-	
-	char in_process;
-	
-	struct crtx_event_ll *prev;
-	struct crtx_event_ll *next;
-};
+// struct crtx_event_ll {
+// 	struct crtx_event *event;
+// 	
+// 	char in_process;
+// 	
+// 	struct crtx_event_ll *prev;
+// 	struct crtx_event_ll *next;
+// };
 
 typedef char (*crtx_handle_task_t)(struct crtx_event *event, void *userdata, void **sessiondata);
 
@@ -148,11 +150,14 @@ struct crtx_graph {
 	unsigned int n_consumers;
 	unsigned int n_max_consumers;
 	
-	struct crtx_event_ll *equeue;
-	unsigned int n_queue_entries;
+// 	struct crtx_event_ll *equeue;
+	struct crtx_dll *equeue;
+// 	unsigned int n_queue_entries;
 	
 	pthread_mutex_t queue_mutex;
 	pthread_cond_t queue_cond;
+	
+	struct crtx_dll ll_hdr;
 };
 
 struct crtx_listener_repository {
@@ -163,6 +168,7 @@ struct crtx_listener_repository {
 
 struct crtx_listener_base {
 	void (*free)(struct crtx_listener_base *data);
+// 	struct crtx_signal finished;
 	
 	// TODO: add (*start)() to start listener after tasks have been added?
 	
@@ -183,6 +189,9 @@ struct crtx_root {
 	struct crtx_graph **graphs;
 	unsigned int n_graphs;
 	MUTEX_TYPE graphs_mutex;
+	
+	struct crtx_dll *graph_queue;
+	MUTEX_TYPE graph_queue_mutex;
 	
 	char shutdown;
 	
@@ -239,7 +248,7 @@ void dereference_event_response(struct crtx_event *event);
 void reference_event_release(struct crtx_event *event);
 void dereference_event_release(struct crtx_event *event);
 
-void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event);
+// void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event);
 char *get_username();
 char is_graph_empty(struct crtx_graph *graph, char *event_type);
 void *crtx_copy_raw_data(struct crtx_event_data *data);
