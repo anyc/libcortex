@@ -19,3 +19,7 @@ CFLAGS+=-DSTATIC_NF_QUEUE
 OBJS+=nf_queue.o
 CFLAGS+=$(shell pkg-config --cflags libnetfilter_queue)
 LDLIBS+=$(shell pkg-config --libs libnetfilter_queue)
+
+OBJS+=evdev.o
+CFLAGS+=$(shell pkg-config --cflags libevdev)
+LDLIBS+=$(shell pkg-config --libs libevdev)

@@ -30,6 +30,7 @@
 #include "timer.h"
 #include "netlink.h"
 #include "epoll.h"
+#include "evdev.h"
 
 
 struct crtx_root crtx_global_root;
@@ -52,6 +53,7 @@ struct crtx_module static_modules[] = {
 	{"controls", &crtx_controls_init, &crtx_controls_finish},
 	{"netlink", &crtx_netlink_init, &crtx_netlink_finish},
 	{"epoll", &crtx_epoll_init, &crtx_epoll_finish},
+	{"evdev", &crtx_evdev_init, &crtx_evdev_finish},
 	{0, 0}
 };
 
@@ -71,6 +73,7 @@ struct crtx_listener_repository listener_factory[] = {
 	{"timer", &crtx_new_timer_listener},
 	{"netlink", &crtx_new_netlink_listener},
 	{"epoll", &crtx_new_epoll_listener},
+	{"evdev", &crtx_new_evdev_listener},
 	{0, 0}
 };
 
