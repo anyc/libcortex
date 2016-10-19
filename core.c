@@ -31,6 +31,7 @@
 #include "netlink.h"
 #include "epoll.h"
 #include "evdev.h"
+#include "udev.h"
 
 
 struct crtx_root crtx_global_root;
@@ -54,6 +55,7 @@ struct crtx_module static_modules[] = {
 	{"netlink", &crtx_netlink_init, &crtx_netlink_finish},
 	{"epoll", &crtx_epoll_init, &crtx_epoll_finish},
 	{"evdev", &crtx_evdev_init, &crtx_evdev_finish},
+	{"udev", &crtx_udev_init, &crtx_udev_finish},
 	{0, 0}
 };
 
@@ -74,6 +76,7 @@ struct crtx_listener_repository listener_factory[] = {
 	{"netlink", &crtx_new_netlink_listener},
 	{"epoll", &crtx_new_epoll_listener},
 	{"evdev", &crtx_new_evdev_listener},
+	{"udev", &crtx_new_udev_listener},
 	{0, 0}
 };
 
