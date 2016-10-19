@@ -94,34 +94,32 @@ struct crtx_dict *udev_raw2dict(struct crtx_event *event, struct crtx_udev_raw2d
 
 void *udev_tmain(void *data) {
 	struct crtx_udev_listener *ulist;
-	int ret;
+// 	int ret;
 	struct udev_device *dev;
 	
 	ulist = (struct crtx_udev_listener*) data;
 	
-	/* This section will run continuously, calling usleep() at
-	 *  the end of each pass. This is to demonstrate how to use
-	 *  a udev_monitor in a non-blocking way. */
+	
 	while (1) {
-		/* Set up the call to select(). In this case, select() will
-		 *   only operate on a single file descriptor, the one
-		 *   associated with our udev_monitor. Note that the timeval
-		 *   object is set to 0, which will cause select() to not
-		 *   block. */
-		fd_set fds;
-		struct timeval tv;
-// 		int ret;
-		
-		FD_ZERO(&fds);
-		FD_SET(ulist->fd, &fds);
-		tv.tv_sec = 0;
-		tv.tv_usec = 0;
-		
-		ret = select(ulist->fd+1, &fds, NULL, NULL, &tv);
-		
-		/* Check if our file descriptor has received data. */
-		if (ret > 0 && FD_ISSET(ulist->fd, &fds)) {
-			printf("\nselect() says there should be data\n");
+// 		/* Set up the call to select(). In this case, select() will
+// 		 *   only operate on a single file descriptor, the one
+// 		 *   associated with our udev_monitor. Note that the timeval
+// 		 *   object is set to 0, which will cause select() to not
+// 		 *   block. */
+// 		fd_set fds;
+// 		struct timeval tv;
+// // 		int ret;
+// 		
+// 		FD_ZERO(&fds);
+// 		FD_SET(ulist->fd, &fds);
+// 		tv.tv_sec = 0;
+// 		tv.tv_usec = 0;
+// 		
+// 		ret = select(ulist->fd+1, &fds, NULL, NULL, &tv);
+// 		
+// 		/* Check if our file descriptor has received data. */
+// 		if (ret > 0 && FD_ISSET(ulist->fd, &fds)) {
+// 			printf("\nselect() says there should be data\n");
 			
 			/* Make the call to receive the device.
 			 *	   select() ensured that this will not block. */
@@ -142,15 +140,48 @@ void *udev_tmain(void *data) {
 				dereference_event_release(event);
 				
 				udev_device_unref(dev);
-			}
-			else {
+			} else {
 				printf("No Device from receive_device(). An error occured.\n");
 			}					
-		}
-// 		usleep(250*1000);
-		sleep(1);
-		printf(".");
-		fflush(stdout);
+// 		}
+// // 		usleep(250*1000);
+// 		sleep(1);
+// 		printf(".");
+// 		fflush(stdout);
+	}
+// 	
+	return 0;
+}
+
+static char udev_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_event_loop_payload *payload;
+	struct crtx_udev_listener *ulist;
+	struct udev_device *dev;
+	
+	
+	payload = (struct crtx_event_loop_payload*) event->data.raw.pointer;
+	
+	ulist = (struct crtx_udev_listener *) payload->data;
+	
+	dev = udev_monitor_receive_device(ulist->monitor);
+	if (dev) {
+		struct crtx_event *nevent;
+		
+		// size of struct udev_device is unknown
+		nevent = create_event(UDEV_MSG_ETYPE, dev, sizeof(struct udev_device*));
+		nevent->data.raw.flags |= DIF_DATA_UNALLOCATED;
+		
+		reference_event_release(nevent);
+		
+		add_event(ulist->parent.graph, nevent);
+		
+		wait_on_event(nevent);
+		
+		dereference_event_release(nevent);
+		
+		udev_device_unref(dev);
+	} else {
+		printf("No Device from receive_device(). An error occured.\n");
 	}
 	
 	return 0;
@@ -165,7 +196,8 @@ void crtx_free_udev_listener(struct crtx_listener_base *data) {
 
 struct crtx_listener_base *crtx_new_udev_listener(void *options) {
 	struct crtx_udev_listener *ulist;
-	int ret;
+// 	struct crtx_event_loop *event_loop;
+// 	int ret;
 	
 	ulist = (struct crtx_udev_listener *) options;
 	
@@ -188,14 +220,16 @@ struct crtx_listener_base *crtx_new_udev_listener(void *options) {
 	
 	udev_monitor_enable_receiving(ulist->monitor);
 	
-	ulist->fd = udev_monitor_get_fd(ulist->monitor);
-	
+	ulist->parent.fd = udev_monitor_get_fd(ulist->monitor);
+	ulist->parent.fd_data = ulist;
+	ulist->parent.fd_event_handler = &udev_fd_event_handler;
 	
 	ulist->parent.free = &crtx_free_udev_listener;
-	
 	new_eventgraph(&ulist->parent.graph, 0, udev_msg_etype);
 	
-	ulist->parent.thread = get_thread(udev_tmain, ulist, 0);
+// 	ulist->parent.thread = get_thread(udev_tmain, ulist, 0);
+	ulist->parent.thread_fct = udev_tmain;
+	ulist->parent.thread_data = ulist;	
 // 	ulist->parent.thread->do_stop = &stop_thread;
 	
 	return &ulist->parent;
@@ -270,78 +304,10 @@ static char udev_test_handler(struct crtx_event *event, void *userdata, void **s
 	return 0;
 }
 
-void udev_list(struct udev *udev) {
-	struct udev_enumerate *enumerate;
-	struct udev_list_entry *devices, *dev_list_entry;
-	struct udev_device *dev;
-	
-	/* Create a list of the devices in the 'hidraw' subsystem. */
-	enumerate = udev_enumerate_new(udev);
-	udev_enumerate_add_match_subsystem(enumerate, "hidraw");
-	udev_enumerate_scan_devices(enumerate);
-	devices = udev_enumerate_get_list_entry(enumerate);
-	/* For each item enumerated, print out its information.
-	 u dev_lis*t_entry_foreach is a *macro which expands to
-	 a loop. The loop will be executed for each member in
-	 devices, setting dev_list_entry to a list entry
-	 which contains the device's path in /sys. */
-	udev_list_entry_foreach(dev_list_entry, devices) {
-		const char *path;
-		
-		/* Get the filename of the /sys entry for the device
-		 and cre*ate a udev_device obje*ct (dev) representing it */
-		path = udev_list_entry_get_name(dev_list_entry);
-		dev = udev_device_new_from_syspath(udev, path);
-		
-		/* usb_device_get_devnode() returns the path to the device node
-		 i tself *in /dev. */           
-		 printf("Device Node Path: %s\n", udev_device_get_devnode(dev));
-		 
-		 /* The device pointed to by dev contains information about
-		  t he hid*raw device. In order *to get information about the
-		  USB device, get the parent device with the
-		  subsystem/devtype pair of "usb"/"usb_device". This will
-		  be several levels up the tree, but the function will find
-		  it.*/
-		 dev = udev_device_get_parent_with_subsystem_devtype(
-			 dev,
-			 "usb",
-			 "usb_device");
-		 if (!dev) {
-			 printf("Unable to find parent usb device.");
-			 exit(1);
-		 }
-		 
-		 /* From here, we can call get_sysattr_value() for each file
-		  i n the *device's /sys entry. *The strings passed into these
-		  functions (idProduct, idVendor, serial, etc.) correspond
-		  directly to the files in the directory which represents
-		  the USB device. Note that USB strings are Unicode, UCS2
-		  encoded, but the strings returned from
-		  udev_device_get_sysattr_value() are UTF-8 encoded. */
-		 printf("  VID/PID: %s %s\n",
-				udev_device_get_sysattr_value(dev,"idVendor"),
-				udev_device_get_sysattr_value(dev, "idProduct"));
-		 printf("  %s\n  %s\n",
-				udev_device_get_sysattr_value(dev,"manufacturer"),
-				udev_device_get_sysattr_value(dev,"product"));
-		 printf("  serial: %s\n",
-				udev_device_get_sysattr_value(dev, "serial"));
-		 udev_device_unref(dev);
-	}
-	/* Free the enumerator object */
-	udev_enumerate_unref(enumerate);
-}
-
 int udev_main(int argc, char **argv) {
 	struct crtx_udev_listener ulist;
 	struct crtx_listener_base *lbase;
 	char ret;
-	
-// 	if (argc < 2) {
-// 		fprintf(stderr, "Usage: %s </dev/input/eventX>\n", argv[0]);
-// 		return 1;
-// 	}
 	
 	memset(&ulist, 0, sizeof(struct crtx_udev_listener));
 	

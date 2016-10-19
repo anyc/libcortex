@@ -10,12 +10,11 @@
 #include "core.h"
 #include "epoll.h"
 
-int crtx_epoll_add_fd(struct crtx_epoll_listener *epl, int fd, struct epoll_event *event) {
+int crtx_epoll_add_fd_intern(struct crtx_epoll_listener *epl, int fd, struct epoll_event *event) {
 	int ret;
 	
 	event->events |= EPOLLET;
 	
-// 	s = epoll_ctl(epl->epoll_fd, EPOLL_CTL_ADD, epl->fds[i].data.fd, &epl->fds[i].data);
 	ret = epoll_ctl(epl->epoll_fd, EPOLL_CTL_ADD, fd, event);
 	if (ret < 0) {
 		ERROR("epoll_ctl failed for fd %d: %s\n", fd, strerror(errno));
@@ -24,6 +23,28 @@ int crtx_epoll_add_fd(struct crtx_epoll_listener *epl, int fd, struct epoll_even
 	}
 	
 	return 1;
+}
+
+void crtx_epoll_add_fd(struct crtx_listener_base *lbase, int fd, void *data, char *event_handler_name, crtx_handle_task_t event_handler) {
+	struct crtx_event_loop_payload *payload;
+	struct epoll_event *event;
+	struct crtx_epoll_listener *epl;
+	
+	
+	payload = (struct crtx_event_loop_payload*) calloc(1, sizeof(struct crtx_event_loop_payload));
+	payload->fd = fd;
+	payload->data = data;
+	
+	event = (struct epoll_event*) calloc(1, sizeof(struct epoll_event));
+	event->events = EPOLLIN;
+	event->data.ptr = payload;
+	
+	epl = (struct crtx_epoll_listener *) lbase;
+// 	printf("lis %d\n", epl->epoll_fd);
+	
+	crtx_create_task(lbase->graph, 0, event_handler_name, event_handler, 0);
+	
+	crtx_epoll_add_fd_intern(epl, payload->fd, event);
 }
 
 void *crtx_epoll_main(void *data) {
@@ -35,7 +56,7 @@ void *crtx_epoll_main(void *data) {
 	struct epoll_event ctrl_event;
 	struct epoll_event *rec_events;
 	
-	struct crtx_epoll_event_payload *ev_payload;
+	struct crtx_event_loop_payload *ev_payload;
 	struct crtx_event *event;
 	
 	epl = (struct crtx_epoll_listener*) data;
@@ -58,7 +79,7 @@ void *crtx_epoll_main(void *data) {
 		ctrl_event.events = EPOLLIN;
 		ctrl_event.data.ptr = 0;
 		
-		crtx_epoll_add_fd(epl, pipe_fds[0], &ctrl_event);
+		crtx_epoll_add_fd_intern(epl, pipe_fds[0], &ctrl_event);
 	}
 	
 	if (epl->max_n_events < 1)
@@ -90,7 +111,7 @@ void *crtx_epoll_main(void *data) {
 				
 				continue;
 			} else {
-				ev_payload = (struct crtx_epoll_event_payload* ) rec_events[i].data.ptr;
+				ev_payload = (struct crtx_event_loop_payload* ) rec_events[i].data.ptr;
 				
 				event = create_event(0, 0, 0);
 				
@@ -152,14 +173,14 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	
 	epl->parent.free = &free_epoll_listener;
 	epl->parent.start_listener = 0;
-	if (!epl->main_thread) {
+	if (!epl->no_thread) {
 		epl->parent.thread = get_thread(crtx_epoll_main, epl, 0);
 		epl->parent.thread->do_stop = &stop_thread;
 	} else {
-		if (crtx_root->epoll_listener)
-			ERROR("multiple crtx_root->epoll_listener\n");
+		if (crtx_root->event_loop.listener)
+			ERROR("multiple crtx_root->event_loop\n");
 		
-		crtx_root->epoll_listener = epl;
+		crtx_root->event_loop.listener = epl;
 	}
 	
 	return &epl->parent;
@@ -184,10 +205,10 @@ int count = 0;
 
 static char epoll_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char buf[1024];
-	struct crtx_epoll_event_payload *payload;
+	struct crtx_event_loop_payload *payload;
 	ssize_t n_read;
 	
-	payload = (struct crtx_epoll_event_payload*) event->data.raw.pointer;
+	payload = (struct crtx_event_loop_payload*) event->data.raw.pointer;
 	
 	n_read = read(payload->fd, buf, sizeof(buf)-1);
 	if (n_read < 0) {
@@ -241,12 +262,12 @@ int epoll_main(int argc, char **argv) {
 	struct crtx_listener_base *lbase;
 	char ret;
 	struct epoll_event event;
-	struct crtx_epoll_event_payload payload;
+	struct crtx_event_loop_payload payload;
 	
 	memset(&epl, 0, sizeof(struct crtx_epoll_listener));
 	
 	if (argc > 1) {
-		epl.main_thread = 1;
+		epl.no_thread = 1;
 	}
 	
 	lbase = create_listener("epoll", &epl);
@@ -261,13 +282,13 @@ int epoll_main(int argc, char **argv) {
 		return 1;
 	}
 	
-	memset(&payload, 0, sizeof(struct crtx_epoll_event_payload));
+	memset(&payload, 0, sizeof(struct crtx_event_loop_payload));
 	payload.fd = testpipe[0];
 	
 	event.events = EPOLLIN;
 // 	event.data.fd = fd;
 	event.data.ptr = &payload;
-	crtx_epoll_add_fd(&epl, testpipe[0], &event);
+	crtx_epoll_add_fd_intern(&epl, testpipe[0], &event);
 	
 	crtx_create_task(lbase->graph, 0, "epoll_test", epoll_test_handler, 0);
 	

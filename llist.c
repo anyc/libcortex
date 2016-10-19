@@ -33,7 +33,8 @@ char CRTX_DLL_FCT(unlink)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item) {
 		*head = item->next;
 	} else {
 		item->prev->next = item->next;
-		item->next->prev = item->prev;
+		if (item->next)
+			item->next->prev = item->prev;
 	}
 	
 	item->prev = 0;

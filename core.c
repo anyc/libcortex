@@ -140,23 +140,40 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 	struct crtx_listener_repository *l;
 	struct crtx_listener_base *lbase;
 	
+	lbase = 0;
 	l = listener_factory;
 	while (l->id) {
 		if (!strcmp(l->id, id)) {
 			lbase = l->create(options);
-// 			init_signal(&lbase->finished);
 			
 			if (lbase->thread)
 				reference_signal(&lbase->thread->finished);
 			
-			return lbase;
+			break;
 		}
 		l++;
 	}
 	
-	ERROR("listener \"%s\" not found\n", id);
+	if (!lbase) {
+		ERROR("listener \"%s\" not found\n", id);
+	} else {
+		if (lbase->fd > 0) {
+			if (!crtx_root->event_loop.listener)
+				crtx_get_event_loop();
+			crtx_root->event_loop.add_fd(
+					&crtx_root->event_loop.listener->parent,
+					lbase->fd,
+					lbase->fd_data,
+					lbase->fd_event_handler_name,
+					lbase->fd_event_handler);
+		}
+		
+// 		if (lbase->thread_fct) {
+// 			lbase->thread = get_thread(lbase->thread_fct, lbase->thread_data, 0);
+// 		}
+	}
 	
-	return 0;
+	return lbase;
 }
 
 void free_listener(struct crtx_listener_base *listener) {
@@ -784,8 +801,8 @@ void crtx_init_shutdown() {
 	
 	crtx_root->shutdown = 1;
 	
-	if (crtx_root->epoll_listener) {
-		crtx_epoll_stop(crtx_root->epoll_listener);
+	if (crtx_root->event_loop.listener) {
+		crtx_epoll_stop(crtx_root->event_loop.listener);
 	}
 	
 // 	crtx_finish();
@@ -945,8 +962,8 @@ void *crtx_copy_raw_data(struct crtx_event_data *data) {
 // }
 
 void crtx_loop() {
-	if (crtx_root->epoll_listener)
-		crtx_epoll_main(crtx_root->epoll_listener);
+	if (crtx_root->event_loop.listener)
+		crtx_epoll_main(crtx_root->event_loop.listener);
 	else
 		spawn_thread(0);
 }
@@ -996,4 +1013,33 @@ void crtx_finish_notification_listeners(void *data) {
 	tmp += sizeof(struct crtx_readline_listener);
 	
 	free(data);
+}
+
+struct crtx_event_loop* crtx_get_event_loop() {
+	if (!crtx_root->event_loop.listener) {
+		struct crtx_listener_base *lbase;
+		int ret;
+		
+// 		crtx_root->event_loop = (struct crtx_event_loop*) calloc(1, sizeof(struct crtx_event_loop));
+		
+		crtx_root->event_loop.listener = (struct crtx_epoll_listener*) calloc(1, sizeof(struct crtx_epoll_listener));
+		
+		crtx_root->event_loop.listener->no_thread = crtx_root->event_loop.no_thread;
+		
+		crtx_root->event_loop.add_fd = &crtx_epoll_add_fd;
+		
+		lbase = create_listener("epoll", crtx_root->event_loop.listener);
+		if (!lbase) {
+			ERROR("create_listener(epoll) failed\n");
+			exit(1);
+		}
+		
+		ret = crtx_start_listener(lbase);
+		if (!ret) {
+			ERROR("starting epoll listener failed\n");
+			return 0;
+		}
+	} 
+	
+	return &crtx_root->event_loop;
 }

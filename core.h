@@ -9,7 +9,6 @@
 #include "dict.h"
 #include "linkedlist.h"
 
-
 #define STRINGIFYB(x) #x
 #define STRINGIFY(x) STRINGIFYB(x)
 
@@ -168,11 +167,17 @@ struct crtx_listener_repository {
 
 struct crtx_listener_base {
 	void (*free)(struct crtx_listener_base *data);
-// 	struct crtx_signal finished;
+		
+	int fd;
+	void *fd_data;
+	crtx_handle_task_t fd_event_handler;
+	char *fd_event_handler_name;
 	
 	// TODO: add (*start)() to start listener after tasks have been added?
-	
 	struct crtx_thread *thread;
+	thread_fct thread_fct;
+	void *thread_data;
+	
 	char (*start_listener)(struct crtx_listener_base *listener);
 	
 	struct crtx_graph *graph;
@@ -185,7 +190,23 @@ struct crtx_module {
 	void (*finish)();
 };
 
-struct crtx_epoll_listener;
+
+#include "epoll.h"
+struct crtx_event_loop_payload {
+	int fd;
+	void *data;
+	
+	struct epoll_event event;
+};
+
+struct crtx_event_loop {
+	struct crtx_epoll_listener *listener;
+	
+	void (*add_fd)(struct crtx_listener_base *lbase, int fd, void *data, char * event_handler_name, crtx_handle_task_t event_handler);
+	
+	char no_thread;
+};
+
 struct crtx_root {
 	struct crtx_graph **graphs;
 	unsigned int n_graphs;
@@ -196,7 +217,7 @@ struct crtx_root {
 	
 	char shutdown;
 	
-	struct crtx_epoll_listener *epoll_listener;
+	struct crtx_event_loop event_loop;
 	
 	struct crtx_graph *crtx_ctrl_graph;
 	
@@ -263,5 +284,7 @@ void crtx_init_notification_listeners(void **data);
 void crtx_finish_notification_listeners(void *data);
 
 void crtx_handle_std_signals();
+
+struct crtx_event_loop* crtx_get_event_loop();
 
 #endif
