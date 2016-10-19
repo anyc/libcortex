@@ -1024,7 +1024,7 @@ struct crtx_event_loop* crtx_get_event_loop() {
 		
 		crtx_root->event_loop.listener = (struct crtx_epoll_listener*) calloc(1, sizeof(struct crtx_epoll_listener));
 		
-		crtx_root->event_loop.listener->no_thread = crtx_root->event_loop.no_thread;
+		crtx_root->event_loop.listener->no_thread = 1 - crtx_root->event_loop.start_thread;
 		
 		crtx_root->event_loop.add_fd = &crtx_epoll_add_fd;
 		

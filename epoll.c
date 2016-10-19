@@ -176,12 +176,13 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	if (!epl->no_thread) {
 		epl->parent.thread = get_thread(crtx_epoll_main, epl, 0);
 		epl->parent.thread->do_stop = &stop_thread;
-	} else {
-		if (crtx_root->event_loop.listener)
-			ERROR("multiple crtx_root->event_loop\n");
-		
-		crtx_root->event_loop.listener = epl;
-	}
+	} 
+// 	else {
+// 		if (crtx_root->event_loop.listener)
+// 			ERROR("multiple crtx_root->event_loop\n");
+// 		
+// 		crtx_root->event_loop.listener = epl;
+// 	}
 	
 	return &epl->parent;
 }

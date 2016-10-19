@@ -67,7 +67,8 @@ struct crtx_dict *udev_raw2dict(struct crtx_event *event, struct crtx_udev_raw2d
 			while (*a) {
 				sdi = crtx_alloc_item(di->ds);
 				value = udev_device_get_sysattr_value(dev, *a);
-				crtx_fill_data_item(sdi, 's', *a, value, strlen(value), DIF_DATA_UNALLOCATED);
+				if (value)
+					crtx_fill_data_item(sdi, 's', *a, value, strlen(value), DIF_DATA_UNALLOCATED);
 				
 				a++;
 			}
@@ -83,74 +84,14 @@ struct crtx_dict *udev_raw2dict(struct crtx_event *event, struct crtx_udev_raw2d
 			value = udev_list_entry_get_value(entry);
 			
 			di = crtx_alloc_item(dict);
-			crtx_fill_data_item(di, 's', key, value, strlen(value), DIF_DATA_UNALLOCATED);
+			if (value)
+				crtx_fill_data_item(di, 's', key, value, strlen(value), DIF_DATA_UNALLOCATED);
 		}
 	}
 	
 	crtx_print_dict(dict);
 	
 	return dict;
-}
-
-void *udev_tmain(void *data) {
-	struct crtx_udev_listener *ulist;
-// 	int ret;
-	struct udev_device *dev;
-	
-	ulist = (struct crtx_udev_listener*) data;
-	
-	
-	while (1) {
-// 		/* Set up the call to select(). In this case, select() will
-// 		 *   only operate on a single file descriptor, the one
-// 		 *   associated with our udev_monitor. Note that the timeval
-// 		 *   object is set to 0, which will cause select() to not
-// 		 *   block. */
-// 		fd_set fds;
-// 		struct timeval tv;
-// // 		int ret;
-// 		
-// 		FD_ZERO(&fds);
-// 		FD_SET(ulist->fd, &fds);
-// 		tv.tv_sec = 0;
-// 		tv.tv_usec = 0;
-// 		
-// 		ret = select(ulist->fd+1, &fds, NULL, NULL, &tv);
-// 		
-// 		/* Check if our file descriptor has received data. */
-// 		if (ret > 0 && FD_ISSET(ulist->fd, &fds)) {
-// 			printf("\nselect() says there should be data\n");
-			
-			/* Make the call to receive the device.
-			 *	   select() ensured that this will not block. */
-			dev = udev_monitor_receive_device(ulist->monitor);
-			if (dev) {
-				struct crtx_event *event;
-				
-				// size of struct udev_device is unknown
-				event = create_event(UDEV_MSG_ETYPE, dev, sizeof(struct udev_device*));
-				event->data.raw.flags |= DIF_DATA_UNALLOCATED;
-				
-				reference_event_release(event);
-				
-				add_event(ulist->parent.graph, event);
-				
-				wait_on_event(event);
-				
-				dereference_event_release(event);
-				
-				udev_device_unref(dev);
-			} else {
-				printf("No Device from receive_device(). An error occured.\n");
-			}					
-// 		}
-// // 		usleep(250*1000);
-// 		sleep(1);
-// 		printf(".");
-// 		fflush(stdout);
-	}
-// 	
-	return 0;
 }
 
 static char udev_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -196,8 +137,6 @@ void crtx_free_udev_listener(struct crtx_listener_base *data) {
 
 struct crtx_listener_base *crtx_new_udev_listener(void *options) {
 	struct crtx_udev_listener *ulist;
-// 	struct crtx_event_loop *event_loop;
-// 	int ret;
 	
 	ulist = (struct crtx_udev_listener *) options;
 	
@@ -226,11 +165,6 @@ struct crtx_listener_base *crtx_new_udev_listener(void *options) {
 	
 	ulist->parent.free = &crtx_free_udev_listener;
 	new_eventgraph(&ulist->parent.graph, 0, udev_msg_etype);
-	
-// 	ulist->parent.thread = get_thread(udev_tmain, ulist, 0);
-	ulist->parent.thread_fct = udev_tmain;
-	ulist->parent.thread_data = ulist;	
-// 	ulist->parent.thread->do_stop = &stop_thread;
 	
 	return &ulist->parent;
 }

@@ -177,6 +177,7 @@ struct crtx_listener_base {
 	struct crtx_thread *thread;
 	thread_fct thread_fct;
 	void *thread_data;
+	void (*thread_stop)(struct crtx_thread *thread, void *data);
 	
 	char (*start_listener)(struct crtx_listener_base *listener);
 	
@@ -204,7 +205,7 @@ struct crtx_event_loop {
 	
 	void (*add_fd)(struct crtx_listener_base *lbase, int fd, void *data, char * event_handler_name, crtx_handle_task_t event_handler);
 	
-	char no_thread;
+	char start_thread;
 };
 
 struct crtx_root {

@@ -8,7 +8,7 @@
 #include "threads.h"
 
 #ifndef CRTX_INIT_N_THREADS
-#define CRTX_INIT_N_THREADS 2
+#define CRTX_INIT_N_THREADS 0
 #endif
 
 struct crtx_thread *pool = 0;
