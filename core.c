@@ -157,15 +157,20 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 	if (!lbase) {
 		ERROR("listener \"%s\" not found\n", id);
 	} else {
-		if (lbase->fd > 0) {
+		if (lbase->ev_payload.fd > 0) {
 			if (!crtx_root->event_loop.listener)
 				crtx_get_event_loop();
+			
 			crtx_root->event_loop.add_fd(
 					&crtx_root->event_loop.listener->parent,
-					lbase->fd,
-					lbase->fd_data,
-					lbase->fd_event_handler_name,
-					lbase->fd_event_handler);
+					&lbase->ev_payload);
+			
+// 			crtx_root->event_loop.add_fd(
+// 					&crtx_root->event_loop.listener->parent,
+// 					lbase->fd,
+// 					lbase->fd_data,
+// 					lbase->fd_event_handler_name,
+// 					lbase->fd_event_handler);
 		}
 		
 // 		if (lbase->thread_fct) {
@@ -178,6 +183,12 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 
 void free_listener(struct crtx_listener_base *listener) {
 // 	reset_signal(&listener->finished);
+	
+	if (listener->ev_payload.fd > 0) {
+		crtx_root->event_loop.del_fd(
+				&crtx_root->event_loop.listener->parent,
+				&listener->ev_payload);
+	}
 	
 	if (listener->free)
 		listener->free(listener);
@@ -300,7 +311,7 @@ void crtx_process_event(struct crtx_graph *graph, struct crtx_dll *queue_entry) 
 	free(queue_entry);
 }
 
-void *graph_consumer_main(void *arg) {
+void *crtx_process_graph_tmain(void *arg) {
 	// 	struct crtx_event_ll *qe;
 	struct crtx_dll *qe;
 	struct crtx_graph *graph = (struct crtx_graph*) arg;
@@ -427,7 +438,7 @@ void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	
 	pthread_mutex_lock(&graph->mutex);
 	
-	DBG("add event %s (%p) to graph %p\n", event->type, event, graph);
+	DBG("add event %s (%p) to graph \"%s\" (%p)\n", event->type, event, graph->name?graph->name:"", graph);
 	
 	if (!graph->tasks) {
 		INFO("dropping event as graph is empty\n");
@@ -453,23 +464,39 @@ void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	
 	UNLOCK(graph->queue_mutex);
 	
-// 	new_n_consumers = ATOMIC_FETCH_ADD(graph->n_consumers, 1);
-// 	if (!graph->n_max_consumers || new_n_consumers < graph->n_max_consumers) {
+// // 	new_n_consumers = ATOMIC_FETCH_ADD(graph->n_consumers, 1);
+// // 	if (!graph->n_max_consumers || new_n_consumers < graph->n_max_consumers) {
+// 	if (! crtx_root->no_threads) {
+// 		struct crtx_thread *t;
+// 		
+// 		t = get_thread(&graph_consumer_main, graph, 0);
+// 		if (t) {
+// 			t->on_finish = &graph_on_thread_finish;
+// 			t->on_finish_data = graph;
+// 			t->do_stop = &graph_consumer_stop;
+// 			
+// 			start_thread(t);
+// 		} else {
+// // 			ATOMIC_FETCH_SUB(graph->n_consumers, 1);
+// 		}
+// // 	} else {
+// // 		ATOMIC_FETCH_SUB(graph->n_consumers, 1);
+// // 	}
+	
+	if (! crtx_root->no_threads) {
 		struct crtx_thread *t;
 		
-		t = get_thread(&graph_consumer_main, graph, 0);
+		t = get_thread(&crtx_process_graph_tmain, graph, 0);
 		if (t) {
 			t->on_finish = &graph_on_thread_finish;
 			t->on_finish_data = graph;
 			t->do_stop = &graph_consumer_stop;
 			
 			start_thread(t);
-		} else {
-// 			ATOMIC_FETCH_SUB(graph->n_consumers, 1);
 		}
-// 	} else {
-// 		ATOMIC_FETCH_SUB(graph->n_consumers, 1);
-// 	}
+	} else {
+		crtx_epoll_queue_graph(crtx_root->event_loop.listener, graph);
+	}
 	
 	pthread_mutex_unlock(&graph->mutex);
 }
@@ -566,7 +593,7 @@ void free_event_data(struct crtx_event_data *ed) {
 // 		free(ed->raw);
 	crtx_free_dict_item(&ed->raw);
 	if (ed->dict)
-		free_dict(ed->dict);
+		crtx_free_dict(ed->dict);
 }
 
 void crtx_invalidate_event(struct crtx_event *event) {
@@ -1024,9 +1051,11 @@ struct crtx_event_loop* crtx_get_event_loop() {
 		
 		crtx_root->event_loop.listener = (struct crtx_epoll_listener*) calloc(1, sizeof(struct crtx_epoll_listener));
 		
-		crtx_root->event_loop.listener->no_thread = 1 - crtx_root->event_loop.start_thread;
+// 		crtx_root->event_loop.listener->no_thread = 1 - crtx_root->event_loop.start_thread;
+		crtx_root->event_loop.listener->no_thread = crtx_root->no_threads;
 		
 		crtx_root->event_loop.add_fd = &crtx_epoll_add_fd;
+		crtx_root->event_loop.del_fd = &crtx_epoll_del_fd;
 		
 		lbase = create_listener("epoll", crtx_root->event_loop.listener);
 		if (!lbase) {

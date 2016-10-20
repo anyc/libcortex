@@ -22,30 +22,60 @@ int crtx_epoll_add_fd_intern(struct crtx_epoll_listener *epl, int fd, struct epo
 		return 0;
 	}
 	
-	return 1;
+	return 0;
 }
 
-void crtx_epoll_add_fd(struct crtx_listener_base *lbase, int fd, void *data, char *event_handler_name, crtx_handle_task_t event_handler) {
-	struct crtx_event_loop_payload *payload;
+int crtx_epoll_del_fd_intern(struct crtx_epoll_listener *epl, int fd) {
+	int ret;
+	
+	ret = epoll_ctl(epl->epoll_fd, EPOLL_CTL_DEL, fd, 0);
+	if (ret < 0) {
+		ERROR("epoll_ctl failed for fd %d: %s\n", fd, strerror(errno));
+		
+		return 0;
+	}
+	
+	return 0;
+}
+
+// struct crtx_event_loop_payload * crtx_epoll_add_fd(struct crtx_listener_base *lbase, int fd, void *data, char *event_handler_name, crtx_handle_task_t event_handler) {
+void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
+// 	struct crtx_event_loop_payload *el_payload;
 	struct epoll_event *event;
 	struct crtx_epoll_listener *epl;
 	
 	
-	payload = (struct crtx_event_loop_payload*) calloc(1, sizeof(struct crtx_event_loop_payload));
-	payload->fd = fd;
-	payload->data = data;
+// 	el_payload = (struct crtx_event_loop_payload*) calloc(1, sizeof(struct crtx_event_loop_payload));
+// 	el_payload->fd = fd;
+// 	el_payload->data = data;
 	
-	event = (struct epoll_event*) calloc(1, sizeof(struct epoll_event));
+// 	event = (struct epoll_event*) calloc(1, sizeof(struct epoll_event));
+	event = &el_payload->event;
 	event->events = EPOLLIN;
-	event->data.ptr = payload;
+	event->data.ptr = el_payload;
 	
 	epl = (struct crtx_epoll_listener *) lbase;
 // 	printf("lis %d\n", epl->epoll_fd);
 	
-	crtx_create_task(lbase->graph, 0, event_handler_name, event_handler, 0);
+	crtx_create_task(lbase->graph, 0, el_payload->event_handler_name, el_payload->event_handler, 0);
 	
-	crtx_epoll_add_fd_intern(epl, payload->fd, event);
+	crtx_epoll_add_fd_intern(epl, el_payload->fd, event);
+	
+// 	return el_payload;
 }
+
+void crtx_epoll_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
+	struct crtx_epoll_listener *epl;
+	
+	epl = (struct crtx_epoll_listener *) lbase;
+	crtx_epoll_del_fd_intern(epl, el_payload->fd);
+	
+	free(el_payload);
+}
+
+struct epoll_control_pipe {
+	struct crtx_graph *graph;
+};
 
 void *crtx_epoll_main(void *data) {
 	struct crtx_epoll_listener *epl;
@@ -55,9 +85,10 @@ void *crtx_epoll_main(void *data) {
 	int ret;
 	struct epoll_event ctrl_event;
 	struct epoll_event *rec_events;
-	
 	struct crtx_event_loop_payload *ev_payload;
 	struct crtx_event *event;
+	struct epoll_control_pipe ecp;
+	
 	
 	epl = (struct crtx_epoll_listener*) data;
 	
@@ -107,7 +138,10 @@ void *crtx_epoll_main(void *data) {
 			if (rec_events[i].data.ptr == 0) {
 				DBG("epoll received wake-up event\n");
 				
-				read(pipe_fds[0], &ret, 1);
+				read(pipe_fds[0], &ecp, sizeof(struct epoll_control_pipe));
+				
+				if (ecp.graph)
+					crtx_process_graph_tmain(ecp.graph);
 				
 				continue;
 			} else {
@@ -124,13 +158,13 @@ void *crtx_epoll_main(void *data) {
 			}
 		}
 		
-		if (epl->process_events) {
-			struct crtx_dll *git, *eit;
-			
-			crtx_claim_next_event(&git, &eit);
-			
-			crtx_process_event(git->graph, eit);
-		}
+// 		if (epl->process_events) {
+// 			struct crtx_dll *git, *eit;
+// 			
+// 			crtx_claim_next_event(&git, &eit);
+// 			
+// 			crtx_process_event(git->graph, eit);
+// 		}
 	}
 	
 	DBG("epoll stops\n");
@@ -141,9 +175,21 @@ void *crtx_epoll_main(void *data) {
 	return 0;
 }
 
+void crtx_epoll_queue_graph(struct crtx_epoll_listener *epl, struct crtx_graph *graph) {
+	struct epoll_control_pipe ecp;
+	
+	ecp.graph = graph;
+	write(epl->control_fd, &ecp, sizeof(struct epoll_control_pipe));
+	
+}
+
 void crtx_epoll_stop(struct crtx_epoll_listener *epl) {
+	struct epoll_control_pipe ecp;
+	
 	epl->stop = 1;
-	write(epl->control_fd, &epl, 1);
+	
+	ecp.graph = 0;
+	write(epl->control_fd, &ecp, sizeof(struct epoll_control_pipe));
 }
 
 static void stop_thread(struct crtx_thread *t, void *data) {
@@ -306,11 +352,15 @@ int epoll_main(int argc, char **argv) {
 		
 		free_listener(blist);
 	} else {
+		struct epoll_control_pipe ecp;
+		
 		sleep(1);
 		write(testpipe[1], "success", 7);
 		
 		sleep(1);
-		write(epl.control_fd, &ret, 1);
+		
+		ecp.graph = 0;
+		write(epl.control_fd, &ecp, sizeof(struct epoll_control_pipe));
 	}
 	
 	free_listener(lbase);

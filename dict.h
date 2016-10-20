@@ -72,7 +72,7 @@ struct crtx_dict_item * crtx_get_item(struct crtx_dict *ds, char *key);
 struct crtx_dict * crtx_init_dict(char *signature, uint32_t sign_length, size_t payload_size);
 struct crtx_dict * crtx_create_dict(char *signature, ...);
 char  crtx_fill_data_item(struct crtx_dict_item *di, char type, ...);
-void free_dict(struct crtx_dict *ds);
+void crtx_free_dict(struct crtx_dict *ds);
 char crtx_get_value(struct crtx_dict *ds, char *key, char type, void *buffer, size_t buffer_size);
 char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size);
 void crtx_print_dict(struct crtx_dict *ds);

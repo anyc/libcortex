@@ -416,7 +416,7 @@ char crtx_cache_update_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item 
 		return 0;
 	}
 	printf("update\n");
-	free_dict(c_entry->ds);
+	crtx_free_dict(c_entry->ds);
 	
 	c_entry->ds = crtx_dict_copy(event->data.dict);
 	
@@ -513,7 +513,7 @@ struct crtx_task *create_response_cache_task(char *id, create_key_cb_t create_ke
 }
 
 void crtx_flush_entries(struct crtx_cache *dc) {
-	free_dict(dc->entries);
+	crtx_free_dict(dc->entries);
 }
 
 void free_response_cache(struct crtx_cache *dc) {

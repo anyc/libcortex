@@ -61,14 +61,16 @@ struct crtx_dict *udev_raw2dict(struct crtx_event *event, struct crtx_udev_raw2d
 			
 			di->key = malloc( (i->subsystem?strlen(i->subsystem):0) + 1 + (i->device_type?strlen(i->device_type):0) + 1);
 			sprintf(di->key, "%s-%s", i->subsystem?i->subsystem:"", i->device_type?i->device_type:"");
+			di->flags |= DIF_KEY_ALLOCATED;
 			di->ds = crtx_init_dict(0, 0, 0);
 			
 			a = i->attributes;
 			while (*a) {
-				sdi = crtx_alloc_item(di->ds);
 				value = udev_device_get_sysattr_value(dev, *a);
-				if (value)
+				if (value) {
+					sdi = crtx_alloc_item(di->ds);
 					crtx_fill_data_item(sdi, 's', *a, value, strlen(value), DIF_DATA_UNALLOCATED);
+				}
 				
 				a++;
 			}
@@ -89,10 +91,17 @@ struct crtx_dict *udev_raw2dict(struct crtx_event *event, struct crtx_udev_raw2d
 		}
 	}
 	
-	crtx_print_dict(dict);
-	
 	return dict;
 }
+
+
+void udev_event_before_release_cb(struct crtx_event *event) {
+	struct udev_device *dev;
+	
+	dev = (struct udev_device *) event->data.raw.pointer;
+	udev_device_unref(dev);
+}
+
 
 static char udev_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event_loop_payload *payload;
@@ -112,15 +121,16 @@ static char udev_fd_event_handler(struct crtx_event *event, void *userdata, void
 		nevent = create_event(UDEV_MSG_ETYPE, dev, sizeof(struct udev_device*));
 		nevent->data.raw.flags |= DIF_DATA_UNALLOCATED;
 		
-		reference_event_release(nevent);
+		nevent->cb_before_release = &udev_event_before_release_cb;
+// 		reference_event_release(nevent);
 		
 		add_event(ulist->parent.graph, nevent);
 		
-		wait_on_event(nevent);
+// 		wait_on_event(nevent);
 		
-		dereference_event_release(nevent);
+// 		dereference_event_release(nevent);
 		
-		udev_device_unref(dev);
+// 		udev_device_unref(dev);
 	} else {
 		printf("No Device from receive_device(). An error occured.\n");
 	}
@@ -159,9 +169,10 @@ struct crtx_listener_base *crtx_new_udev_listener(void *options) {
 	
 	udev_monitor_enable_receiving(ulist->monitor);
 	
-	ulist->parent.fd = udev_monitor_get_fd(ulist->monitor);
-	ulist->parent.fd_data = ulist;
-	ulist->parent.fd_event_handler = &udev_fd_event_handler;
+	ulist->parent.ev_payload.fd = udev_monitor_get_fd(ulist->monitor);
+	ulist->parent.ev_payload.data = ulist;
+	ulist->parent.ev_payload.event_handler = &udev_fd_event_handler;
+	ulist->parent.ev_payload.event_handler_name = "udev fd handler";
 	
 	ulist->parent.free = &crtx_free_udev_listener;
 	new_eventgraph(&ulist->parent.graph, 0, udev_msg_etype);
@@ -180,8 +191,11 @@ void crtx_udev_finish() {
 #ifdef CRTX_TEST
 
 char * usb_attrs[] = {
-	"product",
+	"idVendor",
 	"idProduct",
+	"manufacturer",
+	"product",
+	"serial",
 	0,
 };
 
@@ -198,42 +212,16 @@ char *test_filters[] = {
 };
 
 static char udev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct udev_device *dev, *usb_dev;
+// 	struct udev_device *dev, *usb_dev;
+	struct crtx_dict *dict;
 	
-	dev = (struct udev_device *) event->data.raw.pointer;
+// 	dev = (struct udev_device *) event->data.raw.pointer;
 	
-	printf("Got Device\n");
-	printf("   Node: %s\n", udev_device_get_devnode(dev));
-	printf("   Subsystem: %s\n", udev_device_get_subsystem(dev));
-	printf("   Devtype: %s\n", udev_device_get_devtype(dev));
+	dict = udev_raw2dict(event, r2ds);
 	
-	printf("   Action: %s\n",udev_device_get_action(dev));
-// 	udev_device_unref(dev);
+	crtx_print_dict(dict);
 	
-	udev_raw2dict(event, r2ds);
-	return 0;
-	
-	if (strcmp(udev_device_get_subsystem(dev), "usb") || strcmp(udev_device_get_devtype(dev), "usb_device")) {
-		usb_dev = udev_device_get_parent_with_subsystem_devtype(
-			dev,
-			"usb",
-			"usb_device");
-		if (!usb_dev) {
-			printf("Unable to find parent usb device.");
-			exit(1);
-		}
-		
-		printf("  Path: %s\n", udev_device_get_syspath(usb_dev));
-		printf(" %s\n", udev_device_get_sysattr_value(usb_dev, "product"));
-		printf("  VID/PID: %s %s\n",
-			   udev_device_get_sysattr_value(usb_dev,"idVendor"),
-			   udev_device_get_sysattr_value(usb_dev, "idProduct"));
-		printf("  %s\n  %s\n",
-			   udev_device_get_sysattr_value(usb_dev,"manufacturer"),
-			   udev_device_get_sysattr_value(usb_dev,"product"));
-		printf("  serial: %s\n",
-			   udev_device_get_sysattr_value(usb_dev, "serial"));
-	}
+	crtx_free_dict(dict);
 	
 	return 0;
 }
@@ -242,6 +230,8 @@ int udev_main(int argc, char **argv) {
 	struct crtx_udev_listener ulist;
 	struct crtx_listener_base *lbase;
 	char ret;
+	
+	crtx_root->no_threads = 1;
 	
 	memset(&ulist, 0, sizeof(struct crtx_udev_listener));
 	

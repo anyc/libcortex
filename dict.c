@@ -205,13 +205,13 @@ void crtx_free_dict_item(struct crtx_dict_item *di) {
 			di->string = 0;
 			break;
 		case 'D':
-			free_dict(di->ds);
+			crtx_free_dict(di->ds);
 			di->ds = 0;
 			break;
 	}
 }
 
-void free_dict(struct crtx_dict *ds) {
+void crtx_free_dict(struct crtx_dict *ds) {
 	struct crtx_dict_item *di;
 // 	char *s;
 	size_t i;
@@ -232,6 +232,7 @@ void free_dict(struct crtx_dict *ds) {
 // 		s++;
 	}
 	
+	free(ds->items);
 	free(ds);
 }
 

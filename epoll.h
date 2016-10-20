@@ -2,7 +2,7 @@
 #ifndef _CRTX_EPOLL_H
 #define _CRTX_EPOLL_H
 
-#include <sys/epoll.h>
+// #include <sys/epoll.h>
 
 // struct crtx_epoll_event_payload {
 // 	int fd;
@@ -24,7 +24,7 @@ struct crtx_epoll_listener {
 // 	size_t n_fds;
 	
 	char no_thread;
-	char process_events;
+// 	char process_events;
 	char stop;
 	
 // 	int socket_protocol;
@@ -51,6 +51,9 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options);
 void crtx_epoll_init();
 void crtx_epoll_finish();
 
-void crtx_epoll_add_fd(struct crtx_listener_base *lbase, int fd, void *data, char *event_handler_name, crtx_handle_task_t event_handler);
+// struct crtx_event_loop_payload * crtx_epoll_add_fd(struct crtx_listener_base *lbase, int fd, void *data, char *event_handler_name, crtx_handle_task_t event_handler);
+void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
+void crtx_epoll_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
+void crtx_epoll_queue_graph(struct crtx_epoll_listener *epl, struct crtx_graph *graph);
 
 #endif

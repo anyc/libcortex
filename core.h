@@ -165,13 +165,26 @@ struct crtx_listener_repository {
 	struct crtx_listener_base *(*create)(void *options);
 };
 
+#include <sys/epoll.h>
+struct crtx_event_loop_payload {
+	int fd;
+	void *data;
+	
+	crtx_handle_task_t event_handler;
+	char *event_handler_name;
+	
+	struct epoll_event event;
+};
+
+// #include "epoll.h"
 struct crtx_listener_base {
 	void (*free)(struct crtx_listener_base *data);
 		
-	int fd;
-	void *fd_data;
-	crtx_handle_task_t fd_event_handler;
-	char *fd_event_handler_name;
+// 	int fd;
+// 	void *fd_data;
+// 	crtx_handle_task_t fd_event_handler;
+// 	char *fd_event_handler_name;
+	struct crtx_event_loop_payload ev_payload;
 	
 	// TODO: add (*start)() to start listener after tasks have been added?
 	struct crtx_thread *thread;
@@ -192,20 +205,12 @@ struct crtx_module {
 };
 
 
-#include "epoll.h"
-struct crtx_event_loop_payload {
-	int fd;
-	void *data;
-	
-	struct epoll_event event;
-};
-
 struct crtx_event_loop {
 	struct crtx_epoll_listener *listener;
 	
-	void (*add_fd)(struct crtx_listener_base *lbase, int fd, void *data, char * event_handler_name, crtx_handle_task_t event_handler);
-	
-	char start_thread;
+	void (*add_fd)(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
+	void (*del_fd)(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
+// 	char start_thread;
 };
 
 struct crtx_root {
@@ -219,6 +224,7 @@ struct crtx_root {
 	char shutdown;
 	
 	struct crtx_event_loop event_loop;
+	char no_threads;
 	
 	struct crtx_graph *crtx_ctrl_graph;
 	
@@ -287,5 +293,6 @@ void crtx_finish_notification_listeners(void *data);
 void crtx_handle_std_signals();
 
 struct crtx_event_loop* crtx_get_event_loop();
+void *crtx_process_graph_tmain(void *arg);
 
 #endif
