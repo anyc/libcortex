@@ -32,6 +32,7 @@
 #include "epoll.h"
 #include "evdev.h"
 #include "udev.h"
+#include "xcb_randr.h"
 
 
 struct crtx_root crtx_global_root;
@@ -56,6 +57,7 @@ struct crtx_module static_modules[] = {
 	{"epoll", &crtx_epoll_init, &crtx_epoll_finish},
 	{"evdev", &crtx_evdev_init, &crtx_evdev_finish},
 	{"udev", &crtx_udev_init, &crtx_udev_finish},
+	{"xcb_randr", &crtx_xcb_randr_init, &crtx_xcb_randr_finish},
 	{0, 0}
 };
 
@@ -77,6 +79,7 @@ struct crtx_listener_repository listener_factory[] = {
 	{"epoll", &crtx_new_epoll_listener},
 	{"evdev", &crtx_new_evdev_listener},
 	{"udev", &crtx_new_udev_listener},
+	{"xcb_randr", &crtx_new_xcb_randr_listener},
 	{0, 0}
 };
 
@@ -157,59 +160,36 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 	if (!lbase) {
 		ERROR("listener \"%s\" not found\n", id);
 	} else {
-		if (lbase->ev_payload.fd > 0) {
+		if (lbase->el_payload.fd > 0) {
 			if (!crtx_root->event_loop.listener)
 				crtx_get_event_loop();
 			
 			crtx_root->event_loop.add_fd(
 					&crtx_root->event_loop.listener->parent,
-					&lbase->ev_payload);
-			
-// 			crtx_root->event_loop.add_fd(
-// 					&crtx_root->event_loop.listener->parent,
-// 					lbase->fd,
-// 					lbase->fd_data,
-// 					lbase->fd_event_handler_name,
-// 					lbase->fd_event_handler);
+					&lbase->el_payload);
 		}
-		
-// 		if (lbase->thread_fct) {
-// 			lbase->thread = get_thread(lbase->thread_fct, lbase->thread_data, 0);
-// 		}
 	}
 	
 	return lbase;
 }
 
 void free_listener(struct crtx_listener_base *listener) {
-// 	reset_signal(&listener->finished);
-	
-	if (listener->ev_payload.fd > 0) {
+	if (listener->el_payload.fd > 0) {
 		crtx_root->event_loop.del_fd(
 				&crtx_root->event_loop.listener->parent,
-				&listener->ev_payload);
+				&listener->el_payload);
 	}
 	
 	if (listener->free)
 		listener->free(listener);
 	
-// 	if (listener->thread)
-// 		
-	
 	if (listener->graph)
 		free_eventgraph(listener->graph);
-		
-// 		pthread_join(slistener->thread, 0);
-		
-// 		free(listener);
-// 	}
 	
 	if (listener->thread) {
 		wait_on_signal(&listener->thread->finished);
 		dereference_signal(&listener->thread->finished);
 	}
-	
-// 	wait_on_signal(&listener->finished);
 }
 
 void traverse_graph_r(struct crtx_graph *graph, struct crtx_task *ti, struct crtx_event *event) {
@@ -886,6 +866,8 @@ void crtx_init() {
 
 void crtx_finish() {
 	unsigned int i;
+	
+	free_listener((struct crtx_listener_base *) crtx_root->event_loop.listener);
 	
 	crtx_init_shutdown();
 	

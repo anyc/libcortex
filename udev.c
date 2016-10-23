@@ -142,6 +142,8 @@ void crtx_free_udev_listener(struct crtx_listener_base *data) {
 	struct crtx_udev_listener *ulist;
 	
 	ulist = (struct crtx_udev_listener*) data;
+	
+	udev_monitor_unref(ulist->monitor);
 	udev_unref(ulist->udev);
 }
 
@@ -169,10 +171,10 @@ struct crtx_listener_base *crtx_new_udev_listener(void *options) {
 	
 	udev_monitor_enable_receiving(ulist->monitor);
 	
-	ulist->parent.ev_payload.fd = udev_monitor_get_fd(ulist->monitor);
-	ulist->parent.ev_payload.data = ulist;
-	ulist->parent.ev_payload.event_handler = &udev_fd_event_handler;
-	ulist->parent.ev_payload.event_handler_name = "udev fd handler";
+	ulist->parent.el_payload.fd = udev_monitor_get_fd(ulist->monitor);
+	ulist->parent.el_payload.data = ulist;
+	ulist->parent.el_payload.event_handler = &udev_fd_event_handler;
+	ulist->parent.el_payload.event_handler_name = "udev fd handler";
 	
 	ulist->parent.free = &crtx_free_udev_listener;
 	new_eventgraph(&ulist->parent.graph, 0, udev_msg_etype);
@@ -230,6 +232,8 @@ int udev_main(int argc, char **argv) {
 	struct crtx_udev_listener ulist;
 	struct crtx_listener_base *lbase;
 	char ret;
+	
+// 	crtx_handle_std_signals();
 	
 	crtx_root->no_threads = 1;
 	

@@ -173,18 +173,15 @@ struct crtx_event_loop_payload {
 	crtx_handle_task_t event_handler;
 	char *event_handler_name;
 	
-	struct epoll_event event;
+// 	struct epoll_event event;
+	void *el_data;
 };
 
 // #include "epoll.h"
 struct crtx_listener_base {
 	void (*free)(struct crtx_listener_base *data);
-		
-// 	int fd;
-// 	void *fd_data;
-// 	crtx_handle_task_t fd_event_handler;
-// 	char *fd_event_handler_name;
-	struct crtx_event_loop_payload ev_payload;
+	
+	struct crtx_event_loop_payload el_payload;
 	
 	// TODO: add (*start)() to start listener after tasks have been added?
 	struct crtx_thread *thread;

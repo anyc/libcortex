@@ -17,7 +17,7 @@ int crtx_epoll_add_fd_intern(struct crtx_epoll_listener *epl, int fd, struct epo
 	
 	ret = epoll_ctl(epl->epoll_fd, EPOLL_CTL_ADD, fd, event);
 	if (ret < 0) {
-		ERROR("epoll_ctl failed for fd %d: %s\n", fd, strerror(errno));
+		ERROR("epoll_ctl add failed for fd %d: %s\n", fd, strerror(errno));
 		
 		return 0;
 	}
@@ -30,7 +30,7 @@ int crtx_epoll_del_fd_intern(struct crtx_epoll_listener *epl, int fd) {
 	
 	ret = epoll_ctl(epl->epoll_fd, EPOLL_CTL_DEL, fd, 0);
 	if (ret < 0) {
-		ERROR("epoll_ctl failed for fd %d: %s\n", fd, strerror(errno));
+		ERROR("epoll_ctl del failed for fd %d: %s\n", fd, strerror(errno));
 		
 		return 0;
 	}
@@ -38,30 +38,21 @@ int crtx_epoll_del_fd_intern(struct crtx_epoll_listener *epl, int fd) {
 	return 0;
 }
 
-// struct crtx_event_loop_payload * crtx_epoll_add_fd(struct crtx_listener_base *lbase, int fd, void *data, char *event_handler_name, crtx_handle_task_t event_handler) {
 void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
-// 	struct crtx_event_loop_payload *el_payload;
 	struct epoll_event *event;
 	struct crtx_epoll_listener *epl;
 	
-	
-// 	el_payload = (struct crtx_event_loop_payload*) calloc(1, sizeof(struct crtx_event_loop_payload));
-// 	el_payload->fd = fd;
-// 	el_payload->data = data;
-	
-// 	event = (struct epoll_event*) calloc(1, sizeof(struct epoll_event));
-	event = &el_payload->event;
+	event = (struct epoll_event*) malloc(sizeof(struct epoll_event));
+// 	event = &el_payload->event;
+	el_payload->el_data = event;
 	event->events = EPOLLIN;
 	event->data.ptr = el_payload;
 	
 	epl = (struct crtx_epoll_listener *) lbase;
-// 	printf("lis %d\n", epl->epoll_fd);
 	
 	crtx_create_task(lbase->graph, 0, el_payload->event_handler_name, el_payload->event_handler, 0);
 	
 	crtx_epoll_add_fd_intern(epl, el_payload->fd, event);
-	
-// 	return el_payload;
 }
 
 void crtx_epoll_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
@@ -70,7 +61,8 @@ void crtx_epoll_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 	epl = (struct crtx_epoll_listener *) lbase;
 	crtx_epoll_del_fd_intern(epl, el_payload->fd);
 	
-	free(el_payload);
+	free(el_payload->el_data);
+// 	free(el_payload);
 }
 
 struct epoll_control_pipe {
@@ -85,7 +77,7 @@ void *crtx_epoll_main(void *data) {
 	int ret;
 	struct epoll_event ctrl_event;
 	struct epoll_event *rec_events;
-	struct crtx_event_loop_payload *ev_payload;
+	struct crtx_event_loop_payload *el_payload;
 	struct crtx_event *event;
 	struct epoll_control_pipe ecp;
 	
@@ -123,6 +115,9 @@ void *crtx_epoll_main(void *data) {
 	
 	while (!epl->stop) {
 		n_rdy_events = epoll_wait(epl->epoll_fd, rec_events, epl->max_n_events, epl->timeout);
+		if (n_rdy_events < 0 && errno == EINTR)
+			continue;
+		
 		if (n_rdy_events < 0) {
 			ERROR("epoll_wait failed: %s\n", strerror(errno));
 			break;
@@ -143,14 +138,14 @@ void *crtx_epoll_main(void *data) {
 				if (ecp.graph)
 					crtx_process_graph_tmain(ecp.graph);
 				
-				continue;
+// 				continue;
 			} else {
-				ev_payload = (struct crtx_event_loop_payload* ) rec_events[i].data.ptr;
+				el_payload = (struct crtx_event_loop_payload* ) rec_events[i].data.ptr;
 				
 				event = create_event(0, 0, 0);
 				
-				memcpy(&ev_payload->event, &rec_events[i], sizeof(struct epoll_event));
-				event->data.raw.pointer = ev_payload;
+				memcpy(el_payload->el_data, &rec_events[i], sizeof(struct epoll_event));
+				event->data.raw.pointer = el_payload;
 				event->data.raw.type = 'p';
 				event->data.raw.flags = DIF_DATA_UNALLOCATED;
 				
@@ -169,8 +164,7 @@ void *crtx_epoll_main(void *data) {
 	
 	DBG("epoll stops\n");
 	
-	close(epl->control_fd);
-	close(epl->epoll_fd);
+	free(rec_events);
 	
 	return 0;
 }
@@ -201,7 +195,14 @@ static void stop_thread(struct crtx_thread *t, void *data) {
 }
 
 static void free_epoll_listener(struct crtx_listener_base *lbase) {
+	struct crtx_epoll_listener *epl;
+	
+	epl = (struct crtx_epoll_listener*) lbase;
+	
 	stop_thread(0, lbase);
+	
+	close(epl->control_fd);
+	close(epl->epoll_fd);
 }
 
 struct crtx_listener_base *crtx_new_epoll_listener(void *options) {

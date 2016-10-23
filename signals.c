@@ -155,6 +155,8 @@ void crtx_handle_std_signals() {
 	t->userdata = 0;
 	t->event_type_match = get_signal(SIGINT)->etype;
 	add_task(sl_base->graph, t);
+	
+	crtx_start_listener(sl_base);
 }
 
 void crtx_signals_init() {
