@@ -32,7 +32,7 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 			
 			di->size = va_arg(va, size_t);
 			if (di->size > 0 && di->size != sizeof(uint32_t)) {
-				ERROR("size mismatch %zu %zu\n", di->size, sizeof(uint32_t));
+				ERROR("crtx size mismatch for key %s type %c: %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint32_t));
 				return 0;
 			}
 			break;
@@ -42,7 +42,7 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 			
 			di->size = va_arg(va, size_t);
 			if (di->size > 0 && di->size != sizeof(uint64_t)) {
-				ERROR("size mismatch %zu %zu\n", di->size, sizeof(uint64_t));
+				ERROR("crtx size mismatch for key %s type %c: %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint64_t));
 				return 0;
 			}
 			break;
@@ -51,7 +51,7 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 			
 			di->size = va_arg(va, size_t);
 			if (di->size > 0 && di->size != sizeof(double)) {
-				ERROR("size mismatch %zu %zu\n", di->size, sizeof(double));
+				ERROR("crtx size mismatch for key %s type %c: %zu expected: %zu\n", di->key, di->type, di->size, sizeof(double));
 				return 0;
 			}
 			break;
@@ -232,7 +232,7 @@ void crtx_free_dict(struct crtx_dict *ds) {
 // 		s++;
 	}
 	
-	free(ds->items);
+// 	free(ds->items);
 	free(ds);
 }
 

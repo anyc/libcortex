@@ -463,7 +463,7 @@ void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 // // 		ATOMIC_FETCH_SUB(graph->n_consumers, 1);
 // // 	}
 	
-	if (! crtx_root->no_threads) {
+	if (!crtx_root->no_threads || !crtx_root->event_loop.listener) {
 		struct crtx_thread *t;
 		
 		t = get_thread(&crtx_process_graph_tmain, graph, 0);
