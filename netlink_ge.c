@@ -6,7 +6,7 @@
 
 
 #include "core.h"
-#include "netlink.h"
+#include "netlink_ge.h"
 
 // parse nl_msg and create a crtx_dict
 int crtx_genl_msg2dict(struct nl_msg *msg, void *arg) {
@@ -165,10 +165,10 @@ struct crtx_listener_base *crtx_new_genl_listener(void *options) {
 	return &genlist->parent;
 }
 
-void crtx_netlink_init() {
+void crtx_netlink_ge_init() {
 }
 
-void crtx_netlink_finish() {
+void crtx_netlink_ge_finish() {
 }
 
 
@@ -203,6 +203,7 @@ void acpi_parse_cb(struct nlattr * attr, struct crtx_dict *dict) {
 	crtx_fill_data_item(di, 'u', "data", ev->data, sizeof(ev->data), 0);
 }
 
+// call acpi_parse_cb for the second attribute
 crtx_genl_parse_cb acpi_cbs[] = {
 	0,
 	&acpi_parse_cb,
@@ -233,6 +234,7 @@ int netlink_main(int argc, char **argv) {
 	genl.groups = genl_groups;
 	
 	g = &genl_groups[0];
+	// two attributes are defined but only the second is used
 	g->n_attrs = 2;
 	g->attrs = (struct nlattr**) calloc(1, sizeof(struct nlattr*)*g->n_attrs);
 	g->attrs_template = crtx_create_dict("p", 
