@@ -347,7 +347,7 @@ void *nfq_tmain(void *data) {
 		return 0;
 	}
 	
-	printf("binding nfnetlink_queue as nf_queue handler for AF_INET\n");
+	printf("binding nfnetlink_raw_queue as nf_queue handler for AF_INET\n");
 	if (nfq_bind_pf(h, AF_INET) < 0) {
 		fprintf(stderr, "error during nfq_bind_pf()\n");
 		return 0;

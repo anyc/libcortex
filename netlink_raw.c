@@ -11,15 +11,15 @@
 // for sleep()
 #include <unistd.h>
 
-#include <netlink/genl/genl.h>
-#include <netlink/genl/family.h>
-#include <netlink/genl/ctrl.h>
+#include <netlink_raw/genl/genl.h>
+#include <netlink_raw/genl/family.h>
+#include <netlink_raw/genl/ctrl.h>
 
 #include "core.h"
-#include "netlink.h"
+#include "netlink_raw.h"
 
 
-static struct crtx_dict *crtx_netlink_raw2dict_addr(struct crtx_netlink_listener *nl_listener, struct nlmsghdr *nlh) {
+static struct crtx_dict *crtx_netlink_raw_raw2dict_addr(struct crtx_netlink_raw_listener *nl_listener, struct nlmsghdr *nlh) {
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di, *cdi;
 	const char *s;
@@ -241,7 +241,7 @@ static struct crtx_dict *crtx_netlink_raw2dict_addr(struct crtx_netlink_listener
 				break;
 			
 			default:
-				VDBG("netlink: unhandled rta_type %d\n", rth->rta_type);
+				VDBG("netlink_raw: unhandled rta_type %d\n", rth->rta_type);
 		}
 		rth = RTA_NEXT(rth, rtl);
 	}
@@ -259,7 +259,7 @@ static struct crtx_dict *crtx_netlink_raw2dict_addr(struct crtx_netlink_listener
 	return dict;
 }
 
-struct crtx_dict *crtx_netlink_raw2dict_if(struct crtx_netlink_listener *nl_listener, struct nlmsghdr *nlh) {
+struct crtx_dict *crtx_netlink_raw_raw2dict_if(struct crtx_netlink_raw_listener *nl_listener, struct nlmsghdr *nlh) {
 	struct ifinfomsg *ifi;
 	struct rtattr *rth;
 	int32_t len;
@@ -336,7 +336,7 @@ struct crtx_dict *crtx_netlink_raw2dict_if(struct crtx_netlink_listener *nl_list
 				di = crtx_alloc_item(dict);
 				
 				if (RTA_PAYLOAD(rth) != 6)
-					ERROR("netlink: RTA_PAYLOAD %zu != 6\n", RTA_PAYLOAD(rth));
+					ERROR("netlink_raw: RTA_PAYLOAD %zu != 6\n", RTA_PAYLOAD(rth));
 				
 				s = (char*) malloc(RTA_PAYLOAD(rth)*3);
 				b = (unsigned char*) RTA_DATA(rth);
@@ -428,7 +428,7 @@ struct crtx_dict *crtx_netlink_raw2dict_if(struct crtx_netlink_listener *nl_list
 				// https://lists.open-mesh.org/pipermail/b.a.t.m.a.n/2014-January/011236.html
 				break;
 			default:
-				VDBG("netlink: unhandled rta_type %d\n", rth->rta_type);
+				VDBG("netlink_raw: unhandled rta_type %d\n", rth->rta_type);
 		}
 		
 		rth = RTA_NEXT(rth, len);
@@ -439,41 +439,41 @@ struct crtx_dict *crtx_netlink_raw2dict_if(struct crtx_netlink_listener *nl_list
 	return dict;
 }
 
-struct crtx_dict *crtx_netlink_raw2dict_ifaddr(struct crtx_netlink_listener *nl_listener, struct nlmsghdr *nlh) {
+struct crtx_dict *crtx_netlink_raw_raw2dict_ifaddr(struct crtx_netlink_raw_listener *nl_listener, struct nlmsghdr *nlh) {
 	switch (nlh->nlmsg_type) {
 		case RTM_NEWADDR:
 		case RTM_DELADDR:
-			return crtx_netlink_raw2dict_addr(nl_listener, nlh);
+			return crtx_netlink_raw_raw2dict_addr(nl_listener, nlh);
 			break;
 		case RTM_NEWLINK:
 		case RTM_DELLINK:
-			return crtx_netlink_raw2dict_if(nl_listener, nlh);
+			return crtx_netlink_raw_raw2dict_if(nl_listener, nlh);
 			break;
 	}
 	
 	return 0;
 }
 
-char crtx_netlink_send_req(struct crtx_netlink_listener *nl_listener, struct nlmsghdr *n) {
+char crtx_netlink_raw_send_req(struct crtx_netlink_raw_listener *nl_listener, struct nlmsghdr *n) {
 	int ret;
 	
 	ret = send(nl_listener->sockfd, n, n->nlmsg_len, 0);
 	if (ret < 0) {
-		ERROR("error while sending netlink request: %s\n", strerror(errno));
+		ERROR("error while sending netlink_raw request: %s\n", strerror(errno));
 		return 0;
 	}
 	
 	return 1;
 }
 
-static void *netlink_tmain(void *data) {
+static void *netlink_raw_tmain(void *data) {
 	int len;
 	char buffer[4096];
 	struct nlmsghdr *nlh;
-	struct crtx_netlink_listener *nl_listener;
+	struct crtx_netlink_raw_listener *nl_listener;
 	struct crtx_event *event;
 	
-	nl_listener = (struct crtx_netlink_listener*) data;
+	nl_listener = (struct crtx_netlink_raw_listener*) data;
 	
 	nlh = (struct nlmsghdr *) buffer;
 	printf("recv1\n");
@@ -524,18 +524,18 @@ static void *netlink_tmain(void *data) {
 	}
 	
 	if (len < 0) {
-		ERROR("netlink recv failed: %s\n", strerror(errno));
+		ERROR("netlink_raw recv failed: %s\n", strerror(errno));
 	}
 	
 	return 0;
 }
 
 static void stop_thread(struct crtx_thread *t, void *data) {
-	struct crtx_netlink_listener *nl_listener;
+	struct crtx_netlink_raw_listener *nl_listener;
 	
-	DBG("stopping netlink listener\n");
+	DBG("stopping netlink_raw listener\n");
 	
-	nl_listener = (struct crtx_netlink_listener*) data;
+	nl_listener = (struct crtx_netlink_raw_listener*) data;
 	
 	nl_listener->stop = 1;
 	
@@ -548,21 +548,21 @@ static void stop_thread(struct crtx_thread *t, void *data) {
 // 	dereference_signal(&nl_listener->parent.thread->finished);
 }
 
-void free_netlink_listener(struct crtx_listener_base *lbase) {
-	struct crtx_netlink_listener *nl_listener;
+void free_netlink_raw_listener(struct crtx_listener_base *lbase) {
+	struct crtx_netlink_raw_listener *nl_listener;
 	
-	nl_listener = (struct crtx_netlink_listener *) lbase;
+	nl_listener = (struct crtx_netlink_raw_listener *) lbase;
 	
 	stop_thread(lbase->thread, nl_listener);
 	
 	free_signal(&nl_listener->msg_done);
 }
 
-struct crtx_listener_base *crtx_new_netlink_listener(void *options) {
-	struct crtx_netlink_listener *nl_listener;
+struct crtx_listener_base *crtx_new_netlink_raw_listener(void *options) {
+	struct crtx_netlink_raw_listener *nl_listener;
 	struct sockaddr_nl addr;
 	
-	nl_listener = (struct crtx_netlink_listener*) options;
+	nl_listener = (struct crtx_netlink_raw_listener*) options;
 	
 	if ((nl_listener->sockfd = socket(PF_NETLINK, SOCK_RAW, nl_listener->socket_protocol)) == -1) {
 		perror("couldn't open NETLINK_ROUTE socket");
@@ -582,19 +582,19 @@ struct crtx_listener_base *crtx_new_netlink_listener(void *options) {
 	
 	init_signal(&nl_listener->msg_done);
 	
-	nl_listener->parent.free = &free_netlink_listener;
+	nl_listener->parent.free = &free_netlink_raw_listener;
 	nl_listener->parent.start_listener = 0;
-	nl_listener->parent.thread = get_thread(netlink_tmain, nl_listener, 0);
+	nl_listener->parent.thread = get_thread(netlink_raw_tmain, nl_listener, 0);
 	nl_listener->parent.thread->do_stop = &stop_thread;
 	reference_signal(&nl_listener->parent.thread->finished);
 	
 	return &nl_listener->parent;
 }
 
-void crtx_netlink_init() {
+void crtx_netlink_raw_init() {
 }
 
-void crtx_netlink_finish() {
+void crtx_netlink_raw_finish() {
 }
 
 
@@ -611,7 +611,7 @@ struct {
 	struct ifinfomsg ifinfomsg;
 } if_req;
 
-static char netlink_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char netlink_raw_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	crtx_print_dict(event->data.dict);
 	
 	return 1;
@@ -638,29 +638,29 @@ static char crtx_get_own_ip_addresses_keygen(struct crtx_event *event, struct cr
 }
 
 char crtx_get_own_ip_addresses() {
-	struct crtx_netlink_listener nl_listener;
+	struct crtx_netlink_raw_listener nl_listener;
 	struct crtx_listener_base *lbase;
 	char ret;
 	struct crtx_task *ip_cache_task;
 	struct crtx_cache_task *ctask;
 	#define TASK2CACHETASK(task) ((struct crtx_cache_task*) (task)->userdata)
 	
-	memset(&nl_listener, 0, sizeof(struct crtx_netlink_listener));
+	memset(&nl_listener, 0, sizeof(struct crtx_netlink_raw_listener));
 	nl_listener.socket_protocol = NETLINK_ROUTE;
 	nl_listener.nl_family = AF_NETLINK;
 	nl_listener.nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
 	nl_listener.nlmsg_types = nlmsg_addr_types;
 	
-	nl_listener.raw2dict = &crtx_netlink_raw2dict_ifaddr;
+	nl_listener.raw2dict = &crtx_netlink_raw_raw2dict_ifaddr;
 	nl_listener.all_fields = 1;
 	
-	lbase = create_listener("netlink", &nl_listener);
+	lbase = create_listener("netlink_raw", &nl_listener);
 	if (!lbase) {
-		ERROR("create_listener(netlink) failed\n");
+		ERROR("create_listener(netlink_raw) failed\n");
 		exit(1);
 	}
 	
-// 	crtx_create_task(lbase->graph, 0, "netlink_test", netlink_test_handler, 0);
+// 	crtx_create_task(lbase->graph, 0, "netlink_raw_test", netlink_raw_test_handler, 0);
 	
 	{
 		ip_cache_task = create_response_cache_task("ip_cache", crtx_get_own_ip_addresses_keygen);
@@ -675,7 +675,7 @@ char crtx_get_own_ip_addresses() {
 	
 	ret = crtx_start_listener(lbase);
 	if (!ret) {
-		ERROR("starting netlink listener failed\n");
+		ERROR("starting netlink_raw listener failed\n");
 		return 1;
 	}
 	
@@ -688,7 +688,7 @@ char crtx_get_own_ip_addresses() {
 	
 	reset_signal(&nl_listener.msg_done);
 	
-	crtx_netlink_send_req(&nl_listener, &addr_req.n);
+	crtx_netlink_raw_send_req(&nl_listener, &addr_req.n);
 	
 	wait_on_signal(&nl_listener.msg_done);
 	
@@ -737,12 +737,12 @@ static int my_func(struct nl_msg *msg, void *arg) {
 	return 0;
 }
 
-int netlink_main(int argc, char **argv) {
-// 	struct crtx_netlink_listener nl_listener;
+int netlink_raw_main(int argc, char **argv) {
+// 	struct crtx_netlink_raw_listener nl_listener;
 // 	struct crtx_listener_base *lbase;
 // 	char ret;
 	
-// 	// setup a netlink listener
+// 	// setup a netlink_raw listener
 // 	nl_listener.socket_protocol = NETLINK_ROUTE;
 // 	nl_listener.nl_family = AF_NETLINK;
 // 	// e.g., RTMGRP_LINK, RTMGRP_NEIGH, RTMGRP_IPV4_IFADDR, RTMGRP_IPV6_IFADDR
@@ -771,7 +771,7 @@ int netlink_main(int argc, char **argv) {
 	
 	genlist.sock = nl_socket_alloc();
 	if (!genlist.sock) {
-		fprintf(stderr, "Failed to allocate netlink socket.\n");
+		fprintf(stderr, "Failed to allocate netlink_raw socket.\n");
 		return -ENOMEM;
 	}
 	
@@ -786,7 +786,7 @@ int netlink_main(int argc, char **argv) {
 	
 	
 	if (genl_connect(genlist.sock)) {
-		fprintf(stderr, "Failed to connect to generic netlink.\n");
+		fprintf(stderr, "Failed to connect to generic netlink_raw.\n");
 		err = -ENOLINK;
 // 		goto out_handle_destroy;
 	}
@@ -820,5 +820,5 @@ int netlink_main(int argc, char **argv) {
 	return err;
 }
 
-CRTX_TEST_MAIN(netlink_main);
+CRTX_TEST_MAIN(netlink_raw_main);
 #endif
