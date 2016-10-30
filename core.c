@@ -29,6 +29,7 @@
 #include "signals.h"
 #include "timer.h"
 #include "netlink_raw.h"
+#include "netlink.h"
 #include "epoll.h"
 #include "evdev.h"
 #include "udev.h"
@@ -54,6 +55,7 @@ struct crtx_module static_modules[] = {
 	{"inotify", &crtx_inotify_init, &crtx_inotify_finish},
 	{"controls", &crtx_controls_init, &crtx_controls_finish},
 	{"netlink_raw", &crtx_netlink_raw_init, &crtx_netlink_raw_finish},
+	{"netlink", &crtx_netlink_init, &crtx_netlink_finish},
 	{"epoll", &crtx_epoll_init, &crtx_epoll_finish},
 	{"evdev", &crtx_evdev_init, &crtx_evdev_finish},
 	{"udev", &crtx_udev_init, &crtx_udev_finish},
@@ -76,6 +78,7 @@ struct crtx_listener_repository listener_factory[] = {
 	{"readline", &crtx_new_readline_listener},
 	{"timer", &crtx_new_timer_listener},
 	{"netlink_raw", &crtx_new_netlink_raw_listener},
+	{"genl", &crtx_new_genl_listener},
 	{"epoll", &crtx_new_epoll_listener},
 	{"evdev", &crtx_new_evdev_listener},
 	{"udev", &crtx_new_udev_listener},

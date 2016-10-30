@@ -8,13 +8,6 @@
 #include <net/if.h>
 #include <netinet/in.h>
 
-// for sleep()
-#include <unistd.h>
-
-#include <netlink_raw/genl/genl.h>
-#include <netlink_raw/genl/family.h>
-#include <netlink_raw/genl/ctrl.h>
-
 #include "core.h"
 #include "netlink_raw.h"
 
@@ -598,8 +591,15 @@ void crtx_netlink_raw_finish() {
 }
 
 
+
+
 #ifdef CRTX_TEST
-static uint16_t nlmsg_types[] = {RTM_NEWLINK, RTM_DELLINK, RTM_NEWADDR, RTM_DELADDR, 0};
+
+#include <unistd.h>
+
+#include "cache.h"
+
+// static uint16_t nlmsg_types[] = {RTM_NEWLINK, RTM_DELLINK, RTM_NEWADDR, RTM_DELADDR, 0};
 
 struct {
 	struct nlmsghdr n;
@@ -611,13 +611,12 @@ struct {
 	struct ifinfomsg ifinfomsg;
 } if_req;
 
-static char netlink_raw_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	crtx_print_dict(event->data.dict);
-	
-	return 1;
-}
+// static char netlink_raw_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+// 	crtx_print_dict(event->data.dict);
+// 	
+// 	return 1;
+// }
 
-#include "cache.h"
 static uint16_t nlmsg_addr_types[] = {RTM_NEWADDR, RTM_DELADDR, 0};
 static char crtx_get_own_ip_addresses_keygen(struct crtx_event *event, struct crtx_dict_item *key) {
 	struct crtx_dict_item *di;
@@ -701,42 +700,6 @@ char crtx_get_own_ip_addresses() {
 	return 1;
 }
 
-struct crtx_genl_listener {
-	struct nl_sock *sock;
-	int id;
-};
-
-struct acpi_genl_event {
-	char device_class[20];
-	char bus_id[15];
-	__u32 type;
-	__u32 data;
-};
-
-static int my_func(struct nl_msg *msg, void *arg) {
-	printf("cb\n");
-	
-	#define ATTR_MAX 1
-	struct nlmsghdr *nlh = nlmsg_hdr(msg);
-	struct nlattr *attrs[ATTR_MAX+1];
-	
-	// Validate message and parse attributes
-	genlmsg_parse(nlh, 0, attrs, ATTR_MAX, 0);
-	if (attrs[1]) {
-		void *data;
-// 		uint32_t value = nla_get_u32(attrs[ATTR_FOO]);
-		data = nla_data(attrs[1]);
-		printf("data %p\n", data);
-		
-		struct acpi_genl_event *ev = (struct acpi_genl_event *) data;
-		
-		printf("bus %s %s %d %d \n", ev->device_class, ev->bus_id, ev->type, ev->data);
-	}
-	
-		
-	return 0;
-}
-
 int netlink_raw_main(int argc, char **argv) {
 // 	struct crtx_netlink_raw_listener nl_listener;
 // 	struct crtx_listener_base *lbase;
@@ -763,61 +726,9 @@ int netlink_raw_main(int argc, char **argv) {
 // 	if_req.n.nlmsg_type = RTM_GETLINK;
 // 	if_req.ifinfomsg.ifi_family = AF_UNSPEC;
 // 	
-// 	crtx_get_own_ip_addresses();
+	crtx_get_own_ip_addresses();
 	
-	
-	int err;
-	struct crtx_genl_listener genlist;
-	
-	genlist.sock = nl_socket_alloc();
-	if (!genlist.sock) {
-		fprintf(stderr, "Failed to allocate netlink_raw socket.\n");
-		return -ENOMEM;
-	}
-	
-// 	nl_socket_set_buffer_size(genlist.sock, 8192, 8192);
-	
-	
-	nl_socket_disable_seq_check(genlist.sock);
-	
-	
-	err = nl_socket_modify_cb(genlist.sock, NL_CB_VALID, NL_CB_CUSTOM, my_func, NULL);
-	printf("err %d\n", err);
-	
-	
-	if (genl_connect(genlist.sock)) {
-		fprintf(stderr, "Failed to connect to generic netlink_raw.\n");
-		err = -ENOLINK;
-// 		goto out_handle_destroy;
-	}
-	
-// 	genlist.id = genl_ctrl_resolve(genlist.sock, "acpi_event");
-// 	if (genlist.id < 0) {
-// 		fprintf(stderr, "acpi_event not found.\n");
-// 		err = -ENOENT;
-// // 		goto out_handle_destroy;
-// 	}
-	
-
-	genlist.id = genl_ctrl_resolve_grp(genlist.sock, "acpi_event", "acpi_mc_group");
-// 	genlist.id = genl_ctrl_resolve_grp(genlist.sock, "nl80211", "scan");
-// 	genlist.id = genl_ctrl_resolve_grp(genlist.sock, "thermal_event", "thermal_mc_grp");
-	
-	printf("id %d\n", genlist.id);
-	if (nl_socket_add_memberships(genlist.sock, genlist.id, 0)) {
-		fprintf(stderr, "Failed  nl_socket_add_memberships\n");
-	}
-	
-	printf("start\n");
-	while (1) {
-		err = nl_recvmsgs_default(genlist.sock);
-		if (err)
-			fprintf(stderr, "err %d\n", err);
-	}
-	printf("end\n");
-	nl_socket_free(genlist.sock);
-		
-	return err;
+	return 0;
 }
 
 CRTX_TEST_MAIN(netlink_raw_main);

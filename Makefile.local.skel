@@ -16,6 +16,9 @@ OBJS+=sd_bus.o sd_bus_notifications.o
 CFLAGS+=$(shell pkg-config --cflags libsystemd)
 LDLIBS+=$(shell pkg-config --libs libsystemd)
 
+OBJS+=netlink_raw.o
+TESTS+=netlink_raw.test
+
 OBJS+=netlink.o
 TESTS+=netlink.test
 CFLAGS+=$(shell pkg-config --cflags libnl-genl-3.0)
