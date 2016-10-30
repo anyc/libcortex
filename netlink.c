@@ -6,8 +6,14 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <net/if.h>
-// #include <linux/if.h>
 #include <netinet/in.h>
+
+// for sleep()
+#include <unistd.h>
+
+#include <netlink/genl/genl.h>
+#include <netlink/genl/family.h>
+#include <netlink/genl/ctrl.h>
 
 #include "core.h"
 #include "netlink.h"
@@ -695,36 +701,53 @@ char crtx_get_own_ip_addresses() {
 	return 1;
 }
 
-int netlink_main(int argc, char **argv) {
-	struct crtx_netlink_listener nl_listener;
-	struct crtx_listener_base *lbase;
-	char ret;
+struct crtx_genl_listener {
+	struct nl_sock *sock;
+	int id;
+};
+
+struct acpi_genl_event {
+	char device_class[20];
+	char bus_id[15];
+	__u32 type;
+	__u32 data;
+};
+
+static int my_func(struct nl_msg *msg, void *arg) {
+	printf("cb\n");
 	
-// 	memset(&nl_listener, 0, sizeof(struct crtx_netlink_listener));
-// 	
+	#define ATTR_MAX 1
+	struct nlmsghdr *nlh = nlmsg_hdr(msg);
+	struct nlattr *attrs[ATTR_MAX+1];
+	
+	// Validate message and parse attributes
+	genlmsg_parse(nlh, 0, attrs, ATTR_MAX, 0);
+	if (attrs[1]) {
+		void *data;
+// 		uint32_t value = nla_get_u32(attrs[ATTR_FOO]);
+		data = nla_data(attrs[1]);
+		printf("data %p\n", data);
+		
+		struct acpi_genl_event *ev = (struct acpi_genl_event *) data;
+		
+		printf("bus %s %s %d %d \n", ev->device_class, ev->bus_id, ev->type, ev->data);
+	}
+	
+		
+	return 0;
+}
+
+int netlink_main(int argc, char **argv) {
+// 	struct crtx_netlink_listener nl_listener;
+// 	struct crtx_listener_base *lbase;
+// 	char ret;
+	
 // 	// setup a netlink listener
 // 	nl_listener.socket_protocol = NETLINK_ROUTE;
 // 	nl_listener.nl_family = AF_NETLINK;
 // 	// e.g., RTMGRP_LINK, RTMGRP_NEIGH, RTMGRP_IPV4_IFADDR, RTMGRP_IPV6_IFADDR
 // 	nl_listener.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
 // 	nl_listener.nlmsg_types = nlmsg_types;
-// 	
-// 	nl_listener.raw2dict = &crtx_netlink_raw2dict_ifaddr;
-// 	nl_listener.all_fields = 1;
-// 	
-// 	lbase = create_listener("netlink", &nl_listener);
-// 	if (!lbase) {
-// 		ERROR("create_listener(netlink) failed\n");
-// 		exit(1);
-// 	}
-// 	
-// 	crtx_create_task(lbase->graph, 0, "netlink_test", netlink_test_handler, 0);
-// 	
-// 	ret = crtx_start_listener(lbase);
-// 	if (!ret) {
-// 		ERROR("starting netlink listener failed\n");
-// 		return 1;
-// 	}
 // 	
 // 	// request a list of addresses
 // 	memset(&addr_req, 0, sizeof(addr_req));
@@ -733,13 +756,6 @@ int netlink_main(int argc, char **argv) {
 // 	addr_req.n.nlmsg_type = RTM_GETADDR;
 // // 	addr_req.r.ifa_family = AF_INET; // e.g., AF_INET (IPv4-only) or AF_INET6 (IPv6-only)
 // 	
-// 	reset_signal(&nl_listener.msg_done);
-// 	
-// 	crtx_netlink_send_req(&nl_listener, &addr_req.n);
-// 	
-// 	wait_on_signal(&nl_listener.msg_done);
-// 	
-// 	
 // 	// request a list of interfaces
 // 	memset(&if_req, 0, sizeof(if_req));
 // 	if_req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
@@ -747,18 +763,61 @@ int netlink_main(int argc, char **argv) {
 // 	if_req.n.nlmsg_type = RTM_GETLINK;
 // 	if_req.ifinfomsg.ifi_family = AF_UNSPEC;
 // 	
-// 	reset_signal(&nl_listener.msg_done);
-// 	
-// 	crtx_netlink_send_req(&nl_listener, &if_req.n);
-// 	
-// 	wait_on_signal(&nl_listener.msg_done);
-// 	
-// 	// add the main thread to the thread pool and wait on termination
-// 	crtx_loop();
+// 	crtx_get_own_ip_addresses();
 	
-	crtx_get_own_ip_addresses();
 	
-	return 0;
+	int err;
+	struct crtx_genl_listener genlist;
+	
+	genlist.sock = nl_socket_alloc();
+	if (!genlist.sock) {
+		fprintf(stderr, "Failed to allocate netlink socket.\n");
+		return -ENOMEM;
+	}
+	
+// 	nl_socket_set_buffer_size(genlist.sock, 8192, 8192);
+	
+	
+	nl_socket_disable_seq_check(genlist.sock);
+	
+	
+	err = nl_socket_modify_cb(genlist.sock, NL_CB_VALID, NL_CB_CUSTOM, my_func, NULL);
+	printf("err %d\n", err);
+	
+	
+	if (genl_connect(genlist.sock)) {
+		fprintf(stderr, "Failed to connect to generic netlink.\n");
+		err = -ENOLINK;
+// 		goto out_handle_destroy;
+	}
+	
+// 	genlist.id = genl_ctrl_resolve(genlist.sock, "acpi_event");
+// 	if (genlist.id < 0) {
+// 		fprintf(stderr, "acpi_event not found.\n");
+// 		err = -ENOENT;
+// // 		goto out_handle_destroy;
+// 	}
+	
+
+	genlist.id = genl_ctrl_resolve_grp(genlist.sock, "acpi_event", "acpi_mc_group");
+// 	genlist.id = genl_ctrl_resolve_grp(genlist.sock, "nl80211", "scan");
+// 	genlist.id = genl_ctrl_resolve_grp(genlist.sock, "thermal_event", "thermal_mc_grp");
+	
+	printf("id %d\n", genlist.id);
+	if (nl_socket_add_memberships(genlist.sock, genlist.id, 0)) {
+		fprintf(stderr, "Failed  nl_socket_add_memberships\n");
+	}
+	
+	printf("start\n");
+	while (1) {
+		err = nl_recvmsgs_default(genlist.sock);
+		if (err)
+			fprintf(stderr, "err %d\n", err);
+	}
+	printf("end\n");
+	nl_socket_free(genlist.sock);
+		
+	return err;
 }
 
 CRTX_TEST_MAIN(netlink_main);

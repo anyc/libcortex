@@ -11,9 +11,15 @@
 # LDLIBS+=$(shell pkg-config --libs json-c)
 
 CFLAGS+=-DSTATIC_SD_BUS
+TESTS+=sd_bus.test
 OBJS+=sd_bus.o sd_bus_notifications.o
 CFLAGS+=$(shell pkg-config --cflags libsystemd)
 LDLIBS+=$(shell pkg-config --libs libsystemd)
+
+OBJS+=netlink.o
+TESTS+=netlink.test
+CFLAGS+=$(shell pkg-config --cflags libnl-genl-3.0)
+LDLIBS+=$(shell pkg-config --libs libnl-genl-3.0)
 
 CFLAGS+=-DSTATIC_NF_QUEUE
 OBJS+=nf_queue.o
@@ -21,9 +27,16 @@ CFLAGS+=$(shell pkg-config --cflags libnetfilter_queue)
 LDLIBS+=$(shell pkg-config --libs libnetfilter_queue)
 
 OBJS+=evdev.o
+TESTS+=evdev.test
 CFLAGS+=$(shell pkg-config --cflags libevdev)
 LDLIBS+=$(shell pkg-config --libs libevdev)
 
 OBJS+=udev.o
+TESTS+=udev.test
 CFLAGS+=$(shell pkg-config --cflags libudev)
 LDLIBS+=$(shell pkg-config --libs libudev)
+
+OBJS+=xcb_randr.o
+TESTS+=xcb_randr.test
+CFLAGS+=$(shell pkg-config --cflags xcb xcb-randr)
+LDLIBS+=$(shell pkg-config --libs xcb xcb-randr)

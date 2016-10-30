@@ -43,7 +43,7 @@ struct crtx_module static_modules[] = {
 	{"signals", &crtx_signals_init, &crtx_signals_finish},
 	{"socket", &crtx_socket_init, &crtx_socket_finish},
 #ifdef STATIC_SD_BUS
-	{"sd-bus", &crtx_sd_bus_init, &crtx_sd_bus_finish},
+	{"sdbus", &crtx_sdbus_init, &crtx_sdbus_finish},
 	{"sd_bus_notification", &crtx_sdbus_notification_init, &crtx_sdbus_notification_finish},
 #endif
 #ifdef STATIC_NF_QUEUE
@@ -80,6 +80,7 @@ struct crtx_listener_repository listener_factory[] = {
 	{"evdev", &crtx_new_evdev_listener},
 	{"udev", &crtx_new_udev_listener},
 	{"xcb_randr", &crtx_new_xcb_randr_listener},
+	{"sdbus", &crtx_new_sdbus_listener},
 	{0, 0}
 };
 
@@ -133,8 +134,18 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 		return listener->start_listener(listener);
 	}
 	
-	if (listener->thread)
+	if (listener->thread) {
 		start_thread(listener->thread);
+	} else {
+		if (listener->el_payload.fd > 0) {
+			if (!crtx_root->event_loop.listener)
+				crtx_get_event_loop();
+			
+			crtx_root->event_loop.add_fd(
+				&crtx_root->event_loop.listener->parent,
+				&listener->el_payload);
+		}
+	}
 	
 	return 1;
 }
@@ -160,14 +171,14 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 	if (!lbase) {
 		ERROR("listener \"%s\" not found\n", id);
 	} else {
-		if (lbase->el_payload.fd > 0) {
-			if (!crtx_root->event_loop.listener)
-				crtx_get_event_loop();
-			
-			crtx_root->event_loop.add_fd(
-					&crtx_root->event_loop.listener->parent,
-					&lbase->el_payload);
-		}
+// 		if (lbase->el_payload.fd > 0) {
+// 			if (!crtx_root->event_loop.listener)
+// 				crtx_get_event_loop();
+// 			
+// 			crtx_root->event_loop.add_fd(
+// 					&crtx_root->event_loop.listener->parent,
+// 					&lbase->el_payload);
+// 		}
 	}
 	
 	return lbase;
@@ -867,7 +878,8 @@ void crtx_init() {
 void crtx_finish() {
 	unsigned int i;
 	
-	free_listener((struct crtx_listener_base *) crtx_root->event_loop.listener);
+	if (crtx_root->event_loop.listener)
+		free_listener((struct crtx_listener_base *) crtx_root->event_loop.listener);
 	
 	crtx_init_shutdown();
 	

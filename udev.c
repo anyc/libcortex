@@ -169,8 +169,6 @@ struct crtx_listener_base *crtx_new_udev_listener(void *options) {
 		p+=2;
 	}
 	
-	udev_monitor_enable_receiving(ulist->monitor);
-	
 	ulist->parent.el_payload.fd = udev_monitor_get_fd(ulist->monitor);
 	ulist->parent.el_payload.data = ulist;
 	ulist->parent.el_payload.event_handler = &udev_fd_event_handler;
@@ -178,6 +176,8 @@ struct crtx_listener_base *crtx_new_udev_listener(void *options) {
 	
 	ulist->parent.free = &crtx_free_udev_listener;
 	new_eventgraph(&ulist->parent.graph, 0, udev_msg_etype);
+	
+	udev_monitor_enable_receiving(ulist->monitor);
 	
 	return &ulist->parent;
 }

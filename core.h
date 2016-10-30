@@ -60,8 +60,7 @@ extern char *crtx_evt_outbox[];
 
 
 struct crtx_event;
-
-// #define CRTX_EVF_DONT_FREE_RAW 1<<0
+struct crtx_listener_base;
 
 struct crtx_event_data {
 // 	void *raw;
@@ -94,6 +93,8 @@ struct crtx_event {
 	unsigned char refs_before_release;
 	pthread_cond_t response_cond;
 	pthread_cond_t release_cond;
+	
+	struct crtx_listener_base *origin;
 	
 // 	void (*event_to_str)(struct crtx_event *event);
 	

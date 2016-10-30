@@ -1,9 +1,35 @@
 
+#ifndef _CRTX_SDBUS_H
+#define _CRTX_SDBUS_H
+
 #include <systemd/sd-bus.h>
+
+enum crtx_sdbus_type {
+	CRTX_SDBUS_TYPE_DEFAULT = 0,
+	CRTX_SDBUS_TYPE_USER,
+	CRTX_SDBUS_TYPE_SYSTEM,
+	CRTX_SDBUS_TYPE_SYSTEM_REMOTE,
+	CRTX_SDBUS_TYPE_SYSTEM_MACHINE,
+};
+
+struct crtx_sdbus_listener;
+
+struct crtx_sdbus_match {
+	char *match_str;
+	char *event_type;
+	struct crtx_sdbus_listener *listener;
+};
 
 struct crtx_sdbus_listener {
 	struct crtx_listener_base parent;
 	
+	enum crtx_sdbus_type bus_type;
+	char *name; // contains either the host name or machine name if bus_type is
+				// either CRTX_SDBUS_TYPE_SYSTEM_REMOTE or CRTX_SDBUS_TYPE_SYSTEM_MACHINE
+	sd_bus *bus;
+	
+// 	char **matches;
+	struct crtx_sdbus_match *matches;
 };
 
 extern sd_bus *sd_bus_main_bus;
@@ -11,5 +37,10 @@ extern sd_bus *sd_bus_main_bus;
 void sd_bus_add_signal_listener(sd_bus *bus, char *path, char *event_type);
 void sd_bus_print_event_task(struct crtx_event *event, void *userdata);
 void sd_bus_print_msg(sd_bus_message *m);
-void crtx_sd_bus_init();
-void crtx_sd_bus_finish();
+
+struct crtx_listener_base *crtx_new_sdbus_listener(void *options);
+
+void crtx_sdbus_init();
+void crtx_sdbus_finish();
+
+#endif
