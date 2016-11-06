@@ -376,6 +376,29 @@ struct crtx_listener_base *crtx_new_sdbus_listener(void *options) {
 		case CRTX_SDBUS_TYPE_SYSTEM_MACHINE:
 			r = sd_bus_open_system_machine(&sdlist->bus, sdlist->name);
 			break;
+		case CRTX_SDBUS_TYPE_CUSTOM:
+			r = sd_bus_new(&sdlist->bus);
+			if (r >= 0) {
+				int t;
+				
+				DBG("using custom DBUS at address \"%s\"\n", sdlist->name);
+				
+				t = sd_bus_set_address(sdlist->bus, sdlist->name);
+				if (t < 0) {
+					fprintf(stderr, "sd_bus_set_address failed: %s\n", strerror(-t));
+					return 0;
+				}
+				
+				t = sd_bus_start(sdlist->bus);
+				if (t < 0) {
+					fprintf(stderr, "sd_bus_start failed: %s\n", strerror(-t));
+					return 0;
+				}
+			}
+			break;
+		default:
+			ERROR("crtx_new_sdbus_listener\n");
+			return 0;
 	}
 	if (r < 0) {
 		fprintf(stderr, "Failed to open bus: %s\n", strerror(-r));
@@ -391,8 +414,8 @@ struct crtx_listener_base *crtx_new_sdbus_listener(void *options) {
 	new_eventgraph(&sdlist->parent.graph, 0, 0);
 	
 	m = sdlist->matches;
-	while (m->match_str) {
-		printf("sd_bus will listen on %s\n", m->event_type);
+	while (m && m->match_str) {
+		printf("sd_bus will listen for \"%s\" -> %s\n", m->match_str, m->event_type);
 		m->listener = sdlist;
 		
 		r = sd_bus_add_match(sdlist->bus, NULL, m->match_str, sdbus_match_listener_cb, m);
@@ -407,7 +430,93 @@ struct crtx_listener_base *crtx_new_sdbus_listener(void *options) {
 	return &sdlist->parent;
 }
 
+// const char *destination, const char *path, const char *interface, const char *member, sd_bus_error *ret_error, sd_bus_message **reply, const char *types, ...
+void crtx_sdbus_call_method(struct crtx_sdbus_listener *sdlist, 
+				char *destination,
+				char *path,
+				char *interface,
+				char *member,
+				struct crtx_dict *dict
+				)
+{
+// 	int r;
+// 	sd_bus_message *m;
+	
+// 	('org.PulseAudio1', '/org/pulseaudio/server_lookup1').Get('org.PulseAudio.ServerLookup1', 'Address', dbus_interface='org.freedesktop.DBus.Properties')
+	
+// 	r = sd_bus_message_new_method_call(sdlist->bus,
+// 									   &m,
+// 									"org.PulseAudio1",  /* service to contact */
+// 									"/org/pulseaudio/server_lookup1", /* object path */
+// 									"org.PulseAudio.ServerLookup1",  /* interface name */
+// 									"Address"                          /* method name */
+// 	);
+// 	if (r < 0) {
+// 		fprintf(stderr, "Failed to issue method call: %s\n", error.message);
+// 		goto finish;
+// 	}
+// 	
+// 	/* Parse the response message */
+// 	r = sd_bus_message_read(m, "o", &path);
+// 	if (r < 0) {
+// 		fprintf(stderr, "Failed to parse response message: %s\n", strerror(-r));
+// 		goto finish;
+// 	}
+}
 
+int crtx_sdbus_get_property_str(struct crtx_sdbus_listener *sdlist, 
+							char *destination,
+							char *path,
+							char *interface,
+							char *member,
+							char **s
+					)
+{
+	int r;
+	sd_bus_error ret_error;
+	
+	memset(&ret_error, 0, sizeof(sd_bus_error));
+	
+// 	sd_bus *bus;
+// 	r = sd_bus_open_user(&bus);
+// 	if (r< 0)
+// 		exit(1);
+	r = sd_bus_get_property_string(sdlist->bus, destination, path, interface, member, &ret_error, s);
+// 	r = sd_bus_get_property_string(bus, "org.pulseaudio.Server1",
+// 								   "/org/pulseaudio/server_lookup1",
+// 								"org.PulseAudio.ServerLookup1",
+// 								"Address", &ret_error, s);
+	if (r < 0) {
+		fprintf(stderr, "sd_bus_get_property_string failed: %s\n", strerror(-r));
+	}
+	
+	return r;
+}
+
+static struct crtx_sdbus_listener default_listeners[CRTX_SDBUS_TYPE_MAX] = { { { 0 } } };
+
+
+struct crtx_sdbus_listener *crtx_sdbus_get_default_listener(enum crtx_sdbus_type sdbus_type) {
+	if (!default_listeners[sdbus_type].bus) {
+		struct crtx_listener_base *lbase;
+		int ret;
+		
+		
+		default_listeners[sdbus_type].bus_type = sdbus_type;
+		
+		lbase = create_listener("sdbus", &default_listeners[sdbus_type]);
+		if (!lbase) {
+			return 0;
+		}
+		
+		ret = crtx_start_listener(lbase);
+		if (!ret) {
+			return 0;
+		}
+	}
+	
+	return &default_listeners[sdbus_type];
+}
 
 void crtx_sdbus_init() {
 // 	int r;
@@ -461,7 +570,7 @@ int sdbus_main(int argc, char **argv) {
 	
 	memset(&sdlist, 0, sizeof(struct crtx_sdbus_listener));
 	
-	sdlist.bus_type = CRTX_SDBUS_TYPE_SYSTEM;
+	sdlist.bus_type = CRTX_SDBUS_TYPE_USER;
 	sdlist.matches = matches;
 	
 	lbase = create_listener("sdbus", &sdlist);

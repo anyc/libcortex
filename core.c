@@ -34,6 +34,7 @@
 #include "evdev.h"
 #include "udev.h"
 #include "xcb_randr.h"
+#include "pulseaudio.h"
 
 
 struct crtx_root crtx_global_root;
@@ -60,6 +61,7 @@ struct crtx_module static_modules[] = {
 	{"evdev", &crtx_evdev_init, &crtx_evdev_finish},
 	{"udev", &crtx_udev_init, &crtx_udev_finish},
 	{"xcb_randr", &crtx_xcb_randr_init, &crtx_xcb_randr_finish},
+	{"pulseaudio", &crtx_pa_init, &crtx_pa_finish},
 	{0, 0}
 };
 
@@ -84,6 +86,7 @@ struct crtx_listener_repository listener_factory[] = {
 	{"udev", &crtx_new_udev_listener},
 	{"xcb_randr", &crtx_new_xcb_randr_listener},
 	{"sdbus", &crtx_new_sdbus_listener},
+	{"pulseaudio", &crtx_new_pa_listener},
 	{0, 0}
 };
 
@@ -162,6 +165,10 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 	while (l->id) {
 		if (!strcmp(l->id, id)) {
 			lbase = l->create(options);
+			if (!lbase) {
+				ERROR("creating listener \"%s\" failed\n", id);
+				return 0;
+			}
 			
 			if (lbase->thread)
 				reference_signal(&lbase->thread->finished);

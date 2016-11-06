@@ -10,6 +10,8 @@ enum crtx_sdbus_type {
 	CRTX_SDBUS_TYPE_SYSTEM,
 	CRTX_SDBUS_TYPE_SYSTEM_REMOTE,
 	CRTX_SDBUS_TYPE_SYSTEM_MACHINE,
+	CRTX_SDBUS_TYPE_CUSTOM,
+	CRTX_SDBUS_TYPE_MAX,
 };
 
 struct crtx_sdbus_listener;
@@ -37,6 +39,15 @@ extern sd_bus *sd_bus_main_bus;
 void sd_bus_add_signal_listener(sd_bus *bus, char *path, char *event_type);
 void sd_bus_print_event_task(struct crtx_event *event, void *userdata);
 void sd_bus_print_msg(sd_bus_message *m);
+
+int crtx_sdbus_get_property_str(struct crtx_sdbus_listener *sdlist, 
+								char *destination,
+								char *path,
+								char *interface,
+								char *member,
+								char **s);
+
+struct crtx_sdbus_listener *crtx_sdbus_get_default_listener(enum crtx_sdbus_type sdbus_type);
 
 struct crtx_listener_base *crtx_new_sdbus_listener(void *options);
 
