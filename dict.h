@@ -13,9 +13,12 @@
 
 #define DIF_KEY_ALLOCATED 1<<0
 #define DIF_DATA_UNALLOCATED 1<<1
+#define DIF_COPY_STRING 1<<2
 #define DIF_LAST 1<<7
 
 #define DIF_IS_LAST(di) ( ((di)->flags & DIF_LAST) != 0 )
+
+#include <stdint.h>
 
 struct crtx_dict_item {
 	char *key;
@@ -93,4 +96,6 @@ void crtx_free_dict_item(struct crtx_dict_item *di);
 struct crtx_dict *crtx_dict_copy(struct crtx_dict *orig);
 void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src, char data_only);
 char crtx_get_item_value(struct crtx_dict_item *di, char type,  void *buffer, size_t buffer_size);
+
+char crtx_resize_dict(struct crtx_dict *dict, size_t n_items);
 #endif

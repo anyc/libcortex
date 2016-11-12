@@ -76,6 +76,10 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 	
 	di->flags = va_arg(va, int);
 	
+	if ((di->flags & DIF_COPY_STRING) && di->type == 's') {
+		di->string = crtx_stracpy(di->string, &di->size);
+	}
+	
 	return 0;
 }
 
@@ -92,19 +96,50 @@ char crtx_fill_data_item(struct crtx_dict_item *di, char type, ...) {
 	return ret;
 }
 
-struct crtx_dict_item * crtx_alloc_item(struct crtx_dict *dict) {
-// 	dict->size += sizeof(struct crtx_dict_item);
-	dict->signature_length++;
-	dict->items = (struct crtx_dict_item*) realloc(dict->items, dict->signature_length*sizeof(struct crtx_dict_item));
+char crtx_resize_dict(struct crtx_dict *dict, size_t n_items) {
+	if (n_items < dict->signature_length) {
+		ERROR("shrinking dicts not yet supported\n");
+		return 1;
+	}
+	
+	if (dict->size && dict->size != dict->signature_length*sizeof(struct crtx_dict_item)) {
+		ERROR("TODO handle payload in crtx_resize_dict\n");
+	}
+	
+	dict->items = (struct crtx_dict_item*) realloc(dict->items, n_items*sizeof(struct crtx_dict_item));
+	
+	memset(&dict->items[dict->signature_length-1], 0, sizeof(struct crtx_dict_item) * (n_items - dict->signature_length));
+	
+	// clear "last" flag
+	if (dict->signature_length > 0)
+		dict->items[dict->signature_length-1].flags &= ~((char)DIF_LAST);
+	dict->items[n_items-1].flags = DIF_LAST;
+	
+	dict->signature = (char*) realloc(dict->signature, n_items+1);
+	dict->signature_length = n_items;
 	
 	// TODO payload
-// 	return (struct crtx_dict_item *) ((char*)dict) + dict->size - sizeof(struct crtx_dict_item);
+	// 	return (struct crtx_dict_item *) ((char*)dict) + dict->size - sizeof(struct crtx_dict_item);
 	
-	memset(&dict->items[dict->signature_length-1], 0, sizeof(struct crtx_dict_item));
-	if (dict->signature_length > 1)
-		dict->items[dict->signature_length-2].flags &= ~((char)DIF_LAST);
-	dict->items[dict->signature_length-1].flags = DIF_LAST;
-	return &dict->items[dict->signature_length-1];
+	return 0;
+}
+
+struct crtx_dict_item * crtx_alloc_item(struct crtx_dict *dict) {
+// 	dict->signature_length++;
+// 	dict->items = (struct crtx_dict_item*) realloc(dict->items, dict->signature_length*sizeof(struct crtx_dict_item));
+// 	
+// 	// TODO payload
+// // 	return (struct crtx_dict_item *) ((char*)dict) + dict->size - sizeof(struct crtx_dict_item);
+// 	
+// 	memset(&dict->items[dict->signature_length-1], 0, sizeof(struct crtx_dict_item));
+// 	if (dict->signature_length > 1)
+// 		dict->items[dict->signature_length-2].flags &= ~((char)DIF_LAST);
+// 	dict->items[dict->signature_length-1].flags = DIF_LAST;
+// 	return &dict->items[dict->signature_length-1];
+	
+	crtx_resize_dict(dict, dict->signature_length+1);
+	
+	return dict->items[dict->signature_length-1];
 }
 
 struct crtx_dict * crtx_init_dict(char *signature, uint32_t sign_length, size_t payload_size) {
@@ -157,6 +192,54 @@ struct crtx_dict * crtx_init_dict(char *signature, uint32_t sign_length, size_t 
 // 	
 // 	return ret;
 // }
+
+int crtx_append_to_dict(struct crtx_dict **dictionary, char *signature, ...) {
+	struct crtx_dict *dict;
+	struct crtx_dict_item *di;
+	char *s, ret;
+	va_list va;
+	uint32_t sign_length;
+	
+	if (!dictionary)
+		return 1;
+	
+	sign_length = strlen(signature);
+	
+	if (!*dictionary) {
+		dict = crtx_init_dict(signature, sign_length, 0);
+		*dictionary = dict;
+		
+		di = dict->items;
+	} else {
+		dict = *dictionary;
+		
+		crtx_resize_dict(dict, dict->signature_length + sign_length);
+		
+		sprintf(&dict->signature[dict->signature_length - sign_length], "%s", signature);
+		
+		di = &dict->items[dict->signature_length - sign_length];
+	}
+	
+	va_start(va, signature);
+	
+	s = signature;
+	while (*s) {
+		ret = crtx_fill_data_item_va(di, *s, va);
+		if (ret < 0)
+			return 0;
+		
+		di++;
+		s++;
+		dict->signature_length++;
+	}
+	di--;
+	di->flags |= DIF_LAST;
+	
+	va_end(va);
+	
+	return dict;
+}
+
 
 struct crtx_dict * crtx_create_dict(char *signature, ...) {
 	struct crtx_dict *ds;

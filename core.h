@@ -242,7 +242,7 @@ extern struct crtx_root *crtx_root;
 
 
 void crtx_printf(char level, char *format, ...);
-char *stracpy(const char *str, size_t *str_length);
+char *crtx_stracpy(const char *str, size_t *str_length);
 struct crtx_event *new_event();
 void free_event(struct crtx_event *event);
 void crtx_init();

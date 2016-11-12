@@ -96,7 +96,7 @@ char *crtx_evt_inbox[] = { CRTX_EVT_INBOX, 0 };
 char *crtx_evt_outbox[] = { CRTX_EVT_OUTBOX, 0 };
 
 
-char *stracpy(const char *str, size_t *str_length) {
+char *crtx_stracpy(const char *str, size_t *str_length) {
 	char *r;
 	size_t length;
 	
