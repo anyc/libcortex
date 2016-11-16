@@ -6,6 +6,9 @@ import clang.cindex
 def indent(level):
     return '  '*level
 
+def type_clang2crtx(cursor):
+	
+
 def output_cursor(cursor, level):
 	global output, struct
 	
@@ -18,14 +21,14 @@ def output_cursor(cursor, level):
 		displayname = cursor.displayname
 	kind = cursor.kind;
 
-	st = " "
-	if cursor.type:
-		if cursor.type.kind == clang.cindex.TypeKind.POINTER:
-			st += "myptr "
+	#st = " "
+	#if cursor.type:
+		#if cursor.type.kind == clang.cindex.TypeKind.POINTER:
+			#st += "myptr "
 		
-		st += cursor.type.spelling+" "
-		st += cursor.type.get_canonical().spelling+" "
-		st += str(cursor.type.get_size())+" "
+		#st += cursor.type.spelling+" "
+		#st += cursor.type.get_canonical().spelling+" "
+		#st += str(cursor.type.get_size())+" "
 	
 	if output and cursor.type.kind == clang.cindex.TypeKind.RECORD:
 		if spelling not in addition:
@@ -36,63 +39,113 @@ def output_cursor(cursor, level):
 		#print indent(level) + spelling, '<' + str(kind) + '>'
 		#print indent(level+1) + '"'  + displayname + '"' + st
 		
-		type_spelling = cursor.type.get_canonical().spelling
-		
-		#if cursor.kind == clang.cindex.CursorKind.TYPE_REF:
-			#ref = cursor
-		#else:
-			#ref = None
-		#while ref:
-		##if cursor.referenced:
-			#print(cursor.kind, cursor.type.kind)
-			#print(cursor.referenced.kind, cursor.referenced.type.kind)
-			#if ref.kind == clang.cindex.CursorKind.TYPE_REF:
-				#ref = ref.referenced
-			#else:
-				#ref = None
-		
 		is_struct = False
-		if cursor.type.kind == clang.cindex.TypeKind.POINTER:
-			for c in cursor.get_children():
-				if c.kind == clang.cindex.CursorKind.TYPE_REF:
+		#print(cursor.type.get_canonical().kind)
+		#if (cursor.type.get_canonical().kind == clang.cindex.TypeKind.POINTER or
+		if cursor.type.get_canonical().kind == clang.cindex.TypeKind.RECORD:
+			is_struct = True
+			#print(cursor.canonical.type.spelling)
+			#for c in cursor.get_children():
+				#print(c.kind)
+				#if c.kind == clang.cindex.CursorKind.TYPE_REF:
 					#print(c.referenced.type.kind)
-					#if c.referenced.type.kind == clang.cindex.TypeKind.RECORD:
-						#print(c.referenced.spelling)
-					if c.referenced.kind == clang.cindex.CursorKind.STRUCT_DECL:
-						is_struct = True
+					##if c.referenced.type.kind == clang.cindex.TypeKind.RECORD:
+						##print(c.referenced.spelling)
+					#if c.referenced.kind == clang.cindex.CursorKind.STRUCT_DECL:
+						#is_struct = True
 					
 		
+		typ = cursor.type.get_canonical()
+		#print(typ.get_declaration())
+		#print(cursor.type.kind)
+		
 		print(indent(level) + "di = crtx_alloc_item(dict);")
-		if cursor.type.kind == clang.cindex.TypeKind.POINTER:
-			if type_spelling == "char *":
+		if typ.kind == clang.cindex.TypeKind.POINTER:
+			if typ.spelling.find("char *") > -1:
 				print(indent(level) + "crtx_fill_data_item(di, 's', \""+spelling+"\", ptr->"+spelling+", strlen(value), DIF_DATA_UNALLOCATED);")
 			else:
-				#if cursor.kind == clang.cindex.CursorKind.STRUCT_DECL:
-			#if cursor.kind == clang.cindex.CursorKind.STRUCT_DECL:
-				if is_struct:
+				#print(cursor.type.get_pointee().get_declaration().type.kind)
+				#print(cursor.type.get_pointee().kind)
+				#for c in cursor.get_children():
+					#print(c.type.kind.spelling)
+				#if typ.get_pointee().spelling == "void":
+				if cursor.type.get_pointee().get_declaration().type.kind == clang.cindex.TypeKind.RECORD:
 					print(indent(level) + "crtx_fill_data_item(di, 'd', \""+spelling+"\", 0, 0, 0);")
 				else:
 					print(indent(level) + "crtx_fill_data_item(di, 'p', \""+spelling+"\", ptr->"+spelling+", 0, 0);")
+		elif typ.kind == clang.cindex.TypeKind.ENUM:
+			#print(typ.get_canonical().kind)
+			#print(typ.get_size())
+			print(indent(level) + "crtx_fill_data_item(di, 'I', \""+spelling+"\", ptr->"+spelling+", sizeof(ptr->"+spelling+"), 0);")
+		elif typ.kind == clang.cindex.TypeKind.CONSTANTARRAY:
+			print(indent(level) + "crtx_fill_data_item(di, 'd', \""+spelling+"\", 0, 0, 0);")
+			print(typ.get_array_size())
+			print(typ.get_array_element_type().get_canonical().kind)
+			
+			if typ.get_array_element_type().get_canonical().kind == clang.cindex.TypeKind.ENUM:
+				subtype = "I"
+			else:
+				
+			
+			print("di->ds = crtx_init_dict(0, typ.get_array_size(), 0);")
+			print("")
+			#for i in range(typ.get_array_size()):
+				
 		else:
-			if (type_spelling.find("int") > -1 or 
-				type_spelling.find("long") > -1 or
-				type_spelling.find("char") > -1 or
-				type_spelling.find("short") > -1
+			if (typ.spelling.find("int") > -1 or 
+				typ.spelling.find("long") > -1 or
+				typ.spelling.find("char") > -1 or
+				typ.spelling.find("short") > -1
 				):
-				if cursor.type.get_size() <= 4:
-					if type_spelling.find("unsigned") > -1:
+				if typ.get_size() <= 4:
+					if typ.spelling.find("unsigned") > -1:
 						print(indent(level) + "crtx_fill_data_item(di, 'u', \""+spelling+"\", ptr->"+spelling+", sizeof(ptr->"+spelling+"), 0);")
 					else:
 						print(indent(level) + "crtx_fill_data_item(di, 'i', \""+spelling+"\", ptr->"+spelling+", sizeof(ptr->"+spelling+"), 0);")
-				if cursor.type.get_size() == 8:
-					if type_spelling.find("unsigned") > -1:
+				if typ.get_size() == 8:
+					if typ.spelling.find("unsigned") > -1:
 						print(indent(level) + "crtx_fill_data_item(di, 'U', \""+spelling+"\", ptr->"+spelling+", sizeof(ptr->"+spelling+"), 0);")
 					else:
 						print(indent(level) + "crtx_fill_data_item(di, 'I', \""+spelling+"\", ptr->"+spelling+", sizeof(ptr->"+spelling+"), 0);")
-			elif type_spelling.find("double") > -1 or type_spelling.find("float") > -1:
+			elif typ.spelling.find("double") > -1 or typ.spelling.find("float") > -1:
 				print(indent(level) + "crtx_fill_data_item(di, 'd', \""+spelling+"\", ptr->"+spelling+", sizeof(ptr->"+spelling+"), 0);")
+			elif is_struct:
+			#elif cursor.type.kind == clang.cindex.TypeKind.RECORD:
+				print(indent(level) + "crtx_fill_data_item(di, 'd', \""+spelling+"\", ptr->"+spelling+", 0, 0);")
+				#print(cursor.canonical.referenced.canonical.type.spelling)
+				#print(cursor.canonical.underlying_typedef_type.spelling)
+				#print(cursor.type.get_canonical().get_declaration().spelling)
+				#for c in cursor.type.get_canonical().get_declaration().get_children():
+					#print(c.spelling)
+					#print(c.canonical.type.get_declaration)
+					#print(c.type.get_canonical().get_declaration().spelling)
+					#print(c.canonical.referenced.type.kind)
+				output_cursor_and_children(cursor.type.get_canonical().get_declaration(), level+1)
+			else:
+				
+				#print(cursor.type.get_canonical().spelling)
+				print(typ.kind)
+				
+				for c in cursor.get_children():
+					if c.kind == clang.cindex.CursorKind.TYPE_REF:
+						#print(c.referenced.type.kind)
+						#if c.referenced.type.kind == clang.cindex.TypeKind.RECORD:
+							#print(c.referenced.spelling)
+						print(c.referenced.kind)
+						if c.referenced.kind == clang.cindex.CursorKind.STRUCT_DECL:
+							print(c.kind, c.referenced.kind)
+				
+				st = " "
+				if cursor.type:
+					if cursor.type.kind == clang.cindex.TypeKind.POINTER:
+						st += "myptr "
+					
+					st += cursor.type.spelling+" "
+					st += cursor.type.get_canonical().spelling+" "
+					st += str(cursor.type.get_size())+" "
+				print indent(level) + spelling, '<' + str(kind) + '>'
+				print indent(level+1) + '"'  + displayname + '"' + st
 	
-	#print(cursor.kind.is_reference(), cursor.type.kind, clang.cindex.TypeKind.POINTER)
 	if cursor.kind.is_reference() and cursor.type.kind == clang.cindex.TypeKind.RECORD:
 		if output:
 			print indent(level) + 'reference to:'
@@ -119,7 +172,7 @@ def output_cursor_and_children(cursor, level=0):
 		for c in cursor.get_children():
 			if (not has_children):
 				if output:
-					print indent(level) + '{'
+					print indent(level) + '{' + "\n"+ indent(level+1) + "struct crtx_dict *dict = di->ds; struct crtx_dict_item *di;\n"
 				has_children = True
 			output_cursor_and_children(c, level+1)
 
@@ -144,4 +197,4 @@ while i < len(addition):
 	output_cursor_and_children(tu.cursor)
 	
 	i += 1
-print(addition)
+#print(addition)
