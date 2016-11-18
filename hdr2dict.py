@@ -31,7 +31,7 @@ def type_clang2crtx(typ):
 	else:
 		None
 
-def output_cursor(cursor, level, di):
+def output_cursor(cursor, level, di, prefix=""):
 	global output, struct
 	
 	spelling = ''
@@ -84,10 +84,9 @@ def output_cursor(cursor, level, di):
 		
 		print(indent(level) + di + " = crtx_alloc_item(dict);")
 		
-		
 		if typ.kind == clang.cindex.TypeKind.POINTER:
 			if typ.spelling.find("char *") > -1:
-				print(indent(level) + "crtx_fill_data_item("+di+", 's', \""+spelling+"\", ptr->"+spelling+", strlen(value), DIF_DATA_UNALLOCATED);")
+				print(indent(level) + "crtx_fill_data_item("+di+", 's', \""+spelling+"\", "+prefix+spelling+", strlen("+prefix+spelling+"), DIF_DATA_UNALLOCATED);")
 			else:
 				#print(cursor.type.get_pointee().get_declaration().type.kind)
 				#print(cursor.type.get_pointee().kind)
@@ -96,8 +95,12 @@ def output_cursor(cursor, level, di):
 				#if typ.get_pointee().spelling == "void":
 				if cursor.type.get_pointee().get_declaration().type.kind == clang.cindex.TypeKind.RECORD:
 					print(indent(level) + "crtx_fill_data_item("+di+", 'D', \""+spelling+"\", 0, 0, 0);")
+					
+					prefix = prefix + spelling + "->"
+					
+					output_cursor_and_children(cursor.type.get_pointee().get_declaration(), level+1, di, prefix)
 				else:
-					print(indent(level) + "crtx_fill_data_item("+di+", 'p', \""+spelling+"\", ptr->"+spelling+", 0, 0);")
+					print(indent(level) + "crtx_fill_data_item("+di+", 'p', \""+spelling+"\", "+prefix+spelling+", 0, 0);")
 		#elif typ.kind == clang.cindex.TypeKind.ENUM:
 			##print(typ.get_canonical().kind)
 			##print(typ.get_size())
@@ -119,37 +122,19 @@ def output_cursor(cursor, level, di):
 			for i in range(typ.get_array_size()):
 				#print(indent(level+1) + "di = crtx_alloc_item(di2);")
 				
-				print(indent(level+1) + "crtx_fill_data_item(&"+di+"->ds->items["+str(i)+"], '"+subtype+"', 0, ptr->"+spelling+"["+str(i)+"], sizeof(ptr->"+spelling+"["+str(i)+"), 0);")
+				print(indent(level+1) + "crtx_fill_data_item(&"+di+"->ds->items["+str(i)+"], '"+subtype+"', 0, "+prefix+spelling+"["+str(i)+"], sizeof("+prefix+spelling+"["+str(i)+"]), 0);")
 			print(indent(level) + "}")
 		else:
 			crtx_typ = type_clang2crtx(typ)
 			
 			if crtx_typ in ["u", "U", "i", "I", "d"]:
-				print(indent(level) + "crtx_fill_data_item("+di+", '"+crtx_typ+"', \""+spelling+"\", ptr->"+spelling+", sizeof(ptr->"+spelling+"), 0);")
+				print(indent(level) + "crtx_fill_data_item("+di+", '"+crtx_typ+"', \""+spelling+"\", "+prefix+spelling+", sizeof("+prefix+spelling+"), 0);")
 			
-			#if (typ.spelling.find("int") > -1 or 
-				#typ.spelling.find("long") > -1 or
-				#typ.spelling.find("char") > -1 or
-				#typ.spelling.find("short") > -1
-				#):
-				#if typ.get_size() <= 4:
-					#if typ.spelling.find("unsigned") > -1:
-						#print(indent(level) + "crtx_fill_data_item(di, 'u', \""+spelling+"\", ptr->"+spelling+", sizeof(ptr->"+spelling+"), 0);")
-					#else:
-						#print(indent(level) + "crtx_fill_data_item(di, 'i', \""+spelling+"\", ptr->"+spelling+", sizeof(ptr->"+spelling+"), 0);")
-				#if typ.get_size() == 8:
-					#if typ.spelling.find("unsigned") > -1:
-						#print(indent(level) + "crtx_fill_data_item(di, 'U', \""+spelling+"\", ptr->"+spelling+", sizeof(ptr->"+spelling+"), 0);")
-					#else:
-						#print(indent(level) + "crtx_fill_data_item(di, 'I', \""+spelling+"\", ptr->"+spelling+", sizeof(ptr->"+spelling+"), 0);")
-			#elif typ.spelling.find("double") > -1 or typ.spelling.find("float") > -1:
-				#print(indent(level) + "crtx_fill_data_item(di, 'd', \""+spelling+"\", ptr->"+spelling+", sizeof(ptr->"+spelling+"), 0);")
-			#elif is_struct:
-			##elif cursor.type.kind == clang.cindex.TypeKind.RECORD:
-				#print(indent(level) + "crtx_fill_data_item(di, 'd', \""+spelling+"\", ptr->"+spelling+", 0, 0);")
 			elif crtx_typ == "D":
 				print(indent(level) + "crtx_fill_data_item("+di+", 'D', \""+spelling+"\", 0, 0, 0);")
 				print("")
+				
+				prefix = prefix + spelling + "."
 				
 				output_cursor_and_children(cursor.type.get_canonical().get_declaration(), level+1, di, prefix)
 			else:
@@ -177,27 +162,33 @@ def output_cursor(cursor, level, di):
 				print indent(level) + spelling, '<' + str(kind) + '>'
 				print indent(level+1) + '"'  + displayname + '"' + st
 	
-	if cursor.kind.is_reference() and cursor.type.kind == clang.cindex.TypeKind.RECORD:
-		if output:
-			print indent(level) + 'reference to:'
-		#if cursor.referenced.kind == clang.cindex.CursorKind.STRUCT_DECL: # and cursor.type.kind != clang.cindex.TypeKind.POINTER:
-			#output_cursor_and_children(cursor.referenced, level+1)
-		#else:
-		output_cursor(cursor.referenced, level+1, di, prefix)
+	#if cursor.kind.is_reference() and cursor.type.kind == clang.cindex.TypeKind.RECORD:
+		#if output:
+			#print indent(level) + 'reference to:'
+		##if cursor.referenced.kind == clang.cindex.CursorKind.STRUCT_DECL: # and cursor.type.kind != clang.cindex.TypeKind.POINTER:
+			##output_cursor_and_children(cursor.referenced, level+1)
+		##else:
+		#output_cursor(cursor.referenced, level+1, di, prefix)
 
-def output_cursor_and_children(cursor, level=0, di=None, prefix):
+def output_cursor_and_children(cursor, level=0, di=None, prefix=""):
 	global output, struct
 	
 	if cursor.spelling and cursor.is_definition():
 		if cursor.spelling == struct and cursor.type.kind == clang.cindex.TypeKind.RECORD:
 			output = True
 			print("struct crtx_dict *crtx_"+struct+"2dict(struct "+struct+" *ptr)")
-			prefix = "ptr"
+			prefix = "ptr->"
 	
 	
 	output_cursor(cursor, level, di, prefix)
 	
-	if (cursor.type.kind == clang.cindex.TypeKind.RECORD or
+	if cursor.type.kind == clang.cindex.TypeKind.RECORD and cursor.kind == clang.cindex.CursorKind.UNION_DECL:
+		# TODO
+		pass
+	
+	if (
+		(cursor.type.kind == clang.cindex.TypeKind.RECORD and cursor.kind == clang.cindex.CursorKind.STRUCT_DECL)
+			or
 		cursor.kind == clang.cindex.CursorKind.TRANSLATION_UNIT):
 		
 		has_children = False;
@@ -239,6 +230,7 @@ tu = index.parse(sys.argv[1], options=1)
 addition = [sys.argv[2]]
 output = False
 
+print("#include <string.h>")
 print("#include \""+sys.argv[1]+"\"\n")
 print("#include \"dict.h\"\n")
 
