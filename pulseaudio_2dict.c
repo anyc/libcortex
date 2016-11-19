@@ -170,7 +170,7 @@ char crtx_pa_sink_input_info2dict(struct pa_sink_input_info *ptr, struct crtx_di
 	di = crtx_alloc_item(dict);
 // 	crtx_fill_data_item(di, 'p', "proplist", ptr->proplist, 0, DIF_DATA_UNALLOCATED);
 	crtx_fill_data_item(di, 'D', "proplist", 0, 0, 0);
-	crtx_pa_prop2dict(ptr->proplist, &di->ds);
+	crtx_pa_proplist2dict(ptr->proplist, &di->ds);
 
 	di = crtx_alloc_item(dict);
 	crtx_fill_data_item(di, 'i', "corked", ptr->corked, sizeof(ptr->corked), 0);
@@ -194,7 +194,7 @@ char crtx_pa_sink_input_info2dict(struct pa_sink_input_info *ptr, struct crtx_di
 		di2 = crtx_alloc_item(dict);
 // 		crtx_fill_data_item(di2, 'p', "plist", ptr->format->plist, 0, DIF_DATA_UNALLOCATED);
 		crtx_fill_data_item(di2, 'D', "plist", 0, 0, 0);
-		crtx_pa_prop2dict(ptr->format->plist, &di2->ds);
+		crtx_pa_proplist2dict(ptr->format->plist, &di2->ds);
 	}
 	
 	
