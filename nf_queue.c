@@ -120,7 +120,7 @@ static void nfq_raw2dict(struct crtx_event_data *data) {
 	
 	{
 		slen = 0;
-		crtx_fill_data_item(di, 's', "src_ip", stracpy(inet_ntoa(*(struct in_addr *)&iph->saddr), &slen), slen, 0); di++;
+		crtx_fill_data_item(di, 's', "src_ip", crtx_stracpy(inet_ntoa(*(struct in_addr *)&iph->saddr), &slen), slen, 0); di++;
 		
 		sa.sin_addr = *(struct in_addr *)&iph->saddr;
 		res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, NI_NAMEREQD);
@@ -131,12 +131,12 @@ static void nfq_raw2dict(struct crtx_event_data *data) {
 		}
 		
 		slen = strlen(host);
-		crtx_fill_data_item(di, 's', "src_hostname", stracpy(host, &slen), slen, 0); di++;
+		crtx_fill_data_item(di, 's', "src_hostname", crtx_stracpy(host, &slen), slen, 0); di++;
 	}
 	
 	{
 		slen = 0;
-		crtx_fill_data_item(di, 's', "dst_ip", stracpy(inet_ntoa(*(struct in_addr *)&iph->daddr), &slen), slen, 0); di++;
+		crtx_fill_data_item(di, 's', "dst_ip", crtx_stracpy(inet_ntoa(*(struct in_addr *)&iph->daddr), &slen), slen, 0); di++;
 		
 		sa.sin_addr = *(struct in_addr *)&iph->daddr;
 		res = getnameinfo((struct sockaddr*) &sa, sizeof(struct sockaddr), host, 64, 0, 0, NI_NAMEREQD);
@@ -147,7 +147,7 @@ static void nfq_raw2dict(struct crtx_event_data *data) {
 		}
 		
 		slen = strlen(host);
-		crtx_fill_data_item(di, 's', "dst_hostname", stracpy(host, &slen), slen, 0); di++;
+		crtx_fill_data_item(di, 's', "dst_hostname", crtx_stracpy(host, &slen), slen, 0); di++;
 	}
 	
 	crtx_fill_data_item(di, 'D', "payload", 0, 0, DIF_LAST);

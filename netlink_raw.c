@@ -110,7 +110,7 @@ static struct crtx_dict *crtx_netlink_raw_raw2dict_addr(struct crtx_netlink_raw_
 				s = (char*) RTA_DATA(rth);
 				
 				slen = strlen(s);
-				crtx_fill_data_item(di, 's', "interface", stracpy(s, &slen), slen, 0);
+				crtx_fill_data_item(di, 's', "interface", crtx_stracpy(s, &slen), slen, 0);
 				got_ifname = 1;
 				break;
 			
@@ -162,7 +162,7 @@ static struct crtx_dict *crtx_netlink_raw_raw2dict_addr(struct crtx_netlink_raw_
 					}
 					
 					slen = strlen(s);
-					crtx_fill_data_item(di, 's', key, stracpy(s, &slen), slen, 0);
+					crtx_fill_data_item(di, 's', key, crtx_stracpy(s, &slen), slen, 0);
 				}
 				
 				break;
@@ -244,7 +244,7 @@ static struct crtx_dict *crtx_netlink_raw_raw2dict_addr(struct crtx_netlink_raw_
 		
 		if_indextoname(ifa->ifa_index, ifname);
 		slen = strlen(ifname);
-		crtx_fill_data_item(di, 's', "interface", stracpy(ifname, &slen), slen, 0);
+		crtx_fill_data_item(di, 's', "interface", crtx_stracpy(ifname, &slen), slen, 0);
 	}
 	
 	di->flags |= DIF_LAST;
@@ -351,7 +351,7 @@ struct crtx_dict *crtx_netlink_raw_raw2dict_if(struct crtx_netlink_raw_listener 
 				s = (char*) RTA_DATA(rth);
 				
 				slen = strlen(s);
-				crtx_fill_data_item(di, 's', "interface", stracpy(s, &slen), slen, 0);
+				crtx_fill_data_item(di, 's', "interface", crtx_stracpy(s, &slen), slen, 0);
 				break;
 				
 			case IFLA_MTU:
@@ -370,7 +370,7 @@ struct crtx_dict *crtx_netlink_raw_raw2dict_if(struct crtx_netlink_raw_listener 
 				slen = strlen(s);
 				
 				di = crtx_alloc_item(dict);
-				crtx_fill_data_item(di, 's', "qdisc", stracpy(s, &slen), slen, 0);
+				crtx_fill_data_item(di, 's', "qdisc", crtx_stracpy(s, &slen), slen, 0);
 				break;
 			
 			case IFLA_STATS:
@@ -628,7 +628,7 @@ static char crtx_get_own_ip_addresses_keygen(struct crtx_event *event, struct cr
 	
 	key->key = 0;
 	key->type = 's';
-	key->string = stracpy(di->string, 0);
+	key->string = crtx_stracpy(di->string, 0);
 	if (!key->string)
 		return 0;
 	key->flags |= DIF_KEY_ALLOCATED;

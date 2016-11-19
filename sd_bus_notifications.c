@@ -129,7 +129,7 @@ static char notification_signal_handler(struct crtx_event *event, void *userdata
 	for (it=wait_list; it; it = it->next) {
 		if (it->id == id) {
 			if (s)
-				it->answer = stracpy(s, 0);
+				it->answer = crtx_stracpy(s, 0);
 			else
 				it->answer = 0;
 			

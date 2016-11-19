@@ -33,7 +33,7 @@ void inspect_primitive(json_object *jobj, struct crtx_dict_item *ditem){
 		case json_type_string: 
 			ditem->type = 's';
 			ditem->size = 0;
-			ditem->string = stracpy(json_object_get_string(jobj), &ditem->size);
+			ditem->string = crtx_stracpy(json_object_get_string(jobj), &ditem->size);
 			ditem->size++;
 			break;
 		default:break;
@@ -83,7 +83,7 @@ static void inspect_obj(json_object * jobj, struct crtx_dict *dict) {
 		
 		if (key) {
 			ditem->flags = DIF_KEY_ALLOCATED;
-			ditem->key = stracpy(key, 0);
+			ditem->key = crtx_stracpy(key, 0);
 		}
 		
 		switch (type) {

@@ -112,7 +112,7 @@ static void pfw_update_ip_entry(struct crtx_cache_task *ct, struct crtx_dict_ite
 		if (key->string)
 			free(key->string);
 		
-		key->string = stracpy(s, &size);
+		key->string = crtx_stracpy(s, &size);
 		
 		if (res->ai_next) {
 // 			INFO("TODO multiple resolved IPs per host %s (%s)\n", hostname->string, key->string);
@@ -186,7 +186,7 @@ static char pfw_rcache_create_key_ip(struct crtx_event *event, struct crtx_dict_
 	pfw_get_remote_part(ds, &remote_ip, &remote_host);
 	
 	key->type = 's';
-	key->string = stracpy(remote_ip, 0);
+	key->string = crtx_stracpy(remote_ip, 0);
 	if (!key->string)
 		return 0;
 	key->flags |= DIF_KEY_ALLOCATED;
@@ -210,7 +210,7 @@ static char pfw_rcache_create_key_hostname(struct crtx_event *event, struct crtx
 		return 0;
 	
 	key->type = 's';
-	key->string = stracpy(remote_host, 0);
+	key->string = crtx_stracpy(remote_host, 0);
 	if (!key->string)
 		return 0;
 	key->flags |= DIF_KEY_ALLOCATED;

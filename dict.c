@@ -31,8 +31,11 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 			di->uint32 = va_arg(va, uint32_t);
 			
 			di->size = va_arg(va, size_t);
-			if (di->size > 0 && di->size != sizeof(uint32_t)) {
-				ERROR("crtx size mismatch for key %s type %c: %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint32_t));
+// 			if (di->size > 0 && di->size != sizeof(uint32_t)) {
+			
+			// TODO smaller types are promoted to int
+			if (di->size > 0 && di->size > sizeof(uint32_t)) {
+				ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint32_t));
 				return 0;
 			}
 			break;
@@ -42,7 +45,7 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 			
 			di->size = va_arg(va, size_t);
 			if (di->size > 0 && di->size != sizeof(uint64_t)) {
-				ERROR("crtx size mismatch for key %s type %c: %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint64_t));
+				ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint64_t));
 				return 0;
 			}
 			break;
@@ -51,7 +54,7 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 			
 			di->size = va_arg(va, size_t);
 			if (di->size > 0 && di->size != sizeof(double)) {
-				ERROR("crtx size mismatch for key %s type %c: %zu expected: %zu\n", di->key, di->type, di->size, sizeof(double));
+				ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(double));
 				return 0;
 			}
 			break;
@@ -78,6 +81,7 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 	
 	if ((di->flags & DIF_COPY_STRING) && di->type == 's') {
 		di->string = crtx_stracpy(di->string, &di->size);
+		di->size += 1; // add space for \0 delimiter
 	}
 	
 	return 0;
@@ -102,21 +106,24 @@ char crtx_resize_dict(struct crtx_dict *dict, size_t n_items) {
 		return 1;
 	}
 	
-	if (dict->size && dict->size != dict->signature_length*sizeof(struct crtx_dict_item)) {
-		ERROR("TODO handle payload in crtx_resize_dict\n");
+	if (dict->size && dict->size != sizeof(struct crtx_dict)+dict->signature_length*sizeof(struct crtx_dict_item)) {
+		ERROR("TODO handle payload in crtx_resize_dict (%zu != %zu)\n", dict->size, sizeof(struct crtx_dict)+dict->signature_length*sizeof(struct crtx_dict_item));
 	}
 	
 	dict->items = (struct crtx_dict_item*) realloc(dict->items, n_items*sizeof(struct crtx_dict_item));
 	
-	memset(&dict->items[dict->signature_length-1], 0, sizeof(struct crtx_dict_item) * (n_items - dict->signature_length));
+	if (dict->signature_length > 0)
+		memset(&dict->items[dict->signature_length], 0, sizeof(struct crtx_dict_item) * (n_items - dict->signature_length));
 	
 	// clear "last" flag
 	if (dict->signature_length > 0)
 		dict->items[dict->signature_length-1].flags &= ~((char)DIF_LAST);
 	dict->items[n_items-1].flags = DIF_LAST;
 	
-	dict->signature = (char*) realloc(dict->signature, n_items+1);
+	if (dict->signature)
+		dict->signature = (char*) realloc(dict->signature, n_items+1);
 	dict->signature_length = n_items;
+	dict->size = sizeof(struct crtx_dict)+dict->signature_length*sizeof(struct crtx_dict_item);
 	
 	// TODO payload
 	// 	return (struct crtx_dict_item *) ((char*)dict) + dict->size - sizeof(struct crtx_dict_item);
@@ -139,7 +146,7 @@ struct crtx_dict_item * crtx_alloc_item(struct crtx_dict *dict) {
 	
 	crtx_resize_dict(dict, dict->signature_length+1);
 	
-	return dict->items[dict->signature_length-1];
+	return &dict->items[dict->signature_length-1];
 }
 
 struct crtx_dict * crtx_init_dict(char *signature, uint32_t sign_length, size_t payload_size) {
@@ -237,7 +244,7 @@ int crtx_append_to_dict(struct crtx_dict **dictionary, char *signature, ...) {
 	
 	va_end(va);
 	
-	return dict;
+	return 0;
 }
 
 
@@ -338,7 +345,7 @@ void crtx_print_dict_item(struct crtx_dict_item *di, unsigned char level) {
 			else
 				INFO("(null)");
 			break;
-		default: ERROR("print_dict: unknown type %c", di->type); break;
+		default: ERROR("print_dict: unknown type '%c'", di->type); break;
 	}
 	
 }
@@ -359,6 +366,7 @@ void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level) {
 	i=0;
 	s = ds->signature;
 	di = ds->items;
+
 	while ( s?*s:1 && (!s)? i<ds->signature_length:1 ) {
 		for (j=0;j<level;j++) INFO("   "); // indent
 		
@@ -1026,7 +1034,7 @@ void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src,
 			break;
 		case 's':
 // 			if ( !(src->flags & DIF_DATA_UNALLOCATED) )
-				dst->string = stracpy(src->string, 0);
+				dst->string = crtx_stracpy(src->string, 0);
 			break;
 		case 'p':
 // 			if ( !(src->flags & DIF_DATA_UNALLOCATED) ) {
@@ -1058,7 +1066,7 @@ void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src,
 		
 		if (src->key) {
 			if (src->flags & DIF_KEY_ALLOCATED)
-				dst->key = stracpy(src->key, 0);
+				dst->key = crtx_stracpy(src->key, 0);
 			else
 				dst->key = src->key;
 		}

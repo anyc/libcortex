@@ -149,7 +149,7 @@ void inotify_to_dict(struct crtx_event_data *data) {
 					"mask", mask_dict, mask_dict->size, 0,
 					"cookie", iev->cookie, sizeof(uint32_t), 0,
 					"len", iev->len, sizeof(uint32_t), 0,
-					"name", stracpy(iev->name, &len), len, 0
+					"name", crtx_stracpy(iev->name, &len), len, 0
 				);
 }
 

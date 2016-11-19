@@ -3,8 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <pulse/introspect.h>
 
 #include "pulseaudio.h"
+
+
+#include "pulseaudio_2dict.c"
 
 char *crtx_pa_msg_etype[] = { "pulseaudio/event", 0 };
 
@@ -13,47 +17,43 @@ char *crtx_pa_subscription_etypes[] = {
 };
 
 
-char crtx_pa_raw2dict_sink_input(struct crtx_dict **dictionary, pa_sink_input_info *info) {
-	struct crtx_dict *dict;
-	struct crtx_dict_item *di, *sdi;
-	char **a;
-	
-	if (!dictionary)
-		return 1;
-	
-	if (*dictionary) {
-		dict = *dictionary;
-	} else {
-		dict = crtx_init_dict(0, 0, 0);
-		*dictionary = dict;
-	}
-	
-	// store info->name as dict payload?
-	crtx_append_to_dict(&dict, "us",
-			"index", info->index, sizeof(info->index), 0,
-			"name", info->name, 0, DIF_COPY_STRING,
-			"owner_module", info->owner_module, sizeof(info->owner_module), 0,
-			"client", info->client, sizeof(info->client), 0,
-			"sink", info->sink, sizeof(info->sink), 0,
-			// sample_spec
-			// channel map
-			// volume
-			// buffer_usec
-			// sink_usec
-			"resample_method", info->resample_method, 0, DIF_COPY_STRING,
-			"driver", info->driver, 0, DIF_COPY_STRING,
-			"mute", info->mute, sizeof(info->mute), 0,
-			// proplist
-			"corked", info->corked, sizeof(info->corked), 0,
-			"has_volume", info->has_volume, sizeof(info->has_volume), 0,
-			"volume_writable", info->volume_writable, sizeof(info->volume_writable), 0,
-			// format
-		);
-	
-	
-	
-	
-	
+// char crtx_pa_raw2dict_sink_input(struct crtx_dict **dictionary, pa_sink_input_info *info) {
+// 	struct crtx_dict *dict;
+// 	struct crtx_dict_item *di, *sdi;
+// 	char **a;
+// 	
+// 	if (!dictionary)
+// 		return 1;
+// 	
+// 	if (*dictionary) {
+// 		dict = *dictionary;
+// 	} else {
+// 		dict = crtx_init_dict(0, 0, 0);
+// 		*dictionary = dict;
+// 	}
+// 	
+// 	// store info->name as dict payload?
+// 	crtx_append_to_dict(&dict, "us",
+// 			"index", info->index, sizeof(info->index), 0,
+// 			"name", info->name, 0, DIF_COPY_STRING,
+// 			"owner_module", info->owner_module, sizeof(info->owner_module), 0,
+// 			"client", info->client, sizeof(info->client), 0,
+// 			"sink", info->sink, sizeof(info->sink), 0,
+// 			// sample_spec
+// 			// channel map
+// 			// volume
+// 			// buffer_usec
+// 			// sink_usec
+// 			"resample_method", info->resample_method, 0, DIF_COPY_STRING,
+// 			"driver", info->driver, 0, DIF_COPY_STRING,
+// 			"mute", info->mute, sizeof(info->mute), 0,
+// 			// proplist
+// 			"corked", info->corked, sizeof(info->corked), 0,
+// 			"has_volume", info->has_volume, sizeof(info->has_volume), 0,
+// 			"volume_writable", info->volume_writable, sizeof(info->volume_writable), 0,
+// 			// format
+// 		);
+// 		
 // 	// get only requested or all attributes
 // 	if (r2ds && (r2ds->subsystem || r2ds->device_type)) {
 // 		i = r2ds;
@@ -104,21 +104,22 @@ char crtx_pa_raw2dict_sink_input(struct crtx_dict **dictionary, pa_sink_input_in
 // 				crtx_fill_data_item(di, 's', key, value, strlen(value), DIF_DATA_UNALLOCATED);
 // 		}
 // 	}
-	
-	return 0;
-}
+// 	
+// 	return 0;
+// }
 
 
 struct generic_callback_helper {
 	enum pa_subscription_event_type type;
-	struct crtx_pa_listener palist;
+	struct crtx_pa_listener *palist;
 	uint32_t index;
 };
 
 void generic_callback(pa_context *c, void *info, int eol, void *userdata) {
 	struct generic_callback_helper *helper;
 	struct crtx_event *nevent;
-	struct crtx_dict_item *di
+	struct crtx_dict_item *di;
+	pa_subscription_event_type_t ev_op;
 	
 	
 	helper = (struct generic_callback_helper *) userdata;
@@ -146,7 +147,9 @@ void generic_callback(pa_context *c, void *info, int eol, void *userdata) {
 	nevent->data.dict = crtx_init_dict(0, 0, 0);
 
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_alloc_item(nevent->data.dict);
+	
+	ev_op = helper->type & PA_SUBSCRIPTION_EVENT_TYPE_MASK;
 	
 	if (ev_op == PA_SUBSCRIPTION_EVENT_REMOVE) {
 		crtx_fill_data_item(di, 's', "operation", "remove", strlen("remove"), DIF_DATA_UNALLOCATED);
@@ -159,13 +162,14 @@ void generic_callback(pa_context *c, void *info, int eol, void *userdata) {
 		switch ((helper->type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK)) {
 			case PA_SUBSCRIPTION_EVENT_SINK_INPUT:
 				if (ev_op == PA_SUBSCRIPTION_EVENT_NEW) {
-					crtx_pa_raw2dict_sink_input(&nevent->data.dict, (pa_sink_input_info*) info);
+// 					crtx_pa_raw2dict_sink_input(&nevent->data.dict, (pa_sink_input_info*) info);
+					crtx_pa_sink_input_info2dict(info, &nevent->data.dict);
 				};
 				break;
 		}
 	}
 	
-	add_event(ulist->parent.graph, nevent);
+	add_event(helper->palist->parent.graph, nevent);
 }
 
 static void pa_subscription_callback(pa_context *c, pa_subscription_event_type_t t, uint32_t index, void *userdata) {
@@ -198,7 +202,7 @@ static void pa_subscription_callback(pa_context *c, pa_subscription_event_type_t
 	switch ((t & PA_SUBSCRIPTION_EVENT_FACILITY_MASK)) {
 		case PA_SUBSCRIPTION_EVENT_CARD:
 // 			if (ev_op == PA_SUBSCRIPTION_EVENT_NEW) {
-				op = pa_context_get_card_info(palist->context, index, (pa_card_info_cb_t) &generic_callback, helper);
+				op = pa_context_get_card_info_by_index(palist->context, index, (pa_card_info_cb_t) &generic_callback, helper);
 				if (!op) {
 					printf("error pa_context_get_card_info_list\n");
 				}
@@ -208,7 +212,7 @@ static void pa_subscription_callback(pa_context *c, pa_subscription_event_type_t
 		
 		case PA_SUBSCRIPTION_EVENT_SOURCE:
 // 			if (ev_op == PA_SUBSCRIPTION_EVENT_NEW) {
-				op = pa_context_get_source_info(palist->context, index, (pa_source_info_cb_t) &generic_callback, helper);
+				op = pa_context_get_source_info_by_index(palist->context, index, (pa_source_info_cb_t) &generic_callback, helper);
 				if (!op) {
 					printf("error pa_context_get_source_info_list\n");
 				}
@@ -341,9 +345,9 @@ static char pa_test_handler(struct crtx_event *event, void *userdata, void **ses
 	
 // 	palist = (struct crtx_pa_listener *) event->origin;
 	
-	sd_bus_message *m = event->data.raw.pointer;
-	sd_bus_print_msg(m);
-// 	crtx_print_dict(dict);
+// 	sd_bus_message *m = event->data.raw.pointer;
+// 	sd_bus_print_msg(m);
+	crtx_print_dict(event->data.dict);
 	
 // 	crtx_free_dict(dict);
 	

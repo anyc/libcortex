@@ -61,7 +61,6 @@ tests: libcrtx.so $(TESTS)
 	rm -f $(<:.c=.o)
 # 	LD_LIBRARY_PATH=. ./$@ > /dev/null
 
-
 # timer.test: CFLAGS+=-DCRTX_TEST
 # timer.test: timer.o
 

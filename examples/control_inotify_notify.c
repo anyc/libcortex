@@ -36,7 +36,7 @@ static void send_notification(char *msg) {
 	msg_len = 0;
 	data = crtx_create_dict("ss",
 			"title", "Inotify", strlen("Inotify"), DIF_DATA_UNALLOCATED,
-			"message", stracpy(msg, &msg_len), msg_len, 0
+			"message", crtx_stracpy(msg, &msg_len), msg_len, 0
 			);
 	notif_event->data.dict = data;
 	

@@ -28,6 +28,8 @@ struct crtx_dict_item {
 	char type;
 	
 	union {
+// 		uint8_t uint8; // c
+// 		int8_t int8; // C
 		uint32_t uint32; // u
 		int32_t int32; // i
 		uint64_t uint64; // U
@@ -98,4 +100,5 @@ void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src,
 char crtx_get_item_value(struct crtx_dict_item *di, char type,  void *buffer, size_t buffer_size);
 
 char crtx_resize_dict(struct crtx_dict *dict, size_t n_items);
+int crtx_append_to_dict(struct crtx_dict **dictionary, char *signature, ...);
 #endif

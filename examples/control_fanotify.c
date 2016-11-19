@@ -83,8 +83,8 @@ static char fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 		title_len = strlen(title);
 		buf_len = strlen(buf);
 		data = crtx_create_dict("ssD",
-			"title", stracpy(title, &title_len), title_len, 0,
-			"message", stracpy(buf, &buf_len), buf_len, 0,
+			"title", crtx_stracpy(title, &title_len), title_len, 0,
+			"message", crtx_stracpy(buf, &buf_len), buf_len, 0,
 			"actions", actions_dict, 0, 0
 			);
 		
