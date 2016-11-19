@@ -80,6 +80,7 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 	di->flags = va_arg(va, int);
 	
 	if ((di->flags & DIF_COPY_STRING) && di->type == 's') {
+		di->size = 0;
 		di->string = crtx_stracpy(di->string, &di->size);
 		di->size += 1; // add space for \0 delimiter
 	}

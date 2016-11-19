@@ -8,6 +8,30 @@
 #include "pulseaudio.h"
 
 
+char crtx_pa_prop2dict(pa_proplist *props, struct crtx_dict **dict_ptr) {
+	const char *key, *value;
+	void *iter;
+	struct crtx_dict_item *di;
+	
+	if (! *dict_ptr)
+		*dict_ptr = crtx_init_dict(0, 0, 0);
+	
+	iter = 0;
+	while (1) {
+		key = pa_proplist_iterate(props, &iter);
+		if (!key)
+			break;
+		
+		value = pa_proplist_gets(props, key);
+		if (value) {
+			di = crtx_alloc_item(*dict_ptr);
+			crtx_fill_data_item(di, 's', crtx_stracpy(key, 0), value, 0, DIF_KEY_ALLOCATED | DIF_COPY_STRING);
+		}
+	}
+	
+	return 0;
+}
+
 #include "pulseaudio_2dict.c"
 
 char *crtx_pa_msg_etype[] = { "pulseaudio/event", 0 };
@@ -15,98 +39,6 @@ char *crtx_pa_msg_etype[] = { "pulseaudio/event", 0 };
 char *crtx_pa_subscription_etypes[] = {
 	[PA_SUBSCRIPTION_EVENT_SINK_INPUT] = "pulseaudio/sink_input",
 };
-
-
-// char crtx_pa_raw2dict_sink_input(struct crtx_dict **dictionary, pa_sink_input_info *info) {
-// 	struct crtx_dict *dict;
-// 	struct crtx_dict_item *di, *sdi;
-// 	char **a;
-// 	
-// 	if (!dictionary)
-// 		return 1;
-// 	
-// 	if (*dictionary) {
-// 		dict = *dictionary;
-// 	} else {
-// 		dict = crtx_init_dict(0, 0, 0);
-// 		*dictionary = dict;
-// 	}
-// 	
-// 	// store info->name as dict payload?
-// 	crtx_append_to_dict(&dict, "us",
-// 			"index", info->index, sizeof(info->index), 0,
-// 			"name", info->name, 0, DIF_COPY_STRING,
-// 			"owner_module", info->owner_module, sizeof(info->owner_module), 0,
-// 			"client", info->client, sizeof(info->client), 0,
-// 			"sink", info->sink, sizeof(info->sink), 0,
-// 			// sample_spec
-// 			// channel map
-// 			// volume
-// 			// buffer_usec
-// 			// sink_usec
-// 			"resample_method", info->resample_method, 0, DIF_COPY_STRING,
-// 			"driver", info->driver, 0, DIF_COPY_STRING,
-// 			"mute", info->mute, sizeof(info->mute), 0,
-// 			// proplist
-// 			"corked", info->corked, sizeof(info->corked), 0,
-// 			"has_volume", info->has_volume, sizeof(info->has_volume), 0,
-// 			"volume_writable", info->volume_writable, sizeof(info->volume_writable), 0,
-// 			// format
-// 		);
-// 		
-// 	// get only requested or all attributes
-// 	if (r2ds && (r2ds->subsystem || r2ds->device_type)) {
-// 		i = r2ds;
-// 		while (i->subsystem || i->device_type) {
-// 			subsystem = udev_device_get_subsystem(dev);
-// 			device_type = udev_device_get_devtype(dev);
-// 			
-// 			if (strcmp(subsystem, i->subsystem) || strcmp(device_type, i->device_type)) {
-// 				new_dev = udev_device_get_parent_with_subsystem_devtype(dev, i->subsystem, i->device_type);
-// 				
-// 				if (new_dev)
-// 					dev = new_dev;
-// 				else
-// 					continue;
-// 			}
-// 			
-// 			di = crtx_alloc_item(dict);
-// 			di->type = 'D';
-// 			
-// 			di->key = malloc( (i->subsystem?strlen(i->subsystem):0) + 1 + (i->device_type?strlen(i->device_type):0) + 1);
-// 			sprintf(di->key, "%s-%s", i->subsystem?i->subsystem:"", i->device_type?i->device_type:"");
-// 			di->flags |= DIF_KEY_ALLOCATED;
-// 			di->ds = crtx_init_dict(0, 0, 0);
-// 			
-// 			a = i->attributes;
-// 			while (*a) {
-// 				value = udev_device_get_sysattr_value(dev, *a);
-// 				if (value) {
-// 					sdi = crtx_alloc_item(di->ds);
-// 					crtx_fill_data_item(sdi, 's', *a, value, strlen(value), DIF_DATA_UNALLOCATED);
-// 				}
-// 				
-// 				a++;
-// 			}
-// 			
-// 			i++;
-// 		}
-// 	} else {
-// 		struct udev_list_entry *entry;
-// 		const char *key;
-// 		
-// 		udev_list_entry_foreach(entry, udev_device_get_properties_list_entry(dev)) {
-// 			key = udev_list_entry_get_name(entry);
-// 			value = udev_list_entry_get_value(entry);
-// 			
-// 			di = crtx_alloc_item(dict);
-// 			if (value)
-// 				crtx_fill_data_item(di, 's', key, value, strlen(value), DIF_DATA_UNALLOCATED);
-// 		}
-// 	}
-// 	
-// 	return 0;
-// }
 
 
 struct generic_callback_helper {

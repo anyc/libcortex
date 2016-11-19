@@ -60,12 +60,18 @@ def output_cursor(cursor, level, di, prefix=""):
 				print(indent(level) + "crtx_fill_data_item("+di+", 's', \""+spelling+"\", "+prefix+spelling+", strlen("+prefix+spelling+"), DIF_DATA_UNALLOCATED);")
 				#print(indent(level) + "crtx_fill_data_item("+di+", 's', \""+spelling+"\", "+prefix+spelling+", 0, DIF_COPY_STRING);")
 			else:
-				if cursor.type.get_pointee().get_declaration().type.kind == clang.cindex.TypeKind.RECORD:
+				#print(cursor.spelling, cursor.type.get_pointee().get_canonical().get_declaration().type.kind)
+				has_children = False
+				for c in cursor.type.get_pointee().get_canonical().get_declaration().get_children():
+					has_children = True
+					break
+				
+				if has_children and cursor.type.get_pointee().get_canonical().get_declaration().type.kind == clang.cindex.TypeKind.RECORD:
 					print(indent(level) + "crtx_fill_data_item("+di+", 'D', \""+spelling+"\", 0, 0, 0);")
 					
 					prefix = prefix + spelling + "->"
 					
-					output_cursor_and_children(cursor.type.get_pointee().get_declaration(), level, di, prefix)
+					output_cursor_and_children(cursor.type.get_pointee().get_canonical().get_declaration(), level, di, prefix)
 				else:
 					print(indent(level) + "crtx_fill_data_item("+di+", 'p', \""+spelling+"\", "+prefix+spelling+", 0, DIF_DATA_UNALLOCATED);")
 		elif typ.kind == clang.cindex.TypeKind.CONSTANTARRAY:
