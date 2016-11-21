@@ -28,11 +28,14 @@ int crtx_epoll_add_fd_intern(struct crtx_epoll_listener *epl, int fd, struct epo
 int crtx_epoll_del_fd_intern(struct crtx_epoll_listener *epl, int fd) {
 	int ret;
 	
+	if (epl->stop)
+		return 0;
+	
 	ret = epoll_ctl(epl->epoll_fd, EPOLL_CTL_DEL, fd, 0);
 	if (ret < 0) {
 		ERROR("epoll_ctl del failed for fd %d: %s\n", fd, strerror(errno));
 		
-		return 0;
+		return ret;
 	}
 	
 	return 0;
@@ -150,6 +153,8 @@ void *crtx_epoll_main(void *data) {
 				// TODO we call the event handler directly as walking through the event graph
 				// only causes additional processing overhead in most cases
 				el_payload->event_handler(event, 0, 0);
+				free_event(event);
+				
 				
 				// TODO if this is called, either create individual graph per fd or ensure
 				// the event handlers check if the event is meant for them

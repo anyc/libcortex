@@ -42,6 +42,7 @@ struct crtx_root *crtx_root = &crtx_global_root;
 
 struct crtx_module static_modules[] = {
 	{"threads", &crtx_threads_init, &crtx_threads_finish},
+	{"controls", &crtx_controls_init, &crtx_controls_finish},
 	{"signals", &crtx_signals_init, &crtx_signals_finish},
 	{"socket", &crtx_socket_init, &crtx_socket_finish},
 #ifdef STATIC_SD_BUS
@@ -54,7 +55,6 @@ struct crtx_module static_modules[] = {
 	{"readline", &crtx_readline_init, &crtx_readline_finish},
 	{"fanotify", &crtx_fanotify_init, &crtx_fanotify_finish},
 	{"inotify", &crtx_inotify_init, &crtx_inotify_finish},
-	{"controls", &crtx_controls_init, &crtx_controls_finish},
 	{"netlink_raw", &crtx_netlink_raw_init, &crtx_netlink_raw_finish},
 	{"netlink_ge", &crtx_netlink_ge_init, &crtx_netlink_ge_finish},
 	{"epoll", &crtx_epoll_init, &crtx_epoll_finish},
@@ -922,8 +922,10 @@ void crtx_finish() {
 	
 	// stop threads first
 	static_modules[0].finish();
+	// stop controls second
+	static_modules[1].finish();
 	
-	while (i > 0) {
+	while (i > 1) {
 		DBG("finish \"%s\"\n", static_modules[i].id);
 		
 		static_modules[i].finish();

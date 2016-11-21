@@ -20,8 +20,8 @@ void send_event(struct crtx_evdev_listener *el, struct input_event *ev, char syn
 	new_ev = (struct input_event *) malloc(sizeof(struct input_event));
 	memcpy(new_ev, ev, sizeof(struct input_event));
 	
-	event = create_event(EVDEV_MSG_ETYPE, new_ev, sizeof(struct input_event));
-	event->data.raw.flags |= DIF_DATA_UNALLOCATED;
+	event = create_event(EVDEV_MSG_ETYPE, ev, sizeof(struct input_event));
+// 	event->data.raw.flags |= DIF_DATA_UNALLOCATED;
 	
 // 	reference_event_release(event);
 	
