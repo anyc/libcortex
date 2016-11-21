@@ -146,7 +146,7 @@ static char udev_fd_event_handler(struct crtx_event *event, void *userdata, void
 		
 // 		udev_device_unref(dev);
 	} else {
-		printf("No Device from receive_device(). An error occured.\n");
+		DBG("udev_monitor_receive_device returned no device\n");
 	}
 	
 	return 0;

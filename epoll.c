@@ -50,7 +50,7 @@ void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 	
 	epl = (struct crtx_epoll_listener *) lbase;
 	
-	crtx_create_task(lbase->graph, 0, el_payload->event_handler_name, el_payload->event_handler, 0);
+// 	crtx_create_task(lbase->graph, 0, el_payload->event_handler_name, el_payload->event_handler, 0);
 	
 	crtx_epoll_add_fd_intern(epl, el_payload->fd, event);
 }
@@ -81,7 +81,7 @@ void *crtx_epoll_main(void *data) {
 	struct crtx_event *event;
 	struct epoll_control_pipe ecp;
 	
-	printf("epoll main %p\n", data);
+// 	printf("epoll main %p\n", data);
 	epl = (struct crtx_epoll_listener*) data;
 	
 // 	for (i=0; i < epl->n_events; i++) {
@@ -137,8 +137,6 @@ void *crtx_epoll_main(void *data) {
 				
 				if (ecp.graph)
 					crtx_process_graph_tmain(ecp.graph);
-				
-// 				continue;
 			} else {
 				el_payload = (struct crtx_event_loop_payload* ) rec_events[i].data.ptr;
 				
@@ -149,7 +147,13 @@ void *crtx_epoll_main(void *data) {
 				event->data.raw.type = 'p';
 				event->data.raw.flags = DIF_DATA_UNALLOCATED;
 				
-				add_event(epl->parent.graph, event);
+				// TODO we call the event handler directly as walking through the event graph
+				// only causes additional processing overhead in most cases
+				el_payload->event_handler(event, 0, 0);
+				
+				// TODO if this is called, either create individual graph per fd or ensure
+				// the event handlers check if the event is meant for them
+// 				add_event(epl->parent.graph, event);
 			}
 		}
 		
