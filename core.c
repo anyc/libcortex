@@ -156,6 +156,10 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 	return 1;
 }
 
+static void listener_thread_on_finish(struct crtx_thread *thread, void *userdata) {
+	free_listener( (struct crtx_listener_base*) userdata);
+}
+
 struct crtx_listener_base *create_listener(char *id, void *options) {
 	struct crtx_listener_repository *l;
 	struct crtx_listener_base *lbase;
@@ -181,24 +185,30 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 	if (!lbase) {
 		ERROR("listener \"%s\" not found\n", id);
 	} else {
-// 		if (lbase->el_payload.fd > 0) {
-// 			if (!crtx_root->event_loop.listener)
-// 				crtx_get_event_loop();
-// 			
-// 			crtx_root->event_loop.add_fd(
-// 					&crtx_root->event_loop.listener->parent,
-// 					&lbase->el_payload);
-// 		}
+		if (lbase->thread) {
+			if (lbase->thread->on_finish)
+				ERROR("thread->on_finish already set\n");
+			lbase->thread->on_finish = &listener_thread_on_finish;
+			lbase->thread->on_finish_data = lbase;
+		}
 	}
 	
 	return lbase;
 }
 
 void free_listener(struct crtx_listener_base *listener) {
+	if (listener->on_free) {
+		listener->on_free(listener, listener->on_free_userdata);
+	}
+	
 	if (listener->el_payload.fd > 0) {
 		crtx_root->event_loop.del_fd(
 				&crtx_root->event_loop.listener->parent,
 				&listener->el_payload);
+	}
+	
+	if (listener->thread) {
+		listener->thread->stop = 1;
 	}
 	
 	if (listener->free)
@@ -252,6 +262,8 @@ void crtx_claim_next_event_of_graph(struct crtx_graph *graph, struct crtx_dll **
 		eit = graph->equeue;
 	
 	LOCK(graph->queue_mutex);
+// 	for (; eit; eit = eit->next) {printf("ev %p\n", eit->data);}
+// 	eit = graph->equeue;
 	for (; eit && (eit->event->claimed || eit->event->error); eit = eit->next) {}
 	if (eit && !eit->event->claimed && !eit->event->error) {
 		eit->event->claimed = 1;
@@ -330,10 +342,15 @@ void *crtx_process_graph_tmain(void *arg) {
 // 	
 // 	UNLOCK(graph->queue_mutex);
 	
-	qe = 0;
-	crtx_claim_next_event_of_graph(graph, &qe);
-	
-	crtx_process_event(graph, qe);
+// 	while (1) {
+		qe = 0;
+		crtx_claim_next_event_of_graph(graph, &qe);
+		if (!qe)
+// 			break;
+			return 0;
+		
+		crtx_process_event(graph, qe);
+// 	}
 	
 	return 0;
 }
@@ -705,6 +722,7 @@ void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **event_typ
 	ret = pthread_mutex_init(&graph->queue_mutex, 0); ASSERT(ret >= 0);
 	ret = pthread_cond_init(&graph->queue_cond, NULL); ASSERT(ret >= 0);
 	
+	graph->name = name;
 	INFO("new eventgraph ");
 	if (event_types) {
 		while (event_types[graph->n_types]) {
@@ -863,6 +881,8 @@ void crtx_init() {
 	memset(crtx_root, 0, sizeof(struct crtx_root));
 	
 	DBG("initialized cortex (PID: %d)\n", getpid());
+	
+	crtx_root->no_threads = 1;
 	
 	INIT_MUTEX(crtx_root->graphs_mutex);
 	

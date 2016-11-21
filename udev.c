@@ -12,7 +12,7 @@ char *udev_msg_etype[] = { UDEV_MSG_ETYPE, 0 };
  * udev_device_get_sysattr_value() are UTF-8 encoded.
  */
 
-struct crtx_dict *udev_raw2dict(struct crtx_event *event, struct crtx_udev_raw2dict_attr_req *r2ds) {
+struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_raw2dict_attr_req *r2ds) {
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di, *sdi;
 	struct crtx_udev_raw2dict_attr_req *i;
@@ -24,24 +24,38 @@ struct crtx_dict *udev_raw2dict(struct crtx_event *event, struct crtx_udev_raw2d
 	
 	dict = crtx_init_dict(0, 0, 0);
 	
-	di = crtx_alloc_item(dict);
-	value = udev_device_get_devnode(dev);
-	crtx_fill_data_item(di, 's', "node", value, strlen(value), DIF_DATA_UNALLOCATED);
-	
-	di = crtx_alloc_item(dict);
-	value = udev_device_get_subsystem(dev);
-	crtx_fill_data_item(di, 's', "subsystem", value, strlen(value), DIF_DATA_UNALLOCATED);
-	
-	di = crtx_alloc_item(dict);
-	value = udev_device_get_devtype(dev);
-	crtx_fill_data_item(di, 's', "devtype", value, strlen(value), DIF_DATA_UNALLOCATED);
-	
-	di = crtx_alloc_item(dict);
-	value = udev_device_get_action(dev);
-	crtx_fill_data_item(di, 's', "action", value, strlen(value), DIF_DATA_UNALLOCATED);
+	value = udev_device_get_syspath(dev);
+	if (value) {
+		di = crtx_alloc_item(dict);
+		crtx_fill_data_item(di, 's', "SYSPATH", value, strlen(value), DIF_DATA_UNALLOCATED);
+	}
 	
 	// get only requested or all attributes
 	if (r2ds && (r2ds->subsystem || r2ds->device_type)) {
+		value = udev_device_get_devnode(dev);
+		if (value) {
+			di = crtx_alloc_item(dict);
+			crtx_fill_data_item(di, 's', "NODE", value, strlen(value), DIF_DATA_UNALLOCATED);
+		}
+		
+		value = udev_device_get_subsystem(dev);
+		if (value) {
+			di = crtx_alloc_item(dict);
+			crtx_fill_data_item(di, 's', "SUBSYSTEM", value, strlen(value), DIF_DATA_UNALLOCATED);
+		}
+		
+		value = udev_device_get_devtype(dev);
+		if (value) {
+			di = crtx_alloc_item(dict);
+			crtx_fill_data_item(di, 's', "DEVTYPE", value, strlen(value), DIF_DATA_UNALLOCATED);
+		}
+		
+		value = udev_device_get_action(dev);
+		if (value) {
+			di = crtx_alloc_item(dict);
+			crtx_fill_data_item(di, 's', "ACTION", value, strlen(value), DIF_DATA_UNALLOCATED);
+		}
+		
 		i = r2ds;
 		while (i->subsystem || i->device_type) {
 			subsystem = udev_device_get_subsystem(dev);
@@ -175,7 +189,7 @@ struct crtx_listener_base *crtx_new_udev_listener(void *options) {
 	ulist->parent.el_payload.event_handler_name = "udev fd handler";
 	
 	ulist->parent.free = &crtx_free_udev_listener;
-	new_eventgraph(&ulist->parent.graph, 0, udev_msg_etype);
+	new_eventgraph(&ulist->parent.graph, "udev", udev_msg_etype);
 	
 	udev_monitor_enable_receiving(ulist->monitor);
 	
@@ -219,7 +233,7 @@ static char udev_test_handler(struct crtx_event *event, void *userdata, void **s
 	
 // 	dev = (struct udev_device *) event->data.raw.pointer;
 	
-	dict = udev_raw2dict(event, r2ds);
+	dict = crtx_udev_raw2dict(event, r2ds);
 	
 	crtx_print_dict(dict);
 	

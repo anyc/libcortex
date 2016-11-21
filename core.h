@@ -181,6 +181,8 @@ struct crtx_event_loop_payload {
 // #include "epoll.h"
 struct crtx_listener_base {
 	void (*free)(struct crtx_listener_base *data);
+	void (*on_free)(struct crtx_listener_base *data, void *userdata);
+	void *on_free_userdata;
 	
 	struct crtx_event_loop_payload el_payload;
 	

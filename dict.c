@@ -159,17 +159,18 @@ struct crtx_dict * crtx_init_dict(char *signature, uint32_t sign_length, size_t 
 	if (sign_length == 0 && signature)
 		sign_length = strlen(signature);
 	
+	ds = (struct crtx_dict*) calloc(1, size);
+	
 	if (sign_length)
 		size += sign_length * sizeof(struct crtx_dict_item);
-	
-	ds = (struct crtx_dict*) calloc(1, size);
 	
 	ds->signature = signature;
 	ds->signature_length = sign_length;
 	ds->size = size;
 	
 	if (sign_length) {
-		ds->items = (struct crtx_dict_item *) ((char*) ds + sizeof(struct crtx_dict));
+// 		ds->items = (struct crtx_dict_item *) ((char*) ds + sizeof(struct crtx_dict));
+		ds->items = (struct crtx_dict_item *) malloc(sign_length * sizeof(struct crtx_dict_item));
 		
 		ds->items[sign_length-1].flags |= DIF_LAST;
 	}
@@ -323,7 +324,7 @@ void crtx_free_dict(struct crtx_dict *ds) {
 // 		s++;
 	}
 	
-// 	free(ds->items);
+	free(ds->items);
 	free(ds);
 }
 

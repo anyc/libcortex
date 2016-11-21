@@ -51,8 +51,10 @@ void *evdev_tmain(void *data) {
 			}
 		} while (ret == LIBEVDEV_READ_STATUS_SYNC || ret == LIBEVDEV_READ_STATUS_SUCCESS || ret == -EAGAIN);
 		
-		if (ret != LIBEVDEV_READ_STATUS_SUCCESS && ret != -EAGAIN)
-			fprintf(stderr, "Failed to handle events: %s\n", strerror(-ret));
+		if (ret != LIBEVDEV_READ_STATUS_SUCCESS && ret != -EAGAIN) {
+			fprintf(stderr, "Failed to handle events on %s: %s\n", el->device_path, strerror(-ret));
+			break;
+		}
 	}
 	
 	return 0;
@@ -98,7 +100,7 @@ struct crtx_listener_base *crtx_new_evdev_listener(void *options) {
 	evdev->parent.free = &crtx_free_evdev_listener;
 	
 	new_eventgraph(&evdev->parent.graph, 0, evdev_msg_etype);
-// 	
+	
 	evdev->parent.thread = get_thread(evdev_tmain, evdev, 0);
 // 	evdev->parent.thread->do_stop = &stop_thread;
 	

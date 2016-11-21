@@ -13,7 +13,7 @@
 int crtx_epoll_add_fd_intern(struct crtx_epoll_listener *epl, int fd, struct epoll_event *event) {
 	int ret;
 	
-	event->events |= EPOLLET;
+// 	event->events |= EPOLLET;
 	
 	ret = epoll_ctl(epl->epoll_fd, EPOLL_CTL_ADD, fd, event);
 	if (ret < 0) {
@@ -81,7 +81,7 @@ void *crtx_epoll_main(void *data) {
 	struct crtx_event *event;
 	struct epoll_control_pipe ecp;
 	
-	
+	printf("epoll main %p\n", data);
 	epl = (struct crtx_epoll_listener*) data;
 	
 // 	for (i=0; i < epl->n_events; i++) {
@@ -216,7 +216,7 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 		return 0;
 	}
 	
-	new_eventgraph(&epl->parent.graph, 0, 0);
+	new_eventgraph(&epl->parent.graph, "epoll", 0);
 	
 	epl->parent.free = &free_epoll_listener;
 	epl->parent.start_listener = 0;

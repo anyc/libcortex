@@ -52,7 +52,7 @@ char crtx_pa_proplist2dict(pa_proplist *props, struct crtx_dict **dict_ptr) {
 	return 0;
 }
 
-// include convert function created by hdr2dict.py
+// include convert functions initially created by hdr2dict.py
 #include "pulseaudio_2dict.c"
 
 // function that is called by PA when it gathered the request information
@@ -66,17 +66,22 @@ static void generic_pa_get_info_callback(pa_context *c, void *info, int eol, voi
 	helper = (struct generic_pa_callback_helper *) userdata;
 	
 	if (eol < 0) {
-		fprintf(stderr, "%s error in %s: \n", __func__,
+		// TODO ?
+		if (pa_context_errno(c) == PA_ERR_NOENTITY) {
+			free(helper);
+			return;
+		}
+		
+		fprintf(stderr, "%s idx %d %d error: %s\n", __func__, helper->index, helper->type,
 				pa_strerror(pa_context_errno(c)));
 		
-		// TODO ?
-		if (pa_context_errno(c) == PA_ERR_NOENTITY)
-			return;
 		
+		free(helper);
 		return;
 	}
-	if (eol > 0)
+	if (eol > 0) {
 		return;
+	}
 	
 	
 	nevent = create_event(crtx_pa_subscription_etypes[helper->type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK], 0, 0);
@@ -100,13 +105,18 @@ static void generic_pa_get_info_callback(pa_context *c, void *info, int eol, voi
 			case PA_SUBSCRIPTION_EVENT_SINK_INPUT:
 				crtx_pa_sink_input_info2dict(info, &nevent->data.dict);
 				break;
+			case PA_SUBSCRIPTION_EVENT_CARD:
+				crtx_pa_card_info2dict(info, &nevent->data.dict);
+				break;
 			default:
-				ERROR("TODO no handler yet for type %d", helper->type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK);
+				ERROR("TODO no handler yet for type %d\n", helper->type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK);
 				break;
 		}
 	}
 	
 	add_event(helper->palist->parent.graph, nevent);
+	
+	free(helper);
 }
 
 // this function is called by PA if an interesting event occured
@@ -131,9 +141,6 @@ static void pa_subscription_callback(pa_context *c, pa_subscription_event_type_t
 		return;
 	}
 	
-// 	PA_SUBSCRIPTION_EVENT_NEW
-// 	PA_SUBSCRIPTION_EVENT_CHANGE
-	
 	helper = (struct generic_pa_callback_helper*) malloc(sizeof(struct generic_pa_callback_helper));
 	helper->type = t;
 	helper->palist = palist;
@@ -147,14 +154,6 @@ static void pa_subscription_callback(pa_context *c, pa_subscription_event_type_t
 			pa_operation_unref(op);
 			break;
 		
-		case PA_SUBSCRIPTION_EVENT_SOURCE:
-			op = pa_context_get_source_info_by_index(palist->context, index, (pa_source_info_cb_t) &generic_pa_get_info_callback, helper);
-			if (!op) {
-				printf("error pa_context_get_source_info_list\n");
-			}
-			pa_operation_unref(op);
-			break;
-		
 		case PA_SUBSCRIPTION_EVENT_SINK_INPUT:
 			op = pa_context_get_sink_input_info(palist->context, index, (pa_sink_input_info_cb_t) &generic_pa_get_info_callback, helper);
 			if (!op) {
@@ -164,7 +163,8 @@ static void pa_subscription_callback(pa_context *c, pa_subscription_event_type_t
 			break;
 		
 		default:
-			ERROR("TODO no handler yet for type %d", t & PA_SUBSCRIPTION_EVENT_FACILITY_MASK);
+			ERROR("TODO no handler yet for type %d\n", t & PA_SUBSCRIPTION_EVENT_FACILITY_MASK);
+			free(helper);
 			break;
 	}
 }
@@ -179,7 +179,7 @@ static void * pa_tmain(void *data) {
 	
 	palist = (struct crtx_pa_listener *) data;
 	
-	while (1) {
+	while (!palist->parent.thread->stop) {
 		pa_mainloop_iterate(palist->mainloop, 1, 0);
 	}
 	
@@ -198,6 +198,10 @@ static void crtx_free_pa_listener(struct crtx_listener_base *data) {
 	struct crtx_pa_listener *palist;
 	
 	palist = (struct crtx_pa_listener*) data;
+	
+	pa_mainloop_wakeup(palist->mainloop);
+	
+	wait_on_signal(&palist->parent.thread->finished);
 	
 	pa_context_unref(palist->context);
 	pa_mainloop_free(palist->mainloop);

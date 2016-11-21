@@ -28,4 +28,6 @@ struct crtx_listener_base *crtx_new_udev_listener(void *options);
 void crtx_udev_init();
 void crtx_udev_finish();
 
+struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_raw2dict_attr_req *r2ds);
+
 #endif
