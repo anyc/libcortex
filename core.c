@@ -29,12 +29,18 @@
 #include "signals.h"
 #include "timer.h"
 #include "netlink_raw.h"
+#ifdef STATIC_NETLINK_GE
 #include "netlink_ge.h"
+#endif
 #include "epoll.h"
 #include "evdev.h"
 #include "udev.h"
+#ifdef STATIC_XCB_RANDR
 #include "xcb_randr.h"
+#endif
+#ifdef STATIC_PULSEAUDIO
 #include "pulseaudio.h"
+#endif
 
 
 struct crtx_root crtx_global_root;
@@ -56,12 +62,18 @@ struct crtx_module static_modules[] = {
 	{"fanotify", &crtx_fanotify_init, &crtx_fanotify_finish},
 	{"inotify", &crtx_inotify_init, &crtx_inotify_finish},
 	{"netlink_raw", &crtx_netlink_raw_init, &crtx_netlink_raw_finish},
+#ifdef STATIC_NETLINK_GE
 	{"netlink_ge", &crtx_netlink_ge_init, &crtx_netlink_ge_finish},
+#endif
 	{"epoll", &crtx_epoll_init, &crtx_epoll_finish},
 	{"evdev", &crtx_evdev_init, &crtx_evdev_finish},
 	{"udev", &crtx_udev_init, &crtx_udev_finish},
+#ifdef STATIC_XCB_RANDR
 	{"xcb_randr", &crtx_xcb_randr_init, &crtx_xcb_randr_finish},
+#endif
+#ifdef STATIC_PULSEAUDIO
 	{"pulseaudio", &crtx_pa_init, &crtx_pa_finish},
+#endif
 	{0, 0}
 };
 
@@ -80,13 +92,19 @@ struct crtx_listener_repository listener_factory[] = {
 	{"readline", &crtx_new_readline_listener},
 	{"timer", &crtx_new_timer_listener},
 	{"netlink_raw", &crtx_new_netlink_raw_listener},
+#ifdef STATIC_NETLINK_GE
 	{"genl", &crtx_new_genl_listener},
+#endif
 	{"epoll", &crtx_new_epoll_listener},
 	{"evdev", &crtx_new_evdev_listener},
 	{"udev", &crtx_new_udev_listener},
+#ifdef STATIC_XCB_RANDR
 	{"xcb_randr", &crtx_new_xcb_randr_listener},
+#endif
 	{"sdbus", &crtx_new_sdbus_listener},
+#ifdef STATIC_PULSEAUDIO
 	{"pulseaudio", &crtx_new_pa_listener},
+#endif
 	{0, 0}
 };
 

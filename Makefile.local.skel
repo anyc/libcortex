@@ -19,6 +19,7 @@ LDLIBS+=$(shell pkg-config --libs libsystemd)
 OBJS+=netlink_raw.o
 TESTS+=netlink_raw.test
 
+CFLAGS+=-DSTATIC_NETLINK_GE
 OBJS+=netlink_ge.o
 TESTS+=netlink_ge.test
 CFLAGS+=$(shell pkg-config --cflags libnl-genl-3.0)
@@ -28,6 +29,9 @@ CFLAGS+=-DSTATIC_NF_QUEUE
 OBJS+=nf_queue.o
 CFLAGS+=$(shell pkg-config --cflags libnetfilter_queue)
 LDLIBS+=$(shell pkg-config --libs libnetfilter_queue)
+
+CFLAGS+=-DSTATIC_NETLINK_RAW
+OBJS+=netlink_raw.o
 
 OBJS+=evdev.o
 TESTS+=evdev.test
@@ -39,7 +43,14 @@ TESTS+=udev.test
 CFLAGS+=$(shell pkg-config --cflags libudev)
 LDLIBS+=$(shell pkg-config --libs libudev)
 
+CFLAGS+=-DSTATIC_XCB_RANDR
 OBJS+=xcb_randr.o
 TESTS+=xcb_randr.test
 CFLAGS+=$(shell pkg-config --cflags xcb xcb-randr)
 LDLIBS+=$(shell pkg-config --libs xcb xcb-randr)
+
+CFLAGS+=-DSTATIC_PULSEAUDIO
+OBJS+=pulseaudio.o
+TESTS+=pulseaudio.test
+CFLAGS+=$(shell pkg-config --cflags libpulse)
+LDLIBS+=$(shell pkg-config --libs libpulse)

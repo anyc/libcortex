@@ -53,6 +53,9 @@
 #define PFW_CFG_DIR "/etc/cortexd/pfw/"
 #endif
 
+// todo
+#define PFW_DATA_DIR "/var/lib/cortexd/pfw/"
+
 // listener for the nf_queue
 struct crtx_nfq_listener nfq_list;
 struct crtx_listener_base *nfq_list_base;
