@@ -23,7 +23,7 @@
 struct crtx_dict_item {
 	char *key;
 	
-	unsigned long size;
+	size_t size;
 	unsigned char flags;
 	char type;
 	

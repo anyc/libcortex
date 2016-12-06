@@ -41,6 +41,7 @@
 #ifdef STATIC_PULSEAUDIO
 #include "pulseaudio.h"
 #endif
+#include "can.h"
 
 
 struct crtx_root crtx_global_root;
@@ -74,6 +75,7 @@ struct crtx_module static_modules[] = {
 #ifdef STATIC_PULSEAUDIO
 	{"pulseaudio", &crtx_pa_init, &crtx_pa_finish},
 #endif
+	{"can", &crtx_can_init, &crtx_can_finish},
 	{0, 0}
 };
 
@@ -105,6 +107,7 @@ struct crtx_listener_repository listener_factory[] = {
 #ifdef STATIC_PULSEAUDIO
 	{"pulseaudio", &crtx_new_pa_listener},
 #endif
+	{"can", &crtx_new_can_listener},
 	{0, 0}
 };
 
