@@ -158,7 +158,7 @@ void crtx_printf(char level, char *format, ...) {
 
 char crtx_start_listener(struct crtx_listener_base *listener) {
 	if (listener->start_listener) {
-		return listener->start_listener(listener);
+		listener->start_listener(listener);
 	}
 	
 	if (listener->thread) {

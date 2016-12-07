@@ -217,7 +217,7 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	new_eventgraph(&epl->parent.graph, "epoll", 0);
 	
 	epl->parent.shutdown = &shutdown_epoll_listener;
-	epl->parent.start_listener = 0;
+	
 	if (!epl->no_thread) {
 		epl->parent.thread = get_thread(crtx_epoll_main, epl, 0);
 		epl->parent.thread->do_stop = &stop_thread;
