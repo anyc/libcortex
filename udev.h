@@ -19,8 +19,10 @@ struct crtx_udev_listener {
 	
 	struct udev *udev;
 	int fd;
-	char **sys_dev_filter;
 	struct udev_monitor *monitor;
+	
+	char query_existing;
+	char **sys_dev_filter;
 };
 
 struct crtx_listener_base *crtx_new_udev_listener(void *options);

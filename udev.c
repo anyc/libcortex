@@ -116,6 +116,24 @@ void udev_event_before_release_cb(struct crtx_event *event) {
 	udev_device_unref(dev);
 }
 
+void push_new_udev_event(struct crtx_udev_listener *ulist, struct udev_device *dev) {
+	struct crtx_event *nevent;
+
+	// size of struct udev_device is unknown
+	nevent = create_event(UDEV_MSG_ETYPE, dev, sizeof(struct udev_device*));
+	nevent->data.raw.flags |= DIF_DATA_UNALLOCATED;
+
+	nevent->cb_before_release = &udev_event_before_release_cb;
+	// 		reference_event_release(nevent);
+
+	add_event(ulist->parent.graph, nevent);
+
+	// 		wait_on_event(nevent);
+
+	// 		dereference_event_release(nevent);
+
+	// 		udev_device_unref(dev);
+}
 
 static char udev_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event_loop_payload *payload;
@@ -129,22 +147,7 @@ static char udev_fd_event_handler(struct crtx_event *event, void *userdata, void
 	
 	dev = udev_monitor_receive_device(ulist->monitor);
 	if (dev) {
-		struct crtx_event *nevent;
-		
-		// size of struct udev_device is unknown
-		nevent = create_event(UDEV_MSG_ETYPE, dev, sizeof(struct udev_device*));
-		nevent->data.raw.flags |= DIF_DATA_UNALLOCATED;
-		
-		nevent->cb_before_release = &udev_event_before_release_cb;
-// 		reference_event_release(nevent);
-		
-		add_event(ulist->parent.graph, nevent);
-		
-// 		wait_on_event(nevent);
-		
-// 		dereference_event_release(nevent);
-		
-// 		udev_device_unref(dev);
+		push_new_udev_event(ulist, dev);
 	} else {
 		DBG("udev_monitor_receive_device returned no device\n");
 	}
@@ -152,13 +155,51 @@ static char udev_fd_event_handler(struct crtx_event *event, void *userdata, void
 	return 0;
 }
 
-void crtx_free_udev_listener(struct crtx_listener_base *data) {
+static void crtx_shutdown_udev_listener(struct crtx_listener_base *data) {
 	struct crtx_udev_listener *ulist;
 	
 	ulist = (struct crtx_udev_listener*) data;
 	
 	udev_monitor_unref(ulist->monitor);
 	udev_unref(ulist->udev);
+}
+
+static char start_listener(struct crtx_listener_base *listener) {
+	struct crtx_udev_listener *ulist;
+	
+	ulist = (struct crtx_udev_listener *) listener;
+	
+	udev_monitor_enable_receiving(ulist->monitor);
+	
+	if (ulist->query_existing) {
+		struct udev_enumerate *enumerate;
+		struct udev_list_entry *devices, *dev_list_entry;
+		const char *path;
+		struct udev_device *dev;
+		
+		enumerate = udev_enumerate_new(ulist->udev);
+		
+		char **p = ulist->sys_dev_filter;
+		while (p && (*p || *(p+1))) {
+			if (*p)
+				udev_enumerate_add_match_subsystem(enumerate, *p);
+			if (*(p+1))
+				udev_enumerate_add_match_property(enumerate, "DEVTYPE", *(p+1));
+			p+=2;
+		}
+		
+		udev_enumerate_scan_devices(enumerate);
+		devices = udev_enumerate_get_list_entry(enumerate);
+		
+		udev_list_entry_foreach(dev_list_entry, devices) {
+			path = udev_list_entry_get_name(dev_list_entry);
+			dev = udev_device_new_from_syspath(ulist->udev, path);
+			
+			push_new_udev_event(ulist, dev);
+		}
+	}
+	
+	return 1;
 }
 
 struct crtx_listener_base *crtx_new_udev_listener(void *options) {
@@ -188,10 +229,10 @@ struct crtx_listener_base *crtx_new_udev_listener(void *options) {
 	ulist->parent.el_payload.event_handler = &udev_fd_event_handler;
 	ulist->parent.el_payload.event_handler_name = "udev fd handler";
 	
-	ulist->parent.free = &crtx_free_udev_listener;
+	ulist->parent.shutdown = &crtx_shutdown_udev_listener;
 	new_eventgraph(&ulist->parent.graph, "udev", udev_msg_etype);
 	
-	udev_monitor_enable_receiving(ulist->monitor);
+	ulist->parent.start_listener = &start_listener;
 	
 	return &ulist->parent;
 }

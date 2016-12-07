@@ -219,7 +219,7 @@ void *inotify_tmain(void *data) {
 	return 0;
 }
 
-void crtx_free_inotify_listener(struct crtx_listener_base *data) {
+void crtx_shutdown_inotify_listener(struct crtx_listener_base *data) {
 	unsigned int i;
 	
 	for (i=0; i < n_listeners; i++) {
@@ -292,7 +292,7 @@ struct crtx_listener_base *crtx_new_inotify_listener(void *options) {
 	listeners[list_idx] = inlist;
 	
 	
-	inlist->parent.free = &crtx_free_inotify_listener;
+	inlist->parent.shutdown = &crtx_shutdown_inotify_listener;
 	
 	new_eventgraph(&inlist->parent.graph, 0, inotify_msg_etype);
 	

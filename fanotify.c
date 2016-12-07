@@ -89,7 +89,7 @@ void *fanotify_tmain(void *data) {
 	return 0;
 }
 
-void crtx_free_fanotify_listener(struct crtx_listener_base *data) {
+void crtx_shutdown_fanotify_listener(struct crtx_listener_base *data) {
 // 	struct crtx_fanotify_listener *falist = (struct crtx_fanotify_listener *) data;
 }
 
@@ -130,7 +130,7 @@ struct crtx_listener_base *crtx_new_fanotify_listener(void *options) {
 		return 0;
 	}
 	
-	falist->parent.free = &crtx_free_fanotify_listener;
+	falist->parent.shutdown = &crtx_shutdown_fanotify_listener;
 	
 	new_eventgraph(&falist->parent.graph, 0, fanotify_msg_etype);
 	

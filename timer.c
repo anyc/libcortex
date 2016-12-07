@@ -59,8 +59,8 @@ static void *timer_tmain(void *data) {
 	return 0;
 }
 
-void crtx_free_timer_listener(struct crtx_listener_base *data) {
-	stop_thread(0, data);
+void crtx_shutdown_timer_listener(struct crtx_listener_base *data) {
+// 	stop_thread(0, data);
 }
 
 struct crtx_listener_base *crtx_new_timer_listener(void *options) {
@@ -92,7 +92,7 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 	tlist->parent.thread->do_stop = &stop_thread;
 // 	start_thread(t);
 	
-	tlist->parent.free = &crtx_free_timer_listener;
+	tlist->parent.shutdown = &crtx_shutdown_timer_listener;
 	
 	return &tlist->parent;
 }

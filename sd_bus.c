@@ -345,7 +345,7 @@ static char sdbus_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	return r;
 }
 
-void crtx_free_sdbus_listener(struct crtx_listener_base *data) {
+void crtx_shutdown_sdbus_listener(struct crtx_listener_base *data) {
 	struct crtx_sdbus_listener *sdlist;
 	
 	sdlist = (struct crtx_sdbus_listener*) data;
@@ -410,7 +410,7 @@ struct crtx_listener_base *crtx_new_sdbus_listener(void *options) {
 	sdlist->parent.el_payload.event_handler = &sdbus_fd_event_handler;
 	sdlist->parent.el_payload.event_handler_name = "sdbus event handler";
 	
-	sdlist->parent.free = &crtx_free_sdbus_listener;
+	sdlist->parent.shutdown = &crtx_shutdown_sdbus_listener;
 	new_eventgraph(&sdlist->parent.graph, 0, 0);
 	
 	m = sdlist->matches;

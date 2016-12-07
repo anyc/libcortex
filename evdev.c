@@ -99,7 +99,7 @@ static char evdev_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	return 0;
 }
 
-void crtx_free_evdev_listener(struct crtx_listener_base *data) {
+void crtx_shutdown_evdev_listener(struct crtx_listener_base *data) {
 	struct crtx_evdev_listener *el;
 	
 	el = (struct crtx_evdev_listener*) data;
@@ -136,7 +136,7 @@ struct crtx_listener_base *crtx_new_evdev_listener(void *options) {
 	
 	DBG("new evdev listener on %s: %s\n", evdev->device_path, libevdev_get_name(evdev->device));
 	
-	evdev->parent.free = &crtx_free_evdev_listener;
+	evdev->parent.shutdown = &crtx_shutdown_evdev_listener;
 	
 	new_eventgraph(&evdev->parent.graph, 0, evdev_msg_etype);
 	

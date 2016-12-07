@@ -541,7 +541,7 @@ static void stop_thread(struct crtx_thread *t, void *data) {
 // 	dereference_signal(&nl_listener->parent.thread->finished);
 }
 
-void free_netlink_raw_listener(struct crtx_listener_base *lbase) {
+void shutdown_netlink_raw_listener(struct crtx_listener_base *lbase) {
 	struct crtx_netlink_raw_listener *nl_listener;
 	
 	nl_listener = (struct crtx_netlink_raw_listener *) lbase;
@@ -575,7 +575,7 @@ struct crtx_listener_base *crtx_new_netlink_raw_listener(void *options) {
 	
 	init_signal(&nl_listener->msg_done);
 	
-	nl_listener->parent.free = &free_netlink_raw_listener;
+	nl_listener->parent.shutdown = &shutdown_netlink_raw_listener;
 	nl_listener->parent.start_listener = 0;
 	nl_listener->parent.thread = get_thread(netlink_raw_tmain, nl_listener, 0);
 	nl_listener->parent.thread->do_stop = &stop_thread;

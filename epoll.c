@@ -45,7 +45,7 @@ void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 	struct epoll_event *event;
 	struct crtx_epoll_listener *epl;
 	
-	event = (struct epoll_event*) malloc(sizeof(struct epoll_event));
+	event = (struct epoll_event*) calloc(1, sizeof(struct epoll_event));
 // 	event = &el_payload->event;
 	el_payload->el_data = event;
 	event->events = EPOLLIN;
@@ -76,9 +76,6 @@ void *crtx_epoll_main(void *data) {
 	struct crtx_epoll_listener *epl;
 	size_t i;
 	int n_rdy_events;
-	int pipe_fds[2];
-	int ret;
-	struct epoll_event ctrl_event;
 	struct epoll_event *rec_events;
 	struct crtx_event_loop_payload *el_payload;
 	struct crtx_event *event;
@@ -95,24 +92,7 @@ void *crtx_epoll_main(void *data) {
 // 		}
 // 	}
 	
-	ret = pipe(pipe_fds); // 0 read, 1 write
-	if (ret < 0) {
-		ERROR("creating control pipe failed: %s\n", strerror(errno));
-		epl->control_fd = -1;
-	} else {
-		epl->control_fd = pipe_fds[1];
-		
-		ctrl_event.events = EPOLLIN;
-		ctrl_event.data.ptr = 0;
-		
-		crtx_epoll_add_fd_intern(epl, pipe_fds[0], &ctrl_event);
-	}
 	
-	if (epl->max_n_events < 1)
-		epl->max_n_events = 1;
-	
-	// 0 is our default, -1 is no timeout for epoll
-	epl->timeout -= 1;
 	
 	rec_events = (struct epoll_event*) malloc(sizeof(struct epoll_event)*epl->max_n_events);
 	
@@ -130,13 +110,18 @@ void *crtx_epoll_main(void *data) {
 		
 		for (i=0; i < n_rdy_events; i++) {
 			if (rec_events[i].events & EPOLLERR) {
-				ERROR("epoll returned EPOLLERR\n");
+				el_payload = (struct crtx_event_loop_payload* ) rec_events[i].data.ptr;
+				
+				ERROR("epoll returned EPOLLERR %d\n", el_payload->fd);
+				
+				crtx_epoll_del_fd((struct crtx_listener_base *) epl, el_payload);
+				
 				continue;
 			} else
 			if (rec_events[i].data.ptr == 0) {
 				DBG("epoll received wake-up event\n");
 				
-				read(pipe_fds[0], &ecp, sizeof(struct epoll_control_pipe));
+				read(epl->pipe_fds[0], &ecp, sizeof(struct epoll_control_pipe));
 				
 				if (ecp.graph)
 					crtx_process_graph_tmain(ecp.graph);
@@ -182,8 +167,7 @@ void crtx_epoll_queue_graph(struct crtx_epoll_listener *epl, struct crtx_graph *
 	struct epoll_control_pipe ecp;
 	
 	ecp.graph = graph;
-	write(epl->control_fd, &ecp, sizeof(struct epoll_control_pipe));
-	
+	write(epl->pipe_fds[1], &ecp, sizeof(struct epoll_control_pipe));
 }
 
 void crtx_epoll_stop(struct crtx_epoll_listener *epl) {
@@ -192,7 +176,7 @@ void crtx_epoll_stop(struct crtx_epoll_listener *epl) {
 	epl->stop = 1;
 	
 	ecp.graph = 0;
-	write(epl->control_fd, &ecp, sizeof(struct epoll_control_pipe));
+	write(epl->pipe_fds[1], &ecp, sizeof(struct epoll_control_pipe));
 }
 
 static void stop_thread(struct crtx_thread *t, void *data) {
@@ -203,19 +187,24 @@ static void stop_thread(struct crtx_thread *t, void *data) {
 	crtx_epoll_stop(epl);
 }
 
-static void free_epoll_listener(struct crtx_listener_base *lbase) {
+static void shutdown_epoll_listener(struct crtx_listener_base *lbase) {
 	struct crtx_epoll_listener *epl;
 	
 	epl = (struct crtx_epoll_listener*) lbase;
 	
-	stop_thread(0, lbase);
+// 	stop_thread(0, lbase);
 	
-	close(epl->control_fd);
+	close(epl->pipe_fds[1]);
+	close(epl->pipe_fds[0]);
 	close(epl->epoll_fd);
 }
 
 struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	struct crtx_epoll_listener *epl;
+// 	int pipe_fds[2];
+	struct epoll_event ctrl_event;
+	int ret;
+	
 	
 	epl = (struct crtx_epoll_listener*) options;
 	
@@ -227,7 +216,7 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	
 	new_eventgraph(&epl->parent.graph, "epoll", 0);
 	
-	epl->parent.free = &free_epoll_listener;
+	epl->parent.shutdown = &shutdown_epoll_listener;
 	epl->parent.start_listener = 0;
 	if (!epl->no_thread) {
 		epl->parent.thread = get_thread(crtx_epoll_main, epl, 0);
@@ -239,6 +228,26 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 // 		
 // 		crtx_root->event_loop.listener = epl;
 // 	}
+	
+	ret = pipe(epl->pipe_fds); // 0 read, 1 write
+	if (ret < 0) {
+		ERROR("creating control pipe failed: %s\n", strerror(errno));
+// 		epl->control_fd = -1;
+	} else {
+// 		epl->control_fd = pipe_fds[1];
+		
+		memset(&ctrl_event, 0, sizeof(struct epoll_event));
+		ctrl_event.events = EPOLLIN;
+		ctrl_event.data.ptr = 0;
+		
+		crtx_epoll_add_fd_intern(epl, epl->pipe_fds[0], &ctrl_event);
+	}
+	
+	if (epl->max_n_events < 1)
+		epl->max_n_events = 1;
+	
+	// 0 is our default, -1 is no timeout for epoll
+	epl->timeout -= 1;
 	
 	return &epl->parent;
 }
@@ -370,7 +379,7 @@ int epoll_main(int argc, char **argv) {
 		sleep(1);
 		
 		ecp.graph = 0;
-		write(epl.control_fd, &ecp, sizeof(struct epoll_control_pipe));
+		write(epl.pipe_fds[1], &ecp, sizeof(struct epoll_control_pipe));
 	}
 	
 	free_listener(lbase);

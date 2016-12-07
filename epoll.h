@@ -6,7 +6,8 @@ struct crtx_epoll_listener {
 	struct crtx_listener_base parent;
 	
 	int epoll_fd;
-	int control_fd;
+// 	int control_fd;
+	int pipe_fds[2];
 	
 	size_t max_n_events;
 	int timeout;

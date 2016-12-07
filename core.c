@@ -190,6 +190,7 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 	while (l->id) {
 		if (!strcmp(l->id, id)) {
 			lbase = l->create(options);
+			
 			if (!lbase) {
 				ERROR("creating listener \"%s\" failed\n", id);
 				return 0;
@@ -206,6 +207,10 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 	if (!lbase) {
 		ERROR("listener \"%s\" not found\n", id);
 	} else {
+		if (lbase->el_payload.fd > 0) {
+			if (!crtx_root->event_loop.listener)
+				crtx_get_event_loop();
+		} else
 		if (lbase->thread) {
 			if (lbase->thread->on_finish)
 				ERROR("thread->on_finish already set\n");
@@ -218,10 +223,6 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 }
 
 void free_listener(struct crtx_listener_base *listener) {
-	if (listener->on_free) {
-		listener->on_free(listener, listener->on_free_userdata);
-	}
-	
 	if (listener->el_payload.fd > 0) {
 		crtx_root->event_loop.del_fd(
 				&crtx_root->event_loop.listener->parent,
@@ -232,8 +233,8 @@ void free_listener(struct crtx_listener_base *listener) {
 		listener->thread->stop = 1;
 	}
 	
-	if (listener->free)
-		listener->free(listener);
+	if (listener->shutdown)
+		listener->shutdown(listener);
 	
 	if (listener->graph)
 		free_eventgraph(listener->graph);
@@ -241,6 +242,10 @@ void free_listener(struct crtx_listener_base *listener) {
 	if (listener->thread) {
 		wait_on_signal(&listener->thread->finished);
 		dereference_signal(&listener->thread->finished);
+	}
+	
+	if (listener->free) {
+		listener->free(listener, listener->free_userdata);
 	}
 }
 
