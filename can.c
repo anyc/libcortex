@@ -24,31 +24,36 @@
 
 char *can_msg_etype[] = { CAN_MSG_ETYPE, 0 };
 
+// void can_event_before_release_cb(struct crtx_event *event) {
+// 	free(event->data.raw.pointer);
+// }
+
 static char can_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event_loop_payload *payload;
-	struct can_frame frame;
-// 	struct crtx_event *nevent;
+	struct can_frame *frame;
+	struct crtx_event *nevent;
 	struct crtx_can_listener *clist;
 	int r;
 	
 	payload = (struct crtx_event_loop_payload*) event->data.raw.pointer;
 	
 	clist = (struct crtx_can_listener *) payload->data;
-	printf("read\n");
-	r = read(clist->sockfd, &frame, sizeof(struct can_frame));
+	
+	frame = (struct can_frame *) malloc(sizeof(struct can_frame));
+	r = read(clist->sockfd, frame, sizeof(struct can_frame));
 	if (r != sizeof(struct can_frame)) {
 		fprintf(stderr, "wrong can frame size: %d\n", r);
 		return 1;
 	}
 	
-	printf("0x%04x ", frame.can_id);
+// 	printf("0x%04x ", frame.can_id);
 	
-// 	nevent = create_event("can", 0, 0);
-// 	
-// 	nevent->data.raw.type = 'U';
+	nevent = create_event("can", frame, sizeof(frame));
+// 	nevent->cb_before_release = &can_event_before_release_cb;
+	
 // 	memcpy(&nevent->data.raw.uint64, &frame.data, sizeof(uint64_t));
-// 	
-// 	add_event(clist->parent.graph, nevent);
+	
+	add_event(clist->parent.graph, nevent);
 	
 // 	exit(1);
 	
