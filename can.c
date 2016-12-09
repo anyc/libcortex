@@ -190,12 +190,12 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 		
 		clist->addr.can_family = AF_CAN;
 		clist->addr.can_ifindex = ifr.ifr_ifindex;
-	}
-	
-	r = setup_can_if(clist, clist->interface_name);
-	if (r < 0) {
-		close(clist->sockfd);
-		return 0;
+		
+		r = setup_can_if(clist, clist->interface_name);
+		if (r < 0) {
+			close(clist->sockfd);
+			return 0;
+		}
 	}
 	
 	r = bind(clist->sockfd, (struct sockaddr *)&clist->addr, sizeof(clist->addr));

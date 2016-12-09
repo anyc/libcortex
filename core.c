@@ -42,6 +42,7 @@
 #include "pulseaudio.h"
 #endif
 #include "can.h"
+#include "avahi.h"
 
 
 struct crtx_root crtx_global_root;
@@ -76,6 +77,7 @@ struct crtx_module static_modules[] = {
 	{"pulseaudio", &crtx_pa_init, &crtx_pa_finish},
 #endif
 	{"can", &crtx_can_init, &crtx_can_finish},
+	{"avahi", &crtx_avahi_init, &crtx_avahi_finish},
 	{0, 0}
 };
 
@@ -108,6 +110,7 @@ struct crtx_listener_repository listener_factory[] = {
 	{"pulseaudio", &crtx_new_pa_listener},
 #endif
 	{"can", &crtx_new_can_listener},
+	{"avahi", &crtx_new_avahi_listener},
 	{0, 0}
 };
 
