@@ -14,6 +14,7 @@
 
 #include "core.h"
 #include "socket.h"
+#include "socket_raw.h"
 #ifdef STATIC_SD_BUS
 #include "sd_bus.h"
 #endif
@@ -53,6 +54,7 @@ struct crtx_module static_modules[] = {
 	{"controls", &crtx_controls_init, &crtx_controls_finish},
 	{"signals", &crtx_signals_init, &crtx_signals_finish},
 	{"socket", &crtx_socket_init, &crtx_socket_finish},
+	{"socket_raw", &crtx_socket_raw_init, &crtx_socket_raw_finish},
 #ifdef STATIC_SD_BUS
 	{"sdbus", &crtx_sdbus_init, &crtx_sdbus_finish},
 	{"sd_bus_notification", &crtx_sdbus_notification_init, &crtx_sdbus_notification_finish},
@@ -88,6 +90,7 @@ struct crtx_listener_repository listener_factory[] = {
 	{"fanotify", &crtx_new_fanotify_listener},
 	{"inotify", &crtx_new_inotify_listener},
 	{"socket_server", &crtx_new_socket_server_listener},
+	{"socket_raw_server", &crtx_new_socket_raw_server_listener},
 	{"socket_client", &crtx_new_socket_client_listener},
 #ifdef STATIC_SD_BUS
 	{"sd_bus_notification", &crtx_new_sd_bus_notification_listener},

@@ -171,12 +171,14 @@ struct crtx_listener_repository {
 struct crtx_event_loop_payload {
 	int fd;
 	int event_flags;
+	
 	void *data;
 	
 	crtx_handle_task_t event_handler;
 	char *event_handler_name;
 	
-// 	struct epoll_event event;
+	void (*simple_callback)(struct crtx_event_loop_payload *el_payload);
+	
 	void *el_data;
 };
 

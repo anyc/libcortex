@@ -31,6 +31,7 @@
 
 #include "core.h"
 #include "socket.h"
+#include "socket_raw.h"
 #include "event_comm.h"
 #include "threads.h"
 
@@ -130,50 +131,6 @@ static void *socket_connection_tmain(void *data) {
 	close(args->sockfd);
 	
 	return 0;
-}
-
-static struct addrinfo *crtx_get_addrinfo(struct crtx_socket_listener *listener) {
-	struct addrinfo hints, *result;
-	int ret;
-	
-	if (listener->ai_family == AF_UNIX) {
-		struct sockaddr_un *sun;
-		
-		result = (struct addrinfo *) calloc(1, sizeof(struct addrinfo) + sizeof(struct sockaddr_un));
-		result->ai_family = AF_UNIX;
-		result->ai_socktype = listener->type;
-		result->ai_next = 0;
-		
-		result->ai_addrlen = sizeof(struct sockaddr_un);
-		result->ai_addr = (void *) (result) + sizeof(struct addrinfo);
-		
-		sun = (struct sockaddr_un *) result->ai_addr;
-		
-		sun->sun_family = AF_UNIX;
-		strncpy(sun->sun_path, listener->service, sizeof(sun->sun_path)-1);
-	} else {
-		bzero(&hints, sizeof(struct addrinfo));
-		hints.ai_flags=AI_PASSIVE;
-		hints.ai_family=listener->ai_family;
-		hints.ai_socktype=listener->type;
-		hints.ai_protocol=listener->protocol;
-		
-		ret = getaddrinfo(listener->host, listener->service, &hints, &result);
-		if (ret !=0) {
-			printf("getaddrinfo error %s %s: %s", listener->host, listener->service, gai_strerror(ret));
-			return 0;
-		}
-	}
-	
-	return result;
-}
-
-static void crtx_free_addrinfo(struct addrinfo *result) {
-	if (result->ai_family == AF_UNIX) {
-		free(result);
-	} else {
-		freeaddrinfo(result);
-	}
 }
 
 /// main thread of a server socket

@@ -5,7 +5,7 @@ local_mk_rules ?= Makefile.local_rules
 
 APP=cortexd
 
-OBJS+=cortexd.o core.o socket.o readline.o controls.o fanotify.o inotify.o \
+OBJS+=cortexd.o core.o socket.o socket_raw.o readline.o controls.o fanotify.o inotify.o \
 	event_comm.o cache.o threads.o signals.o dict.o dict_inout.o \
 	llist.o dllist.o timer.o epoll.o
 
