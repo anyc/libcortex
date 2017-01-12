@@ -49,6 +49,7 @@
 		return i; \
 	}
 
+#define CRTX_RET_GEZ(r) { if (r < 0) {ERROR("%s:%d: %d %s\n", __FILE__, __LINE__, r, strerror(r)); return(r); } }
 
 #define CRTX_EVT_NOTIFICATION "cortexd.notification"
 extern char *crtx_evt_notification[];
@@ -169,6 +170,7 @@ struct crtx_listener_repository {
 #include <sys/epoll.h>
 struct crtx_event_loop_payload {
 	int fd;
+	int event_flags;
 	void *data;
 	
 	crtx_handle_task_t event_handler;

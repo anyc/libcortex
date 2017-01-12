@@ -353,6 +353,57 @@ void crtx_shutdown_sdbus_listener(struct crtx_listener_base *data) {
 	sd_bus_unref(sdlist->bus);
 }
 
+char crtx_open_sdbus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name) {
+	int r;
+	
+	switch (bus_type) {
+		case CRTX_SDBUS_TYPE_DEFAULT:
+			r = sd_bus_open(bus);
+			break;
+		case CRTX_SDBUS_TYPE_USER:
+			r = sd_bus_open_user(bus);
+			break;
+		case CRTX_SDBUS_TYPE_SYSTEM:
+			r = sd_bus_open_system(bus);
+			break;
+		case CRTX_SDBUS_TYPE_SYSTEM_REMOTE:
+			r = sd_bus_open_system_remote(bus, name);
+			break;
+		case CRTX_SDBUS_TYPE_SYSTEM_MACHINE:
+			r = sd_bus_open_system_machine(bus, name);
+			break;
+		case CRTX_SDBUS_TYPE_CUSTOM:
+			r = sd_bus_new(bus);
+			if (r >= 0) {
+				int t;
+				
+				DBG("using custom DBUS at address \"%s\"\n", name);
+				
+				t = sd_bus_set_address(*bus, name);
+				if (t < 0) {
+					fprintf(stderr, "sd_bus_set_address failed: %s\n", strerror(-t));
+					return t;
+				}
+				
+				t = sd_bus_start(*bus);
+				if (t < 0) {
+					fprintf(stderr, "sd_bus_start failed: %s\n", strerror(-t));
+					return t;
+				}
+			}
+			break;
+		default:
+			ERROR("crtx_new_sdbus_listener\n");
+			return -1;
+	}
+	if (r < 0) {
+		fprintf(stderr, "Failed to open bus: %s\n", strerror(-r));
+		return r;
+	}
+	
+	return 0;
+}
+
 struct crtx_listener_base *crtx_new_sdbus_listener(void *options) {
 	struct crtx_sdbus_listener *sdlist;
 	struct crtx_sdbus_match *m;
@@ -360,52 +411,20 @@ struct crtx_listener_base *crtx_new_sdbus_listener(void *options) {
 	
 	sdlist = (struct crtx_sdbus_listener *) options;
 	
-	switch (sdlist->bus_type) {
-		case CRTX_SDBUS_TYPE_DEFAULT:
-			r = sd_bus_open(&sdlist->bus);
-			break;
-		case CRTX_SDBUS_TYPE_USER:
-			r = sd_bus_open_user(&sdlist->bus);
-			break;
-		case CRTX_SDBUS_TYPE_SYSTEM:
-			r = sd_bus_open_system(&sdlist->bus);
-			break;
-		case CRTX_SDBUS_TYPE_SYSTEM_REMOTE:
-			r = sd_bus_open_system_remote(&sdlist->bus, sdlist->name);
-			break;
-		case CRTX_SDBUS_TYPE_SYSTEM_MACHINE:
-			r = sd_bus_open_system_machine(&sdlist->bus, sdlist->name);
-			break;
-		case CRTX_SDBUS_TYPE_CUSTOM:
-			r = sd_bus_new(&sdlist->bus);
-			if (r >= 0) {
-				int t;
-				
-				DBG("using custom DBUS at address \"%s\"\n", sdlist->name);
-				
-				t = sd_bus_set_address(sdlist->bus, sdlist->name);
-				if (t < 0) {
-					fprintf(stderr, "sd_bus_set_address failed: %s\n", strerror(-t));
-					return 0;
-				}
-				
-				t = sd_bus_start(sdlist->bus);
-				if (t < 0) {
-					fprintf(stderr, "sd_bus_start failed: %s\n", strerror(-t));
-					return 0;
-				}
-			}
-			break;
-		default:
-			ERROR("crtx_new_sdbus_listener\n");
+	if (!sdlist->bus) {
+		if (crtx_open_sdbus(&sdlist->bus, sdlist->bus_type, sdlist->name) < 0)
 			return 0;
 	}
-	if (r < 0) {
-		fprintf(stderr, "Failed to open bus: %s\n", strerror(-r));
-		return 0;
-	}
+	
+// 	int flags = sd_bus_get_events(sdlist->bus);
+// 	int eflags = 0;
+// 	if (flags | POLLIN)
+// 		eflags |= EPOLLIN;
+// 	if (flags | POLLOUT)
+// 		eflags |= EPOLLOUT;
 	
 	sdlist->parent.el_payload.fd = sd_bus_get_fd(sdlist->bus);
+// 	sdlist->parent.el_payload.event_flags = EPOLLIN;
 	sdlist->parent.el_payload.data = sdlist;
 	sdlist->parent.el_payload.event_handler = &sdbus_fd_event_handler;
 	sdlist->parent.el_payload.event_handler_name = "sdbus event handler";
@@ -558,6 +577,7 @@ static char sdbus_test_handler(struct crtx_event *event, void *userdata, void **
 
 struct crtx_sdbus_match matches[] = {
 	{ "type='signal'", "sd_bus/signal", 0 },
+	{0},
 };
 
 int sdbus_main(int argc, char **argv) {

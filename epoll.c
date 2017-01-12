@@ -49,6 +49,7 @@ void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 // 	event = &el_payload->event;
 	el_payload->el_data = event;
 	event->events = EPOLLIN;
+// 	event->events = el_payload->event_flags;
 	event->data.ptr = el_payload;
 	
 	epl = (struct crtx_epoll_listener *) lbase;

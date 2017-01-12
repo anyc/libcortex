@@ -46,7 +46,7 @@ static char can_fd_event_handler(struct crtx_event *event, void *userdata, void 
 		return 1;
 	}
 	
-// 	printf("0x%04x ", frame.can_id);
+// 	printf("0x%04x ", frame->can_id);
 	
 	nevent = create_event("can", frame, sizeof(frame));
 // 	nevent->cb_before_release = &can_event_before_release_cb;
@@ -115,7 +115,7 @@ static char setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 	
 	if ( !(flags & IFF_UP) || (bitrate != clist->bitrate) ) {
 		if (getuid() != 0 && geteuid() != 0) {
-			printf("warning, interface \"%s\" is DOWN, you might not have the required privilege to change this.\n", if_name);
+			printf("warning, interface \"%s\" need to be reconfigured, you might not have the required privileges.\n", if_name);
 		}
 		
 		rtnl_link_set_type(newlink, "can");

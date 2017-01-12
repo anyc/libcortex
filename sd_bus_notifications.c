@@ -17,7 +17,7 @@ char *notif_event_types[] = { EV_NOTIF_SIGNAL, 0 };
 static char initialized = 0;
 
 struct wait_list_item {
-	u_int32_t id;
+	uint32_t id;
 	char *answer;
 	struct crtx_signal barrier;
 	
@@ -31,7 +31,7 @@ pthread_mutex_t wait_list_mutex;
 static sd_bus *def_bus = 0;
 
 /// send a SD-BUS message to the notification service
-static u_int32_t sd_bus_send_notification(char *icon, char *title, char *text, char **actions) {
+static uint32_t sd_bus_send_notification(char *icon, char *title, char *text, char **actions) {
 	int r;
 	sd_bus_error error = SD_BUS_ERROR_NULL;
 	sd_bus_message *m = NULL, *reply = NULL;
@@ -59,42 +59,41 @@ static u_int32_t sd_bus_send_notification(char *icon, char *title, char *text, c
 		return 0;
 	}
 	
-	#define SDCHECK(r) { if (r < 0) {printf("err %d %s %d\n", r, strerror(r), __LINE__);} }
-	r = sd_bus_message_append_basic(m, 's', "cortexd"); SDCHECK(r)
-	r = sd_bus_message_append_basic(m, 'u', &id); SDCHECK(r)
-	r = sd_bus_message_append_basic(m, 's', icon); SDCHECK(r)
-	r = sd_bus_message_append_basic(m, 's', title); SDCHECK(r)
-	r = sd_bus_message_append_basic(m, 's', text); SDCHECK(r)
+	r = sd_bus_message_append_basic(m, 's', "cortexd"); CRTX_RET_GEZ(r)
+	r = sd_bus_message_append_basic(m, 'u', &id); CRTX_RET_GEZ(r)
+	r = sd_bus_message_append_basic(m, 's', icon); CRTX_RET_GEZ(r)
+	r = sd_bus_message_append_basic(m, 's', title); CRTX_RET_GEZ(r)
+	r = sd_bus_message_append_basic(m, 's', text); CRTX_RET_GEZ(r)
 	
-	r = sd_bus_message_open_container(m, 'a', "s"); SDCHECK(r)
+	r = sd_bus_message_open_container(m, 'a', "s"); CRTX_RET_GEZ(r)
 		if (actions) {
 			ait = actions;
 			while (*ait) {
-				r = sd_bus_message_append_basic(m, 's', *ait); SDCHECK(r)
+				r = sd_bus_message_append_basic(m, 's', *ait); CRTX_RET_GEZ(r)
 				ait++;
 			}
 		} else {
-			r = sd_bus_message_append_basic(m, 's', ""); SDCHECK(r)
+			r = sd_bus_message_append_basic(m, 's', ""); CRTX_RET_GEZ(r)
 		}
-	r = sd_bus_message_close_container(m); SDCHECK(r)
+	r = sd_bus_message_close_container(m); CRTX_RET_GEZ(r)
 	
 	
-	r = sd_bus_message_open_container(m, 'a', "{sv}"); SDCHECK(r)
-		r = sd_bus_message_open_container(m, 'e', "sv"); SDCHECK(r)
-			r = sd_bus_message_append_basic(m, 's', ""); SDCHECK(r)
+	r = sd_bus_message_open_container(m, 'a', "{sv}"); CRTX_RET_GEZ(r)
+		r = sd_bus_message_open_container(m, 'e', "sv"); CRTX_RET_GEZ(r)
+			r = sd_bus_message_append_basic(m, 's', ""); CRTX_RET_GEZ(r)
 			
-			r = sd_bus_message_open_container(m, 'v', "s"); SDCHECK(r)
-				r = sd_bus_message_append_basic(m, 's', ""); SDCHECK(r)
-			r = sd_bus_message_close_container(m); SDCHECK(r)
-		r = sd_bus_message_close_container(m); SDCHECK(r)
-	r = sd_bus_message_close_container(m); SDCHECK(r)
+			r = sd_bus_message_open_container(m, 'v', "s"); CRTX_RET_GEZ(r)
+				r = sd_bus_message_append_basic(m, 's', ""); CRTX_RET_GEZ(r)
+			r = sd_bus_message_close_container(m); CRTX_RET_GEZ(r)
+		r = sd_bus_message_close_container(m); CRTX_RET_GEZ(r)
+	r = sd_bus_message_close_container(m); CRTX_RET_GEZ(r)
 	
 	
-	r = sd_bus_message_append_basic(m, 'i', &time); SDCHECK(r)
+	r = sd_bus_message_append_basic(m, 'i', &time); CRTX_RET_GEZ(r)
 	
-	r = sd_bus_call(def_bus, m, -1, &error, &reply); SDCHECK(r)
+	r = sd_bus_call(def_bus, m, -1, &error, &reply); CRTX_RET_GEZ(r)
 	
-	u_int32_t res;
+	uint32_t res;
 	r = sd_bus_message_read(reply, "u", &res);
 	if (r < 0) {
 		fprintf(stderr, "Failed to parse response message: %s\n", strerror(-r));

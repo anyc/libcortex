@@ -30,12 +30,12 @@ struct crtx_sdbus_listener {
 				// either CRTX_SDBUS_TYPE_SYSTEM_REMOTE or CRTX_SDBUS_TYPE_SYSTEM_MACHINE
 	sd_bus *bus;
 	
-// 	char **matches;
 	struct crtx_sdbus_match *matches;
 };
 
 extern sd_bus *sd_bus_main_bus;
 
+char crtx_open_sdbus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name);
 void sd_bus_add_signal_listener(sd_bus *bus, char *path, char *event_type);
 void sd_bus_print_event_task(struct crtx_event *event, void *userdata);
 void sd_bus_print_msg(sd_bus_message *m);
