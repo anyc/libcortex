@@ -35,6 +35,7 @@ struct crtx_sdbus_listener {
 
 extern sd_bus *sd_bus_main_bus;
 
+int crtx_sd_bus_message_read_string(sd_bus_message *m, char **p);
 char crtx_open_sdbus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name);
 void sd_bus_add_signal_listener(sd_bus *bus, char *path, char *event_type);
 void sd_bus_print_event_task(struct crtx_event *event, void *userdata);

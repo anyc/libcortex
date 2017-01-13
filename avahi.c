@@ -14,6 +14,76 @@
 #include "sd_bus.h"
 
 
+char crtx_avahi_resolve_service(struct crtx_avahi_service *service) {
+	int r;
+	sd_bus_error error = SD_BUS_ERROR_NULL;
+	sd_bus_message *m = NULL, *reply = NULL;
+	struct crtx_sdbus_listener *slist;
+	size_t size;
+	
+	slist = crtx_sdbus_get_default_listener(CRTX_SDBUS_TYPE_SYSTEM);
+	
+	r = sd_bus_message_new_method_call(slist->bus,
+									&m,
+									"org.freedesktop.Avahi",
+									"/",
+									"org.freedesktop.Avahi.Server",
+									"ResolveService"
+	);
+	if (r < 0) {
+		ERROR("Failed to create method call: %s %s\n", error.name, error.message);
+		return r;
+	}
+	
+	r = sd_bus_message_append_basic(m, 'i', &service->interface); CRTX_RET_GEZ(r)
+	r = sd_bus_message_append_basic(m, 'i', &service->protocol); CRTX_RET_GEZ(r)
+	r = sd_bus_message_append_basic(m, 's', service->name); CRTX_RET_GEZ(r)
+	r = sd_bus_message_append_basic(m, 's', service->type); CRTX_RET_GEZ(r)
+	r = sd_bus_message_append_basic(m, 's', service->domain); CRTX_RET_GEZ(r)
+	r = sd_bus_message_append_basic(m, 'i', &service->aprotocol); CRTX_RET_GEZ(r)
+	r = sd_bus_message_append_basic(m, 'u', &service->flags); CRTX_RET_GEZ(r)
+	
+	r = sd_bus_call(slist->bus, m, -1, &error, &reply); 
+	if (r < 0) {
+		ERROR("Failed to issue method call: %s %s\n", error.name, error.message);
+		return r;
+	}
+	
+	sd_bus_message_unref(m);
+	
+	r = sd_bus_message_read_basic(reply, 'i', &service->interface); CRTX_RET_GEZ(r)
+	r = sd_bus_message_read_basic(reply, 'i', &service->protocol); CRTX_RET_GEZ(r)
+	r = crtx_sd_bus_message_read_string(reply, &service->name); CRTX_RET_GEZ(r)
+	r = crtx_sd_bus_message_read_string(reply, &service->type); CRTX_RET_GEZ(r)
+	r = crtx_sd_bus_message_read_string(reply, &service->domain); CRTX_RET_GEZ(r)
+	r = crtx_sd_bus_message_read_string(reply, &service->host); CRTX_RET_GEZ(r)
+	r = sd_bus_message_read_basic(reply, 'i', &service->aprotocol); CRTX_RET_GEZ(r)
+	r = crtx_sd_bus_message_read_string(reply, &service->address); CRTX_RET_GEZ(r)
+	r = sd_bus_message_read_basic(reply, 'q', &service->port); CRTX_RET_GEZ(r)
+	
+// 	r = sd_bus_message_read_array(reply, 'y', &service->txt, &size); CRTX_RET_GEZ(r)
+// 	r = sd_bus_message_enter_container(reply, 'a', "ay");CRTX_RET_GEZ(r)
+	while ((r = sd_bus_message_enter_container(reply, 'a', "ay")) > 0) {
+		char *s;
+		s = 0; size = 0;
+// 		r = sd_bus_message_enter_container(reply, 'a', "y");CRTX_RET_GEZ(r)
+		r = sd_bus_message_read_array(reply, 'y', (const void**) &s, &size); CRTX_RET_GEZ(r)
+		if (size > 0) {
+			printf("string %p %zu\n", s, size);
+			printf("string %s %zu\n", s, size);
+		}
+		
+// 		r = sd_bus_message_exit_container(reply); CRTX_RET_GEZ(r)
+		r = sd_bus_message_exit_container(reply); CRTX_RET_GEZ(r)
+	}
+	
+	r = sd_bus_message_read_basic(reply, 'u', &service->flags); CRTX_RET_GEZ(r)
+	
+	sd_bus_message_unref(reply);
+	
+	return 0;
+}
+
 char crtx_avahi_publish_service(struct crtx_avahi_service *service) {
 	int r;
 	sd_bus_error error = SD_BUS_ERROR_NULL;
@@ -229,6 +299,15 @@ static char sdbus_to_avahi_handler(struct crtx_event *event, void *userdata, voi
 	r = sd_bus_message_read_basic(m, 's', &service->type); CRTX_RET_GEZ(r)
 	r = sd_bus_message_read_basic(m, 's', &service->domain); CRTX_RET_GEZ(r)
 	r = sd_bus_message_read_basic(m, 'u', &service->flags); CRTX_RET_GEZ(r)
+	
+	if (!strcmp(sd_bus_message_get_member(m), "ItemNew")) {
+		service->action = 'a';
+	} else
+	if (!strcmp(sd_bus_message_get_member(m), "ItemRemove")) {
+		service->action = 'r';
+	} else {
+		service->action = 0;
+	}
 	
 	service->payload = m;
 	sd_bus_message_ref(m);

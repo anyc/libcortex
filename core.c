@@ -92,6 +92,7 @@ struct crtx_listener_repository listener_factory[] = {
 	{"socket_server", &crtx_new_socket_server_listener},
 	{"socket_raw_server", &crtx_new_socket_raw_server_listener},
 	{"socket_client", &crtx_new_socket_client_listener},
+	{"socket_raw_client", &crtx_new_socket_raw_client_listener},
 #ifdef STATIC_SD_BUS
 	{"sd_bus_notification", &crtx_new_sd_bus_notification_listener},
 #endif

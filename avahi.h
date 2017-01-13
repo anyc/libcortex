@@ -11,13 +11,15 @@
 struct crtx_avahi_service {
 	int32_t interface;
 	int32_t protocol;
+	int32_t aprotocol;
 	uint32_t flags;
 	char *name;
 	char *type;
 	char *domain;
 	char *host;
+	char *address;
 	uint32_t port;
-// 	char *txt; // TODO
+	void *txt; // TODO
 	
 	char action;
 // 	char *path;
@@ -35,6 +37,7 @@ struct crtx_avahi_listener {
 	struct crtx_sdbus_match sdbus_match[3];
 };
 
+char crtx_avahi_resolve_service(struct crtx_avahi_service *service);
 char crtx_avahi_service(struct crtx_event *event);
 struct crtx_listener_base *crtx_new_avahi_listener(void *options);
 void crtx_avahi_init();

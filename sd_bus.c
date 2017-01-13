@@ -303,6 +303,21 @@ void sd_bus_add_signal_listener(sd_bus *bus, char *path, char *event_type) {
 // 	// 	sd_bus_add_match(bus, &slot, "type='signal',path='/Mixers/PulseAudio__Playback_Devices_1'" , bus_signal_cb, bus);
 // 	sd_bus_add_match(bus, &slot, "type='signal'" , bus_signal_cb, dthread);
 
+int crtx_sd_bus_message_read_string(sd_bus_message *m, char **p) {
+	char *o = 0;
+	int r;
+	
+	r = sd_bus_message_read_basic(m, 's', &o);
+	if (r >= 0) {
+		if (o == 0)
+			return -1;
+		
+		*p = crtx_stracpy(o, 0);
+	}
+	
+	return r;
+}
+
 static void cb_event_release(struct crtx_event *event) {
 	sd_bus_message_unref(event->data.raw.pointer);
 }
@@ -327,20 +342,45 @@ static int sdbus_match_listener_cb(sd_bus_message *m, void *userdata, sd_bus_err
 	return 0;
 }
 
+// #include <poll.h>
+// int crtx_sd_bus_get_events(sd_bus *bus) {
+// 	int f, result;
+// 	
+// 	result = 0;
+// 	
+// 	f = sd_bus_get_events(bus);
+// 	if (f & POLLIN)
+// 		result |= EPOLLIN;
+// 	if (f & POLLOUT)
+// 		result |= EPOLLOUT;
+// 	
+// 	return result;
+// }
+
 static char sdbus_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event_loop_payload *payload;
 	struct crtx_sdbus_listener *sdlist;
 	int r;
 	
-	
 	payload = (struct crtx_event_loop_payload*) event->data.raw.pointer;
 	
 	sdlist = (struct crtx_sdbus_listener *) payload->data;
 	
-	r = sd_bus_process(sdlist->bus, NULL);
-	if (r < 0) {
-		fprintf(stderr, "Failed to process bus: %s\n", strerror(-r));
+	while (1) {
+		r = sd_bus_process(sdlist->bus, NULL);
+		if (r < 0) {
+			fprintf(stderr, "Failed to process bus: %s\n", strerror(-r));
+		}
+		if (r == 0)
+			break;
 	}
+	
+// 	int new_flags;
+// 	new_flags = crtx_sd_bus_get_events(sdlist->bus);
+// 	if (payload->event_flags != new_flags) {
+// 		printf("%d != %d\n", payload->event_flags, new_flags);
+// 		payload->event_flags = new_flags;
+// 	}
 	
 	return r;
 }
@@ -424,7 +464,8 @@ struct crtx_listener_base *crtx_new_sdbus_listener(void *options) {
 // 		eflags |= EPOLLOUT;
 	
 	sdlist->parent.el_payload.fd = sd_bus_get_fd(sdlist->bus);
-// 	sdlist->parent.el_payload.event_flags = EPOLLIN;
+// 	sdlist->parent.el_payload.event_flags = EPOLLIN | crtx_sd_bus_get_events(sdlist->bus);
+// 	sdlist->parent.el_payload.event_flags = EPOLLIN | EPOLLOUT;
 	sdlist->parent.el_payload.data = sdlist;
 	sdlist->parent.el_payload.event_handler = &sdbus_fd_event_handler;
 	sdlist->parent.el_payload.event_handler_name = "sdbus event handler";

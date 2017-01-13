@@ -58,11 +58,14 @@ struct addrinfo *crtx_get_addrinfo(struct crtx_socket_raw_listener *listener) {
 		hints.ai_socktype=listener->type;
 		hints.ai_protocol=listener->protocol;
 		
+		// getattrinfo modifies the host variable for some reason
+// 		char *test = crtx_stracpy(listener->host, 0);
 		ret = getaddrinfo(listener->host, listener->service, &hints, &result);
 		if (ret !=0) {
-			printf("getaddrinfo error %s %s: %s", listener->host, listener->service, gai_strerror(ret));
+			printf("getaddrinfo error %s %s: %s\n", listener->host, listener->service, gai_strerror(ret));
 			return 0;
 		}
+// 		free(test);
 	}
 	
 	return result;
@@ -165,9 +168,64 @@ struct crtx_listener_base *crtx_new_socket_raw_server_listener(void *options) {
 	return &slistener->parent;
 }
 
-struct crtx_listener_base *crtx_new_socket_raw_client_listener(void *options) {
+
+static char client_read_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_event_loop_payload *el_payload;
+	struct crtx_socket_raw_listener *slist;
+	
+	
+	el_payload = (struct crtx_event_loop_payload*) event->data.raw.pointer;
+	
+	slist = (struct crtx_socket_raw_listener *) el_payload->data;
+	
+	slist->accept_cb(slist, el_payload->fd, 0);
 	
 	return 0;
+}
+
+struct crtx_listener_base *crtx_new_socket_raw_client_listener(void *options) {
+	struct crtx_socket_raw_listener *slistener;
+	struct addrinfo *addrinfos, *rit;
+// 	int ret;
+	
+	slistener = (struct crtx_socket_raw_listener *) options;
+	
+	
+	
+	addrinfos = crtx_get_addrinfo(slistener);
+	
+	if (!addrinfos) {
+		ERROR("cannot resolve %s %s\n", slistener->host, slistener->service);
+		return 0;
+	}
+	
+	for (rit = addrinfos; rit; rit = rit->ai_next) {
+		slistener->sockfd = socket(rit->ai_family, rit->ai_socktype, rit->ai_protocol);
+		
+		if (slistener->sockfd < 0)
+			continue;
+		
+		if (connect(slistener->sockfd, rit->ai_addr, rit->ai_addrlen) == 0)
+			break;
+		
+		close(slistener->sockfd);
+	}
+	if (rit == 0) {
+		ERROR("cannot connect to %s:%s: %s\n", slistener->host, slistener->service, strerror(errno));
+		return 0;
+	}
+	
+	crtx_free_addrinfo(addrinfos);
+	
+	slistener->parent.shutdown = &shutdown_socket_raw_listener;
+	
+	slistener->parent.el_payload.fd = slistener->sockfd;
+	// 	slistener->parent.el_payload.event_flags = EPOLLIN;
+	slistener->parent.el_payload.data = slistener;
+	slistener->parent.el_payload.event_handler = &client_read_handler;
+	slistener->parent.el_payload.event_handler_name = "client_read_handler";
+	
+	return &slistener->parent;
 }
 
 void crtx_socket_raw_init() {
