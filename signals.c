@@ -156,6 +156,8 @@ void crtx_handle_std_signals() {
 	t->event_type_match = get_signal(SIGINT)->etype;
 	add_task(sl_base->graph, t);
 	
+	signal(SIGPIPE, SIG_IGN);
+	
 	crtx_start_listener(sl_base);
 }
 

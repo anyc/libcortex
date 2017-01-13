@@ -2,7 +2,7 @@
 /*
  * To open a TCPv4 connection with localhost:1234
  * 
- * sock_listener.ai_family = AF_INET;
+ * sock_listener.ai_family = AF_INET; // or AF_UNSPEC
  * sock_listener.type = SOCK_STREAM;
  * sock_listener.protocol = IPPROTO_TCP;
  * sock_listener.host = "localhost";

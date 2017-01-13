@@ -14,7 +14,7 @@
 #include "sd_bus.h"
 
 
-char crtx_avahi_resolve_service(struct crtx_avahi_service *service) {
+int crtx_avahi_resolve_service(struct crtx_avahi_service *service) {
 	int r;
 	sd_bus_error error = SD_BUS_ERROR_NULL;
 	sd_bus_message *m = NULL, *reply = NULL;
