@@ -109,7 +109,9 @@ char crtx_avahi_publish_service(struct crtx_avahi_service *service) {
 	}
 	
 	r = sd_bus_message_read(reply, "o", &service->payload); CRTX_RET_GEZ(r);
+	service->payload = crtx_stracpy(service->payload, 0);
 	
+	sd_bus_message_unref(reply);
 	sd_bus_message_unref(m);
 	
 	
@@ -137,7 +139,7 @@ char crtx_avahi_publish_service(struct crtx_avahi_service *service) {
 	r = sd_bus_message_append_basic(m, 'q', &port); CRTX_RET_GEZ(r)
 	r = sd_bus_message_append(m, "aay", 0); CRTX_RET_GEZ(r)
 	
-	r = sd_bus_call(slist->bus, m, -1, &error, &reply); 
+	r = sd_bus_call(slist->bus, m, -1, &error, 0); 
 	if (r < 0) {
 		ERROR("Failed to issue method call: %s %s\n", error.name, error.message);
 		return r;
@@ -156,7 +158,7 @@ char crtx_avahi_publish_service(struct crtx_avahi_service *service) {
 								);
 	CRTX_RET_GEZ(r);
 	
-	r = sd_bus_call(slist->bus, m, -1, &error, &reply);
+	r = sd_bus_call(slist->bus, m, -1, &error, 0);
 	if (r < 0) {
 		ERROR("Failed to issue method call: %s %s\n", error.name, error.message);
 		return r;
@@ -349,6 +351,8 @@ static char init_service_browser(struct crtx_avahi_listener *alist) {
 	}
 	
 	r = sd_bus_message_read(reply, "o", &alist->service_browser.payload); CRTX_RET_GEZ(r);
+	
+	alist->service_browser.payload = crtx_stracpy(alist->service_browser.payload, 0);
 	
 	sd_bus_message_unref(m);
 	
