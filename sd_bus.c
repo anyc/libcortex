@@ -589,6 +589,13 @@ void crtx_sdbus_init() {
 }
 
 void crtx_sdbus_finish() {
+	int i;
+	
+	for (i=0; i < CRTX_SDBUS_TYPE_MAX; i++) {
+		if (default_listeners[i].bus)
+			free_listener(&default_listeners[i].parent);
+	}
+	
 // 	sd_bus_flush(sd_bus_main_bus);
 // 	sd_bus_unref(sd_bus_main_bus);
 }

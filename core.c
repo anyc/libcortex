@@ -941,9 +941,6 @@ void crtx_init() {
 void crtx_finish() {
 	unsigned int i;
 	
-	if (crtx_root->event_loop.listener)
-		free_listener((struct crtx_listener_base *) crtx_root->event_loop.listener);
-	
 	crtx_init_shutdown();
 	
 	i=0;
@@ -963,6 +960,11 @@ void crtx_finish() {
 		
 		static_modules[i].finish();
 		i--;
+	}
+	
+	if (crtx_root->event_loop.listener) {
+		free_listener((struct crtx_listener_base *) crtx_root->event_loop.listener);
+		free(crtx_root->event_loop.listener);
 	}
 	
 	LOCK(crtx_root->graphs_mutex);

@@ -8,6 +8,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <cap-ng.h>
 
 // #include <linux/if.h>
 #include <net/if.h>
@@ -69,7 +70,7 @@ void crtx_shutdown_can_listener(struct crtx_listener_base *data) {
 // 	shutdown(inlist->server_sockfd, SHUT_RDWR);
 }
 
-static char setup_can_if(struct crtx_can_listener *clist, char *if_name) {
+static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 	struct nl_sock *socket;
 	struct rtnl_link *link, *newlink;
 	int r;
@@ -110,12 +111,28 @@ static char setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 		goto error_linktype;
 	}
 	
+	bitrate = 0;
 	flags = rtnl_link_get_flags(link);
 	rtnl_link_can_get_bitrate(link, &bitrate);
 	
 	if ( !(flags & IFF_UP) || (bitrate != clist->bitrate) ) {
-		if (getuid() != 0 && geteuid() != 0) {
-			printf("warning, interface \"%s\" need to be reconfigured, you might not have the required privileges.\n", if_name);
+// 		if (getuid() != 0 && geteuid() != 0) {
+// 			printf("warning, interface \"%s\" need to be reconfigured, you might not have the required privileges.\n", if_name);
+// 		}
+		
+		int caps;
+		caps = capng_get_caps_process();
+		if (caps != 0) {
+			ERROR("retrieving capabilities failed\n");
+		} else {
+			if (!capng_have_capability(CAPNG_EFFECTIVE, CAP_NET_ADMIN)) {
+				char *buf;
+				
+				ERROR("interface \"%s\" needs to be reconfigured and it looks like you do not have the required privileges (CAP_NET_ADMIN).\n", if_name);
+				buf = capng_print_caps_text(CAPNG_PRINT_BUFFER, CAPNG_EFFECTIVE);
+				DBG("effective caps: %s\n", buf);
+				free(buf);
+			}
 		}
 		
 		rtnl_link_set_type(newlink, "can");
@@ -134,6 +151,7 @@ static char setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 		r = rtnl_link_change(socket, link, newlink, 0);
 		if (r < 0) {
 			printf("link change failed: %s\n", nl_geterror(r));
+			goto error_newlink;
 		}
 	}
 	

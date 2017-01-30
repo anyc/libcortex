@@ -62,7 +62,7 @@ void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 	
 // 	crtx_create_task(lbase->graph, 0, el_payload->event_handler_name, el_payload->event_handler, 0);
 	
-	printf("add %d\n", el_payload->fd);
+// 	printf("add %d\n", el_payload->fd);
 	
 // 	int count;
 // 	ioctl(el_payload->fd, FIONREAD, &count);
@@ -73,6 +73,8 @@ void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 
 void crtx_epoll_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
 	struct crtx_epoll_listener *epl;
+	
+	printf("free %p\n", lbase);
 	
 	epl = (struct crtx_epoll_listener *) lbase;
 	crtx_epoll_del_fd_intern(epl, el_payload->fd);
@@ -127,7 +129,7 @@ void *crtx_epoll_main(void *data) {
 				
 				ERROR("epoll returned EPOLLERR %d\n", el_payload->fd);
 				
-				crtx_epoll_del_fd((struct crtx_listener_base *) epl, el_payload);
+// 				crtx_epoll_del_fd((struct crtx_listener_base *) epl, el_payload);
 				
 				continue;
 			} else
