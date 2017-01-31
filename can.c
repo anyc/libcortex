@@ -196,6 +196,7 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 		
 		if (strlen(clist->interface_name) >= IFNAMSIZ-1) {
 			fprintf(stderr, "too long interface name\n");
+			close(clist->sockfd);
 			return 0;
 		}
 		
@@ -203,6 +204,7 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 		r = ioctl(clist->sockfd, SIOCGIFINDEX, &ifr);
 		if (r != 0) {
 			fprintf(stderr, "SIOCGIFINDEX failed on %s: %s\n", clist->interface_name, strerror(errno));
+			close(clist->sockfd);
 			return 0;
 		}
 		
