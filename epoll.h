@@ -12,7 +12,7 @@ struct crtx_epoll_listener {
 	size_t max_n_events;
 	int timeout;
 	
-	char no_thread;
+// 	char no_thread;
 	char stop;
 };
 

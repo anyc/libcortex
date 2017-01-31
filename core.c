@@ -44,6 +44,8 @@
 #endif
 #include "can.h"
 #include "avahi.h"
+#include "uevents.h"
+#include "nl_route.h"
 
 
 struct crtx_root crtx_global_root;
@@ -80,6 +82,8 @@ struct crtx_module static_modules[] = {
 #endif
 	{"can", &crtx_can_init, &crtx_can_finish},
 	{"avahi", &crtx_avahi_init, &crtx_avahi_finish},
+	{"uevents", &crtx_uevents_init, &crtx_uevents_finish},
+	{"nl_route", &crtx_nl_route_init, &crtx_nl_route_finish},
 	{0, 0}
 };
 
@@ -115,6 +119,8 @@ struct crtx_listener_repository listener_factory[] = {
 #endif
 	{"can", &crtx_new_can_listener},
 	{"avahi", &crtx_new_avahi_listener},
+	{"uevents", &crtx_new_uevents_listener},
+	{"nl_route", &crtx_new_nl_route_listener},
 	{0, 0}
 };
 
@@ -163,22 +169,59 @@ void crtx_printf(char level, char *format, ...) {
 	va_end(va);
 }
 
+enum crtx_processing_mode crtx_get_mode(enum crtx_processing_mode local_mode) {
+	enum crtx_processing_mode mode;
+	
+	if (crtx_root->force_mode == CRTX_PREFER_NONE) {
+		if (local_mode == CRTX_PREFER_NONE) {
+			mode = crtx_root->default_mode;
+		} else {
+			mode = local_mode;
+		}
+	} else
+	if (crtx_root->force_mode == CRTX_PREFER_THREAD) {
+		mode = CRTX_PREFER_THREAD;
+	} else
+	if (crtx_root->force_mode == CRTX_PREFER_ELOOP) {
+		mode = CRTX_PREFER_ELOOP;
+	}
+	
+	return mode;
+}
+
 char crtx_start_listener(struct crtx_listener_base *listener) {
+	enum crtx_processing_mode mode;
+	
 	if (listener->start_listener) {
 		listener->start_listener(listener);
 	}
 	
-	if (listener->thread) {
+	if (!listener->el_payload.fd && !listener->thread) {
+		DBG("no method to start listener \"%s\" provided\n", listener->graph->name);
+		return -1;
+	}
+	
+	mode = crtx_get_mode(listener->mode);
+	
+	if (mode == CRTX_PREFER_ELOOP && listener->el_payload.fd <= 0) {
+		ERROR("listener mode set to \"event loop\" but not event loop data available\n");
+		mode = CRTX_PREFER_THREAD;
+	}
+	if (mode == CRTX_PREFER_THREAD && !listener->thread) {
+		ERROR("listener mode set to \"thread\" but not thread data available\n");
+		mode = CRTX_PREFER_ELOOP;
+	}
+	
+	if (mode == CRTX_PREFER_THREAD) {
 		start_thread(listener->thread);
-	} else {
-		if (listener->el_payload.fd > 0) {
-			if (!crtx_root->event_loop.listener)
-				crtx_get_event_loop();
-			
-			crtx_root->event_loop.add_fd(
-				&crtx_root->event_loop.listener->parent,
-				&listener->el_payload);
-		}
+	} else 
+	if (mode == CRTX_PREFER_ELOOP) {
+		if (!crtx_root->event_loop.listener)
+			crtx_get_event_loop();
+		
+		crtx_root->event_loop.add_fd(
+			&crtx_root->event_loop.listener->parent,
+			&listener->el_payload);
 	}
 	
 	return 1;
@@ -219,10 +262,10 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 				crtx_get_event_loop();
 		} else
 		if (lbase->thread) {
-			if (lbase->thread->on_finish)
-				ERROR("thread->on_finish already set\n");
-			lbase->thread->on_finish = &listener_thread_on_finish;
-			lbase->thread->on_finish_data = lbase;
+// 			if (lbase->thread->on_finish)
+// 				ERROR("thread->on_finish already set\n");
+// 			lbase->thread->on_finish = &listener_thread_on_finish;
+// 			lbase->thread->on_finish_data = lbase;
 		}
 	}
 	
@@ -534,7 +577,10 @@ void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 // // 		ATOMIC_FETCH_SUB(graph->n_consumers, 1);
 // // 	}
 	
-	if (!crtx_root->no_threads || !crtx_root->event_loop.listener) {
+	enum crtx_processing_mode mode = crtx_get_mode(graph->mode);
+	
+// 	if (mode == CRTX_PREFER_THREAD || !crtx_root->event_loop.listener) {
+	if (mode == CRTX_PREFER_THREAD) {
 		struct crtx_thread *t;
 		
 		t = get_thread(&crtx_process_graph_tmain, graph, 0);
@@ -915,7 +961,8 @@ void crtx_init() {
 	
 	DBG("initialized cortex (PID: %d)\n", getpid());
 	
-	crtx_root->no_threads = 1;
+// 	crtx_root->no_threads = 1;
+	crtx_root->default_mode = CRTX_PREFER_ELOOP;
 	
 	INIT_MUTEX(crtx_root->graphs_mutex);
 	
@@ -951,7 +998,8 @@ void crtx_finish() {
 		crtx_finish_notification_listeners(crtx_root->notification_listeners_handle);
 	
 	// stop threads first
-	static_modules[0].finish();
+// 	static_modules[0].finish();
+	crtx_threads_stop();
 	// stop controls second
 	static_modules[1].finish();
 	
@@ -966,6 +1014,9 @@ void crtx_finish() {
 		free_listener((struct crtx_listener_base *) crtx_root->event_loop.listener);
 		free(crtx_root->event_loop.listener);
 	}
+	
+	// finish threads module
+	static_modules[0].finish();
 	
 	LOCK(crtx_root->graphs_mutex);
 	for (i=0; i < crtx_root->n_graphs; i++) {
@@ -1113,7 +1164,7 @@ struct crtx_event_loop* crtx_get_event_loop() {
 		crtx_root->event_loop.listener = (struct crtx_epoll_listener*) calloc(1, sizeof(struct crtx_epoll_listener));
 		
 // 		crtx_root->event_loop.listener->no_thread = 1 - crtx_root->event_loop.start_thread;
-		crtx_root->event_loop.listener->no_thread = crtx_root->no_threads;
+// 		crtx_root->event_loop.listener->parent.lmode = crtx_root->lmode;
 		
 		crtx_root->event_loop.add_fd = &crtx_epoll_add_fd;
 		crtx_root->event_loop.del_fd = &crtx_epoll_del_fd;

@@ -50,6 +50,8 @@ void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 // 	event = &el_payload->event;
 	el_payload->el_data = event;
 	
+	printf("%d %d\n", el_payload->fd, el_payload->event_flags);
+	
 	if (el_payload->event_flags == 0)
 		event->events = EPOLLIN;
 	else
@@ -239,10 +241,10 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	
 	epl->parent.shutdown = &shutdown_epoll_listener;
 	
-	if (!epl->no_thread) {
+// 	if (!epl->no_thread) {
 		epl->parent.thread = get_thread(crtx_epoll_main, epl, 0);
 		epl->parent.thread->do_stop = &stop_thread;
-	} 
+// 	} 
 // 	else {
 // 		if (crtx_root->event_loop.listener)
 // 			ERROR("multiple crtx_root->event_loop\n");
@@ -354,7 +356,8 @@ int epoll_main(int argc, char **argv) {
 	memset(&epl, 0, sizeof(struct crtx_epoll_listener));
 	
 	if (argc > 1) {
-		epl.no_thread = 1;
+// 		epl.no_thread = 1;
+		crtx_root->force_mode = CRTX_PREFER_ELOOP;
 	}
 	
 	lbase = create_listener("epoll", &epl);

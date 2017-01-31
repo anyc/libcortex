@@ -634,7 +634,7 @@ int sdbus_main(int argc, char **argv) {
 	char ret;
 	
 	
-	crtx_root->no_threads = 1;
+// 	crtx_root->no_threads = 1;
 	
 	memset(&sdlist, 0, sizeof(struct crtx_sdbus_listener));
 	

@@ -207,7 +207,8 @@ static struct crtx_thread *get_thread_intern(thread_fct fct, void *data, char st
 	t->fct_data = data;
 	
 	if (start)
-		send_signal(&t->start, 0);
+// 		send_signal(&t->start, 0);
+		start_thread(t);
 	
 	return t;
 }
@@ -221,6 +222,9 @@ struct crtx_thread *get_main_thread(thread_fct fct, void *data, char start) {
 }
 
 void start_thread(struct crtx_thread *t) {
+// 	if (t->handle == 0)
+// 		pthread_create(&t->handle, NULL, &thread_main, t);
+	
 	send_signal(&t->start, 0);
 }
 

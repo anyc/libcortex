@@ -97,6 +97,10 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 	return &tlist->parent;
 }
 
+void crtx_usleep(unsigned int usec) {
+	
+}
+
 void crtx_timer_init() {
 }
 

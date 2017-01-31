@@ -16,9 +16,6 @@ OBJS+=sd_bus.o sd_bus_notifications.o
 CFLAGS+=$(shell pkg-config --cflags libsystemd)
 LDLIBS+=$(shell pkg-config --libs libsystemd)
 
-OBJS+=netlink_raw.o
-TESTS+=netlink_raw.test
-
 CFLAGS+=-DSTATIC_NETLINK_GE
 OBJS+=netlink_ge.o
 TESTS+=netlink_ge.test
@@ -30,8 +27,11 @@ OBJS+=nf_queue.o
 CFLAGS+=$(shell pkg-config --cflags libnetfilter_queue)
 LDLIBS+=$(shell pkg-config --libs libnetfilter_queue)
 
-CFLAGS+=-DSTATIC_NETLINK_RAW
+CFLAGS+=-DSTATIC_NETLINK
 OBJS+=netlink_raw.o
+
+OBJS+=nl_route.o
+TESTS+=nl_route.test
 
 OBJS+=evdev.o
 TESTS+=evdev.test
@@ -54,3 +54,6 @@ OBJS+=pulseaudio.o
 TESTS+=pulseaudio.test
 CFLAGS+=$(shell pkg-config --cflags libpulse)
 LDLIBS+=$(shell pkg-config --libs libpulse)
+
+OBJS+=uevents.o
+TESTS+=uevents.test

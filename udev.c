@@ -290,7 +290,7 @@ int udev_main(int argc, char **argv) {
 	
 // 	crtx_handle_std_signals();
 	
-	crtx_root->no_threads = 1;
+// 	crtx_root->no_threads = 1;
 	
 	memset(&ulist, 0, sizeof(struct crtx_udev_listener));
 	

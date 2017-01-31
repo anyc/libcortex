@@ -59,6 +59,8 @@ extern char *crtx_evt_inbox[];
 extern char *crtx_evt_outbox[];
 
 
+enum crtx_processing_mode {CRTX_PREFER_NONE=0, CRTX_PREFER_THREAD, CRTX_PREFER_ELOOP};
+
 
 struct crtx_event;
 struct crtx_listener_base;
@@ -147,6 +149,8 @@ struct crtx_graph {
 	
 	struct crtx_task *tasks;
 	
+	enum crtx_processing_mode mode;
+	
 // 	struct crtx_thread *consumers;
 	unsigned int n_consumers;
 	unsigned int n_max_consumers;
@@ -182,18 +186,18 @@ struct crtx_event_loop_payload {
 	void *el_data;
 };
 
-// #include "epoll.h"
 struct crtx_listener_base {
 	void (*shutdown)(struct crtx_listener_base *data);
 	void (*free)(struct crtx_listener_base *data, void *userdata);
 	void *free_userdata;
 	
+	enum crtx_processing_mode mode;
+	
 	struct crtx_event_loop_payload el_payload;
 	
-	// TODO: add (*start)() to start listener after tasks have been added?
 	struct crtx_thread *thread;
-	thread_fct thread_fct;
-	void *thread_data;
+// 	thread_fct thread_fct;
+// 	void *thread_data;
 	void (*thread_stop)(struct crtx_thread *thread, void *data);
 	
 	char (*start_listener)(struct crtx_listener_base *listener);
@@ -228,7 +232,9 @@ struct crtx_root {
 	char shutdown;
 	
 	struct crtx_event_loop event_loop;
-	char no_threads;
+// 	char no_threads;
+	enum crtx_processing_mode default_mode;
+	enum crtx_processing_mode force_mode;
 	
 	struct crtx_graph *crtx_ctrl_graph;
 	
