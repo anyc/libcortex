@@ -8,105 +8,99 @@
 #include "core.h"
 #include "uevents.h"
 
-static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int fd, void *userdata) {
-	char buf[512];
+struct crtx_dict *uevents_raw2dict(char *buf, size_t size) {
+	char *s, *sep, *key;
+	struct crtx_dict *dict;
+	struct crtx_dict_item *di;
+	size_t len;
 	
-	int i, len;
-	printf("asd\n");
-	len = recv(fd, buf, sizeof(buf), MSG_DONTWAIT);
-	if (len == -1) {
-		if (errno == EWOULDBLOCK)
-			return;
+	// safety measure
+	buf[size-1] = 0;
+	
+	sep = strchr(buf, '@');
+	if (!sep) {
+		ERROR("wrong format of uevent msg\n");
+		return 0;
+	}
+	s = buf + strlen(buf)+1;
+	
+	dict = crtx_init_dict(0, 0, 0);
+	
+	while (s < buf + size) {
+		sep = strchr(s, '=');
+		if (!sep) {
+			len = strlen(s);
+			s += len + 1;
+			continue;
+		}
+		if (sep >= buf+size) {
+			ERROR("wrong format of uevent msg\n");
+			crtx_free_dict(dict);
+			return 0;
+		}
 		
-		ERROR("TODO %s\n", strerror(errno));
-		return;
+		len = sep - s;
+		key = (char*) malloc(len + 1);
+		memcpy(key, s, len);
+		key[len] = 0;
+
+		len = strlen(sep+1);
+		
+		di = crtx_alloc_item(dict);
+		crtx_fill_data_item(di, 's', key, crtx_stracpy(sep+1, &len), len, DIF_KEY_ALLOCATED);
+		
+		s = sep + 1 + len + 1;
 	}
 	
-	i = 0;
-	while (i<len) {
-		printf("\"\"\"%s\"\"\"\n", buf+i);
-		i += strlen(buf+i)+1;
+	return dict;
+}
+
+static int uevents_read_cb(struct crtx_netlink_raw_listener *nl_listener, int fd, void *userdata) {
+	char buf[512];
+	ssize_t len;
+	size_t ulen;
+	struct crtx_event *event;
+	struct crtx_uevents_listener *ulist;
+	
+	
+	ulist = (struct crtx_uevents_listener*) userdata;
+	
+	len = recv(fd, buf, sizeof(buf), MSG_DONTWAIT);
+	if (len <= -1) {
+		if (errno == EWOULDBLOCK)
+			return 0;
+		
+		ERROR("error while receiving nl route event: %s\n", strerror(errno));
+		return errno;
 	}
 	
+	// len is >= 0 here
+	ulen = len;
 	
-	
-	
-// 	struct nlmsghdr *nlh = NULL;
-// 	struct sockaddr_nl dest_addr;
-// 	struct iovec iov;
-// 	struct msghdr msg;
-// 	
-// 	memset(&dest_addr, 0, sizeof(dest_addr));
-// 	
-// 	#define MAX_PAYLOAD 1024
-// 	nlh = (struct nlmsghdr *)malloc(NLMSG_SPACE(MAX_PAYLOAD));
-// 	memset(nlh, 0, NLMSG_SPACE(MAX_PAYLOAD));
-// 	
-// 	iov.iov_base = (void *)nlh;
-// 	iov.iov_len = NLMSG_SPACE(MAX_PAYLOAD);
-// 	msg.msg_name = (void *)&dest_addr;
-// 	msg.msg_namelen = sizeof(dest_addr);
-// 	msg.msg_iov = &iov;
-// 	msg.msg_iovlen = 1;
-// 	
-// 	printf("Waiting for message from kernel\n");
-// 	
-// 	/* Read message from kernel */
-// 	recvmsg(fd, &msg, 0);
-// 	
-// 	printf(" Received message payload: group %d \"\"\"%s\"\"\"\n", dest_addr.nl_groups, (char*) NLMSG_DATA(nlh));
-	
-	
-	
-	
-// 	int len;
-// 	char buffer[4096];
-// // 	struct nlmsghdr *nlh;
-// 	
-// 	nlh = (struct nlmsghdr *) buffer;
-// 	
-// 	len = recv(fd, nlh, 4096, 0);
-// 	if (len > 0) {
-// 		printf("rec %d %d\n", NLMSG_OK(nlh, len), nlh->nlmsg_type != NLMSG_DONE);
-// 		while ((NLMSG_OK(nlh, len)) && (nlh->nlmsg_type != NLMSG_DONE)) {
-// // 			uint16_t *it;
-// 			
-// 			printf(" Received message payload: %s\n", (char*) NLMSG_DATA(nlh));
-// 			
-// // 			it = nlr_list->nlmsg_types;
-// // 			while (*it && *it != nlh->nlmsg_type) { it++; }
-// // 			
-// // 			if (nlh->nlmsg_type == *it) {
-// // 				event = create_event(0, 0, 0);
-// // 				
-// // 				if (!nlr_list->raw2dict) {
-// // 					// we don't know the size of data, hence we cannot copy it
-// // 					// and we have to wait until all tasks have finished
-// // 					
-// // 					event->data.raw.pointer = nlh;
-// // 					event->data.raw.type = 'p';
-// // 					event->data.raw.flags = DIF_DATA_UNALLOCATED;
-// // 					
-// // 					reference_event_release(event);
-// // 					
-// // 					add_event(nl_listener->parent.graph, event);
-// // 					
-// // 					wait_on_event(event);
-// // 					
-// // 					dereference_event_release(event);
-// // 				} else {
-// // 					// we copy the data and we do not have to wait
-// // 					
-// // 					// 					event->data.raw.type = 'D';
-// // 					event->data.dict = nlr_list->raw2dict(nlr_list, nlh);
-// // 					
-// // 					add_event(nl_listener->parent.graph, event);
-// // 				}
-// // 			}
-// 			
-// 			nlh = NLMSG_NEXT(nlh, len);
-// 		}
+// 	int i;
+// 	i = 0;
+// 	while (i<len) {
+// 		printf("\"\"\"%s\"\"\"\n", buf+i);
+// 		i += strlen(buf+i)+1;
 // 	}
+	
+	event = create_event(0, 0, 0);
+	
+// 	event->data.raw.string = crtx_stracpy(buf, &ulen);
+	event->data.raw.string = (char *) malloc(ulen+1);
+	memcpy(event->data.raw.string, buf, ulen);
+	event->data.raw.string[ulen] = 0;
+	event->data.raw.size = ulen + 1;
+	event->data.raw.type = 's';
+// 	event->data.raw.flags = DIF_DATA_UNALLOCATED;
+	
+// 	reference_event_release(event);
+	
+	add_event(ulist->parent.graph, event);
+	
+// 	wait_on_event(event);
+	
+// 	dereference_event_release(event);
 	
 	return 0;
 }
@@ -147,7 +141,8 @@ struct crtx_listener_base *crtx_new_uevents_listener(void *options) {
 	ulist->nl_listener.nl_family = AF_NETLINK;
 	ulist->nl_listener.nl_groups = 1;
 	
-	ulist->nl_listener.read_cb = nl_route_read_cb;
+	ulist->nl_listener.read_cb = uevents_read_cb;
+	ulist->nl_listener.read_cb_userdata = ulist;
 	
 	lbase = create_listener("netlink_raw", &ulist->nl_listener);
 	if (!lbase) {
@@ -174,7 +169,25 @@ void crtx_uevents_finish() {
 #ifdef CRTX_TEST
 
 static char uevents_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	char *buf;
+	int i;
+	struct crtx_dict *dict;
 	
+	
+	buf = event->data.raw.string;
+	
+	printf("RAW:\n");
+	i = 0;
+	while (i<event->data.raw.size) {
+		printf("\"\"\"%s\"\"\"\n", buf+i);
+		i += strlen(buf+i)+1;
+	}
+	
+	dict = uevents_raw2dict(buf, event->data.raw.size);
+	
+	crtx_print_dict(dict);
+	
+	crtx_free_dict(dict);
 	
 	return 1;
 }
@@ -201,6 +214,8 @@ int netlink_raw_main(int argc, char **argv) {
 	}
 	
 	crtx_loop();
+	
+	free_listener(lbase);
 	
 	return 0;
 }

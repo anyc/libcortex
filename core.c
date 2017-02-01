@@ -274,13 +274,15 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 
 void free_listener(struct crtx_listener_base *listener) {
 	if (listener->el_payload.fd > 0) {
+		printf("del fd %d\n", listener->el_payload.fd);
 		crtx_root->event_loop.del_fd(
 				&crtx_root->event_loop.listener->parent,
 				&listener->el_payload);
 	}
 	
 	if (listener->thread) {
-		listener->thread->stop = 1;
+// 		listener->thread->stop = 1;
+		crtx_threads_stop(listener->thread);
 	}
 	
 	if (listener->shutdown)
@@ -289,6 +291,7 @@ void free_listener(struct crtx_listener_base *listener) {
 	if (listener->graph)
 		free_eventgraph(listener->graph);
 	
+// 	&& crtx_signal_is_active(&listener->thread->start)
 	if (listener->thread) {
 		wait_on_signal(&listener->thread->finished);
 		dereference_signal(&listener->thread->finished);
@@ -931,7 +934,7 @@ void crtx_init_shutdown() {
 	}
 	
 // 	crtx_finish();
-	crtx_threads_stop();
+	crtx_threads_stop_all();
 	crtx_flush_events();
 }
 
@@ -999,7 +1002,7 @@ void crtx_finish() {
 	
 	// stop threads first
 // 	static_modules[0].finish();
-	crtx_threads_stop();
+	crtx_threads_stop_all();
 	// stop controls second
 	static_modules[1].finish();
 	

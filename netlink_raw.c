@@ -48,22 +48,22 @@ static void stop_thread(struct crtx_thread *t, void *data) {
 	if (nl_listener->sockfd)
 		shutdown(nl_listener->sockfd, SHUT_RDWR);
 	
-	if (nl_listener->parent.thread)
-		crtx_threads_interrupt_thread(nl_listener->parent.thread);
+// 	if (nl_listener->parent.thread)
+// 		crtx_threads_interrupt_thread(nl_listener->parent.thread);
 	
 // 	wait_on_signal(&nl_listener->parent.thread->finished);
 // 	dereference_signal(&nl_listener->parent.thread->finished);
 }
 
-void shutdown_netlink_raw_listener(struct crtx_listener_base *lbase) {
-	struct crtx_netlink_raw_listener *nl_listener;
-	
-	nl_listener = (struct crtx_netlink_raw_listener *) lbase;
-	
-	stop_thread(lbase->thread, nl_listener);
-	
-// 	free_signal(&nl_listener->msg_done);
-}
+// void shutdown_netlink_raw_listener(struct crtx_listener_base *lbase) {
+// 	struct crtx_netlink_raw_listener *nl_listener;
+// 	
+// 	nl_listener = (struct crtx_netlink_raw_listener *) lbase;
+// 	
+// 	stop_thread(lbase->thread, nl_listener);
+// 	
+// // 	free_signal(&nl_listener->msg_done);
+// }
 
 struct crtx_listener_base *crtx_new_netlink_raw_listener(void *options) {
 	struct crtx_netlink_raw_listener *nl_listener;
@@ -89,7 +89,7 @@ struct crtx_listener_base *crtx_new_netlink_raw_listener(void *options) {
 	
 // 	init_signal(&nl_listener->msg_done);
 	
-	nl_listener->parent.shutdown = &shutdown_netlink_raw_listener;
+// 	nl_listener->parent.shutdown = &shutdown_netlink_raw_listener;
 	
 	nl_listener->parent.thread = get_thread(netlink_raw_tmain, nl_listener, 0);
 	nl_listener->parent.thread->do_stop = &stop_thread;

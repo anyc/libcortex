@@ -106,6 +106,10 @@ void free_signal(struct crtx_signal *s) {
 	pthread_cond_destroy(&s->cond);
 }
 
+char crtx_signal_is_active(struct crtx_signal *s) {
+	return *s->condition;
+}
+
 // void test(int sig) {
 // 	printf("thread sign\n");
 // }
@@ -113,15 +117,17 @@ void free_signal(struct crtx_signal *s) {
 static void * thread_main(void *data) {
 	struct crtx_thread *thread = (struct crtx_thread*) data;
 	
-	DBG("thread %p starts\n", data);
+	DBG("thread %p started\n", data);
 	
 // 	signal(SIGINT,test);
 	
 	while (!thread->stop) {
 		// we wait until someone has work for us
 		wait_on_signal(&thread->start);
-		if (thread->stop)
+		if (thread->stop) {
+			send_signal(&thread->finished, 1);
 			break;
+		}
 		
 		// execute
 		thread->fct(thread->fct_data);
@@ -240,23 +246,33 @@ void crtx_threads_interrupt_thread(struct crtx_thread *t) {
 	pthread_kill(t->handle, SIGUSR1);
 }
 
-void crtx_threads_stop() {
+void crtx_threads_stop(struct crtx_thread *t) {
+	t->stop = 1;
+	
+// 	if (!t->in_use) {
+		start_thread(t);
+// 	} else {
+		if (t->do_stop)
+			t->do_stop(t, t->fct_data);
+// 	}
+}
+
+void crtx_threads_stop_all() {
 	struct crtx_thread *t;
 	
 	LOCK(pool_mutex);
+	
+	if (pool_stop) {
+		UNLOCK(pool_mutex);
+		return;
+	}
 	
 	pool_stop = 1;
 	
 	DBG("shutdown pool\n");
 	
 	for (t=pool; t; t = t->next) {
-		t->stop = 1;
-		if (!t->in_use) {
-			start_thread(t);
-		} else {
-			if (t->do_stop)
-				t->do_stop(t, t->fct_data);
-		}
+		crtx_threads_stop(t);
 	}
 	UNLOCK(pool_mutex);
 }

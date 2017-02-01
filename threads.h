@@ -63,12 +63,14 @@ void free_signal(struct crtx_signal *s);
 void reset_signal(struct crtx_signal *signal);
 void reference_signal(struct crtx_signal *s);
 void dereference_signal(struct crtx_signal *s);
+char crtx_signal_is_active(struct crtx_signal *s);
 
 struct crtx_thread *get_thread(thread_fct fct, void *data, char start);
 void start_thread(struct crtx_thread *t);
 struct crtx_thread *spawn_thread(char create);
 
-void crtx_threads_stop();
+void crtx_threads_stop(struct crtx_thread *t);
+void crtx_threads_stop_all();
 void crtx_threads_interrupt_thread(struct crtx_thread *t);
 
 void crtx_threads_init();
