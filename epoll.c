@@ -50,7 +50,7 @@ void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 // 	event = &el_payload->event;
 	el_payload->el_data = event;
 	
-	printf("%d %d\n", el_payload->fd, el_payload->event_flags);
+// 	printf("epoll add %d %d\n", el_payload->fd, el_payload->event_flags);
 	
 	if (el_payload->event_flags == 0)
 		event->events = EPOLLIN;
@@ -76,7 +76,7 @@ void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 void crtx_epoll_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
 	struct crtx_epoll_listener *epl;
 	
-	printf("free %p\n", lbase);
+// 	printf("free %p\n", lbase);
 	
 	epl = (struct crtx_epoll_listener *) lbase;
 	crtx_epoll_del_fd_intern(epl, el_payload->fd);
@@ -129,7 +129,7 @@ void *crtx_epoll_main(void *data) {
 			if (rec_events[i].events & EPOLLERR) {
 				el_payload = (struct crtx_event_loop_payload* ) rec_events[i].data.ptr;
 				
-				ERROR("epoll returned EPOLLERR %d\n", el_payload->fd);
+				ERROR("epoll returned EPOLLERR for fd %d\n", el_payload->fd);
 				
 // 				crtx_epoll_del_fd((struct crtx_listener_base *) epl, el_payload);
 				

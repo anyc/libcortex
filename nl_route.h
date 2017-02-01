@@ -3,6 +3,7 @@
 #define _CRTX_NL_ROUTE_H
 
 #include <linux/netlink.h>
+#include <linux/rtnetlink.h>
 
 #include "netlink_raw.h"
 

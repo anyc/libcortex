@@ -8,11 +8,17 @@
 #include "core.h"
 #include "uevents.h"
 
-struct crtx_dict *uevents_raw2dict(char *buf, size_t size) {
+struct crtx_dict *crtx_uevents_raw2dict(struct crtx_event *event) {
 	char *s, *sep, *key;
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di;
 	size_t len;
+	char *buf;
+	size_t size;
+	
+	
+	buf = (char *) event->data.raw.string;
+	size = event->data.raw.size;
 	
 	// safety measure
 	buf[size-1] = 0;
@@ -183,7 +189,7 @@ static char uevents_test_handler(struct crtx_event *event, void *userdata, void 
 		i += strlen(buf+i)+1;
 	}
 	
-	dict = uevents_raw2dict(buf, event->data.raw.size);
+	dict = crtx_uevents_raw2dict(event);
 	
 	crtx_print_dict(dict);
 	
