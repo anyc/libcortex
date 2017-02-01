@@ -227,9 +227,9 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 	return 1;
 }
 
-static void listener_thread_on_finish(struct crtx_thread *thread, void *userdata) {
-	free_listener( (struct crtx_listener_base*) userdata);
-}
+// static void listener_thread_on_finish(struct crtx_thread *thread, void *userdata) {
+// 	free_listener( (struct crtx_listener_base*) userdata);
+// }
 
 struct crtx_listener_base *create_listener(char *id, void *options) {
 	struct crtx_listener_repository *l;

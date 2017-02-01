@@ -555,7 +555,7 @@ struct crtx_listener_base *crtx_new_nl_route_listener(void *options) {
 	struct crtx_nl_route_listener *nlr_list;
 // 	struct sockaddr_nl addr;
 	struct crtx_listener_base *lbase;
-	int ret;
+// 	int ret;
 	
 	nlr_list = (struct crtx_nl_route_listener*) options;
 	

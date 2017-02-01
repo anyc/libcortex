@@ -91,8 +91,8 @@ struct crtx_listener_base *crtx_new_netlink_raw_listener(void *options) {
 	
 	nl_listener->parent.shutdown = &shutdown_netlink_raw_listener;
 	
-// 	nl_listener->parent.thread = get_thread(netlink_raw_tmain, nl_listener, 0);
-// 	nl_listener->parent.thread->do_stop = &stop_thread;
+	nl_listener->parent.thread = get_thread(netlink_raw_tmain, nl_listener, 0);
+	nl_listener->parent.thread->do_stop = &stop_thread;
 	
 	nl_listener->parent.el_payload.fd = nl_listener->sockfd;
 	nl_listener->parent.el_payload.data = nl_listener;

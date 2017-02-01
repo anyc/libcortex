@@ -8,51 +8,107 @@
 #include "core.h"
 #include "uevents.h"
 
-// static char nl2uevents_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int fd, void *userdata) {
-// 	struct crtx_event_loop_payload *payload;
-// 	struct crtx_event *nevent;
-// 	struct crtx_uevents_listener *ulist;
-// 	struct crtx_netlink_raw_listener *nl_listener;
-// 	int r;
 	char buf[512];
-	
-// 	payload = (struct crtx_event_loop_payload*) event->data.raw.pointer;
-// 	nl_listener = (struct crtx_netlink_raw_listener*) payload->data;
-	
-// 	ulist = (struct crtx_uevents_listener*) userdata;
-	
-// 	frame = (struct can_frame *) malloc(sizeof(struct can_frame));
-// 	r = read(clist->sockfd, frame, sizeof(struct can_frame));
-// 	if (r != sizeof(struct can_frame)) {
-// 		fprintf(stderr, "wrong can frame size: %d\n", r);
-// 		return 1;
-// 	}
-// 	
-// 	// 	printf("0x%04x ", frame->can_id);
-// 	
-// 	nevent = create_event("can", frame, sizeof(frame));
-// 	// 	nevent->cb_before_release = &can_event_before_release_cb;
-// 	
-// 	// 	memcpy(&nevent->data.raw.uint64, &frame.data, sizeof(uint64_t));
-// 	
-// 	add_event(clist->parent.graph, nevent);
 	
 	int i, len;
 	printf("asd\n");
 	len = recv(fd, buf, sizeof(buf), MSG_DONTWAIT);
 	if (len == -1) {
+		if (errno == EWOULDBLOCK)
+			return;
+		
 		ERROR("TODO %s\n", strerror(errno));
-		return 0;
+		return;
 	}
 	
 	i = 0;
 	while (i<len) {
-		printf("%s\n", buf+i);
+		printf("\"\"\"%s\"\"\"\n", buf+i);
 		i += strlen(buf+i)+1;
 	}
 	
-	return 1;
+	
+	
+	
+// 	struct nlmsghdr *nlh = NULL;
+// 	struct sockaddr_nl dest_addr;
+// 	struct iovec iov;
+// 	struct msghdr msg;
+// 	
+// 	memset(&dest_addr, 0, sizeof(dest_addr));
+// 	
+// 	#define MAX_PAYLOAD 1024
+// 	nlh = (struct nlmsghdr *)malloc(NLMSG_SPACE(MAX_PAYLOAD));
+// 	memset(nlh, 0, NLMSG_SPACE(MAX_PAYLOAD));
+// 	
+// 	iov.iov_base = (void *)nlh;
+// 	iov.iov_len = NLMSG_SPACE(MAX_PAYLOAD);
+// 	msg.msg_name = (void *)&dest_addr;
+// 	msg.msg_namelen = sizeof(dest_addr);
+// 	msg.msg_iov = &iov;
+// 	msg.msg_iovlen = 1;
+// 	
+// 	printf("Waiting for message from kernel\n");
+// 	
+// 	/* Read message from kernel */
+// 	recvmsg(fd, &msg, 0);
+// 	
+// 	printf(" Received message payload: group %d \"\"\"%s\"\"\"\n", dest_addr.nl_groups, (char*) NLMSG_DATA(nlh));
+	
+	
+	
+	
+// 	int len;
+// 	char buffer[4096];
+// // 	struct nlmsghdr *nlh;
+// 	
+// 	nlh = (struct nlmsghdr *) buffer;
+// 	
+// 	len = recv(fd, nlh, 4096, 0);
+// 	if (len > 0) {
+// 		printf("rec %d %d\n", NLMSG_OK(nlh, len), nlh->nlmsg_type != NLMSG_DONE);
+// 		while ((NLMSG_OK(nlh, len)) && (nlh->nlmsg_type != NLMSG_DONE)) {
+// // 			uint16_t *it;
+// 			
+// 			printf(" Received message payload: %s\n", (char*) NLMSG_DATA(nlh));
+// 			
+// // 			it = nlr_list->nlmsg_types;
+// // 			while (*it && *it != nlh->nlmsg_type) { it++; }
+// // 			
+// // 			if (nlh->nlmsg_type == *it) {
+// // 				event = create_event(0, 0, 0);
+// // 				
+// // 				if (!nlr_list->raw2dict) {
+// // 					// we don't know the size of data, hence we cannot copy it
+// // 					// and we have to wait until all tasks have finished
+// // 					
+// // 					event->data.raw.pointer = nlh;
+// // 					event->data.raw.type = 'p';
+// // 					event->data.raw.flags = DIF_DATA_UNALLOCATED;
+// // 					
+// // 					reference_event_release(event);
+// // 					
+// // 					add_event(nl_listener->parent.graph, event);
+// // 					
+// // 					wait_on_event(event);
+// // 					
+// // 					dereference_event_release(event);
+// // 				} else {
+// // 					// we copy the data and we do not have to wait
+// // 					
+// // 					// 					event->data.raw.type = 'D';
+// // 					event->data.dict = nlr_list->raw2dict(nlr_list, nlh);
+// // 					
+// // 					add_event(nl_listener->parent.graph, event);
+// // 				}
+// // 			}
+// 			
+// 			nlh = NLMSG_NEXT(nlh, len);
+// 		}
+// 	}
+	
+	return 0;
 }
 
 static void shutdown_uevents_listener(struct crtx_listener_base *lbase) {
@@ -82,22 +138,16 @@ static char uevents_start_listener(struct crtx_listener_base *listener) {
 
 struct crtx_listener_base *crtx_new_uevents_listener(void *options) {
 	struct crtx_uevents_listener *ulist;
-// 	struct crtx_netlink_raw_listener nl_listener;
 	struct crtx_listener_base *lbase;
-// 	char ret;
 	
 	
 	ulist = (struct crtx_uevents_listener*) options;
 	
 	ulist->nl_listener.socket_protocol = NETLINK_KOBJECT_UEVENT;
 	ulist->nl_listener.nl_family = AF_NETLINK;
-	ulist->nl_listener.nl_groups = -1;
-// 	ulist->nl_listener.nlmsg_types = 0;
+	ulist->nl_listener.nl_groups = 1;
 	
 	ulist->nl_listener.read_cb = nl_route_read_cb;
-	
-// 	ulist->nl_listener.raw2dict = &crtx_netlink_raw_raw2dict_ifaddr;
-// 	ulist->nl_listener.all_fields = 1;
 	
 	lbase = create_listener("netlink_raw", &ulist->nl_listener);
 	if (!lbase) {
@@ -105,11 +155,7 @@ struct crtx_listener_base *crtx_new_uevents_listener(void *options) {
 		exit(1);
 	}
 	
-// 	crtx_create_task(lbase->graph, 0, "nl2uevents_handler", nl2uevents_handler, ulist);
-	
-// 	new_eventgraph(&ulist->parent.graph, 0, 0);
 	ulist->parent.graph = ulist->nl_listener.parent.graph;
-	
 	ulist->parent.shutdown = &shutdown_uevents_listener;
 	ulist->parent.start_listener = &uevents_start_listener;
 	
