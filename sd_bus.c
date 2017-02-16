@@ -369,8 +369,7 @@ static char sdbus_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	while (1) {
 		r = sd_bus_process(sdlist->bus, NULL);
 		if (r < 0) {
-			fprintf(stderr, "Failed to process bus: %s\n", strerror(-r));
-			exit(1);
+			ERROR("sd_bus_process failed: %s\n", strerror(-r));
 			break;
 		}
 		if (r == 0)

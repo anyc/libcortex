@@ -57,3 +57,6 @@ LDLIBS+=$(shell pkg-config --libs libpulse)
 
 OBJS+=uevents.o
 TESTS+=uevents.test
+
+OBJS+=can.o
+TESTS+=can.test

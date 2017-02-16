@@ -483,29 +483,32 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 			if (nlh->nlmsg_type == *it) {
 				event = create_event(0, 0, 0);
 				
-				if (!nlr_list->raw2dict) {
+// 				if (!nlr_list->raw2dict) {
 					// we don't know the size of data, hence we cannot copy it
 					// and we have to wait until all tasks have finished
 					
-					event->data.raw.pointer = nlh;
+					event->data.raw.pointer = malloc(4096);
+					memcpy(event->data.raw.pointer, nlh, 4096);
 					event->data.raw.type = 'p';
-					event->data.raw.flags = DIF_DATA_UNALLOCATED;
+// 					event->data.raw.flags = DIF_DATA_UNALLOCATED;
 					
-					reference_event_release(event);
+// 					reference_event_release(event);
 					
-					add_event(nl_listener->parent.graph, event);
+// 					add_event(nl_listener->parent.graph, event);
 					
-					wait_on_event(event);
+// 					wait_on_event(event);
 					
-					dereference_event_release(event);
-				} else {
+// 					dereference_event_release(event);
+// 				} else {
+				if (nlr_list->raw2dict) {
 					// we copy the data and we do not have to wait
 					
 					// 					event->data.raw.type = 'D';
 					event->data.dict = nlr_list->raw2dict(nlr_list, nlh);
 					
-					add_event(nl_listener->parent.graph, event);
+					
 				}
+				add_event(nl_listener->parent.graph, event);
 			}
 			
 			nlh = NLMSG_NEXT(nlh, len);

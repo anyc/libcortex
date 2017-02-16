@@ -70,55 +70,91 @@ void crtx_shutdown_can_listener(struct crtx_listener_base *data) {
 // 	shutdown(inlist->server_sockfd, SHUT_RDWR);
 }
 
+static char *print_can_state (uint32_t state)
+{
+	char *text;
+	
+	switch (state)
+	{
+		case CAN_STATE_ERROR_ACTIVE:
+			text = "error active";
+			break;
+		case CAN_STATE_ERROR_WARNING:
+			text = "error warning";
+			break;
+		case CAN_STATE_ERROR_PASSIVE:
+			text = "error passive";
+			break;
+		case CAN_STATE_BUS_OFF:
+			text = "bus off";
+			break;
+		case CAN_STATE_STOPPED:
+			text = "stopped";
+			break;
+		case CAN_STATE_SLEEPING:
+			text = "sleeping";
+			break;
+		default:
+			text = "unknown state";
+	}
+	
+	printf("can state: %s\n", text);
+	return text;
+}
+
 static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
-	struct nl_sock *socket;
-	struct rtnl_link *link, *newlink;
+	struct rtnl_link *newlink;
 	int r;
 	unsigned int flags;
 	uint32_t bitrate;
 	
+	r = 0;
 	
-	socket = nl_socket_alloc();
-	if (socket == 0){
-		printf("Failed to allocate a netlink socket\n");
-		r = -1;
-		goto error_socket;
+	if (!clist->socket) {
+		clist->socket = nl_socket_alloc();
+		if (clist->socket == 0){
+			printf("Failed to allocate a netlink socket\n");
+			r = -1;
+			goto error_socket;
+		}
+		
+		r = nl_connect(clist->socket, NETLINK_ROUTE);
+		if (r != 0){
+			printf("failed to connect to kernel\n");
+			goto error_connect;
+		}
 	}
 	
-	r = nl_connect(socket, NETLINK_ROUTE);
-	if (r != 0){
-		printf("failed to connect to kernel\n");
-		goto error_connect;
+	if (!clist->link) {
+		r = rtnl_link_get_kernel(clist->socket, 0, if_name, &clist->link);
+		if (r != 0){
+			printf("failed find interface\n");
+			goto error_connect;
+		}
+		
+		r = rtnl_link_is_can(clist->link);
+		if (!r) {
+			printf("not a CAN interface\n");
+			r = -1;
+			goto error_linktype;
+		}
 	}
 	
-	r = rtnl_link_get_kernel(socket, 0, if_name, &link);
-	if (r != 0){
-		printf("failed find interface\n");
-		goto error_connect;
-	}
-	
-	r = rtnl_link_is_can(link);
-	if (!r) {
-		printf("not a CAN interface\n");
-		r = -1;
-		goto error_linktype;
-	}
-	
-	
-	newlink = rtnl_link_alloc();
-	if (!newlink) {
-		printf("error allocating link\n");
-		goto error_linktype;
-	}
 	
 	bitrate = 0;
-	flags = rtnl_link_get_flags(link);
-	rtnl_link_can_get_bitrate(link, &bitrate);
+	flags = rtnl_link_get_flags(clist->link);
+	rtnl_link_can_get_bitrate(clist->link, &bitrate);
 	
 	if ( !(flags & IFF_UP) || (bitrate != clist->bitrate) ) {
 // 		if (getuid() != 0 && geteuid() != 0) {
 // 			printf("warning, interface \"%s\" need to be reconfigured, you might not have the required privileges.\n", if_name);
 // 		}
+		
+		newlink = rtnl_link_alloc();
+		if (!newlink) {
+			printf("error allocating link\n");
+			goto error_linktype;
+		}
 		
 		int caps;
 		caps = capng_get_caps_process();
@@ -148,11 +184,16 @@ static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 		if (!(flags & IFF_UP))
 			rtnl_link_set_flags(newlink, IFF_UP);
 		
-		r = rtnl_link_change(socket, link, newlink, 0);
+		r = rtnl_link_change(clist->socket, clist->link, newlink, 0);
 		if (r < 0) {
 			printf("link change failed: %s\n", nl_geterror(r));
 			goto error_newlink;
 		}
+		
+		return 1;
+		
+		error_newlink:
+			rtnl_link_put(newlink);
 	}
 	
 // 	printf("bit %u\n", bitrate);
@@ -166,18 +207,20 @@ static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 // 		}
 // 	}
 	
+
 	
-error_newlink:
-	rtnl_link_put(newlink);
+	return r;
 	
 error_linktype:
-	rtnl_link_put(link);
+	rtnl_link_put(clist->link);
+	clist->link = 0;
 	
 error_connect:
-	nl_close(socket);
+	nl_close(clist->socket);
 	
 error_socket:
-	nl_socket_free(socket);
+	nl_socket_free(clist->socket);
+	clist->socket = 0;
 	
 	return r;
 }
@@ -190,6 +233,10 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 	clist = (struct crtx_can_listener *) options;
 	
 	clist->sockfd = socket(PF_CAN, SOCK_RAW, clist->protocol);
+	if (clist->sockfd == -1) {
+		ERROR("opening can socket failed: %s\n", strerror(errno));
+		return 0;
+	}
 	
 	if (clist->interface_name) {
 		struct ifreq ifr;
@@ -203,7 +250,7 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 		strcpy(ifr.ifr_name, clist->interface_name);
 		r = ioctl(clist->sockfd, SIOCGIFINDEX, &ifr);
 		if (r != 0) {
-			fprintf(stderr, "SIOCGIFINDEX failed on %s: %s\n", clist->interface_name, strerror(errno));
+			fprintf(stderr, "SIOCGIFINDEX failed on %s (%d): %s\n", clist->interface_name, clist->sockfd, strerror(errno));
 			close(clist->sockfd);
 			return 0;
 		}
@@ -216,7 +263,22 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 			close(clist->sockfd);
 			return 0;
 		}
+// 		// if we send a configuration command to the kernel, we do not start
+// 		// listening now and wait for the "interface is up" message
+// 		if (r == 1) {
+// 			close(clist->sockfd);
+// 			return 0;
+// 		}
+		
+		uint32_t can_state;
+		r = rtnl_link_can_state (clist->link, &can_state);
+		if (r < 0) {
+			printf("link change failed: %s\n", nl_geterror(r));
+		}
+		
+		print_can_state(can_state);
 	}
+	
 	
 	r = bind(clist->sockfd, (struct sockaddr *)&clist->addr, sizeof(clist->addr));
 	if (r != 0) {
@@ -242,3 +304,51 @@ void crtx_can_init() {
 
 void crtx_can_finish() {
 }
+
+#ifdef CRTX_TEST
+
+static char can_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct can_frame *frame;
+	
+	frame = (struct can_frame*) event->data.raw.pointer;
+	
+	printf("CAN: %d\n", frame->can_id);
+	
+	return 0;
+}
+
+int can_main(int argc, char **argv) {
+	struct crtx_can_listener clist;
+	struct crtx_listener_base *lbase;
+	int ret;
+	
+	
+	memset(&clist, 0, sizeof(struct crtx_can_listener));
+	clist.protocol = CAN_RAW;
+	clist.bitrate = 250000;
+	
+	if (argc > 1)
+		clist.interface_name = argv[1];
+	
+	lbase = create_listener("can", &clist);
+	if (!lbase) {
+		ERROR("create_listener(can) failed\n");
+		return 0;
+	}
+	
+	ret = crtx_start_listener(lbase);
+	if (!ret) {
+		ERROR("starting can listener failed\n");
+		return 0;
+	}
+	
+	
+	crtx_create_task(lbase->graph, 0, "can_test", &can_event_handler, 0);
+	
+	crtx_loop();
+	
+	return 0;
+}
+
+CRTX_TEST_MAIN(can_main);
+#endif

@@ -201,6 +201,7 @@ struct crtx_listener_base {
 	void (*thread_stop)(struct crtx_thread *thread, void *data);
 	
 	char (*start_listener)(struct crtx_listener_base *listener);
+	char (*stop_listener)(struct crtx_listener_base *listener);
 	
 	struct crtx_graph *graph;
 };
@@ -283,8 +284,11 @@ void crtx_process_event(struct crtx_graph *graph, struct crtx_dll *queue_entry);
 void crtx_init_shutdown();
 
 char crtx_start_listener(struct crtx_listener_base *listener);
+void crtx_stop_listener(struct crtx_listener_base *listener);
 void print_tasks(struct crtx_graph *graph);
 void hexdump(unsigned char *buffer, size_t index);
+
+void crtx_daemonize();
 
 void crtx_traverse_graph(struct crtx_graph *graph, struct crtx_event *event);
 void reference_event_response(struct crtx_event *event);

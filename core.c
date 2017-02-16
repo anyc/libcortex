@@ -272,18 +272,29 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 	return lbase;
 }
 
-void free_listener(struct crtx_listener_base *listener) {
+void crtx_stop_listener(struct crtx_listener_base *listener) {
+	
 	if (listener->el_payload.fd > 0) {
 		printf("del fd %d\n", listener->el_payload.fd);
 		crtx_root->event_loop.del_fd(
-				&crtx_root->event_loop.listener->parent,
-				&listener->el_payload);
+			&crtx_root->event_loop.listener->parent,
+			&listener->el_payload);
 	}
 	
 	if (listener->thread) {
 // 		listener->thread->stop = 1;
 		crtx_threads_stop(listener->thread);
 	}
+	
+	if (listener->stop_listener) {
+		listener->stop_listener(listener);
+	}
+	
+	return;
+}
+
+void free_listener(struct crtx_listener_base *listener) {
+	crtx_stop_listener(listener);
 	
 	if (listener->shutdown)
 		listener->shutdown(listener);
@@ -805,7 +816,7 @@ void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **event_typ
 	ret = pthread_cond_init(&graph->queue_cond, NULL); ASSERT(ret >= 0);
 	
 	graph->name = name;
-	INFO("new eventgraph ");
+	INFO("new eventgraph %s ", graph->name);
 	if (event_types) {
 		while (event_types[graph->n_types]) {
 			INFO("%s ", event_types[graph->n_types]);
@@ -948,6 +959,45 @@ static char handle_shutdown(struct crtx_event *event, void *userdata, void **ses
 	crtx_init_shutdown();
 	
 	return 1;
+}
+
+#include <sys/types.h>
+#include <sys/stat.h>
+void crtx_daemonize() {
+	pid_t pid = 0;
+	int r, fd;
+	
+// 	signal(SIGCHLD, SIG_IGN);
+	
+	daemon(0, 0);
+	
+// 	pid = fork();
+// 	if (pid < 0) {
+// 		ERROR("fork failed\n");
+// 		exit(1);
+// 	}
+// 	if (pid > 0) {
+// 		DBG("parent exits\n");
+// 		exit(0);
+// 	}
+// 	
+// 	r = setsid();
+// 	if (r < 0) {
+// 		ERROR("setsid failed: %d\n", r);
+// 		exit(1);
+// 	}
+// 	
+// 	umask(0);
+// 	chdir("/");
+	
+// 	for (fd = sysconf(_SC_OPEN_MAX); fd > 0; fd--) {
+// 		close(fd);
+// 	}
+// 	fclose(stdin);
+	
+// 	stdin = fopen("/dev/null", "r");
+// 	stdout = fopen("/dev/null", "w+");
+// 	stderr = fopen("/dev/null", "w+");
 }
 
 void crtx_init() {
