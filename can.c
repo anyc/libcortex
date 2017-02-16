@@ -225,6 +225,14 @@ error_socket:
 	return r;
 }
 
+static void on_error_cb(struct crtx_event_loop_payload *el_payload, void *data) {
+	struct crtx_can_listener *clist;
+	
+	clist = (struct crtx_can_listener *) data;
+	
+	crtx_stop_listener(&clist->parent);
+}
+
 struct crtx_listener_base *crtx_new_can_listener(void *options) {
 	struct crtx_can_listener *clist;
 	int r;
@@ -291,6 +299,8 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 	clist->parent.el_payload.data = clist;
 	clist->parent.el_payload.event_handler = &can_fd_event_handler;
 	clist->parent.el_payload.event_handler_name = "can fd handler";
+	clist->parent.el_payload.error_cb = &on_error_cb;
+	clist->parent.el_payload.error_cb_data = clist;
 	
 	clist->parent.shutdown = &crtx_shutdown_can_listener;
 	

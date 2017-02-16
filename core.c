@@ -275,7 +275,7 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 void crtx_stop_listener(struct crtx_listener_base *listener) {
 	
 	if (listener->el_payload.fd > 0) {
-		printf("del fd %d\n", listener->el_payload.fd);
+// 		printf("del fd %d\n", listener->el_payload.fd);
 		crtx_root->event_loop.del_fd(
 			&crtx_root->event_loop.listener->parent,
 			&listener->el_payload);
@@ -964,8 +964,8 @@ static char handle_shutdown(struct crtx_event *event, void *userdata, void **ses
 #include <sys/types.h>
 #include <sys/stat.h>
 void crtx_daemonize() {
-	pid_t pid = 0;
-	int r, fd;
+// 	pid_t pid = 0;
+// 	int r, fd;
 	
 // 	signal(SIGCHLD, SIG_IGN);
 	
@@ -1228,10 +1228,12 @@ struct crtx_event_loop* crtx_get_event_loop() {
 			exit(1);
 		}
 		
-		ret = crtx_start_listener(lbase);
-		if (!ret) {
-			ERROR("starting epoll listener failed\n");
-			return 0;
+		if (crtx_root->detached_event_loop) {
+			ret = crtx_start_listener(lbase);
+			if (!ret) {
+				ERROR("starting epoll listener failed\n");
+				return 0;
+			}
 		}
 	} 
 	

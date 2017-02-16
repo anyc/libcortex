@@ -182,6 +182,8 @@ struct crtx_event_loop_payload {
 	char *event_handler_name;
 	
 	void (*simple_callback)(struct crtx_event_loop_payload *el_payload);
+	void (*error_cb)(struct crtx_event_loop_payload *el_payload, void *data);
+	void *error_cb_data;
 	
 	void *el_data;
 };
@@ -219,7 +221,8 @@ struct crtx_event_loop {
 	
 	void (*add_fd)(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
 	void (*del_fd)(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
-// 	char start_thread;
+	
+	char start_thread;
 };
 
 struct crtx_root {
@@ -232,8 +235,9 @@ struct crtx_root {
 	
 	char shutdown;
 	
+	char detached_event_loop;
 	struct crtx_event_loop event_loop;
-// 	char no_threads;
+	
 	enum crtx_processing_mode default_mode;
 	enum crtx_processing_mode force_mode;
 	
