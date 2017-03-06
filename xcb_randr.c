@@ -269,7 +269,7 @@ void *xcb_randr_tmain(void *data) {
 	return 0;
 }
 
-void crtx_free_xcb_randr_listener(struct crtx_listener_base *data) {
+void crtx_free_xcb_randr_listener(struct crtx_listener_base *data, void *userdata) {
 	struct crtx_xcb_randr_listener *xrlist;
 	
 	xrlist = (struct crtx_xcb_randr_listener*) data;
@@ -375,7 +375,7 @@ int xcb_randr_main(int argc, char **argv) {
 	struct crtx_listener_base *lbase;
 	char ret;
 	
-	crtx_root->no_threads = 1;
+// 	crtx_root->no_threads = 1;
 	
 	memset(&ulist, 0, sizeof(struct crtx_xcb_randr_listener));
 	

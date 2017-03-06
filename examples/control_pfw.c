@@ -54,7 +54,9 @@
 #endif
 
 // todo
+#ifndef PFW_DATA_DIR
 #define PFW_DATA_DIR "/var/lib/cortexd/pfw/"
+#endif
 
 // listener for the nf_queue
 struct crtx_nfq_listener nfq_list;

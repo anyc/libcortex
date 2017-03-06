@@ -59,4 +59,17 @@ OBJS+=uevents.o
 TESTS+=uevents.test
 
 OBJS+=can.o
+CFLAGS+=$(shell pkg-config --cflags libnl-route-3.0 libcap-ng)
+LDLIBS+=$(shell pkg-config --libs libnl-route-3.0 libcap-ng)
 TESTS+=can.test
+
+OBJS+=nl_route.o
+CFLAGS+=$(shell pkg-config --cflags libnl-route-3.0)
+LDLIBS+=$(shell pkg-config --libs libnl-route-3.0)
+TESTS+=nl_route.test
+
+OBJS+=libvirt.o
+TESTS+=libvirt.test
+
+OBJS+=avahi.o
+TESTS+=avahi.test

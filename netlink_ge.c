@@ -96,7 +96,7 @@ static char genl_fd_event_handler(struct crtx_event *event, void *userdata, void
 	return 0;
 }
 
-void free_genl_listener(struct crtx_listener_base *lbase) {
+void free_genl_listener(struct crtx_listener_base *lbase, void *userdata) {
 	struct crtx_genl_listener *genlist;
 	
 	genlist = (struct crtx_genl_listener*) lbase;

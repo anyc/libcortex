@@ -194,7 +194,7 @@ static void connect_state_cb(pa_context* context, void* raw) {
 	palist->state = pa_context_get_state(context);
 }
 
-static void crtx_free_pa_listener(struct crtx_listener_base *data) {
+static void crtx_free_pa_listener(struct crtx_listener_base *data, void *userdata) {
 	struct crtx_pa_listener *palist;
 	
 	palist = (struct crtx_pa_listener*) data;
@@ -291,7 +291,7 @@ int pa_main(int argc, char **argv) {
 	struct crtx_listener_base *lbase;
 	char ret;
 	
-	crtx_root->no_threads = 1;
+// 	crtx_root->no_threads = 1;
 	
 	memset(&palist, 0, sizeof(struct crtx_pa_listener));
 	
