@@ -61,12 +61,14 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 			subsystem = udev_device_get_subsystem(dev);
 			device_type = udev_device_get_devtype(dev);
 			
+// 			printf("%s %s\n", subsystem, device_type);
 			if (strcmp(subsystem, i->subsystem) || strcmp(device_type, i->device_type)) {
 				new_dev = udev_device_get_parent_with_subsystem_devtype(dev, i->subsystem, i->device_type);
-				
+// 				printf("new %s %s\n", subsystem, device_type);
 				if (new_dev)
 					dev = new_dev;
 				else
+					i++;
 					continue;
 			}
 			
@@ -84,11 +86,29 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 				if (value) {
 					sdi = crtx_alloc_item(di->ds);
 					crtx_fill_data_item(sdi, 's', *a, value, strlen(value), DIF_DATA_UNALLOCATED);
+				} else {
+					value = udev_device_get_property_value(dev, *a);
+					if (value) {
+						sdi = crtx_alloc_item(di->ds);
+						crtx_fill_data_item(sdi, 's', *a, value, strlen(value), DIF_DATA_UNALLOCATED);
+					}
 				}
 				
 				a++;
 			}
 			
+// 			struct udev_list_entry *entry;
+// 			const char *key;
+// 			
+// 			udev_list_entry_foreach(entry, udev_device_get_properties_list_entry(dev)) {
+// 				key = udev_list_entry_get_name(entry);
+// 				value = udev_list_entry_get_value(entry);
+// 				
+// 				di = crtx_alloc_item(dict);
+// 				if (value)
+// 					crtx_fill_data_item(di, 's', key, value, strlen(value), DIF_DATA_UNALLOCATED);
+// 			}
+// 			
 			i++;
 		}
 	} else {
