@@ -4,8 +4,11 @@
 #include <string.h>
 #include <json.h>
 
+#include <linux/limits.h>
+
 #include "core.h"
 #include "dict.h"
+#include "dict_inout.h"
 
 static void inspect_obj(json_object * jobj, struct crtx_dict *dict);
 
@@ -51,6 +54,7 @@ void inspect_array(json_object *jobj, struct crtx_dict *dict) {
 		jvalue = json_object_array_get_idx(jobj, i);
 		type = json_object_get_type(jvalue);
 		ditem = crtx_alloc_item(dict);
+		ditem->key = 0;
 		
 		if (type == json_type_array) {
 			ditem->type = 'D';
@@ -111,7 +115,7 @@ static void inspect_obj(json_object * jobj, struct crtx_dict *dict) {
 	}
 }
 
-void crtx_load_dict_json(struct crtx_dict *dict, char *string) {
+void crtx_dict_parse_json(struct crtx_dict *dict, char *string) {
 	enum json_tokener_error error;
 // 	json_object * jobj = json_tokener_parse(string);
 	json_object * jobj = json_tokener_parse_verbose(string, &error);
@@ -122,4 +126,34 @@ void crtx_load_dict_json(struct crtx_dict *dict, char *string) {
 	}
 	
 	inspect_obj(jobj, dict);
+}
+
+char crtx_dict_json_from_file(struct crtx_dict **dict, char *dictdb_path, char *id) {
+	char *s;
+	char file_path[PATH_MAX];
+	char *path;
+	
+	if (!dictdb_path)
+		dictdb_path = CRTX_DICT_DB_PATH;
+	
+	path = getenv("CRTX_DICTDB_PATH");
+	if (path)
+		dictdb_path = path;
+	
+	snprintf(file_path, PATH_MAX, "%s%s.json", dictdb_path?dictdb_path:"", id);
+	
+	s = crtx_readfile(file_path);
+	if (!s)
+		return -1;
+	
+	if (!*dict)
+		*dict = crtx_init_dict(0, 0, 0);
+	
+// 	#ifdef WITH_JSON
+	crtx_dict_parse_json(*dict, s);
+// 	#endif
+	
+	crtx_print_dict(*dict);
+	
+	return 0;
 }

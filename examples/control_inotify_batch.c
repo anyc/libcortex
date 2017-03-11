@@ -14,7 +14,7 @@
 #include "core.h"
 #include "inotify.h"
 #include "sd_bus_notifications.h"
-#include "dict.h"
+#include "dict_inout_json.h"
 #include "event_comm.h"
 #include "linkedlist.h"
 #include "linkedlist.h"
@@ -67,7 +67,7 @@ char init() {
 	char *path;
 	uint32_t in_mask;
 	
-	crtx_load_dict(&config, 0, "control_inotify_batch");
+	crtx_dict_json_from_file(&config, 0, "control_inotify_batch");
 	
 	monitors = transforms = 0;
 	crtx_get_value(config, "monitors", 'D', &monitors, sizeof(void*));

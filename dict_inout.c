@@ -265,45 +265,15 @@ char *crtx_readfile(char *path) {
 	return s;
 }
 
-char crtx_load_dict(struct crtx_dict **dict, char *dictdb_path, char *id) {
-	char *s;
-	char file_path[PATH_MAX];
-	char *path;
-	
-	if (!dictdb_path)
-		dictdb_path = CRTX_DICT_DB_PATH;
-	
-	path = getenv("CRTX_DICTDB_PATH");
-	if (path)
-		dictdb_path = path;
-	
-	snprintf(file_path, PATH_MAX, "%s%s.json", dictdb_path?dictdb_path:"", id);
-	
-	s = crtx_readfile(file_path);
-	if (!s)
-		return 0;
-	
-	if (!*dict)
-		*dict = crtx_init_dict(0, 0, 0);
-	
-	#ifdef WITH_JSON
-	crtx_load_dict_json(*dict, s);
-	#endif
-	
-	crtx_print_dict(*dict);
-	
-	return 1;
-}
-
-void crtx_store_dict(struct crtx_dict *dict) {
-// 	int f = open(config->name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP);
-// 	if (f == -1) {
-// 		printf("error %s\n", strerror(errno));
-// 		return;
-// 	}
-
-// 	send_dict(crtx_wrapper_write, &f, d);
-
-// 	close(f);
-}
+// void crtx_store_dict(struct crtx_dict *dict) {
+// // 	int f = open(config->name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP);
+// // 	if (f == -1) {
+// // 		printf("error %s\n", strerror(errno));
+// // 		return;
+// // 	}
+// 
+// // 	send_dict(crtx_wrapper_write, &f, d);
+// 
+// // 	close(f);
+// }
 

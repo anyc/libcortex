@@ -10,7 +10,7 @@
 #include "core.h"
 #include "cache.h"
 #include "threads.h"
-#include "dict_inout.h"
+#include "dict_inout_json.h"
 
 
 struct crtx_dict_item * rcache_match_cb_t_strcmp(struct crtx_cache *rc, struct crtx_dict_item *key, struct crtx_event *event) {
@@ -525,7 +525,7 @@ char crtx_load_cache(struct crtx_cache *cache, char *path) {
 	char ret;
 	struct crtx_dict_item *cfg, *entries;
 	
-	ret = crtx_load_dict(&cache->dict, path, cache->dict->id);
+	ret = crtx_dict_json_from_file(&cache->dict, path, cache->dict->id);
 	if (!ret) {
 		DBG("loading cache dict %s failed\n", cache->dict->id);
 		return 0;
