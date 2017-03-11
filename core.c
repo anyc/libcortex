@@ -46,6 +46,7 @@
 #include "avahi.h"
 #include "uevents.h"
 #include "nl_route.h"
+#include "libvirt.h"
 
 
 struct crtx_root crtx_global_root;
@@ -121,6 +122,7 @@ struct crtx_listener_repository listener_factory[] = {
 	{"avahi", &crtx_new_avahi_listener},
 	{"uevents", &crtx_new_uevents_listener},
 	{"nl_route", &crtx_new_nl_route_listener},
+	{"libvirt", &crtx_new_libvirt_listener},
 	{0, 0}
 };
 
@@ -172,6 +174,7 @@ void crtx_printf(char level, char *format, ...) {
 enum crtx_processing_mode crtx_get_mode(enum crtx_processing_mode local_mode) {
 	enum crtx_processing_mode mode;
 	
+	mode = CRTX_PREFER_NONE;
 	if (crtx_root->force_mode == CRTX_PREFER_NONE) {
 		if (local_mode == CRTX_PREFER_NONE) {
 			mode = crtx_root->default_mode;
@@ -197,7 +200,7 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 	}
 	
 	if (!listener->el_payload.fd && !listener->thread) {
-		DBG("no method to start listener \"%s\" provided\n", listener->graph->name);
+		DBG("no method to start listener \"%s\" provided\n", listener->graph?listener->graph->name: 0);
 		return -1;
 	}
 	
@@ -222,6 +225,16 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 		crtx_root->event_loop.add_fd(
 			&crtx_root->event_loop.listener->parent,
 			&listener->el_payload);
+	} else {
+		ERROR("invalid start listener mode: %d\n", mode);
+	}
+	
+	return 1;
+}
+
+char crtx_update_listener(struct crtx_listener_base *listener) {
+	if (listener->update_listener) {
+		listener->update_listener(listener);
 	}
 	
 	return 1;
@@ -1220,6 +1233,7 @@ struct crtx_event_loop* crtx_get_event_loop() {
 // 		crtx_root->event_loop.listener->parent.lmode = crtx_root->lmode;
 		
 		crtx_root->event_loop.add_fd = &crtx_epoll_add_fd;
+		crtx_root->event_loop.mod_fd = &crtx_epoll_mod_fd;
 		crtx_root->event_loop.del_fd = &crtx_epoll_del_fd;
 		
 		lbase = create_listener("epoll", crtx_root->event_loop.listener);

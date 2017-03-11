@@ -19,7 +19,23 @@ int crtx_epoll_add_fd_intern(struct crtx_epoll_listener *epl, int fd, struct epo
 	if (ret < 0) {
 		ERROR("epoll_ctl add failed for fd %d: %s\n", fd, strerror(errno));
 		
+		return ret;
+	}
+	
+	return 0;
+}
+
+int crtx_epoll_mod_fd_intern(struct crtx_epoll_listener *epl, int fd, struct epoll_event *event) {
+	int ret;
+	
+	if (epl->stop)
 		return 0;
+	
+	ret = epoll_ctl(epl->epoll_fd, EPOLL_CTL_MOD, fd, event);
+	if (ret < 0) {
+		ERROR("epoll_ctl mod failed for fd %d: %s\n", fd, strerror(errno));
+		
+		return ret;
 	}
 	
 	return 0;
@@ -52,9 +68,9 @@ void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 	
 	printf("epoll add %d %d\n", el_payload->fd, el_payload->event_flags);
 	
-	if (el_payload->event_flags == 0)
-		event->events = EPOLLIN;
-	else
+// 	if (el_payload->event_flags == 0)
+// 		event->events = EPOLLIN;
+// 	else
 		event->events = el_payload->event_flags;
 	
 // 	event->events = el_payload->event_flags;
@@ -71,6 +87,10 @@ void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 // 	printf("count %d\n", count);
 	
 	crtx_epoll_add_fd_intern(epl, el_payload->fd, event);
+}
+
+void crtx_epoll_mod_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
+	crtx_epoll_mod_fd_intern((struct crtx_epoll_listener *) lbase, el_payload->fd, el_payload->el_data);
 }
 
 void crtx_epoll_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
@@ -330,16 +350,16 @@ static char timer_handler(struct crtx_event *event, void *userdata, void **sessi
 
 void start_timer() {
 	// set time for (first) alarm
-	newtimer.it_value.tv_sec = 1;
-	newtimer.it_value.tv_nsec = 0;
+	tlist.newtimer.it_value.tv_sec = 1;
+	tlist.newtimer.it_value.tv_nsec = 0;
 	
 	// set interval for repeating alarm, set to 0 to disable repetition
-	newtimer.it_interval.tv_sec = 10;
-	newtimer.it_interval.tv_nsec = 0;
+	tlist.newtimer.it_interval.tv_sec = 10;
+	tlist.newtimer.it_interval.tv_nsec = 0;
 	
 	tlist.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
 	tlist.settime_flags = 0; // absolute (TFD_TIMER_ABSTIME), or relative (0) time, see: man timerfd_settime()
-	tlist.newtimer = &newtimer;
+// 	tlist.newtimer = &newtimer;
 	
 	blist = create_listener("timer", &tlist);
 	if (!blist) {

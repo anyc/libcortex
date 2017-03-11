@@ -6,7 +6,7 @@ struct crtx_timer_listener {
 	char stop;
 	
 	int clockid;
-	const struct itimerspec *newtimer;
+	struct itimerspec newtimer;
 	int settime_flags;
 };
 

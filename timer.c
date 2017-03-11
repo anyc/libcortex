@@ -50,7 +50,7 @@ static void *timer_tmain(void *data) {
 		
 		add_event(tlist->parent.graph, event);
 		
-		if (tlist->newtimer->it_interval.tv_sec == 0 && tlist->newtimer->it_interval.tv_nsec == 0)
+		if (tlist->newtimer.it_interval.tv_sec == 0 && tlist->newtimer.it_interval.tv_nsec == 0)
 			break;
 	}
 	
@@ -59,19 +59,72 @@ static void *timer_tmain(void *data) {
 	return 0;
 }
 
-void crtx_shutdown_timer_listener(struct crtx_listener_base *data) {
+static char timer_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_event_loop_payload *payload;
+	struct crtx_timer_listener *tlist;
+	uint64_t exp;
+	ssize_t s;
+	
+	
+	payload = (struct crtx_event_loop_payload*) event->data.raw.pointer;
+	
+	tlist = (struct crtx_timer_listener *) payload->data;
+	
+	s = read(tlist->fd, &exp, sizeof(uint64_t));
+	if (s == -1 && errno == EINTR) {
+		DBG("timerfd thread interrupted\n");
+		return 0;
+	}
+	if (s != sizeof(uint64_t)) {
+		ERROR("reading from timerfd failed: %zd != %" PRIu64 " %s (%d)\n", s, exp, strerror(errno), errno);
+		return 0;
+	}
+	
+	event = create_event(CRTX_EVT_TIMER, 0, 0);
+	event->data.raw.uint32 = exp;
+	event->data.raw.type = 'u';
+	event->data.raw.flags = DIF_DATA_UNALLOCATED;
+	
+	add_event(tlist->parent.graph, event);
+	
+// 	if (tlist->newtimer->it_interval.tv_sec == 0 && tlist->newtimer->it_interval.tv_nsec == 0)
+// 		break;
+	
+	return 1;
+}
+
+void crtx_shutdown_timer_listener(struct crtx_listener_base *base) {
 // 	stop_thread(0, data);
+}
+
+// static char start_listener(struct crtx_listener_base *base) {
+// 	
+// }
+
+static char update_listener(struct crtx_listener_base *base) {
+	struct crtx_timer_listener *tlist;
+	int ret;
+	
+	tlist = (struct crtx_timer_listener *) base;
+// 	printf("set %d %ld %ld\n", tlist->fd, tlist->newtimer.it_value.tv_nsec, tlist->newtimer.it_interval.tv_nsec);
+	ret = timerfd_settime(tlist->fd, tlist->settime_flags, &tlist->newtimer, NULL);
+	if (ret == -1) {
+		ERROR("timerfd_settime failed: %s\n", strerror(errno));
+		return 0;
+	}
+	
+	return 1;
 }
 
 struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 	struct crtx_timer_listener *tlist;
-	int ret;
+// 	int ret;
 // 	struct crtx_thread *t;
 	
 	tlist = (struct crtx_timer_listener *) options;
 	
-	if (!tlist->newtimer)
-		return 0;
+// 	if (!tlist->newtimer)
+// 		return 0;
 	
 	new_eventgraph(&tlist->parent.graph, 0, 0);
 	
@@ -81,15 +134,22 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 		return 0;
 	}
 	
-	ret = timerfd_settime(tlist->fd, tlist->settime_flags, tlist->newtimer, NULL);
-	if (ret == -1) {
-		ERROR("timerfd_settime failed: %s\n", strerror(errno));
-		return 0;
-	}
+// 	ret = timerfd_settime(tlist->fd, tlist->settime_flags, tlist->newtimer, NULL);
+// 	if (ret == -1) {
+// 		ERROR("timerfd_settime failed: %s\n", strerror(errno));
+// 		return 0;
+// 	}
 	
-	tlist->parent.start_listener = 0;
-	tlist->parent.thread = get_thread(timer_tmain, tlist, 0);
-	tlist->parent.thread->do_stop = &stop_thread;
+	tlist->parent.el_payload.fd = tlist->fd;
+	tlist->parent.el_payload.event_flags = EPOLLIN;
+	tlist->parent.el_payload.data = tlist;
+	tlist->parent.el_payload.event_handler = &timer_fd_event_handler;
+	tlist->parent.el_payload.event_handler_name = "timer fd handler";
+	
+	tlist->parent.start_listener = &update_listener;
+	tlist->parent.update_listener = &update_listener;
+// 	tlist->parent.thread = get_thread(timer_tmain, tlist, 0);
+// 	tlist->parent.thread->do_stop = &stop_thread;
 // 	start_thread(t);
 	
 	tlist->parent.shutdown = &crtx_shutdown_timer_listener;
@@ -116,20 +176,22 @@ static char timertest_handler(struct crtx_event *event, void *userdata, void **s
 
 int timer_main(int argc, char **argv) {
 	struct crtx_timer_listener tlist;
-	struct itimerspec newtimer;
+// 	struct itimerspec newtimer;
 	struct crtx_listener_base *blist;
 	
+	memset(&tlist, 0, sizeof(struct crtx_timer_listener));
+	
 	// set time for (first) alarm
-	newtimer.it_value.tv_sec = 1;
-	newtimer.it_value.tv_nsec = 0;
+	tlist.newtimer.it_value.tv_sec = 1;
+	tlist.newtimer.it_value.tv_nsec = 0;
 	
 	// set interval for repeating alarm, set to 0 to disable repetition
-	newtimer.it_interval.tv_sec = 1;
-	newtimer.it_interval.tv_nsec = 0;
+	tlist.newtimer.it_interval.tv_sec = 1;
+	tlist.newtimer.it_interval.tv_nsec = 0;
 	
 	tlist.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
 	tlist.settime_flags = 0; // absolute (TFD_TIMER_ABSTIME), or relative (0) time, see: man timerfd_settime()
-	tlist.newtimer = &newtimer;
+// 	tlist.newtimer = &newtimer;
 	
 	blist = create_listener("timer", &tlist);
 	if (!blist) {

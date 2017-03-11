@@ -189,8 +189,8 @@ struct crtx_event_loop_payload {
 };
 
 struct crtx_listener_base {
-	void (*shutdown)(struct crtx_listener_base *data);
-	void (*free)(struct crtx_listener_base *data, void *userdata);
+	void (*shutdown)(struct crtx_listener_base *base);
+	void (*free)(struct crtx_listener_base *base, void *userdata);
 	void *free_userdata;
 	
 	enum crtx_processing_mode mode;
@@ -204,6 +204,7 @@ struct crtx_listener_base {
 	
 	char (*start_listener)(struct crtx_listener_base *listener);
 	char (*stop_listener)(struct crtx_listener_base *listener);
+	char (*update_listener)(struct crtx_listener_base *listener);
 	
 	struct crtx_graph *graph;
 };
@@ -220,6 +221,7 @@ struct crtx_event_loop {
 	struct crtx_epoll_listener *listener;
 	
 	void (*add_fd)(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
+	void (*mod_fd)(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
 	void (*del_fd)(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
 	
 	char start_thread;
@@ -288,6 +290,7 @@ void crtx_process_event(struct crtx_graph *graph, struct crtx_dll *queue_entry);
 void crtx_init_shutdown();
 
 char crtx_start_listener(struct crtx_listener_base *listener);
+char crtx_update_listener(struct crtx_listener_base *listener);
 void crtx_stop_listener(struct crtx_listener_base *listener);
 void print_tasks(struct crtx_graph *graph);
 void hexdump(unsigned char *buffer, size_t index);
