@@ -11,16 +11,7 @@
 #include "timer.h"
 #include "epoll.h"
 
-
-// void	(*virEventHandleCallback	)	(int watch,
-// 										 int fd,
-// 								 int events,
-// 								 void * opaque)
-
-// void	(*virEventTimeoutCallback	)	(int timer,
-// 										 void * opaque)
-
-// void	(*virFreeCallback		)	(void * opaque)
+// See https://github.com/libvirt/libvirt/blob/master/examples/object-events/event-test.c
 
 struct libvirt_wrapper {
 	int id;
@@ -355,13 +346,7 @@ static int crtx_virEventRemoveTimeoutFunc(int timer) {
 	return 0;
 }
 
-// static void freeFunction(void *opaque) {
-// 	char *str = opaque;
-// 	printf("%s: Freeing [%s]\n", __func__, str);
-// 	free(str);
-// }
-
-const char *eventToString(int event) {
+static const char *eventToString(int event) {
 	const char *ret = "";
 	switch ((virDomainEventType) event) {
 		case VIR_DOMAIN_EVENT_DEFINED:
@@ -396,57 +381,57 @@ const char *eventToString(int event) {
 }
 
 static const char *eventDetailToString(int event, int detail) {
-    const char *ret = "";
-    switch ((virDomainEventType) event) {
-        case VIR_DOMAIN_EVENT_DEFINED:
-            if (detail == VIR_DOMAIN_EVENT_DEFINED_ADDED)
-                ret = "Added";
-            else if (detail == VIR_DOMAIN_EVENT_DEFINED_UPDATED)
-                ret = "Updated";
-            break;
-        case VIR_DOMAIN_EVENT_UNDEFINED:
-            if (detail == VIR_DOMAIN_EVENT_UNDEFINED_REMOVED)
-                ret = "Removed";
-            break;
-        case VIR_DOMAIN_EVENT_STARTED:
-            switch ((virDomainEventStartedDetailType) detail) {
-            case VIR_DOMAIN_EVENT_STARTED_BOOTED:
-                ret = "Booted";
-                break;
-            case VIR_DOMAIN_EVENT_STARTED_MIGRATED:
-                ret = "Migrated";
-                break;
-            case VIR_DOMAIN_EVENT_STARTED_RESTORED:
-                ret = "Restored";
-                break;
-            case VIR_DOMAIN_EVENT_STARTED_FROM_SNAPSHOT:
-                ret = "Snapshot";
-                break;
-            case VIR_DOMAIN_EVENT_STARTED_WAKEUP:
-                ret = "Event wakeup";
-                break;
-            }
-            break;
-        case VIR_DOMAIN_EVENT_SUSPENDED:
-            switch ((virDomainEventSuspendedDetailType) detail) {
-            case VIR_DOMAIN_EVENT_SUSPENDED_PAUSED:
-                ret = "Paused";
-                break;
-            case VIR_DOMAIN_EVENT_SUSPENDED_MIGRATED:
-                ret = "Migrated";
-                break;
-            case VIR_DOMAIN_EVENT_SUSPENDED_IOERROR:
-                ret = "I/O Error";
-                break;
-            case VIR_DOMAIN_EVENT_SUSPENDED_WATCHDOG:
-                ret = "Watchdog";
-                break;
-            case VIR_DOMAIN_EVENT_SUSPENDED_RESTORED:
-                ret = "Restored";
-                break;
-            case VIR_DOMAIN_EVENT_SUSPENDED_FROM_SNAPSHOT:
-                ret = "Snapshot";
-                break;
+	const char *ret = "";
+	switch ((virDomainEventType) event) {
+		case VIR_DOMAIN_EVENT_DEFINED:
+			if (detail == VIR_DOMAIN_EVENT_DEFINED_ADDED)
+				ret = "Added";
+			else if (detail == VIR_DOMAIN_EVENT_DEFINED_UPDATED)
+				ret = "Updated";
+			break;
+		case VIR_DOMAIN_EVENT_UNDEFINED:
+			if (detail == VIR_DOMAIN_EVENT_UNDEFINED_REMOVED)
+				ret = "Removed";
+			break;
+		case VIR_DOMAIN_EVENT_STARTED:
+			switch ((virDomainEventStartedDetailType) detail) {
+			case VIR_DOMAIN_EVENT_STARTED_BOOTED:
+				ret = "Booted";
+				break;
+			case VIR_DOMAIN_EVENT_STARTED_MIGRATED:
+				ret = "Migrated";
+				break;
+			case VIR_DOMAIN_EVENT_STARTED_RESTORED:
+				ret = "Restored";
+				break;
+			case VIR_DOMAIN_EVENT_STARTED_FROM_SNAPSHOT:
+				ret = "Snapshot";
+				break;
+			case VIR_DOMAIN_EVENT_STARTED_WAKEUP:
+				ret = "Event wakeup";
+				break;
+			}
+			break;
+		case VIR_DOMAIN_EVENT_SUSPENDED:
+			switch ((virDomainEventSuspendedDetailType) detail) {
+			case VIR_DOMAIN_EVENT_SUSPENDED_PAUSED:
+				ret = "Paused";
+				break;
+			case VIR_DOMAIN_EVENT_SUSPENDED_MIGRATED:
+				ret = "Migrated";
+				break;
+			case VIR_DOMAIN_EVENT_SUSPENDED_IOERROR:
+				ret = "I/O Error";
+				break;
+			case VIR_DOMAIN_EVENT_SUSPENDED_WATCHDOG:
+				ret = "Watchdog";
+				break;
+			case VIR_DOMAIN_EVENT_SUSPENDED_RESTORED:
+				ret = "Restored";
+				break;
+			case VIR_DOMAIN_EVENT_SUSPENDED_FROM_SNAPSHOT:
+				ret = "Snapshot";
+				break;
 			case VIR_DOMAIN_EVENT_SUSPENDED_API_ERROR:
 				ret = "API error";
 				break;
@@ -456,56 +441,56 @@ static const char *eventDetailToString(int event, int detail) {
 			case VIR_DOMAIN_EVENT_SUSPENDED_POSTCOPY_FAILED:
 				ret = "Suspended postcopy failed";
 				break;
-            }
-            break;
-        case VIR_DOMAIN_EVENT_RESUMED:
-            switch ((virDomainEventResumedDetailType) detail) {
-            case VIR_DOMAIN_EVENT_RESUMED_UNPAUSED:
-                ret = "Unpaused";
-                break;
-            case VIR_DOMAIN_EVENT_RESUMED_MIGRATED:
-                ret = "Migrated";
-                break;
-            case VIR_DOMAIN_EVENT_RESUMED_FROM_SNAPSHOT:
-                ret = "Snapshot";
-                break;
+			}
+			break;
+		case VIR_DOMAIN_EVENT_RESUMED:
+			switch ((virDomainEventResumedDetailType) detail) {
+			case VIR_DOMAIN_EVENT_RESUMED_UNPAUSED:
+				ret = "Unpaused";
+				break;
+			case VIR_DOMAIN_EVENT_RESUMED_MIGRATED:
+				ret = "Migrated";
+				break;
+			case VIR_DOMAIN_EVENT_RESUMED_FROM_SNAPSHOT:
+				ret = "Snapshot";
+				break;
 			case VIR_DOMAIN_EVENT_RESUMED_POSTCOPY:
 				ret = "Postcopy";
 				break;
-            }
-            break;
-        case VIR_DOMAIN_EVENT_STOPPED:
-            switch ((virDomainEventStoppedDetailType) detail) {
-            case VIR_DOMAIN_EVENT_STOPPED_SHUTDOWN:
-                ret = "Shutdown";
-                break;
-            case VIR_DOMAIN_EVENT_STOPPED_DESTROYED:
-                ret = "Destroyed";
-                break;
-            case VIR_DOMAIN_EVENT_STOPPED_CRASHED:
-                ret = "Crashed";
-                break;
-            case VIR_DOMAIN_EVENT_STOPPED_MIGRATED:
-                ret = "Migrated";
-                break;
-            case VIR_DOMAIN_EVENT_STOPPED_SAVED:
-                ret = "Saved";
-                break;
-            case VIR_DOMAIN_EVENT_STOPPED_FAILED:
-                ret = "Failed";
-                break;
-            case VIR_DOMAIN_EVENT_STOPPED_FROM_SNAPSHOT:
-                ret = "Snapshot";
-                break;
-            }
-            break;
-        case VIR_DOMAIN_EVENT_SHUTDOWN:
-            switch ((virDomainEventShutdownDetailType) detail) {
-            case VIR_DOMAIN_EVENT_SHUTDOWN_FINISHED:
-                ret = "Finished";
-                break;
-            }
-            break;
+			}
+			break;
+		case VIR_DOMAIN_EVENT_STOPPED:
+			switch ((virDomainEventStoppedDetailType) detail) {
+			case VIR_DOMAIN_EVENT_STOPPED_SHUTDOWN:
+				ret = "Shutdown";
+				break;
+			case VIR_DOMAIN_EVENT_STOPPED_DESTROYED:
+				ret = "Destroyed";
+				break;
+			case VIR_DOMAIN_EVENT_STOPPED_CRASHED:
+				ret = "Crashed";
+				break;
+			case VIR_DOMAIN_EVENT_STOPPED_MIGRATED:
+				ret = "Migrated";
+				break;
+			case VIR_DOMAIN_EVENT_STOPPED_SAVED:
+				ret = "Saved";
+				break;
+			case VIR_DOMAIN_EVENT_STOPPED_FAILED:
+				ret = "Failed";
+				break;
+			case VIR_DOMAIN_EVENT_STOPPED_FROM_SNAPSHOT:
+				ret = "Snapshot";
+				break;
+			}
+			break;
+		case VIR_DOMAIN_EVENT_SHUTDOWN:
+			switch ((virDomainEventShutdownDetailType) detail) {
+			case VIR_DOMAIN_EVENT_SHUTDOWN_FINISHED:
+				ret = "Finished";
+				break;
+			}
+			break;
 		case VIR_DOMAIN_EVENT_PMSUSPENDED:
 			switch ((virDomainEventPMSuspendedDetailType) detail) {
 				case VIR_DOMAIN_EVENT_PMSUSPENDED_MEMORY:
@@ -529,8 +514,8 @@ static const char *eventDetailToString(int event, int detail) {
 // 					break;
 			}
 			break;
-    }
-    return ret;
+	}
+	return ret;
 }
 
 static int myDomainEventCallback2(virConnectPtr conn,
@@ -545,6 +530,30 @@ static int myDomainEventCallback2(virConnectPtr conn,
 	return 0;
 }
 
+static void connectClose(virConnectPtr conn, int reason, void *opaque) {
+	switch ((virConnectCloseReason) reason) {
+		case VIR_CONNECT_CLOSE_REASON_ERROR:
+			fprintf(stderr, "Connection closed due to I/O error\n");
+			return;
+			
+		case VIR_CONNECT_CLOSE_REASON_EOF:
+			fprintf(stderr, "Connection closed due to end of file\n");
+			return;
+			
+		case VIR_CONNECT_CLOSE_REASON_KEEPALIVE:
+			fprintf(stderr, "Connection closed due to keepalive timeout\n");
+			return;
+			
+		case VIR_CONNECT_CLOSE_REASON_CLIENT:
+			fprintf(stderr, "Connection closed due to client request\n");
+			return;
+			
+// 		case VIR_CONNECT_CLOSE_REASON_LAST:
+// 			break;
+	};
+	
+	fprintf(stderr, "Connection closed due to unknown reason\n");
+}
 
 static void shutdown_listener(struct crtx_listener_base *base) {
 	struct crtx_libvirt_listener *lvlist;
@@ -568,6 +577,12 @@ static char start_listener(struct crtx_listener_base *base) {
 		return 0;
 	}
 	
+	ret = virConnectRegisterCloseCallback(lvlist->conn, connectClose, NULL, NULL);
+	if (ret < 0) {
+		ERROR("virConnectRegisterCloseCallback failed: %s\n", virGetLastErrorMessage());
+		virConnectClose(lvlist->conn);
+		return 0;
+	}
 	
 	ret = virConnectDomainEventRegisterAny(lvlist->conn,
 												NULL,
@@ -576,7 +591,15 @@ static char start_listener(struct crtx_listener_base *base) {
 												0, 0);
 // 												strdup("callback 2"), 0);
 	if (ret < 0) {
-		ERROR("virConnectDomainEventRegisterAny failed\n");
+		ERROR("virConnectDomainEventRegisterAny failed: %s\n", virGetLastErrorMessage());
+		virConnectClose(lvlist->conn);
+		return 0;
+	}
+	
+	ret = virConnectSetKeepAlive(lvlist->conn, 5, 3);
+	if (ret < 0) {
+		ERROR("Failed to start keepalive protocol: %s\n", virGetLastErrorMessage());
+		virConnectClose(lvlist->conn);
 		return 0;
 	}
 	
@@ -586,12 +609,6 @@ static char start_listener(struct crtx_listener_base *base) {
 // 					virGetLastErrorMessage());
 // 		}
 // 	}
-	
-	ret = virConnectSetKeepAlive(lvlist->conn, 5, 3);
-	if (ret < 0) {
-		ERROR("Failed to start keepalive protocol: %s\n", virGetLastErrorMessage());
-		return 0;
-	}
 	
 	return 1;
 }
