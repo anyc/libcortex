@@ -10,7 +10,6 @@
 #include "core.h"
 #include "timer.h"
 
-#define CRTX_EVT_TIMER "cortex.timer"
 
 static void stop_thread(struct crtx_thread *thread, void *data) {
 	struct crtx_timer_listener *tlist;
@@ -106,7 +105,7 @@ static char update_listener(struct crtx_listener_base *base) {
 	int ret;
 	
 	tlist = (struct crtx_timer_listener *) base;
-// 	printf("set %d %ld %ld\n", tlist->fd, tlist->newtimer.it_value.tv_nsec, tlist->newtimer.it_interval.tv_nsec);
+	printf("set %d %ld %ld\n", tlist->fd, tlist->newtimer.it_value.tv_nsec, tlist->newtimer.it_interval.tv_nsec);
 	ret = timerfd_settime(tlist->fd, tlist->settime_flags, &tlist->newtimer, NULL);
 	if (ret == -1) {
 		ERROR("timerfd_settime failed: %s\n", strerror(errno));
@@ -157,8 +156,44 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 	return &tlist->parent;
 }
 
-void crtx_usleep(unsigned int usec) {
+static char restart_listener_task(struct crtx_event *event, void *userdata, void **sessiondata) {
 	
+	
+	return 1;
+}
+
+struct crtx_listener_base *crtx_timer_restart_listener(void *options) {
+	struct crtx_timer_listener *tlist;
+	struct crtx_listener_base *blist;
+	
+	
+	tlist = (struct crtx_timer_listener *) options;
+	
+// 	memset(&tlist, 0, sizeof(struct crtx_timer_listener));
+// 	
+// 	// set time for (first) alarm
+// 	tlist.newtimer.it_value.tv_sec = 1;
+// 	tlist.newtimer.it_value.tv_nsec = 0;
+// 	
+// 	// set interval for repeating alarm, set to 0 to disable repetition
+// 	tlist.newtimer.it_interval.tv_sec = 1;
+// 	tlist.newtimer.it_interval.tv_nsec = 0;
+// 	
+// 	tlist.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
+// 	tlist.settime_flags = 0; // absolute (TFD_TIMER_ABSTIME), or relative (0) time, see: man timerfd_settime()
+// 	// 	tlist.newtimer = &newtimer;
+	
+	blist = create_listener("timer", tlist);
+	if (!blist) {
+		ERROR("create_listener(timer) failed\n");
+		exit(1);
+	}
+	
+	crtx_create_task(blist->graph, 0, "restart_listener", restart_listener_task, 0);
+	
+// 	crtx_start_listener(blist);
+	
+	return blist;
 }
 
 void crtx_timer_init() {

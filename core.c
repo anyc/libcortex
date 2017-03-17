@@ -194,9 +194,38 @@ enum crtx_processing_mode crtx_get_mode(enum crtx_processing_mode local_mode) {
 
 char crtx_start_listener(struct crtx_listener_base *listener) {
 	enum crtx_processing_mode mode;
+	struct crtx_event *event;
+	int ret;
 	
+// 	if (listener->state == CRTX_LSTNR_STARTED || listener == CRTX_LSTNR_PAUSED) {
+// 		DBG("will not start 
+// 	}
+// 	
+// 	listener->state = CRTX_LSTNR_STARTED;
+// 	printf("send started1 %p\n", listener);
 	if (listener->start_listener) {
-		listener->start_listener(listener);
+		ret = listener->start_listener(listener);
+		if (ret == 0) {
+			listener->state = CRTX_LSTNR_STOPPED;
+			
+			event = create_event("listener_state", 0, 0);
+			
+			event->data.raw.type = 'u';
+			event->data.raw.uint32 = CRTX_LSTNR_STOPPED;
+			
+			add_event(listener->graph, event);
+			
+			return 0;
+		}
+	}
+	
+	listener->state = CRTX_LSTNR_STARTED;
+	
+	if (crtx_root->event_loop.listener) {
+		event = create_event("listener_state", 0, 0);
+		event->data.raw.type = 'u';
+		event->data.raw.uint32 = CRTX_LSTNR_STARTED;
+		add_event(listener->graph, event);
 	}
 	
 	if (!listener->el_payload.fd && !listener->thread) {
@@ -282,10 +311,18 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 		}
 	}
 	
+	lbase->state = CRTX_LSTNR_STOPPED;
+	
 	return lbase;
 }
 
 void crtx_stop_listener(struct crtx_listener_base *listener) {
+// 	if (listener->state != CRTX_LSTNR_STARTED && listener != CRTX_LSTNR_PAUSED) {
+// 		DBG("will not stop unstarted listener\n");
+// 		return;
+// 	}
+// 	
+// 	listener->state = CRTX_LSTNR_STOPPED;
 	
 	if (listener->el_payload.fd > 0) {
 // 		printf("del fd %d\n", listener->el_payload.fd);
@@ -302,6 +339,14 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 	if (listener->stop_listener) {
 		listener->stop_listener(listener);
 	}
+	
+	listener->state = CRTX_LSTNR_STOPPED;
+	
+	struct crtx_event *event;
+	event = create_event("listener_state", 0, 0);
+	event->data.raw.type = 'u';
+	event->data.raw.uint32 = CRTX_LSTNR_STOPPED;
+	add_event(listener->graph, event);
 	
 	return;
 }

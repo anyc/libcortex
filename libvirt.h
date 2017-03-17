@@ -10,6 +10,8 @@ struct crtx_libvirt_listener {
 	char *hypervisor;
 	
 	virConnectPtr conn;
+	
+	int domain_event_id;
 };
 
 struct crtx_listener_base *crtx_new_libvirt_listener(void *options);

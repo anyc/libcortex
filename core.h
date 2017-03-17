@@ -97,7 +97,7 @@ struct crtx_event {
 	pthread_cond_t response_cond;
 	pthread_cond_t release_cond;
 	
-	struct crtx_listener_base *origin;
+// 	struct crtx_listener_base *origin;
 	
 // 	void (*event_to_str)(struct crtx_event *event);
 	
@@ -188,11 +188,14 @@ struct crtx_event_loop_payload {
 	void *el_data;
 };
 
+enum crtx_listener_state { CRTX_LSTNR_UNKNOWN=0, CRTX_LSTNR_STARTED, CRTX_LSTNR_PAUSED, CRTX_LSTNR_STOPPED }; //CRTX_LSTNR_ABORTED, 
+
 struct crtx_listener_base {
 	void (*shutdown)(struct crtx_listener_base *base);
 	void (*free)(struct crtx_listener_base *base, void *userdata);
 	void *free_userdata;
 	
+	enum crtx_listener_state state;
 	enum crtx_processing_mode mode;
 	
 	struct crtx_event_loop_payload el_payload;

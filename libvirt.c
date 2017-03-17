@@ -13,7 +13,7 @@
 
 // See https://github.com/libvirt/libvirt/blob/master/examples/object-events/event-test.c
 
-struct libvirt_wrapper {
+struct libvirt_eventloop_wrapper {
 	int id;
 	
 	struct crtx_event_loop_payload el_payload;
@@ -33,7 +33,7 @@ static struct crtx_ll * event_list = 0;
 static struct crtx_ll * timeout_list = 0;
 
 
-int virEventPollToNativeEvents(int events) {
+static int elw_virEventPollToNativeEvents(int events) {
 	int ret = 0;
 	if (events & VIR_EVENT_HANDLE_READABLE)
 		ret |= POLLIN;
@@ -46,7 +46,7 @@ int virEventPollToNativeEvents(int events) {
 	return ret;
 }
 
-int virEventPollFromNativeEvents(int events) {
+static int elw_virEventPollFromNativeEvents(int events) {
 	int ret = 0;
 	if (events & POLLIN)
 		ret |= VIR_EVENT_HANDLE_READABLE;
@@ -61,39 +61,38 @@ int virEventPollFromNativeEvents(int events) {
 	return ret;
 }
 
-static void el_callback(struct crtx_event_loop_payload *el_payload) {
-	struct libvirt_wrapper *wrap;
+static void elw_fd_callback(struct crtx_event_loop_payload *el_payload) {
+	struct libvirt_eventloop_wrapper *wrap;
 	struct epoll_event *epoll_event;
 	
 	
-	wrap = (struct libvirt_wrapper*) el_payload->data;
+	wrap = (struct libvirt_eventloop_wrapper*) el_payload->data;
 	
 	epoll_event = (struct epoll_event *) el_payload->el_data;
 	
-// 	printf("event %d %d\n", wrap->id, wrap->el_payload.fd);
-	
-	wrap->event_cb(wrap->id, wrap->el_payload.fd, virEventPollFromNativeEvents(epoll_event->events), wrap->opaque);
+	wrap->event_cb(wrap->id, wrap->el_payload.fd, elw_virEventPollFromNativeEvents(epoll_event->events), wrap->opaque);
 }
 
-
-static void el_error_cb(struct crtx_event_loop_payload *el_payload, void *data) {
-	struct libvirt_wrapper *wrap;
+static void elw_fd_error_cb(struct crtx_event_loop_payload *el_payload, void *data) {
+	struct libvirt_eventloop_wrapper *wrap;
 	
-	wrap = (struct libvirt_wrapper*) el_payload->data;
-	printf("error\n");
+	wrap = (struct libvirt_eventloop_wrapper*) el_payload->data;
+	
+	DBG("libvirt event loop error callback for fd %d\n", el_payload->fd);
+	
 	wrap->ff(wrap->opaque);
 }
 
-static int crtx_virEventAddHandleFunc(int fd, int event, virEventHandleCallback cb, void * opaque, virFreeCallback ff) {
-	struct libvirt_wrapper *wrap;
+static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback cb, void * opaque, virFreeCallback ff) {
+	struct libvirt_eventloop_wrapper *wrap;
 	struct crtx_ll *it;
 	
-	wrap = (struct libvirt_wrapper*) calloc(1, sizeof(struct libvirt_wrapper));
+	wrap = (struct libvirt_eventloop_wrapper*) calloc(1, sizeof(struct libvirt_eventloop_wrapper));
 	
 	wrap->el_payload.fd = fd;
-	wrap->el_payload.event_flags = virEventPollToNativeEvents(event);
-	wrap->el_payload.simple_callback = &el_callback;
-	wrap->el_payload.error_cb = &el_error_cb;
+	wrap->el_payload.event_flags = elw_virEventPollToNativeEvents(event);
+	wrap->el_payload.simple_callback = &elw_fd_callback;
+	wrap->el_payload.error_cb = &elw_fd_error_cb;
 	wrap->el_payload.data = wrap;
 	wrap->event_cb = cb;
 	wrap->opaque = opaque;
@@ -102,17 +101,17 @@ static int crtx_virEventAddHandleFunc(int fd, int event, virEventHandleCallback 
 	wrap->id = 0;
 	if (event_list) {
 		for (it=event_list;it->next;it=it->next) {
-			if (wrap->id < ((struct libvirt_wrapper*) it->data)->id)
+			if (wrap->id < ((struct libvirt_eventloop_wrapper*) it->data)->id)
 				break;
-			if (wrap->id == ((struct libvirt_wrapper*) it->data)->id)
+			if (wrap->id == ((struct libvirt_eventloop_wrapper*) it->data)->id)
 				wrap->id++;
 		}
 		
-		if (wrap->id == ((struct libvirt_wrapper*) it->data)->id)
+		if (wrap->id == ((struct libvirt_eventloop_wrapper*) it->data)->id)
 			wrap->id++;
 	}
 	
-	printf("new id %d fd %d flag %d\n", wrap->id, fd, wrap->el_payload.event_flags);
+	DBG("libvirt: new id %d fd %d flag %d\n", wrap->id, fd, wrap->el_payload.event_flags);
 	
 	crtx_ll_append_new(&event_list, wrap);
 	
@@ -121,12 +120,12 @@ static int crtx_virEventAddHandleFunc(int fd, int event, virEventHandleCallback 
 	return wrap->id;
 }
 
-static void crtx_virEventUpdateHandleFunc(int watch, int event) {
+static void elw_virEventUpdateHandleFunc(int watch, int event) {
 	struct crtx_ll *it;
-	struct libvirt_wrapper *wrap;
+	struct libvirt_eventloop_wrapper *wrap;
 	
 	for (it=event_list; it; it=it->next) {
-		if ( ((struct libvirt_wrapper*) it->data)->id == watch)
+		if ( ((struct libvirt_eventloop_wrapper*) it->data)->id == watch)
 			break;
 	}
 	
@@ -135,20 +134,20 @@ static void crtx_virEventUpdateHandleFunc(int watch, int event) {
 		return;
 	}
 	
-	wrap = ((struct libvirt_wrapper*) it->data);
-	wrap->el_payload.event_flags = virEventPollToNativeEvents(event);
+	wrap = ((struct libvirt_eventloop_wrapper*) it->data);
+	wrap->el_payload.event_flags = elw_virEventPollToNativeEvents(event);
 	
-	printf("update %d flags %d\n", wrap->id, wrap->el_payload.event_flags);
+	DBG("libvirt: update %d flags %d\n", wrap->id, wrap->el_payload.event_flags);
 	
 	crtx_root->event_loop.mod_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
 }
 
-static int crtx_virEventRemoveHandleFunc(int watch) {
+static int elw_virEventRemoveHandleFunc(int watch) {
 	struct crtx_ll *it;
-	struct libvirt_wrapper *wrap;
+	struct libvirt_eventloop_wrapper *wrap;
 	
 	for (it=event_list; it; it=it->next) {
-		if ( ((struct libvirt_wrapper*) it->data)->id == watch)
+		if ( ((struct libvirt_eventloop_wrapper*) it->data)->id == watch)
 			break;
 	}
 	
@@ -157,7 +156,7 @@ static int crtx_virEventRemoveHandleFunc(int watch) {
 		return -1;
 	}
 	
-	wrap = ((struct libvirt_wrapper*) it->data);
+	wrap = ((struct libvirt_eventloop_wrapper*) it->data);
 	printf("rem %d\n", wrap->id);
 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
 	
@@ -171,21 +170,21 @@ static int crtx_virEventRemoveHandleFunc(int watch) {
 	return 0;
 }
 
-static char timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct libvirt_wrapper *wrap;
+static char elw_timer_event_cb(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct libvirt_eventloop_wrapper *wrap;
 	
-	wrap = (struct libvirt_wrapper*) userdata;
-// 	printf("ev cb\n");
+	wrap = (struct libvirt_eventloop_wrapper*) userdata;
+	
 	wrap->time_cb(wrap->id, wrap->opaque);
 	
 	return 1;
 }
 
-static int crtx_virEventAddTimeoutFunc(int timeout, virEventTimeoutCallback cb, void * opaque, virFreeCallback ff) {
-	struct libvirt_wrapper *wrap;
+static int elw_virEventAddTimeoutFunc(int timeout, virEventTimeoutCallback cb, void * opaque, virFreeCallback ff) {
+	struct libvirt_eventloop_wrapper *wrap;
 	struct crtx_ll *it;
 	
-	wrap = (struct libvirt_wrapper*) calloc(1, sizeof(struct libvirt_wrapper));
+	wrap = (struct libvirt_eventloop_wrapper*) calloc(1, sizeof(struct libvirt_eventloop_wrapper));
 	
 	wrap->timeout = timeout;
 	wrap->time_cb = cb;
@@ -195,24 +194,20 @@ static int crtx_virEventAddTimeoutFunc(int timeout, virEventTimeoutCallback cb, 
 	wrap->id = 0;
 	if (timeout_list) {
 		for (it=timeout_list;it->next;it=it->next) {
-			if (wrap->id < ((struct libvirt_wrapper*) it->data)->id)
+			if (wrap->id < ((struct libvirt_eventloop_wrapper*) it->data)->id)
 				break;
-			if (wrap->id == ((struct libvirt_wrapper*) it->data)->id)
+			if (wrap->id == ((struct libvirt_eventloop_wrapper*) it->data)->id)
 				wrap->id++;
 		}
 		
-		if (wrap->id == ((struct libvirt_wrapper*) it->data)->id)
+		if (wrap->id == ((struct libvirt_eventloop_wrapper*) it->data)->id)
 			wrap->id++;
 	}
 	
-	printf("add timeout %d\n", timeout);
-	printf("new id %d\n", wrap->id);
+	DBG("add timeout %d %d\n", timeout, wrap->id);
 	
 	crtx_ll_append_new(&timeout_list, wrap);
 	
-	
-// 	struct crtx_timer_listener tlist;
-// 	struct itimerspec newtimer;
 	struct crtx_listener_base *blist;
 	
 	if (timeout > 0) {
@@ -241,7 +236,6 @@ static int crtx_virEventAddTimeoutFunc(int timeout, virEventTimeoutCallback cb, 
 	
 	wrap->timer_listener.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
 	wrap->timer_listener.settime_flags = 0;
-// 	wrap->timer_listener.newtimer = &newtimer;
 	
 	blist = create_listener("timer", &wrap->timer_listener);
 	if (!blist) {
@@ -249,23 +243,20 @@ static int crtx_virEventAddTimeoutFunc(int timeout, virEventTimeoutCallback cb, 
 		exit(1);
 	}
 	
-	crtx_create_task(blist->graph, 0, "libvirt_timer", timertest_handler, wrap);
+	crtx_create_task(blist->graph, 0, "libvirt_timer", elw_timer_event_cb, wrap);
 	
-// 	if (timeout > -1)
 	crtx_start_listener(blist);
-	
-// 	crtx_root->event_loop.add_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
 	
 	return wrap->id;
 }
 
-static void crtx_virEventUpdateTimeoutFunc(int timer, int timeout) {
+static void elw_virEventUpdateTimeoutFunc(int timer, int timeout) {
 	struct crtx_ll *it;
-	struct libvirt_wrapper *wrap;
+	struct libvirt_eventloop_wrapper *wrap;
 // 	struct itimerspec newtimer;
 	
 	for (it=timeout_list; it; it=it->next) {
-		if ( ((struct libvirt_wrapper*) it->data)->id == timer)
+		if ( ((struct libvirt_eventloop_wrapper*) it->data)->id == timer)
 			break;
 	}
 	
@@ -274,7 +265,7 @@ static void crtx_virEventUpdateTimeoutFunc(int timer, int timeout) {
 		return;
 	}
 	
-	wrap = ((struct libvirt_wrapper*) it->data);
+	wrap = ((struct libvirt_eventloop_wrapper*) it->data);
 	
 	
 	wrap->timeout = timeout;
@@ -305,24 +296,18 @@ static void crtx_virEventUpdateTimeoutFunc(int timer, int timeout) {
 	
 	wrap->timer_listener.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
 	wrap->timer_listener.settime_flags = 0;
-// 	wrap->timer_listener.newtimer = &newtimer;
-	
-	
-// 		crtx_start_listener(blist);
 	
 	crtx_update_listener(&wrap->timer_listener.parent);
 	
-	printf("mod timeout %d\n", timeout);
-	
-// 	crtx_virEventAddTimeoutFunc(int timeout, virEventTimeoutCallback cb, void * opaque, virFreeCallback ff)
+	DBG("libvirt: mod timeout %d\n", timeout);
 }
 
-static int crtx_virEventRemoveTimeoutFunc(int timer) {
+static int elw_virEventRemoveTimeoutFunc(int timer) {
 	struct crtx_ll *it;
-	struct libvirt_wrapper *wrap;
+	struct libvirt_eventloop_wrapper *wrap;
 	
 	for (it=timeout_list; it; it=it->next) {
-		if ( ((struct libvirt_wrapper*) it->data)->id == timer)
+		if ( ((struct libvirt_eventloop_wrapper*) it->data)->id == timer)
 			break;
 	}
 	
@@ -331,7 +316,7 @@ static int crtx_virEventRemoveTimeoutFunc(int timer) {
 		return -1;
 	}
 	
-	wrap = ((struct libvirt_wrapper*) it->data);
+	wrap = ((struct libvirt_eventloop_wrapper*) it->data);
 	
 // 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
 	free_listener(&wrap->timer_listener.parent);
@@ -341,7 +326,7 @@ static int crtx_virEventRemoveTimeoutFunc(int timer) {
 	free(it);
 	free(wrap);
 	
-	printf("del timeout\n");
+	DBG("libvirt: del timeout\n");
 	
 	return 0;
 }
@@ -518,41 +503,108 @@ static const char *eventDetailToString(int event, int detail) {
 	return ret;
 }
 
-static int myDomainEventCallback2(virConnectPtr conn,
+static int domain_evt_cb(virConnectPtr conn,
 								  virDomainPtr dom,
 								  int event,
 								  int detail,
 								  void *opaque)
 {
-	printf("%s EVENT: Domain %s(%d) %s %s\n", __func__, virDomainGetName(dom),
-		   virDomainGetID(dom), eventToString(event),
-		   eventDetailToString(event, detail));
+// 	printf("%s EVENT: Domain %s(%d) %s %s\n", __func__, virDomainGetName(dom),
+// 		   virDomainGetID(dom), eventToString(event),
+// 		   eventDetailToString(event, detail));
+	
+	struct crtx_event *crtx_event;
+	struct crtx_libvirt_listener *lvlist;
+	struct crtx_dict *dict;
+	struct crtx_dict_item *di;
+	size_t slen;
+	
+	lvlist = (struct crtx_libvirt_listener *) opaque;
+	
+	crtx_event = create_event("domain_event", 0, 0);
+	
+	dict = crtx_init_dict(0, 0, 0);
+	
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 's', "name", crtx_stracpy(virDomainGetName(dom), &slen), slen, 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "id", virDomainGetID(dom), sizeof(unsigned int), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 's', "type", eventToString(event), strlen(eventToString(event)), DIF_DATA_UNALLOCATED);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 's', "detail", eventDetailToString(event, detail), strlen(eventDetailToString(event, detail)), DIF_DATA_UNALLOCATED);
+	
+	crtx_event->data.dict = dict;
+	
+	add_event(lvlist->parent.graph, crtx_event);
+	
 	return 0;
 }
 
-static void connectClose(virConnectPtr conn, int reason, void *opaque) {
+static void conn_evt_cb(virConnectPtr conn, int reason, void *opaque) {
+	struct crtx_libvirt_listener *lvlist;
+// 	int ret;
+	char *sreason;
+	struct crtx_event *event;
+	struct crtx_dict *dict;
+	struct crtx_dict_item *di;
+	
+	
+	lvlist = (struct crtx_libvirt_listener *) opaque;
+	
 	switch ((virConnectCloseReason) reason) {
 		case VIR_CONNECT_CLOSE_REASON_ERROR:
-			fprintf(stderr, "Connection closed due to I/O error\n");
-			return;
-			
+// 			fprintf(stderr, "Connection closed due to I/O error\n");
+// 			return;
+			sreason = "error";
+			break;
+		
 		case VIR_CONNECT_CLOSE_REASON_EOF:
-			fprintf(stderr, "Connection closed due to end of file\n");
-			return;
-			
+// 			fprintf(stderr, "Connection closed due to end of file\n");
+// 			return;
+			sreason = "eof";
+			break;
+		
 		case VIR_CONNECT_CLOSE_REASON_KEEPALIVE:
-			fprintf(stderr, "Connection closed due to keepalive timeout\n");
-			return;
+// 			fprintf(stderr, "Connection closed due to keepalive timeout\n");
+// 			return;
+			sreason = "timeout";
+			break;
 			
 		case VIR_CONNECT_CLOSE_REASON_CLIENT:
-			fprintf(stderr, "Connection closed due to client request\n");
-			return;
+// 			fprintf(stderr, "Connection closed due to client request\n");
+// 			return;
+			sreason = "client";
+			break;
 			
 // 		case VIR_CONNECT_CLOSE_REASON_LAST:
 // 			break;
 	};
+// 	
+// 	fprintf(stderr, "Connection closed due to unknown reason\n");
 	
-	fprintf(stderr, "Connection closed due to unknown reason\n");
+	lvlist = (struct crtx_libvirt_listener *) opaque;
+	
+	lvlist->conn = 0;
+	lvlist->parent.state = CRTX_LSTNR_STOPPED;
+	
+	event = create_event("listener_state", 0, 0);
+	
+// 	dict = crtx_init_dict(0, 0, 0);
+	
+	
+// 	di = crtx_alloc_item(dict);
+// 	crtx_fill_data_item(di, 's', "reason", sreason, strlen(sreason), 0);
+	
+// 	event->data.dict = dict;
+	
+	event->data.raw.uint32 = CRTX_LSTNR_STOPPED;
+	
+	add_event(lvlist->parent.graph, event);
 }
 
 static void shutdown_listener(struct crtx_listener_base *base) {
@@ -560,7 +612,13 @@ static void shutdown_listener(struct crtx_listener_base *base) {
 	
 	lvlist = (struct crtx_libvirt_listener *) base;
 	
-	virConnectClose(lvlist->conn);
+	if (lvlist->conn) {
+		virConnectDomainEventDeregisterAny(lvlist->conn, lvlist->domain_event_id);
+		
+		virConnectUnregisterCloseCallback(lvlist->conn, conn_evt_cb);
+		
+		virConnectClose(lvlist->conn);
+	}
 }
 
 static char start_listener(struct crtx_listener_base *base) {
@@ -569,37 +627,39 @@ static char start_listener(struct crtx_listener_base *base) {
 	
 	lvlist = (struct crtx_libvirt_listener *) base;
 	
-	printf("start %s\n", lvlist->hypervisor);
-	
 	lvlist->conn = virConnectOpen(lvlist->hypervisor);
 	if (lvlist->conn == 0) {
-		fprintf(stderr, "Failed to connect to hypervisor\n");
+		ERROR("Failed to connect to hypervisor\n");
 		return 0;
 	}
 	
-	ret = virConnectRegisterCloseCallback(lvlist->conn, connectClose, NULL, NULL);
+	ret = virConnectRegisterCloseCallback(lvlist->conn, conn_evt_cb, lvlist, NULL);
 	if (ret < 0) {
 		ERROR("virConnectRegisterCloseCallback failed: %s\n", virGetLastErrorMessage());
 		virConnectClose(lvlist->conn);
+		lvlist->conn = 0;
 		return 0;
 	}
 	
 	ret = virConnectDomainEventRegisterAny(lvlist->conn,
 												NULL,
 												VIR_DOMAIN_EVENT_ID_LIFECYCLE,
-												VIR_DOMAIN_EVENT_CALLBACK(myDomainEventCallback2),
-												0, 0);
-// 												strdup("callback 2"), 0);
+												VIR_DOMAIN_EVENT_CALLBACK(domain_evt_cb),
+												lvlist, 0);
 	if (ret < 0) {
 		ERROR("virConnectDomainEventRegisterAny failed: %s\n", virGetLastErrorMessage());
 		virConnectClose(lvlist->conn);
+		lvlist->conn = 0;
 		return 0;
+	} else {
+		lvlist->domain_event_id = ret;
 	}
 	
 	ret = virConnectSetKeepAlive(lvlist->conn, 5, 3);
 	if (ret < 0) {
 		ERROR("Failed to start keepalive protocol: %s\n", virGetLastErrorMessage());
 		virConnectClose(lvlist->conn);
+		lvlist->conn = 0;
 		return 0;
 	}
 	
@@ -628,18 +688,20 @@ struct crtx_listener_base *crtx_new_libvirt_listener(void *options) {
 		return 0;
 	}
 	
-	virEventRegisterImpl(crtx_virEventAddHandleFunc,
-						crtx_virEventUpdateHandleFunc,
-						crtx_virEventRemoveHandleFunc,
-						crtx_virEventAddTimeoutFunc,
-						crtx_virEventUpdateTimeoutFunc,
-						crtx_virEventRemoveTimeoutFunc);
+	virEventRegisterImpl(elw_virEventAddHandleFunc,
+						elw_virEventUpdateHandleFunc,
+						elw_virEventRemoveHandleFunc,
+						elw_virEventAddTimeoutFunc,
+						elw_virEventUpdateTimeoutFunc,
+						elw_virEventRemoveTimeoutFunc);
 	
 // 	ret = virEventRegisterDefaultImpl();
 // 	if (ret < 0) {
 // 		ERROR("failed to initialize libvirt");
 // 		return 0;
 // 	}
+	
+	new_eventgraph(&lvlist->parent.graph, "libvirt", 0);
 	
 	return &lvlist->parent;
 }
@@ -653,8 +715,42 @@ void crtx_libvirt_finish() {
 
 #ifdef CRTX_TEST
 
+struct crtx_libvirt_listener lvlist;
+struct crtx_timer_listener tlist;
+struct crtx_listener_base *tblist;
+
+static char libvirt_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	if (!strcmp(event->type, "listener_state")) {
+		printf("ev %d\n", event->data.raw.uint32);
+		if (event->data.raw.uint32 == CRTX_LSTNR_STARTED && tlist.parent.state == CRTX_LSTNR_STARTED) {
+			printf("stop timer\n");
+			crtx_stop_listener(&tlist.parent);
+		}
+		if (event->data.raw.uint32 == CRTX_LSTNR_STOPPED && tlist.parent.state == CRTX_LSTNR_STOPPED) {
+			printf("start timer\n");
+			crtx_start_listener(&tlist.parent);
+		}
+	} else
+	if (!strcmp(event->type, "domain_event")) {
+		crtx_print_dict(event->data.dict);
+	}
+	
+	return 0;
+}
+
+static char timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	if (!strcmp(event->type, CRTX_EVT_TIMER)) {
+		printf("state %d\n", lvlist.parent.state);
+		if (lvlist.parent.state == CRTX_LSTNR_STOPPED) {
+			printf("start libvirt\n");
+			crtx_start_listener(&lvlist.parent);
+		}
+	}
+	
+	return 0;
+}
+
 int libvirt_main(int argc, char **argv) {
-	struct crtx_libvirt_listener lvlist;
 	struct crtx_listener_base *lbase;
 	char ret;
 	
@@ -672,12 +768,32 @@ int libvirt_main(int argc, char **argv) {
 		exit(1);
 	}
 	
-// 	crtx_create_task(lbase->graph, 0, "udev_test", udev_test_handler, 0);
+	crtx_create_task(lbase->graph, 0, "libvirt_test", libvirt_test_handler, 0);
+	
+	
+	memset(&tlist, 0, sizeof(struct crtx_timer_listener));
+	
+	tlist.newtimer.it_value.tv_sec = 1;
+	tlist.newtimer.it_value.tv_nsec = 0;
+	tlist.newtimer.it_interval.tv_sec = 1;
+	tlist.newtimer.it_interval.tv_nsec = 0;
+	tlist.clockid = CLOCK_REALTIME;
+	
+	tblist = create_listener("timer", &tlist);
+	if (!tblist) {
+		ERROR("create_listener(timer) failed\n");
+		exit(1);
+	}
+	
+	crtx_create_task(tblist->graph, 0, "timertest", timertest_handler, 0);
+	
+// 	crtx_start_listener(tblist);
+	
 	
 	ret = crtx_start_listener(lbase);
 	if (!ret) {
 		ERROR("starting libvirt listener failed\n");
-		return 1;
+// 		return 1;
 	}
 	
 	crtx_loop();

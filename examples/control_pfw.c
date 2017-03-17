@@ -65,7 +65,7 @@ struct crtx_listener_base *nfq_list_base;
 // listener for the timer events
 struct crtx_timer_listener tlist;
 struct crtx_listener_base *blist;
-struct itimerspec newtimer;
+// struct itimerspec newtimer;
 
 // cache tasks that contain the configuration
 struct crtx_task *rcache_host;
@@ -357,16 +357,16 @@ char pfw_start(unsigned int queue_num, unsigned int default_mark) {
 		 */
 		
 		// set time for (first) alarm
-		newtimer.it_value.tv_sec = 5;
-		newtimer.it_value.tv_nsec = 0;
+		tlist.newtimer.it_value.tv_sec = 5;
+		tlist.newtimer.it_value.tv_nsec = 0;
 		
 		// set interval for repeating alarm, set to 0 to disable repetition
-		newtimer.it_interval.tv_sec = 5;
-		newtimer.it_interval.tv_nsec = 0;
+		tlist.newtimer.it_interval.tv_sec = 5;
+		tlist.newtimer.it_interval.tv_nsec = 0;
 		
 		tlist.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
 		tlist.settime_flags = 0; // absolute (TFD_TIMER_ABSTIME), or relative (0) time, see: man timerfd_settime()
-		tlist.newtimer = &newtimer;
+// 		tlist.newtimer = &newtimer;
 		
 		blist = create_listener("timer", &tlist);
 		if (!blist) {

@@ -1,4 +1,9 @@
 
+#ifndef _CRTX_TIMER_H
+#define _CRTX_TIMER_H
+
+#define CRTX_EVT_TIMER "cortex.timer"
+
 struct crtx_timer_listener {
 	struct crtx_listener_base parent;
 	
@@ -13,3 +18,5 @@ struct crtx_timer_listener {
 void crtx_timer_init();
 void crtx_timer_finish();
 struct crtx_listener_base *crtx_new_timer_listener(void *options);
+
+#endif

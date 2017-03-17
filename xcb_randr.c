@@ -234,7 +234,7 @@ void *xcb_randr_tmain(void *data) {
 						
 						crtx_event = create_event("xcb_randr/crtc_change", &event->u.cc, 0);
 						crtx_event->data.raw.flags = DIF_DATA_UNALLOCATED;
-						crtx_event->origin = (struct crtx_listener_base *) xrlist;
+// 						crtx_event->origin = (struct crtx_listener_base *) xrlist;
 						
 						add_event(xrlist->parent.graph, crtx_event);
 						
@@ -251,7 +251,7 @@ void *xcb_randr_tmain(void *data) {
 					
 					crtx_event = create_event("xcb_randr/output_change", &event->u.oc, 0);
 					crtx_event->data.raw.flags = DIF_DATA_UNALLOCATED;
-					crtx_event->origin = (struct crtx_listener_base *) xrlist;
+// 					crtx_event->origin = (struct crtx_listener_base *) xrlist;
 					
 					add_event(xrlist->parent.graph, crtx_event);
 					
@@ -330,15 +330,17 @@ void crtx_xcb_randr_finish() {
 
 #ifdef CRTX_TEST
 
+struct crtx_xcb_randr_listener xrlist;
+
 static char xcb_randr_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *dict;
-	struct crtx_xcb_randr_listener *xrlist;
+// 	struct crtx_xcb_randr_listener *xrlist;
 	
 	
-	xrlist = (struct crtx_xcb_randr_listener *) event->origin;
+// 	xrlist = (struct crtx_xcb_randr_listener *) event->origin;
 	
 	if (!strcmp(event->type, "xcb_randr/crtc_change")) {
-		dict = crtc_change2dict(xrlist, event->data.raw.pointer);
+		dict = crtc_change2dict(&xrlist, event->data.raw.pointer);
 		
 // 		xcb_randr_crtc_change_t *cevent = event->data.raw.pointer;
 		
@@ -360,7 +362,7 @@ static char xcb_randr_test_handler(struct crtx_event *event, void *userdata, voi
 		
 	} else
 	if (!strcmp(event->type, "xcb_randr/output_change")) {
-		dict = output_change2dict(xrlist, event->data.raw.pointer);
+		dict = output_change2dict(&xrlist, event->data.raw.pointer);
 	}
 	
 	crtx_print_dict(dict);
@@ -371,16 +373,15 @@ static char xcb_randr_test_handler(struct crtx_event *event, void *userdata, voi
 }
 
 int xcb_randr_main(int argc, char **argv) {
-	struct crtx_xcb_randr_listener ulist;
 	struct crtx_listener_base *lbase;
 	char ret;
 	
 // 	crtx_root->no_threads = 1;
 	
-	memset(&ulist, 0, sizeof(struct crtx_xcb_randr_listener));
+	memset(&xrlist, 0, sizeof(struct crtx_xcb_randr_listener));
 	
 	
-	lbase = create_listener("xcb_randr", &ulist);
+	lbase = create_listener("xcb_randr", &xrlist);
 	if (!lbase) {
 		ERROR("create_listener(xcb_randr) failed\n");
 		exit(1);
