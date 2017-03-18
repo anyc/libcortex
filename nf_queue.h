@@ -1,5 +1,5 @@
 
-#define NFQ_PACKET_MSG_ETYPE "nf_queue/packet_msg"
+// #define NFQ_PACKET_MSG_ETYPE "nf_queue/packet_msg"
 
 #define PFW_NEWPACKET_SIGNATURE "ussssD"
 enum {PFW_NEWP_PROTOCOL=0, PFW_NEWP_SRC_IP, PFW_NEWP_SRC_HOST, PFW_NEWP_DST_IP, PFW_NEWP_DST_HOST, PFW_NEWP_PAYLOAD};

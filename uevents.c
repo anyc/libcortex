@@ -116,7 +116,7 @@ static void shutdown_uevents_listener(struct crtx_listener_base *lbase) {
 	
 	ulist = (struct crtx_uevents_listener*) lbase;
 	
-	free_listener(&ulist->nl_listener.parent);
+	crtx_free_listener(&ulist->nl_listener.parent);
 	ulist->parent.graph = 0;
 }
 
@@ -221,7 +221,7 @@ int netlink_raw_main(int argc, char **argv) {
 	
 	crtx_loop();
 	
-	free_listener(lbase);
+// 	free_listener(lbase);
 	
 	return 0;
 }

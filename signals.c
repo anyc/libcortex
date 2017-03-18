@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
+#include <string.h>
 
 #include "signals.h"
 
@@ -162,7 +163,8 @@ void crtx_handle_std_signals() {
 }
 
 void crtx_signals_init() {
-	new_eventgraph(&signal_list.parent.graph, "cortex.signals", 0);
+	memset(&signal_list, 0, sizeof(struct crtx_signal_listener));
+// 	crtx_create_graph(&signal_list.parent.graph, "cortex.signals", 0);
 }
 
 void crtx_signals_finish() {

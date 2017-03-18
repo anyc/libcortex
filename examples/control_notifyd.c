@@ -86,7 +86,7 @@ char init() {
 }
 
 void finish() {
-	free_listener(sock_list);
+	crtx_free_listener(sock_list);
 // 	free_listener(notify_list);
 	
 	crtx_finish_notification_listeners(notifier_data);

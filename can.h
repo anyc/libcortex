@@ -4,8 +4,8 @@
 
 #include <linux/can.h>
 
-#define CAN_MSG_ETYPE "can/event"
-extern char *can_msg_etype[];
+// #define CAN_MSG_ETYPE "can/event"
+// extern char *can_msg_etype[];
 
 struct crtx_can_listener {
 	struct crtx_listener_base parent;

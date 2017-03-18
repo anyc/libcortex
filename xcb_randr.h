@@ -6,8 +6,8 @@
 
 #include "core.h"
 
-#define XCB_RANDR_MSG_ETYPE "xcb/randr"
-extern char *xcb_randr_msg_etype[];
+// #define XCB_RANDR_MSG_ETYPE "xcb/randr"
+// extern char *xcb_randr_msg_etype[];
 
 struct crtx_xcb_randr_listener {
 	struct crtx_listener_base parent;

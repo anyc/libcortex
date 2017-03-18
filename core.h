@@ -162,6 +162,8 @@ struct crtx_graph {
 	pthread_mutex_t queue_mutex;
 	pthread_cond_t queue_cond;
 	
+	struct crtx_listener_base *listener;
+	
 	struct crtx_dll ll_hdr;
 };
 
@@ -188,14 +190,19 @@ struct crtx_event_loop_payload {
 	void *el_data;
 };
 
-enum crtx_listener_state { CRTX_LSTNR_UNKNOWN=0, CRTX_LSTNR_STARTED, CRTX_LSTNR_PAUSED, CRTX_LSTNR_STOPPED }; //CRTX_LSTNR_ABORTED, 
+enum crtx_listener_state { CRTX_LSTNR_UNKNOWN=0, CRTX_LSTNR_STARTING, CRTX_LSTNR_STARTED, CRTX_LSTNR_PAUSED, CRTX_LSTNR_STOPPING, CRTX_LSTNR_STOPPED, CRTX_LSTNR_SHUTDOWN }; //CRTX_LSTNR_ABORTED, 
 
 struct crtx_listener_base {
+	char *id;
+	
 	void (*shutdown)(struct crtx_listener_base *base);
 	void (*free)(struct crtx_listener_base *base, void *userdata);
 	void *free_userdata;
 	
+	MUTEX_TYPE state_mutex;
 	enum crtx_listener_state state;
+// 	struct crtx_graph *state_graph;
+	
 	enum crtx_processing_mode mode;
 	
 	struct crtx_event_loop_payload el_payload;
@@ -270,8 +277,8 @@ void free_event(struct crtx_event *event);
 void crtx_init();
 void crtx_finish();
 void crtx_loop();
-void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **event_types);
 void free_eventgraph(struct crtx_graph *egraph);
+void crtx_create_graph(struct crtx_graph **crtx_graph, char *name, char **event_types);
 // void get_eventgraph(struct crtx_graph **crtx_graph, char **event_types, unsigned int n_event_types);
 void add_task(struct crtx_graph *graph, struct crtx_task *task);
 void add_event_type(char *event_type);
@@ -279,13 +286,14 @@ void add_raw_event(struct crtx_event *event);
 void add_event(struct crtx_graph *graph, struct crtx_event *event);
 void add_event_sync(struct crtx_graph *graph, struct crtx_event *event);
 struct crtx_graph *find_graph_for_event_type(char *event_type);
-struct crtx_graph *find_graph_by_name(char *name);
+struct crtx_graph *find_graph_by_name(char *na6me);
 struct crtx_graph *get_graph_for_event_type(char *event_type, char **new_event_types);
 struct crtx_task *new_task();
 void free_task(struct crtx_task *task);
 char wait_on_event(struct crtx_event *event);
 struct crtx_listener_base *create_listener(char *id, void *options);
-void free_listener(struct crtx_listener_base *listener);
+// void free_listener(struct crtx_listener_base *listener);
+void crtx_free_listener(struct crtx_listener_base *listener);
 struct crtx_event *create_event(char *type, void *data, size_t data_size);
 struct crtx_task *crtx_create_task(struct crtx_graph *graph, unsigned char position, char *id, crtx_handle_task_t handler, void *userdata);
 void crtx_claim_next_event(struct crtx_dll **graph, struct crtx_dll **event);

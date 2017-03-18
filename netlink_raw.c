@@ -85,7 +85,7 @@ struct crtx_listener_base *crtx_new_netlink_raw_listener(void *options) {
 		return 0;
 	}
 	
-	new_eventgraph(&nl_listener->parent.graph, 0, 0);
+// 	new_eventgraph(&nl_listener->parent.graph, 0, 0);
 	
 // 	init_signal(&nl_listener->msg_done);
 	

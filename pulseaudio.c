@@ -262,7 +262,7 @@ struct crtx_listener_base *crtx_new_pa_listener(void *options) {
 	}
 	
 	palist->parent.free = &crtx_free_pa_listener;
-	new_eventgraph(&palist->parent.graph, "pulseaudio", 0);
+// 	new_eventgraph(&palist->parent.graph, "pulseaudio", 0);
 	
 	// TODO set own poll function that wraps our epoll listener
 	// 	pa_mainloop_set_poll_func(palist->mainloop, pa_poll_func, data);
@@ -322,7 +322,7 @@ int pa_main(int argc, char **argv) {
 	
 	crtx_loop();
 	
-	free_listener(lbase);
+// 	crtx_free_listener(lbase);
 	
 	return 0;  
 }

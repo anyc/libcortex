@@ -28,7 +28,7 @@ sd_bus *sd_bus_main_bus;
 
 void sd_bus_print_msg(sd_bus_message *m) {
 	const char *sig;
-	char *val;
+// 	char *val;
 	
 	sig = sd_bus_message_get_signature(m, 1);
 	
@@ -42,8 +42,8 @@ void sd_bus_print_msg(sd_bus_message *m) {
 	);
 	
 	if (sig[0] == 's') {
-		sd_bus_message_read_basic(m, 's', &val);
-		printf("\tval %s\n", val);
+// 		sd_bus_message_read_basic(m, 's', &val);
+// 		printf("\tval %s\n", val);
 	}
 }
 
@@ -472,7 +472,7 @@ struct crtx_listener_base *crtx_new_sdbus_listener(void *options) {
 	sdlist->parent.el_payload.event_handler_name = "sdbus event handler";
 	
 	sdlist->parent.shutdown = &crtx_shutdown_sdbus_listener;
-	new_eventgraph(&sdlist->parent.graph, 0, 0);
+// 	new_eventgraph(&sdlist->parent.graph, 0, 0);
 	
 	m = sdlist->matches;
 	while (m && m->match_str) {
@@ -594,7 +594,7 @@ void crtx_sdbus_finish() {
 	
 	for (i=0; i < CRTX_SDBUS_TYPE_MAX; i++) {
 		if (default_listeners[i].bus)
-			free_listener(&default_listeners[i].parent);
+			crtx_free_listener(&default_listeners[i].parent);
 	}
 	
 // 	sd_bus_flush(sd_bus_main_bus);

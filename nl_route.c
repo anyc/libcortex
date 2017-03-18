@@ -549,7 +549,7 @@ static void shutdown_nl_route_listener(struct crtx_listener_base *lbase) {
 	
 	nlr_list = (struct crtx_nl_route_listener*) lbase;
 	
-	free_listener(&nlr_list->nl_listener.parent);
+	crtx_free_listener(&nlr_list->nl_listener.parent);
 	nlr_list->parent.graph = 0;
 }
 
@@ -722,7 +722,7 @@ char crtx_get_own_ip_addresses() {
 	
 	crtx_print_dict(ctask->cache->entries);
 	
-	free_listener(lbase);
+// 	free_listener(lbase);
 	
 	return 1;
 }

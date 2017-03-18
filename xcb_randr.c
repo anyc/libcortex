@@ -8,7 +8,7 @@
 
 #define QRY(cmd, conn, error, ...) cmd ## _reply(conn, cmd(conn, __VA_ARGS__), & (error))
 
-char *xcb_randr_msg_etype[] = { "xcb_randr/crtc_change", "xcb_randr/output_change", 0 };
+// char *xcb_randr_msg_etype[] = { "xcb_randr/crtc_change", "xcb_randr/output_change", 0 };
 
 struct edid_monitor_descriptor {
 	uint16_t zero0;
@@ -314,7 +314,7 @@ struct crtx_listener_base *crtx_new_xcb_randr_listener(void *options) {
 	xcb_flush(xrlist->conn);
 	
 	xrlist->parent.free = &crtx_free_xcb_randr_listener;
-	new_eventgraph(&xrlist->parent.graph, "xcb_randr", xcb_randr_msg_etype);
+// 	new_eventgraph(&xrlist->parent.graph, "xcb_randr", xcb_randr_msg_etype);
 	
 	xrlist->parent.thread = get_thread(xcb_randr_tmain, xrlist, 0);
 	
@@ -397,7 +397,7 @@ int xcb_randr_main(int argc, char **argv) {
 	
 	crtx_loop();
 	
-	free_listener(lbase);
+// 	crtx_free_listener(lbase);
 	
 	return 0;  
 }

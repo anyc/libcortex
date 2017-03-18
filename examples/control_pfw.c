@@ -443,7 +443,7 @@ void finish() {
 		free(ipi);
 	}
 	
-	free_listener(nfq_list_base);
+	crtx_free_listener(nfq_list_base);
 }
 
 #ifdef PFW_STANDALONE

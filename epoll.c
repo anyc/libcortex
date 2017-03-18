@@ -101,7 +101,7 @@ void crtx_epoll_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 	printf("epoll del %d\n", el_payload->fd);
 	
 	fd = el_payload->fd;
-	el_payload->fd = 0;
+// 	el_payload->fd = 0;
 	
 	epl = (struct crtx_epoll_listener *) lbase;
 	crtx_epoll_del_fd_intern(epl, fd);
@@ -263,7 +263,7 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 		return 0;
 	}
 	
-	new_eventgraph(&epl->parent.graph, "epoll", 0);
+// 	new_eventgraph(&epl->parent.graph, "epoll", 0);
 	
 	epl->parent.shutdown = &shutdown_epoll_listener;
 	
@@ -419,7 +419,7 @@ int epoll_main(int argc, char **argv) {
 		
 		crtx_loop();
 		
-		free_listener(blist);
+// 		free_listener(blist);
 	} else {
 		struct epoll_control_pipe ecp;
 		
@@ -432,7 +432,7 @@ int epoll_main(int argc, char **argv) {
 		write(epl.pipe_fds[1], &ecp, sizeof(struct epoll_control_pipe));
 	}
 	
-	free_listener(lbase);
+// 	free_listener(lbase);
 	
 	close(testpipe[0]);
 	

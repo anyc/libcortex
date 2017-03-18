@@ -218,7 +218,7 @@ void finish() {
 	
 	for (llit=listeners;llit;llit=llitn) {
 		llitn = llit->next;
-		free_listener(&llit->in_listener->parent);
+		crtx_free_listener(&llit->in_listener->parent);
 		free(llit);
 	}
 }

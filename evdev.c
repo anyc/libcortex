@@ -11,7 +11,7 @@
 #include "core.h"
 #include "evdev.h"
 
-char *evdev_msg_etype[] = { EVDEV_MSG_ETYPE, 0 };
+// char *evdev_msg_etype[] = { EVDEV_MSG_ETYPE, 0 };
 
 void send_event(struct crtx_evdev_listener *el, struct input_event *ev, char sync) {
 	struct crtx_event *event;
@@ -20,7 +20,7 @@ void send_event(struct crtx_evdev_listener *el, struct input_event *ev, char syn
 	new_ev = (struct input_event *) malloc(sizeof(struct input_event));
 	memcpy(new_ev, ev, sizeof(struct input_event));
 	
-	event = create_event(EVDEV_MSG_ETYPE, ev, sizeof(struct input_event));
+	event = create_event(0, ev, sizeof(struct input_event));
 // 	event->data.raw.flags |= DIF_DATA_UNALLOCATED;
 	
 // 	reference_event_release(event);
@@ -138,7 +138,7 @@ struct crtx_listener_base *crtx_new_evdev_listener(void *options) {
 	
 	evdev->parent.shutdown = &crtx_shutdown_evdev_listener;
 	
-	new_eventgraph(&evdev->parent.graph, 0, evdev_msg_etype);
+// 	new_eventgraph(&evdev->parent.graph, 0, evdev_msg_etype);
 	
 // 	evdev->parent.thread = get_thread(evdev_tmain, evdev, 0);
 // 	evdev->parent.thread->do_stop = &stop_thread;
@@ -222,7 +222,7 @@ int evdev_main(int argc, char **argv) {
 	
 	crtx_loop();
 	
-	free_listener(lbase);
+// 	crtx_free_listener(lbase);
 	
 	return 0;
 }

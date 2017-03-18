@@ -11,52 +11,52 @@
 #include "timer.h"
 
 
-static void stop_thread(struct crtx_thread *thread, void *data) {
-	struct crtx_timer_listener *tlist;
-	
-	tlist = (struct crtx_timer_listener*) data;
-	
-	tlist->stop = 1;
-	if (tlist->fd > 0) {
-		close(tlist->fd);
-		tlist->fd = 0;
-	}
-}
+// static void stop_thread(struct crtx_thread *thread, void *data) {
+// 	struct crtx_timer_listener *tlist;
+// 	
+// 	tlist = (struct crtx_timer_listener*) data;
+// 	
+// 	tlist->stop = 1;
+// 	if (tlist->fd > 0) {
+// 		close(tlist->fd);
+// 		tlist->fd = 0;
+// 	}
+// }
 
-static void *timer_tmain(void *data) {
-	struct crtx_timer_listener *tlist;
-	uint64_t exp;
-	ssize_t s;
-	struct crtx_event *event;
-	
-	tlist = (struct crtx_timer_listener*) data;
-	
-	while (!tlist->stop) {
-		s = read(tlist->fd, &exp, sizeof(uint64_t));
-		if (s == -1 && errno == EINTR) {
-			DBG("timerfd thread interrupted\n");
-			break;
-		}
-		if (s != sizeof(uint64_t)) {
-			ERROR("reading from timerfd failed: %zd != %" PRIu64 " %s (%d)\n", s, exp, strerror(errno), errno);
-			break;
-		}
-		
-		event = create_event(CRTX_EVT_TIMER, 0, 0);
-		event->data.raw.uint32 = exp;
-		event->data.raw.type = 'u';
-		event->data.raw.flags = DIF_DATA_UNALLOCATED;
-		
-		add_event(tlist->parent.graph, event);
-		
-		if (tlist->newtimer.it_interval.tv_sec == 0 && tlist->newtimer.it_interval.tv_nsec == 0)
-			break;
-	}
-	
-	stop_thread(0, data);
-	
-	return 0;
-}
+// static void *timer_tmain(void *data) {
+// 	struct crtx_timer_listener *tlist;
+// 	uint64_t exp;
+// 	ssize_t s;
+// 	struct crtx_event *event;
+// 	
+// 	tlist = (struct crtx_timer_listener*) data;
+// 	
+// 	while (!tlist->stop) {
+// 		s = read(tlist->fd, &exp, sizeof(uint64_t));
+// 		if (s == -1 && errno == EINTR) {
+// 			DBG("timerfd thread interrupted\n");
+// 			break;
+// 		}
+// 		if (s != sizeof(uint64_t)) {
+// 			ERROR("reading from timerfd failed: %zd != %" PRIu64 " %s (%d)\n", s, exp, strerror(errno), errno);
+// 			break;
+// 		}
+// 		
+// 		event = create_event(CRTX_EVT_TIMER, 0, 0);
+// 		event->data.raw.uint32 = exp;
+// 		event->data.raw.type = 'u';
+// 		event->data.raw.flags = DIF_DATA_UNALLOCATED;
+// 		
+// 		add_event(tlist->parent.graph, event);
+// 		
+// 		if (tlist->newtimer.it_interval.tv_sec == 0 && tlist->newtimer.it_interval.tv_nsec == 0)
+// 			break;
+// 	}
+// 	
+// 	stop_thread(0, data);
+// 	
+// 	return 0;
+// }
 
 static char timer_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event_loop_payload *payload;
@@ -105,7 +105,7 @@ static char update_listener(struct crtx_listener_base *base) {
 	int ret;
 	
 	tlist = (struct crtx_timer_listener *) base;
-	printf("set %d %ld %ld\n", tlist->fd, tlist->newtimer.it_value.tv_nsec, tlist->newtimer.it_interval.tv_nsec);
+	printf("set %d %ld %ld\n", tlist->fd, tlist->newtimer.it_value.tv_sec, tlist->newtimer.it_interval.tv_sec);
 	ret = timerfd_settime(tlist->fd, tlist->settime_flags, &tlist->newtimer, NULL);
 	if (ret == -1) {
 		ERROR("timerfd_settime failed: %s\n", strerror(errno));
@@ -125,7 +125,7 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 // 	if (!tlist->newtimer)
 // 		return 0;
 	
-	new_eventgraph(&tlist->parent.graph, 0, 0);
+// 	new_eventgraph(&tlist->parent.graph, 0, 0);
 	
 	tlist->fd = timerfd_create(tlist->clockid, 0);
 	if (tlist->fd == -1) {

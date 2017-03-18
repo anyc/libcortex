@@ -112,5 +112,5 @@ char init() {
 void finish() {
 	crtx_finish_notification_listeners(notifier_data);
 	
-	free_listener(in_base);
+	crtx_free_listener(in_base);
 }

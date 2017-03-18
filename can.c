@@ -23,7 +23,7 @@
 
 // libnl-genl-3-dev libnl-genl-3-dev libnl-genl-3-dev
 
-char *can_msg_etype[] = { CAN_MSG_ETYPE, 0 };
+// char *can_msg_etype[] = { CAN_MSG_ETYPE, 0 };
 
 // void can_event_before_release_cb(struct crtx_event *event) {
 // 	free(event->data.raw.pointer);
@@ -304,7 +304,7 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 	
 	clist->parent.shutdown = &crtx_shutdown_can_listener;
 	
-	new_eventgraph(&clist->parent.graph, "can", can_msg_etype);
+// 	new_eventgraph(&clist->parent.graph, "can", can_msg_etype);
 	
 	return &clist->parent;
 }

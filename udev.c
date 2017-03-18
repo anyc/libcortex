@@ -6,7 +6,7 @@
 #include "core.h"
 #include "udev.h"
 
-char *udev_msg_etype[] = { UDEV_MSG_ETYPE, 0 };
+// char *udev_msg_etype[] = { UDEV_MSG_ETYPE, 0 };
 
 /* Note that USB strings are Unicode, UCS2 encoded, but the strings returned from
  * udev_device_get_sysattr_value() are UTF-8 encoded.
@@ -140,7 +140,7 @@ void push_new_udev_event(struct crtx_udev_listener *ulist, struct udev_device *d
 	struct crtx_event *nevent;
 
 	// size of struct udev_device is unknown
-	nevent = create_event(UDEV_MSG_ETYPE, dev, sizeof(struct udev_device*));
+	nevent = create_event(0, dev, sizeof(struct udev_device*));
 	nevent->data.raw.flags |= DIF_DATA_UNALLOCATED;
 
 	nevent->cb_before_release = &udev_event_before_release_cb;
@@ -250,7 +250,7 @@ struct crtx_listener_base *crtx_new_udev_listener(void *options) {
 	ulist->parent.el_payload.event_handler_name = "udev fd handler";
 	
 	ulist->parent.shutdown = &crtx_shutdown_udev_listener;
-	new_eventgraph(&ulist->parent.graph, "udev", udev_msg_etype);
+// 	new_eventgraph(&ulist->parent.graph, "udev", udev_msg_etype);
 	
 	ulist->parent.start_listener = &start_listener;
 	
@@ -332,7 +332,7 @@ int udev_main(int argc, char **argv) {
 	
 	crtx_loop();
 	
-	free_listener(lbase);
+// 	crtx_free_listener(lbase);
 	
 	return 0;  
 }

@@ -12,7 +12,7 @@
 #include "threads.h"
 
 static int inotify_fd = -1;
-char *inotify_msg_etype[] = { INOTIFY_MSG_ETYPE, 0 };
+// char *inotify_msg_etype[] = { INOTIFY_MSG_ETYPE, 0 };
 
 static struct crtx_inotify_listener **listeners = 0;
 static unsigned int n_listeners = 0;
@@ -294,7 +294,7 @@ struct crtx_listener_base *crtx_new_inotify_listener(void *options) {
 	
 	inlist->parent.shutdown = &crtx_shutdown_inotify_listener;
 	
-	new_eventgraph(&inlist->parent.graph, 0, inotify_msg_etype);
+// 	new_eventgraph(&inlist->parent.graph, 0, inotify_msg_etype);
 	
 	inlist->parent.thread = 0;
 	inlist->parent.start_listener = &start_listener;

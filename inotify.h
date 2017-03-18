@@ -4,8 +4,8 @@
 
 #include <sys/inotify.h>
 
-#define INOTIFY_MSG_ETYPE "inotify/event"
-extern char *inotify_msg_etype[];
+// #define INOTIFY_MSG_ETYPE "inotify/event"
+// extern char *inotify_msg_etype[];
 
 struct crtx_inotify_listener {
 	struct crtx_listener_base parent;

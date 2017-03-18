@@ -140,7 +140,7 @@ struct crtx_listener_base *crtx_new_genl_listener(void *options) {
 	}
 	
 	
-	new_eventgraph(&genlist->parent.graph, 0, 0);
+// 	new_eventgraph(&genlist->parent.graph, 0, 0);
 	
 	genlist->parent.el_payload.fd = nl_socket_get_fd(genlist->sock);
 	genlist->parent.el_payload.data = genlist;

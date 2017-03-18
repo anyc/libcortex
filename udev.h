@@ -4,8 +4,8 @@
 
 #include <libudev.h>
 
-#define UDEV_MSG_ETYPE "udev/event"
-extern char *udev_msg_etype[];
+// #define UDEV_MSG_ETYPE "udev/event"
+// extern char *udev_msg_etype[];
 
 struct crtx_udev_raw2dict_attr_req {
 	char *subsystem;

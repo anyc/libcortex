@@ -10,7 +10,7 @@
 #include "fanotify.h"
 #include "threads.h"
 
-char *fanotify_msg_etype[] = { FANOTIFY_MSG_ETYPE, 0 };
+// char *fanotify_msg_etype[] = { FANOTIFY_MSG_ETYPE, 0 };
 
 void crtx_fanotify_get_path(int fd, char **path, size_t *length, char *format) {
 	char fdpath[32];
@@ -132,7 +132,7 @@ struct crtx_listener_base *crtx_new_fanotify_listener(void *options) {
 	
 	falist->parent.shutdown = &crtx_shutdown_fanotify_listener;
 	
-	new_eventgraph(&falist->parent.graph, 0, fanotify_msg_etype);
+// 	new_eventgraph(&falist->parent.graph, 0, fanotify_msg_etype);
 	
 	falist->parent.thread = get_thread(fanotify_tmain, falist, 0);
 	falist->parent.thread->do_stop = &stop_thread;

@@ -27,7 +27,7 @@
 #include "nf_queue.h"
 #include "threads.h"
 
-char *nfq_packet_msg_etype[] = { NFQ_PACKET_MSG_ETYPE, 0 };
+// char *nfq_packet_msg_etype[] = { NFQ_PACKET_MSG_ETYPE, 0 };
 
 
 char crtx_nfq_print_packet(struct crtx_dict *ds) {
@@ -386,7 +386,7 @@ struct crtx_listener_base *crtx_new_nf_queue_listener(void *options) {
 	nfq_listata = (struct crtx_nfq_listener*) options;
 	nfq_listata->parent.free = &free_nf_queue_listener;
 	
-	new_eventgraph(&nfq_listata->parent.graph, 0, nfq_packet_msg_etype);
+// 	new_eventgraph(&nfq_listata->parent.graph, 0, nfq_packet_msg_etype);
 	
 	nfq_listata->parent.thread = get_thread(nfq_tmain, nfq_listata, 0);
 	nfq_listata->parent.start_listener = 0;

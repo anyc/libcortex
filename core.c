@@ -132,6 +132,9 @@ char *crtx_evt_inbox[] = { CRTX_EVT_INBOX, 0 };
 char *crtx_evt_outbox[] = { CRTX_EVT_OUTBOX, 0 };
 
 
+static void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **event_types);
+
+
 char *crtx_stracpy(const char *str, size_t *str_length) {
 	char *r;
 	size_t length;
@@ -197,6 +200,9 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 	struct crtx_event *event;
 	int ret;
 	
+	LOCK(listener->state_mutex);
+	listener->state = CRTX_LSTNR_STARTING;
+	
 // 	if (listener->state == CRTX_LSTNR_STARTED || listener == CRTX_LSTNR_PAUSED) {
 // 		DBG("will not start 
 // 	}
@@ -205,6 +211,7 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 // 	printf("send started1 %p\n", listener);
 	if (listener->start_listener) {
 		ret = listener->start_listener(listener);
+// 		if (ret == 0 && listener->state_graph) {
 		if (ret == 0) {
 			listener->state = CRTX_LSTNR_STOPPED;
 			
@@ -215,21 +222,25 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 			
 			add_event(listener->graph, event);
 			
+			UNLOCK(listener->state_mutex);
+			
 			return 0;
 		}
 	}
 	
 	listener->state = CRTX_LSTNR_STARTED;
 	
-	if (crtx_root->event_loop.listener) {
+// 	if (listener->state_graph) {
 		event = create_event("listener_state", 0, 0);
 		event->data.raw.type = 'u';
 		event->data.raw.uint32 = CRTX_LSTNR_STARTED;
 		add_event(listener->graph, event);
-	}
+// 	}
+	
+	UNLOCK(listener->state_mutex);
 	
 	if (!listener->el_payload.fd && !listener->thread) {
-		DBG("no method to start listener \"%s\" provided\n", listener->graph?listener->graph->name: 0);
+		DBG("no method to start listener \"%s\" provided\n", listener->id);
 		return -1;
 	}
 	
@@ -277,6 +288,8 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 	struct crtx_listener_repository *l;
 	struct crtx_listener_base *lbase;
 	
+	DBG("new listener %s\n", id);
+	
 	lbase = 0;
 	l = listener_factory;
 	while (l->id) {
@@ -296,6 +309,15 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 		l++;
 	}
 	
+	lbase->id = id;
+	INIT_MUTEX(lbase->state_mutex);
+	lbase->state = CRTX_LSTNR_STOPPED;
+// 	printf("if %s\n", id);
+	new_eventgraph(&lbase->graph, 0, 0);
+	lbase->graph->listener = lbase;
+	
+// 	new_eventgraph(&lbase->state_graph, 0, 0);
+	
 	if (!lbase) {
 		ERROR("listener \"%s\" not found\n", id);
 	} else {
@@ -311,8 +333,6 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 		}
 	}
 	
-	lbase->state = CRTX_LSTNR_STOPPED;
-	
 	return lbase;
 }
 
@@ -322,7 +342,12 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 // 		return;
 // 	}
 // 	
-// 	listener->state = CRTX_LSTNR_STOPPED;
+	LOCK(listener->state_mutex);
+	if (listener->state == CRTX_LSTNR_STOPPING || listener->state == CRTX_LSTNR_STOPPED) {
+		UNLOCK(listener->state_mutex);
+		return;
+	}
+	listener->state = CRTX_LSTNR_STOPPING;
 	
 	if (listener->el_payload.fd > 0) {
 // 		printf("del fd %d\n", listener->el_payload.fd);
@@ -342,20 +367,25 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 	
 	listener->state = CRTX_LSTNR_STOPPED;
 	
-	struct crtx_event *event;
-	event = create_event("listener_state", 0, 0);
-	event->data.raw.type = 'u';
-	event->data.raw.uint32 = CRTX_LSTNR_STOPPED;
-	add_event(listener->graph, event);
+// 	if (listener->state_graph) {
+		struct crtx_event *event;
+		event = create_event("listener_state", 0, 0);
+		event->data.raw.type = 'u';
+		event->data.raw.uint32 = CRTX_LSTNR_STOPPED;
+		add_event(listener->graph, event);
+// 	}
+	
+	UNLOCK(listener->state_mutex);
 	
 	return;
 }
 
-void free_listener(struct crtx_listener_base *listener) {
-	crtx_stop_listener(listener);
+static void free_listener_intern(struct crtx_listener_base *listener) {
+// 	crtx_stop_listener(listener);
 	
-	if (listener->shutdown)
-		listener->shutdown(listener);
+// 	LOCK(listener->state_mutex);
+// 	listener->state = CRTX_LSTNR_SHUTDOWN;
+// 	UNLOCK(listener->state_mutex);
 	
 	if (listener->graph)
 		free_eventgraph(listener->graph);
@@ -369,6 +399,33 @@ void free_listener(struct crtx_listener_base *listener) {
 	if (listener->free) {
 		listener->free(listener, listener->free_userdata);
 	}
+}
+
+void crtx_free_listener(struct crtx_listener_base *listener) {
+	crtx_stop_listener(listener);
+	
+	LOCK(listener->state_mutex);
+	if (listener->state != CRTX_LSTNR_STOPPED) {
+		ERROR("listener is not stopped\n");
+	}
+	
+	listener->state = CRTX_LSTNR_SHUTDOWN;
+	
+	if (listener->shutdown)
+		listener->shutdown(listener);
+	
+	LOCK(listener->graph->queue_mutex);
+	if (listener->graph->equeue) {
+		DBG("delaying listener shutdown due to pending events\n");
+		UNLOCK(listener->graph->queue_mutex);
+		UNLOCK(listener->state_mutex);
+		return;
+	}
+	UNLOCK(listener->graph->queue_mutex);
+	
+	free_listener_intern(listener);
+	
+	UNLOCK(listener->state_mutex);
 }
 
 void traverse_graph_r(struct crtx_graph *graph, struct crtx_task *ti, struct crtx_event *event) {
@@ -470,6 +527,10 @@ void crtx_process_event(struct crtx_graph *graph, struct crtx_dll *queue_entry) 
 	UNLOCK(graph->queue_mutex);
 	
 	free(queue_entry);
+	
+	if (!graph->equeue && graph->listener && graph->listener->state == CRTX_LSTNR_SHUTDOWN) {
+		free_listener_intern(graph->listener);
+	}
 }
 
 void *crtx_process_graph_tmain(void *arg) {
@@ -664,6 +725,8 @@ void add_event(struct crtx_graph *graph, struct crtx_event *event) {
 			start_thread(t);
 		}
 	} else {
+		if (!crtx_root->event_loop.listener)
+			crtx_get_event_loop();
 		crtx_epoll_queue_graph(crtx_root->event_loop.listener, graph);
 	}
 	
@@ -859,9 +922,14 @@ void add_raw_event(struct crtx_event *event) {
 	add_event(graph, event);
 }
 
-void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **event_types) {
+static void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **event_types) {
 	struct crtx_graph *graph;
 	int i, ret;
+	
+	if (crtx_graph && *crtx_graph) {
+		ERROR("new_eventgraph: will not overwrite graph ptr\n");
+		return;
+	}
 	
 	graph = (struct crtx_graph*) calloc(1, sizeof(struct crtx_graph)); ASSERT(graph);
 	
@@ -874,16 +942,16 @@ void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **event_typ
 	ret = pthread_cond_init(&graph->queue_cond, NULL); ASSERT(ret >= 0);
 	
 	graph->name = name;
-	INFO("new eventgraph %s ", graph->name);
+// 	INFO("new eventgraph %s ", graph->name);
 	if (event_types) {
 		while (event_types[graph->n_types]) {
-			INFO("%s ", event_types[graph->n_types]);
+// 			INFO("%s ", event_types[graph->n_types]);
 			graph->n_types++;
 		}
 		
 		graph->types = event_types;
 	}
-	INFO("\n");
+// 	INFO("\n");
 	
 	LOCK(crtx_root->graphs_mutex);
 	for (i=0; i < crtx_root->n_graphs; i++) {
@@ -898,6 +966,10 @@ void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **event_typ
 		crtx_root->graphs[crtx_root->n_graphs-1] = graph;
 	}
 	UNLOCK(crtx_root->graphs_mutex);
+}
+
+void crtx_create_graph(struct crtx_graph **crtx_graph, char *name, char **event_types) {
+	new_eventgraph(crtx_graph, name, event_types);
 }
 
 void free_eventgraph_intern(struct crtx_graph *egraph, char crtx_shutdown) {
@@ -1122,8 +1194,8 @@ void crtx_finish() {
 	}
 	
 	if (crtx_root->event_loop.listener) {
-		free_listener((struct crtx_listener_base *) crtx_root->event_loop.listener);
-		free(crtx_root->event_loop.listener);
+		crtx_free_listener((struct crtx_listener_base *) crtx_root->event_loop.listener);
+// 		free(crtx_root->event_loop.listener);
 	}
 	
 	// finish threads module
@@ -1255,11 +1327,11 @@ void crtx_finish_notification_listeners(void *data) {
 	tmp = data;
 	
 	base = (struct crtx_listener_base*) tmp;
-	free_listener(base);
+	crtx_free_listener(base);
 	tmp += sizeof(struct crtx_sd_bus_notification_listener);
 	
 	base = (struct crtx_listener_base*) tmp;
-	free_listener(base);
+	crtx_free_listener(base);
 	tmp += sizeof(struct crtx_readline_listener);
 	
 	free(data);

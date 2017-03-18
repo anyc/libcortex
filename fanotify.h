@@ -5,8 +5,8 @@
 #include <fcntl.h>
 #include <sys/fanotify.h>
 
-#define FANOTIFY_MSG_ETYPE "fanotify/event"
-extern char *fanotify_msg_etype[];
+// #define FANOTIFY_MSG_ETYPE "fanotify/event"
+// extern char *fanotify_msg_etype[];
 
 struct crtx_fanotify_listener {
 	struct crtx_listener_base parent;

@@ -4,8 +4,8 @@
 
 #include "libevdev/libevdev.h"
 
-#define EVDEV_MSG_ETYPE "evdev/event"
-extern char *evdev_msg_etype[];
+// #define EVDEV_MSG_ETYPE "evdev/event"
+// extern char *evdev_msg_etype[];
 
 struct crtx_evdev_listener {
 	struct crtx_listener_base parent;

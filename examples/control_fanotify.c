@@ -224,8 +224,8 @@ char init() {
 }
 
 void finish() {
-	free_listener(sock_list);
-	free_listener(fa);
+	crtx_free_listener(sock_list);
+	crtx_free_listener(fa);
 	
 	if (sock_path)
 		free(sock_path);

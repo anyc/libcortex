@@ -404,7 +404,7 @@ struct crtx_listener_base *crtx_new_avahi_listener(void *options) {
 	}
 	
 	
-	new_eventgraph(&alist->parent.graph, "avahi", 0);
+// 	new_eventgraph(&alist->parent.graph, "avahi", 0);
 
 // 	epl->parent.shutdown = &shutdown_avahi_listener;
 
