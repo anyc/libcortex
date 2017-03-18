@@ -151,7 +151,7 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 // 	tlist->parent.thread->do_stop = &stop_thread;
 // 	start_thread(t);
 	
-	tlist->parent.shutdown = &crtx_shutdown_timer_listener;
+// 	tlist->parent.shutdown = &crtx_shutdown_timer_listener;
 	
 	return &tlist->parent;
 }

@@ -171,11 +171,11 @@ void *crtx_epoll_main(void *data) {
 			} else {
 				el_payload = (struct crtx_event_loop_payload* ) rec_events[i].data.ptr;
 				
-				event = create_event(0, 0, 0);
-				
 				memcpy(el_payload->el_data, &rec_events[i], sizeof(struct epoll_event));
 				
 				if (el_payload->event_handler) {
+					event = create_event(0, 0, 0);
+					
 					event->data.raw.pointer = el_payload;
 					event->data.raw.type = 'p';
 					event->data.raw.flags = DIF_DATA_UNALLOCATED;

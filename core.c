@@ -211,8 +211,8 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 // 	printf("send started1 %p\n", listener);
 	if (listener->start_listener) {
 		ret = listener->start_listener(listener);
-// 		if (ret == 0 && listener->state_graph) {
-		if (ret == 0) {
+		if (ret == 0 && listener->state_graph) {
+// 		if (ret == 0) {
 			listener->state = CRTX_LSTNR_STOPPED;
 			
 			event = create_event("listener_state", 0, 0);
@@ -220,7 +220,7 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 			event->data.raw.type = 'u';
 			event->data.raw.uint32 = CRTX_LSTNR_STOPPED;
 			
-			add_event(listener->graph, event);
+			add_event(listener->state_graph, event);
 			
 			UNLOCK(listener->state_mutex);
 			
@@ -230,12 +230,12 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 	
 	listener->state = CRTX_LSTNR_STARTED;
 	
-// 	if (listener->state_graph) {
+	if (listener->state_graph) {
 		event = create_event("listener_state", 0, 0);
 		event->data.raw.type = 'u';
 		event->data.raw.uint32 = CRTX_LSTNR_STARTED;
-		add_event(listener->graph, event);
-// 	}
+		add_event(listener->state_graph, event);
+	}
 	
 	UNLOCK(listener->state_mutex);
 	
@@ -367,13 +367,13 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 	
 	listener->state = CRTX_LSTNR_STOPPED;
 	
-// 	if (listener->state_graph) {
+	if (listener->state_graph) {
 		struct crtx_event *event;
 		event = create_event("listener_state", 0, 0);
 		event->data.raw.type = 'u';
 		event->data.raw.uint32 = CRTX_LSTNR_STOPPED;
-		add_event(listener->graph, event);
-// 	}
+		add_event(listener->state_graph, event);
+	}
 	
 	UNLOCK(listener->state_mutex);
 	
@@ -425,7 +425,7 @@ void crtx_free_listener(struct crtx_listener_base *listener) {
 	
 	free_listener_intern(listener);
 	
-	UNLOCK(listener->state_mutex);
+// 	UNLOCK(listener->state_mutex);
 }
 
 void traverse_graph_r(struct crtx_graph *graph, struct crtx_task *ti, struct crtx_event *event) {

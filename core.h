@@ -201,7 +201,7 @@ struct crtx_listener_base {
 	
 	MUTEX_TYPE state_mutex;
 	enum crtx_listener_state state;
-// 	struct crtx_graph *state_graph;
+	struct crtx_graph *state_graph;
 	
 	enum crtx_processing_mode mode;
 	

@@ -157,7 +157,13 @@ static int elw_virEventRemoveHandleFunc(int watch) {
 	}
 	
 	wrap = ((struct libvirt_eventloop_wrapper*) it->data);
-	printf("rem %d\n", wrap->id);
+	
+	// this deadlocks. crtx calls an fd handler in libvirt which calls this function, maybe both reference the same
+	// libvirt object
+// 	wrap->ff(wrap->opaque);
+	
+	printf("rem id %d\n", wrap->id);
+	
 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
 	
 	crtx_ll_unlink(&event_list, it);
@@ -174,10 +180,14 @@ static char elw_timer_event_cb(struct crtx_event *event, void *userdata, void **
 	struct libvirt_eventloop_wrapper *wrap;
 	
 	wrap = (struct libvirt_eventloop_wrapper*) userdata;
-	
+	printf("timer event id %d\n", wrap->id);
 	wrap->time_cb(wrap->id, wrap->opaque);
 	
 	return 1;
+}
+
+void elw_free_timer_lstnr(struct crtx_listener_base *base, void *userdata) {
+	free(userdata);
 }
 
 static int elw_virEventAddTimeoutFunc(int timeout, virEventTimeoutCallback cb, void * opaque, virFreeCallback ff) {
@@ -236,6 +246,9 @@ static int elw_virEventAddTimeoutFunc(int timeout, virEventTimeoutCallback cb, v
 	
 	wrap->timer_listener.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
 	wrap->timer_listener.settime_flags = 0;
+	
+	wrap->timer_listener.parent.free = &elw_free_timer_lstnr;
+	wrap->timer_listener.parent.free_userdata = wrap;
 	
 	blist = create_listener("timer", &wrap->timer_listener);
 	if (!blist) {
@@ -318,13 +331,14 @@ static int elw_virEventRemoveTimeoutFunc(int timer) {
 	
 	wrap = ((struct libvirt_eventloop_wrapper*) it->data);
 	
+	wrap->ff(wrap->opaque);
+	
 // 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
 	crtx_free_listener(&wrap->timer_listener.parent);
 	
 	crtx_ll_unlink(&timeout_list, it);
-	
 	free(it);
-	free(wrap);
+// 	free(wrap);
 	
 	DBG("libvirt: del timeout\n");
 	
@@ -584,46 +598,36 @@ static void conn_evt_cb(virConnectPtr conn, int reason, void *opaque) {
 // 		case VIR_CONNECT_CLOSE_REASON_LAST:
 // 			break;
 	};
-// 	
-// 	fprintf(stderr, "Connection closed due to unknown reason\n");
 	
 	printf("libvirt %s\n", sreason);
 	
 	lvlist = (struct crtx_libvirt_listener *) opaque;
 	
+	// we close the connection here as unregistering the callback in stop_listener will deadlock
+	// although we close the connection, we still leak memory allocated by virConnectOpen->virNetSocketNewConnectUNIX->...
+	virConnectClose(lvlist->conn);
+	
 	lvlist->conn = 0;
 	
 	crtx_stop_listener(&lvlist->parent);
-	
-// 	lvlist->parent.state = CRTX_LSTNR_STOPPED;
-// 	
-// 	event = create_event("listener_state", 0, 0);
-// 	
-// // 	dict = crtx_init_dict(0, 0, 0);
-// 	
-// 	
-// // 	di = crtx_alloc_item(dict);
-// // 	crtx_fill_data_item(di, 's', "reason", sreason, strlen(sreason), 0);
-// 	
-// // 	event->data.dict = dict;
-// 	
-// 	event->data.raw.uint32 = CRTX_LSTNR_STOPPED;
-// 	
-// 	add_event(lvlist->parent.graph, event);
 }
 
-static void shutdown_listener(struct crtx_listener_base *base) {
+static char stop_listener(struct crtx_listener_base *base) {
 	struct crtx_libvirt_listener *lvlist;
 	
 	lvlist = (struct crtx_libvirt_listener *) base;
-	printf("shutdown\n");
+	printf("stop listener\n");
 	if (lvlist->conn) {
 		virConnectDomainEventDeregisterAny(lvlist->conn, lvlist->domain_event_id);
 		
 		virConnectUnregisterCloseCallback(lvlist->conn, conn_evt_cb);
 		
 		virConnectClose(lvlist->conn);
+		
+		lvlist->conn = 0;
 	}
+	
+	return 0;
 }
 
 static char start_listener(struct crtx_listener_base *base) {
@@ -631,7 +635,7 @@ static char start_listener(struct crtx_listener_base *base) {
 	int ret;
 	
 	lvlist = (struct crtx_libvirt_listener *) base;
-	
+	printf("open\n");
 	lvlist->conn = virConnectOpen(lvlist->hypervisor);
 	if (lvlist->conn == 0) {
 		ERROR("Failed to connect to hypervisor\n");
@@ -685,7 +689,7 @@ struct crtx_listener_base *crtx_new_libvirt_listener(void *options) {
 	lvlist = (struct crtx_libvirt_listener *) options;
 	
 	lvlist->parent.start_listener = start_listener;
-	lvlist->parent.shutdown = shutdown_listener;
+	lvlist->parent.stop_listener = stop_listener;
 	
 	ret = virInitialize();
 	if (ret < 0) {
@@ -773,6 +777,8 @@ int libvirt_main(int argc, char **argv) {
 		ERROR("create_listener(libvirt) failed\n");
 		exit(1);
 	}
+	
+	lbase->state_graph = lbase->graph;
 	
 // 	new_eventgraph(&lvlist->parent.graph, "libvirt", 0);
 	
