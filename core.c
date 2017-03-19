@@ -139,6 +139,14 @@ char *crtx_stracpy(const char *str, size_t *str_length) {
 	char *r;
 	size_t length;
 	
+	if (!str) {
+		INFO("trying to stracpy null pointer\n");
+		if (str_length)
+			*str_length = 0;
+		
+		return 0;
+	}
+	
 	if (!str_length || *str_length == 0) {
 		length = strlen(str);
 		if (str_length && *str_length == 0)
@@ -201,6 +209,13 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 	int ret;
 	
 	LOCK(listener->state_mutex);
+	
+	if (listener->state == CRTX_LSTNR_STARTED) {
+		DBG("listener already started\n");
+		UNLOCK(listener->state_mutex);
+		return 1;
+	}
+	
 	listener->state = CRTX_LSTNR_STARTING;
 	
 // 	if (listener->state == CRTX_LSTNR_STARTED || listener == CRTX_LSTNR_PAUSED) {
@@ -228,19 +243,10 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 		}
 	}
 	
-	listener->state = CRTX_LSTNR_STARTED;
-	
-	if (listener->state_graph) {
-		event = create_event("listener_state", 0, 0);
-		event->data.raw.type = 'u';
-		event->data.raw.uint32 = CRTX_LSTNR_STARTED;
-		add_event(listener->state_graph, event);
-	}
-	
-	UNLOCK(listener->state_mutex);
-	
 	if (!listener->el_payload.fd && !listener->thread) {
 		DBG("no method to start listener \"%s\" provided\n", listener->id);
+		
+		UNLOCK(listener->state_mutex);
 		return -1;
 	}
 	
@@ -262,12 +268,24 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 		if (!crtx_root->event_loop.listener)
 			crtx_get_event_loop();
 		
+		DBG("start listener \"%s\"\n", listener->id);
 		crtx_root->event_loop.add_fd(
 			&crtx_root->event_loop.listener->parent,
 			&listener->el_payload);
 	} else {
 		ERROR("invalid start listener mode: %d\n", mode);
 	}
+	
+	listener->state = CRTX_LSTNR_STARTED;
+	
+	if (listener->state_graph) {
+		event = create_event("listener_state", 0, 0);
+		event->data.raw.type = 'u';
+		event->data.raw.uint32 = CRTX_LSTNR_STARTED;
+		add_event(listener->state_graph, event);
+	}
+	
+	UNLOCK(listener->state_mutex);
 	
 	return 1;
 }
@@ -343,10 +361,12 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 // 	}
 // 	
 	LOCK(listener->state_mutex);
+	
 	if (listener->state == CRTX_LSTNR_STOPPING || listener->state == CRTX_LSTNR_STOPPED) {
 		UNLOCK(listener->state_mutex);
 		return;
 	}
+	
 	listener->state = CRTX_LSTNR_STOPPING;
 	
 	if (listener->el_payload.fd > 0) {

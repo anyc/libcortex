@@ -107,6 +107,7 @@ void crtx_epoll_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 	crtx_epoll_del_fd_intern(epl, fd);
 	
 	free(el_payload->el_data);
+	el_payload->el_data = 0;
 }
 
 struct epoll_control_pipe {

@@ -126,6 +126,8 @@ void crtx_dict_parse_json(struct crtx_dict *dict, char *string) {
 	}
 	
 	inspect_obj(jobj, dict);
+	
+	json_object_put(jobj);
 }
 
 char crtx_dict_json_from_file(struct crtx_dict **dict, char *dictdb_path, char *id) {
@@ -153,7 +155,9 @@ char crtx_dict_json_from_file(struct crtx_dict **dict, char *dictdb_path, char *
 	crtx_dict_parse_json(*dict, s);
 // 	#endif
 	
-	crtx_print_dict(*dict);
+// 	crtx_print_dict(*dict);
+	
+	free(s);
 	
 	return 0;
 }

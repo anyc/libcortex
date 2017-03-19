@@ -15,8 +15,18 @@ struct crtx_timer_listener {
 	int settime_flags;
 };
 
+struct crtx_timer_retry_listener {
+	struct crtx_timer_listener timer_lstnr;
+	
+	struct crtx_listener_base *lstnr;
+	
+	unsigned int seconds;
+};
+
 void crtx_timer_init();
 void crtx_timer_finish();
 struct crtx_listener_base *crtx_new_timer_listener(void *options);
 
+struct crtx_timer_retry_listener *crtx_timer_retry_listener(struct crtx_listener_base *lstnr, unsigned int seconds);
+void crtx_timer_retry_listener_free(struct crtx_timer_retry_listener *retry_lstnr);
 #endif

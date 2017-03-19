@@ -15,6 +15,7 @@ struct crtx_libvirt_listener {
 };
 
 struct crtx_listener_base *crtx_new_libvirt_listener(void *options);
+virConnectPtr crtx_libvirt_get_conn(struct crtx_listener_base *base);
 
 void crtx_libvirt_init();
 void crtx_libvirt_finish();

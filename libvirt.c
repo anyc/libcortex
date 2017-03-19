@@ -111,7 +111,7 @@ static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback c
 			wrap->id++;
 	}
 	
-	DBG("libvirt: new id %d fd %d flag %d\n", wrap->id, fd, wrap->el_payload.event_flags);
+	DBG("libvirt: new fd %d (id %d flag %d)\n", fd, wrap->id, wrap->el_payload.event_flags);
 	
 	crtx_ll_append_new(&event_list, wrap);
 	
@@ -137,7 +137,7 @@ static void elw_virEventUpdateHandleFunc(int watch, int event) {
 	wrap = ((struct libvirt_eventloop_wrapper*) it->data);
 	wrap->el_payload.event_flags = elw_virEventPollToNativeEvents(event);
 	
-	DBG("libvirt: update %d flags %d\n", wrap->id, wrap->el_payload.event_flags);
+// 	DBG("libvirt: update %d flags %d\n", wrap->id, wrap->el_payload.event_flags);
 	
 	crtx_root->event_loop.mod_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
 }
@@ -162,7 +162,8 @@ static int elw_virEventRemoveHandleFunc(int watch) {
 	// libvirt object
 // 	wrap->ff(wrap->opaque);
 	
-	printf("rem id %d\n", wrap->id);
+	// 	printf("rem id %d\n", wrap->id);
+	DBG("libvirt: remove fd %d (id %d)\n", wrap->el_payload.fd, wrap->id);
 	
 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
 	
@@ -180,7 +181,7 @@ static char elw_timer_event_cb(struct crtx_event *event, void *userdata, void **
 	struct libvirt_eventloop_wrapper *wrap;
 	
 	wrap = (struct libvirt_eventloop_wrapper*) userdata;
-	printf("timer event id %d\n", wrap->id);
+// 	printf("timer event id %d\n", wrap->id);
 	wrap->time_cb(wrap->id, wrap->opaque);
 	
 	return 1;
@@ -214,7 +215,7 @@ static int elw_virEventAddTimeoutFunc(int timeout, virEventTimeoutCallback cb, v
 			wrap->id++;
 	}
 	
-	DBG("add timeout %d %d\n", timeout, wrap->id);
+	DBG("libvirt: new timer %d (id %d)\n", timeout, wrap->id);
 	
 	crtx_ll_append_new(&timeout_list, wrap);
 	
@@ -272,7 +273,7 @@ static void elw_virEventUpdateTimeoutFunc(int timer, int timeout) {
 		if ( ((struct libvirt_eventloop_wrapper*) it->data)->id == timer)
 			break;
 	}
-	printf("update timer %d %d\n", timer, timeout);
+// 	printf("update timer %d %d\n", timer, timeout);
 	if (!it) {
 		ERROR("libvirt: no timer with id %d found\n", timer);
 		return;
@@ -312,7 +313,7 @@ static void elw_virEventUpdateTimeoutFunc(int timer, int timeout) {
 	
 	crtx_update_listener(&wrap->timer_listener.parent);
 	
-	DBG("libvirt: mod timeout %d\n", timeout);
+// 	DBG("libvirt: mod timeout %d\n", timeout);
 }
 
 static int elw_virEventRemoveTimeoutFunc(int timer) {
@@ -323,13 +324,15 @@ static int elw_virEventRemoveTimeoutFunc(int timer) {
 		if ( ((struct libvirt_eventloop_wrapper*) it->data)->id == timer)
 			break;
 	}
-	printf("remove timer %d\n", timer);
+	
 	if (!it) {
 		ERROR("libvirt: no timer with id %d found\n", timer);
 		return -1;
 	}
 	
 	wrap = ((struct libvirt_eventloop_wrapper*) it->data);
+	
+	DBG("libvirt: remove timer id %d\n", wrap->id);
 	
 	wrap->ff(wrap->opaque);
 	
@@ -340,7 +343,7 @@ static int elw_virEventRemoveTimeoutFunc(int timer) {
 	free(it);
 // 	free(wrap);
 	
-	DBG("libvirt: del timeout\n");
+// 	DBG("libvirt: del timeout\n");
 	
 	return 0;
 }
@@ -532,6 +535,7 @@ static int domain_evt_cb(virConnectPtr conn,
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di;
 	size_t slen;
+	const char *vm_name;
 	
 	lvlist = (struct crtx_libvirt_listener *) opaque;
 	
@@ -539,9 +543,14 @@ static int domain_evt_cb(virConnectPtr conn,
 	
 	dict = crtx_init_dict(0, 0, 0);
 	
+	vm_name = virDomainGetName(dom);
 	
-	di = crtx_alloc_item(dict);
-	crtx_fill_data_item(di, 's', "name", crtx_stracpy(virDomainGetName(dom), &slen), slen, 0);
+	if (vm_name) {
+		slen = 0;
+		
+		di = crtx_alloc_item(dict);
+		crtx_fill_data_item(di, 's', "name", crtx_stracpy(vm_name, &slen), slen, 0);
+	}
 	
 	di = crtx_alloc_item(dict);
 	crtx_fill_data_item(di, 'u', "id", virDomainGetID(dom), sizeof(unsigned int), 0);
@@ -552,7 +561,8 @@ static int domain_evt_cb(virConnectPtr conn,
 	di = crtx_alloc_item(dict);
 	crtx_fill_data_item(di, 's', "detail", eventDetailToString(event, detail), strlen(eventDetailToString(event, detail)), DIF_DATA_UNALLOCATED);
 	
-	crtx_event->data.dict = dict;
+	crtx_event->data.raw.type = 'D';
+	crtx_event->data.raw.ds = dict;
 	
 	add_event(lvlist->parent.graph, crtx_event);
 	
@@ -599,7 +609,7 @@ static void conn_evt_cb(virConnectPtr conn, int reason, void *opaque) {
 // 			break;
 	};
 	
-	printf("libvirt %s\n", sreason);
+	DBG("libvirt connection closed: %s\n", sreason);
 	
 	lvlist = (struct crtx_libvirt_listener *) opaque;
 	
@@ -616,7 +626,7 @@ static char stop_listener(struct crtx_listener_base *base) {
 	struct crtx_libvirt_listener *lvlist;
 	
 	lvlist = (struct crtx_libvirt_listener *) base;
-	printf("stop listener\n");
+// 	printf("stop listener\n");
 	if (lvlist->conn) {
 		virConnectDomainEventDeregisterAny(lvlist->conn, lvlist->domain_event_id);
 		
@@ -630,12 +640,20 @@ static char stop_listener(struct crtx_listener_base *base) {
 	return 0;
 }
 
+virConnectPtr crtx_libvirt_get_conn(struct crtx_listener_base *base) {
+	struct crtx_libvirt_listener *lvlist;
+	
+	lvlist = (struct crtx_libvirt_listener *) base;
+	
+	return lvlist->conn;
+}
+
 static char start_listener(struct crtx_listener_base *base) {
 	struct crtx_libvirt_listener *lvlist;
 	int ret;
 	
 	lvlist = (struct crtx_libvirt_listener *) base;
-	printf("open\n");
+// 	printf("open\n");
 	lvlist->conn = virConnectOpen(lvlist->hypervisor);
 	if (lvlist->conn == 0) {
 		ERROR("Failed to connect to hypervisor\n");
@@ -725,20 +743,23 @@ void crtx_libvirt_finish() {
 #ifdef CRTX_TEST
 
 struct crtx_libvirt_listener lvlist;
-struct crtx_timer_listener tlist;
-struct crtx_listener_base *tblist;
+struct crtx_timer_retry_listener *retry_lstnr;
+// struct crtx_timer_listener tlist;
+// struct crtx_listener_base *tblist;
 
 static char libvirt_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	printf("virt %d timer %d\n", lvlist.parent.state, tlist.parent.state);
+// 	printf("virt %d timer %d\n", lvlist.parent.state, tlist.parent.state);
 	if (!strcmp(event->type, "listener_state")) {
-		printf("ev %d\n", event->data.raw.uint32);
-		if (event->data.raw.uint32 == CRTX_LSTNR_STARTED && tlist.parent.state == CRTX_LSTNR_STARTED) {
-			printf("stop timer\n");
-			crtx_stop_listener(&tlist.parent);
+// 		printf("ev %d\n", event->data.raw.uint32);
+// 		if (event->data.raw.uint32 == CRTX_LSTNR_STARTED && tlist.parent.state == CRTX_LSTNR_STARTED) {
+		if (event->data.raw.uint32 == CRTX_LSTNR_STARTED) {
+// 			printf("stop timer\n");
+			crtx_stop_listener(&retry_lstnr->timer_lstnr.parent);
 		}
-		if (event->data.raw.uint32 == CRTX_LSTNR_STOPPED && tlist.parent.state == CRTX_LSTNR_STOPPED) {
-			printf("start timer\n");
-			crtx_start_listener(&tlist.parent);
+// 		if (event->data.raw.uint32 == CRTX_LSTNR_STOPPED && tlist.parent.state == CRTX_LSTNR_STOPPED) {
+		if (event->data.raw.uint32 == CRTX_LSTNR_STOPPED) {
+// 			printf("start timer\n");
+			crtx_start_listener(&retry_lstnr->timer_lstnr.parent);
 		}
 	} else
 	if (!strcmp(event->type, "domain_event")) {
@@ -748,17 +769,17 @@ static char libvirt_test_handler(struct crtx_event *event, void *userdata, void 
 	return 0;
 }
 
-static char timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	if (!strcmp(event->type, CRTX_EVT_TIMER)) {
-		printf("state %d\n", lvlist.parent.state);
-		if (lvlist.parent.state == CRTX_LSTNR_STOPPED) {
-			printf("start libvirt\n");
-			crtx_start_listener(&lvlist.parent);
-		}
-	}
-	
-	return 0;
-}
+// static char timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+// 	if (!strcmp(event->type, CRTX_EVT_TIMER)) {
+// // 		printf("state %d\n", lvlist.parent.state);
+// 		if (lvlist.parent.state == CRTX_LSTNR_STOPPED) {
+// // 			printf("start libvirt\n");
+// 			crtx_start_listener(&lvlist.parent);
+// 		}
+// 	}
+// 	
+// 	return 0;
+// }
 
 int libvirt_main(int argc, char **argv) {
 	struct crtx_listener_base *lbase;
@@ -786,24 +807,25 @@ int libvirt_main(int argc, char **argv) {
 	
 	
 	
-	memset(&tlist, 0, sizeof(struct crtx_timer_listener));
-	
-	tlist.newtimer.it_value.tv_sec = 1;
-	tlist.newtimer.it_value.tv_nsec = 0;
-	tlist.newtimer.it_interval.tv_sec = 1;
-	tlist.newtimer.it_interval.tv_nsec = 0;
-	tlist.clockid = CLOCK_REALTIME;
-	
-	tblist = create_listener("timer", &tlist);
-	if (!tblist) {
-		ERROR("create_listener(timer) failed\n");
-		exit(1);
-	}
-	
-	crtx_create_task(tblist->graph, 0, "timertest", timertest_handler, 0);
+// 	memset(&tlist, 0, sizeof(struct crtx_timer_listener));
+// 	
+// 	tlist.newtimer.it_value.tv_sec = 1;
+// 	tlist.newtimer.it_value.tv_nsec = 0;
+// 	tlist.newtimer.it_interval.tv_sec = 1;
+// 	tlist.newtimer.it_interval.tv_nsec = 0;
+// 	tlist.clockid = CLOCK_REALTIME;
+// 	
+// 	tblist = create_listener("timer", &tlist);
+// 	if (!tblist) {
+// 		ERROR("create_listener(timer) failed\n");
+// 		exit(1);
+// 	}
+// 	
+// 	crtx_create_task(tblist->graph, 0, "timertest", timertest_handler, 0);
 	
 // 	crtx_start_listener(tblist);
 	
+	retry_lstnr = crtx_timer_retry_listener(&lvlist.parent, 5);
 	
 	ret = crtx_start_listener(lbase);
 	if (!ret) {

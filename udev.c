@@ -138,7 +138,7 @@ void udev_event_before_release_cb(struct crtx_event *event) {
 
 void push_new_udev_event(struct crtx_udev_listener *ulist, struct udev_device *dev) {
 	struct crtx_event *nevent;
-
+	
 	// size of struct udev_device is unknown
 	nevent = create_event(0, dev, sizeof(struct udev_device*));
 	nevent->data.raw.flags |= DIF_DATA_UNALLOCATED;
@@ -217,6 +217,8 @@ static char start_listener(struct crtx_listener_base *listener) {
 			
 			push_new_udev_event(ulist, dev);
 		}
+		
+		udev_enumerate_unref(enumerate);
 	}
 	
 	return 1;
@@ -245,6 +247,7 @@ struct crtx_listener_base *crtx_new_udev_listener(void *options) {
 	}
 	
 	ulist->parent.el_payload.fd = udev_monitor_get_fd(ulist->monitor);
+	ulist->parent.el_payload.event_flags = EPOLLIN;
 	ulist->parent.el_payload.data = ulist;
 	ulist->parent.el_payload.event_handler = &udev_fd_event_handler;
 	ulist->parent.el_payload.event_handler_name = "udev fd handler";

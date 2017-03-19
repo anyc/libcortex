@@ -105,7 +105,9 @@ static char update_listener(struct crtx_listener_base *base) {
 	int ret;
 	
 	tlist = (struct crtx_timer_listener *) base;
-	printf("set %d %ld %ld\n", tlist->fd, tlist->newtimer.it_value.tv_sec, tlist->newtimer.it_interval.tv_sec);
+	
+	DBG("timer: update %d (%lds %lds)\n", tlist->fd, tlist->newtimer.it_value.tv_sec, tlist->newtimer.it_interval.tv_sec);
+	
 	ret = timerfd_settime(tlist->fd, tlist->settime_flags, &tlist->newtimer, NULL);
 	if (ret == -1) {
 		ERROR("timerfd_settime failed: %s\n", strerror(errno));
@@ -156,44 +158,53 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 	return &tlist->parent;
 }
 
-static char restart_listener_task(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char retry_listener_task(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_timer_retry_listener *retry_lstnr;
 	
+	
+	retry_lstnr = (struct crtx_timer_retry_listener*) userdata;
+	
+	if (retry_lstnr->lstnr->state == CRTX_LSTNR_STOPPED) {
+		crtx_start_listener(retry_lstnr->lstnr);
+	}
 	
 	return 1;
 }
 
-struct crtx_listener_base *crtx_timer_restart_listener(void *options) {
+struct crtx_timer_retry_listener *crtx_timer_retry_listener(struct crtx_listener_base *lstnr, unsigned int seconds) {
 	struct crtx_timer_listener *tlist;
 	struct crtx_listener_base *blist;
+	struct crtx_timer_retry_listener *retry_lstnr;
 	
 	
-	tlist = (struct crtx_timer_listener *) options;
+	retry_lstnr = (struct crtx_timer_retry_listener*) calloc(1, sizeof(struct crtx_timer_retry_listener));
+	retry_lstnr->lstnr = lstnr;
 	
-// 	memset(&tlist, 0, sizeof(struct crtx_timer_listener));
-// 	
-// 	// set time for (first) alarm
-// 	tlist.newtimer.it_value.tv_sec = 1;
-// 	tlist.newtimer.it_value.tv_nsec = 0;
-// 	
-// 	// set interval for repeating alarm, set to 0 to disable repetition
-// 	tlist.newtimer.it_interval.tv_sec = 1;
-// 	tlist.newtimer.it_interval.tv_nsec = 0;
-// 	
-// 	tlist.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
-// 	tlist.settime_flags = 0; // absolute (TFD_TIMER_ABSTIME), or relative (0) time, see: man timerfd_settime()
-// 	// 	tlist.newtimer = &newtimer;
+	tlist = &retry_lstnr->timer_lstnr;
+	tlist->newtimer.it_value.tv_sec = seconds;
+	tlist->newtimer.it_value.tv_nsec = 0;
+	tlist->newtimer.it_interval.tv_sec = seconds;
+	tlist->newtimer.it_interval.tv_nsec = 0;
+	tlist->clockid = CLOCK_REALTIME;
 	
 	blist = create_listener("timer", tlist);
 	if (!blist) {
 		ERROR("create_listener(timer) failed\n");
-		exit(1);
+		
+		free(retry_lstnr);
+		
+		return 0;
 	}
 	
-	crtx_create_task(blist->graph, 0, "restart_listener", restart_listener_task, 0);
+	crtx_create_task(blist->graph, 0, "retry_lstnr_task", &retry_listener_task, retry_lstnr);
 	
-// 	crtx_start_listener(blist);
+	return retry_lstnr;
+}
+
+void crtx_timer_retry_listener_free(struct crtx_timer_retry_listener *retry_lstnr) {
+	crtx_stop_listener(&retry_lstnr->timer_lstnr.parent);
 	
-	return blist;
+	free(retry_lstnr);
 }
 
 void crtx_timer_init() {
