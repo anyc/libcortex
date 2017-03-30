@@ -158,6 +158,7 @@ char response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 	
 	ditem = ct->match_event(ct->cache, &sd->key, event);
 	
+	// update stats
 	if (ditem && !(ct->cache->flags & CRTX_CACHE_SIMPLE_LAYOUT) && !(ct->cache->flags & CRTX_CACHE_NO_EXT_FIELDS)) {
 		struct crtx_dict_item *di, now;
 		uint64_t timeout;
@@ -519,6 +520,77 @@ void crtx_flush_entries(struct crtx_cache *dc) {
 void free_response_cache(struct crtx_cache *dc) {
 	crtx_flush_entries(dc);
 	free(dc);
+}
+
+
+
+
+
+void presence_cache_on_miss_cb(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
+	struct crtx_dict_item *entry;
+	
+	entry = crtx_cache_add_entry(ct, keyevent, 0);
+}
+
+static char presence_cache_task(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_cache_task *ct = (struct crtx_cache_task*) userdata;
+	struct crtx_dict_item *ditem, key;
+	char ret;
+	
+	
+	ret = ct->create_key(event, &key);
+	if (!ret) {
+		DBG("no key created for \"%s\", ignoring\n", event->type);
+		key.string = 0;
+		return 1;
+	}
+	
+	
+	pthread_mutex_lock(&ct->cache->mutex);
+	
+	ditem = ct->match_event(ct->cache, &key, event);
+	
+	if (ct->on_miss)
+		ct->on_miss(ct, &sd->key, event);
+	
+	pthread_mutex_unlock(&ct->cache->mutex);
+	
+	return 1;
+}
+
+struct crtx_task *crtx_create_presence_cache_task(char *id, create_key_cb_t create_key) {
+	struct crtx_cache *dc;
+	struct crtx_cache_task *ct;
+	struct crtx_task *task;
+	int ret;
+	
+	task = new_task();
+	
+	dc = (struct crtx_cache*) calloc(1, sizeof(struct crtx_cache));
+	
+	ret = pthread_mutex_init(&dc->mutex, 0); ASSERT(ret >= 0);
+	
+	dc->dict = crtx_init_dict(0, 0, 0);
+	dc->dict->id = id;
+	
+	// 	dc->config = crtx_get_item_by_idx(dc->dict, 0)->ds;
+	// 	dc->entries = crtx_get_item_by_idx(dc->dict, 1)->ds;
+	
+	ct = (struct crtx_cache_task*) calloc(1, sizeof(struct crtx_cache_task));
+	ct->create_key = create_key;
+	ct->match_event = &rcache_match_cb_t_strcmp;
+// 	ct->on_hit = &crtx_cache_on_hit;
+// 	ct->on_miss = 0;
+	ct->cache = dc;
+	ct->get_time = &crtx_cache_gettime_rt;
+	
+	task->id = id;
+	task->position = 90;
+	task->userdata = ct;
+	task->handle = &presence_cache_task;
+// 	task->cleanup = &response_cache_task_cleanup;
+	
+	return task;
 }
 
 char crtx_load_cache(struct crtx_cache *cache, char *path) {

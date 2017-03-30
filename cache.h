@@ -13,9 +13,12 @@ typedef char (*add_cb_t)(struct crtx_cache_task *ct, struct crtx_dict_item *key,
 typedef void (*get_time_cb_t)(struct crtx_dict_item *item);
 
 
+// An entry in the simple layout cache contains only the value.
+// In a non-simple layout the entry contains a dictionary which may contain
+// additional fields like number of hits or time since last hist
 #define CRTX_CACHE_SIMPLE_LAYOUT 1<<0
 #define CRTX_CACHE_NO_EXT_FIELDS 1<<1
-#define CRTX_CACHE_REGEXP 1<<2
+// #define CRTX_CACHE_REGEXP 1<<2
 
 struct crtx_cache {
 	char flags;
