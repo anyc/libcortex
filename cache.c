@@ -241,7 +241,9 @@ char response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 	return 1;
 }
 
-struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *entry_data) {
+struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key,
+											 struct crtx_event *event, struct crtx_dict_item *entry_data)
+{
 	struct crtx_cache *dc = ct->cache;
 	struct crtx_dict_item *c_entry;
 	struct crtx_dict_item *value_item;
@@ -304,6 +306,11 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache_task *ct, struct 
 			c_entry = crtx_alloc_item(dc->entries);
 		
 		
+		if (key->type == 's') {
+			c_entry->key = key->string;
+			key->string = 0;
+		}
+		
 		c_entry->type = 'D';
 		n_items = 2;
 		
@@ -316,12 +323,8 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache_task *ct, struct 
 		memcpy(crtx_get_item_by_idx(c_entry->ds, 0), key, sizeof(struct crtx_dict_item));
 		crtx_get_item_by_idx(c_entry->ds, 0)->key = "key";
 		crtx_get_item_by_idx(c_entry->ds, 0)->flags &= ~DIF_KEY_ALLOCATED;
-		crtx_fill_data_item(crtx_get_item_by_idx(c_entry->ds, 1), 'p', "value", 0, 0, 0); // event->response.raw.size
 		
-		if (key->type == 's') {
-			c_entry->key = key->string;
-			key->string = 0;
-		}
+		crtx_fill_data_item(crtx_get_item_by_idx(c_entry->ds, 1), 'p', "value", 0, 0, 0); // event->response.raw.size
 		
 		if (!(ct->cache->flags & CRTX_CACHE_NO_EXT_FIELDS)) {
 			struct crtx_dict_item *last_match, *creation, *it;
@@ -529,7 +532,7 @@ void free_response_cache(struct crtx_cache *dc) {
 void presence_cache_on_miss_cb(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
 	struct crtx_dict_item *entry;
 	
-	entry = crtx_cache_add_entry(ct, keyevent, 0);
+	entry = crtx_cache_add_entry(ct, key, event, &event->data.raw);
 }
 
 static char presence_cache_task(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -550,8 +553,8 @@ static char presence_cache_task(struct crtx_event *event, void *userdata, void *
 	
 	ditem = ct->match_event(ct->cache, &key, event);
 	
-	if (ct->on_miss)
-		ct->on_miss(ct, &sd->key, event);
+	if (!ditem && ct->on_miss)
+		ct->on_miss(ct, &key, event);
 	
 	pthread_mutex_unlock(&ct->cache->mutex);
 	
