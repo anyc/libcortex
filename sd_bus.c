@@ -92,7 +92,7 @@ void sd_bus_print_msg(sd_bus_message *m) {
 // 	listener = (struct crtx_listener_base_data*) userdata;
 // 	
 // 	event = create_event(listener->event_type, m, 0);
-// 	event->data.raw.flags |= DIF_DATA_UNALLOCATED;
+// 	event->data.raw.flags |= CRTX_DIF_DONT_FREE_DATA;
 // 	
 // 	sd_bus_print_msg(m);
 // 	
@@ -330,7 +330,7 @@ static int sdbus_match_listener_cb(sd_bus_message *m, void *userdata, sd_bus_err
 	match = (struct crtx_sdbus_match*) userdata;
 	
 	event = create_event(match->event_type, m, 0);
-	event->data.flags |= DIF_DATA_UNALLOCATED;
+	event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
 	event->cb_before_release = &cb_event_release;
 	
 	sd_bus_print_msg(m);

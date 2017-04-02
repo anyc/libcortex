@@ -55,10 +55,10 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct crtx_nl_route_listen
 		di = crtx_alloc_item(dict);
 		
 		if (nlh->nlmsg_type == RTM_NEWADDR)
-			crtx_fill_data_item(di, 's', "type", "add", 0, DIF_DATA_UNALLOCATED);
+			crtx_fill_data_item(di, 's', "type", "add", 0, CRTX_DIF_DONT_FREE_DATA);
 		else
 			if (nlh->nlmsg_type == RTM_DELADDR)
-				crtx_fill_data_item(di, 's', "type", "del", 0, DIF_DATA_UNALLOCATED);
+				crtx_fill_data_item(di, 's', "type", "del", 0, CRTX_DIF_DONT_FREE_DATA);
 	}
 	
 	if (nlr_list->all_fields) {
@@ -66,19 +66,19 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct crtx_nl_route_listen
 		
 		switch (ifa->ifa_scope) {
 			case RT_SCOPE_UNIVERSE:
-				crtx_fill_data_item(di, 's', "scope", "global", 0, DIF_DATA_UNALLOCATED);
+				crtx_fill_data_item(di, 's', "scope", "global", 0, CRTX_DIF_DONT_FREE_DATA);
 				break;
 			case RT_SCOPE_SITE:
-				crtx_fill_data_item(di, 's', "scope", "site", 0, DIF_DATA_UNALLOCATED);
+				crtx_fill_data_item(di, 's', "scope", "site", 0, CRTX_DIF_DONT_FREE_DATA);
 				break;
 			case RT_SCOPE_LINK:
-				crtx_fill_data_item(di, 's', "scope", "link", 0, DIF_DATA_UNALLOCATED);
+				crtx_fill_data_item(di, 's', "scope", "link", 0, CRTX_DIF_DONT_FREE_DATA);
 				break;
 			case RT_SCOPE_HOST:
-				crtx_fill_data_item(di, 's', "scope", "host", 0, DIF_DATA_UNALLOCATED);
+				crtx_fill_data_item(di, 's', "scope", "host", 0, CRTX_DIF_DONT_FREE_DATA);
 				break;
 			case RT_SCOPE_NOWHERE:
-				crtx_fill_data_item(di, 's', "scope", "nowhere", 0, DIF_DATA_UNALLOCATED);
+				crtx_fill_data_item(di, 's', "scope", "nowhere", 0, CRTX_DIF_DONT_FREE_DATA);
 				break;
 		}
 		
@@ -94,7 +94,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct crtx_nl_route_listen
 		#define IFA_FLAG(name) \
 		if (ifa->ifa_flags & IFA_F_ ## name) { \
 			cdi = crtx_alloc_item(di->ds); \
-			crtx_fill_data_item(cdi, 's', 0, #name, 0, DIF_DATA_UNALLOCATED); \
+			crtx_fill_data_item(cdi, 's', 0, #name, 0, CRTX_DIF_DONT_FREE_DATA); \
 		}
 		
 		cdi = 0;
@@ -113,7 +113,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct crtx_nl_route_listen
 		IFA_FLAG(STABLE_PRIVACY);
 		
 		if (cdi)
-			cdi->flags |= DIF_LAST;
+			cdi->flags |= CRTX_DIF_LAST_ITEM;
 	}
 	
 	while (rtl && RTA_OK(rth, rtl)) {
@@ -200,7 +200,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct crtx_nl_route_listen
 					cdi = crtx_get_next_item(di->ds, cdi);
 					crtx_fill_data_item(cdi, 'u', "tstamp", cinfo->tstamp, 0, 0);
 					
-					cdi->flags |= DIF_LAST;
+					cdi->flags |= CRTX_DIF_LAST_ITEM;
 				}
 				
 				// 0xFFFFFFFFUL == forever
@@ -224,7 +224,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct crtx_nl_route_listen
 // 					#define IFA_FLAG(name)
 // 						if (*flags & IFA_F_ ## name) {
 // 							cdi = crtx_alloc_item(di->ds);
-// 							crtx_fill_data_item(cdi, 's', 0, #name, 0, DIF_DATA_UNALLOCATED);
+// 							crtx_fill_data_item(cdi, 's', 0, #name, 0, CRTX_DIF_DONT_FREE_DATA);
 // 						}
 // 					
 // 					cdi = 0;
@@ -243,7 +243,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct crtx_nl_route_listen
 // 					IFA_FLAG(STABLE_PRIVACY);
 // 					
 // 					if (cdi)
-// 						cdi->flags |= DIF_LAST;
+// 						cdi->flags |= CRTX_DIF_LAST_ITEM;
 // 				}
 				break;
 				
@@ -261,7 +261,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct crtx_nl_route_listen
 		crtx_fill_data_item(di, 's', "interface", crtx_stracpy(ifname, &slen), slen, 0);
 	}
 	
-	di->flags |= DIF_LAST;
+	di->flags |= CRTX_DIF_LAST_ITEM;
 	
 	return dict;
 }
@@ -297,10 +297,10 @@ struct crtx_dict *crtx_nl_route_raw2dict_if(struct crtx_nl_route_listener *nlr_l
 		di = crtx_alloc_item(dict);
 		
 		if (nlh->nlmsg_type == RTM_NEWLINK)
-			crtx_fill_data_item(di, 's', "type", "add", 0, DIF_DATA_UNALLOCATED);
+			crtx_fill_data_item(di, 's', "type", "add", 0, CRTX_DIF_DONT_FREE_DATA);
 		else
 			if (nlh->nlmsg_type == RTM_DELLINK)
-				crtx_fill_data_item(di, 's', "type", "del", 0, DIF_DATA_UNALLOCATED);
+				crtx_fill_data_item(di, 's', "type", "del", 0, CRTX_DIF_DONT_FREE_DATA);
 	}
 	
 	{
@@ -312,7 +312,7 @@ struct crtx_dict *crtx_nl_route_raw2dict_if(struct crtx_nl_route_listener *nlr_l
 		#define IFI_FLAG(name) \
 		if (ifi->ifi_flags & IFF_ ## name) { \
 			cdi = crtx_alloc_item(di->ds); \
-			crtx_fill_data_item(cdi, 's', 0, #name, 0, DIF_DATA_UNALLOCATED); \
+			crtx_fill_data_item(cdi, 's', 0, #name, 0, CRTX_DIF_DONT_FREE_DATA); \
 		}
 		
 		IFI_FLAG(UP);
@@ -441,7 +441,7 @@ struct crtx_dict *crtx_nl_route_raw2dict_if(struct crtx_nl_route_listener *nlr_l
 		rth = RTA_NEXT(rth, len);
 	}
 	
-	di->flags |= DIF_LAST;
+	di->flags |= CRTX_DIF_LAST_ITEM;
 	
 	return dict;
 }
@@ -490,7 +490,7 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 					event->data.raw.pointer = malloc(4096);
 					memcpy(event->data.raw.pointer, nlh, 4096);
 					event->data.raw.type = 'p';
-// 					event->data.raw.flags = DIF_DATA_UNALLOCATED;
+// 					event->data.raw.flags = CRTX_DIF_DONT_FREE_DATA;
 					
 // 					reference_event_release(event);
 					
@@ -656,7 +656,7 @@ static char crtx_get_own_ip_addresses_keygen(struct crtx_event *event, struct cr
 	key->string = crtx_stracpy(di->string, 0);
 	if (!key->string)
 		return 0;
-	key->flags |= DIF_KEY_ALLOCATED;
+	key->flags |= CRTX_DIF_ALLOCATED_KEY;
 	
 	return 1;
 }

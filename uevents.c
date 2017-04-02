@@ -53,7 +53,7 @@ struct crtx_dict *crtx_uevents_raw2dict(struct crtx_event *event) {
 		len = strlen(sep+1);
 		
 		di = crtx_alloc_item(dict);
-		crtx_fill_data_item(di, 's', key, crtx_stracpy(sep+1, &len), len, DIF_KEY_ALLOCATED);
+		crtx_fill_data_item(di, 's', key, crtx_stracpy(sep+1, &len), len, CRTX_DIF_ALLOCATED_KEY);
 		
 		s = sep + 1 + len + 1;
 	}
@@ -98,7 +98,7 @@ static int uevents_read_cb(struct crtx_netlink_raw_listener *nl_listener, int fd
 	event->data.raw.string[ulen] = 0;
 	event->data.raw.size = ulen + 1;
 	event->data.raw.type = 's';
-// 	event->data.raw.flags = DIF_DATA_UNALLOCATED;
+// 	event->data.raw.flags = CRTX_DIF_DONT_FREE_DATA;
 	
 // 	reference_event_release(event);
 	

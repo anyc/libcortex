@@ -135,14 +135,14 @@ void inotify_to_dict(struct crtx_event_data *data) {
 			
 			di->string = dictit->name;
 			di->size = dictit->name_size;
-			di->flags = DIF_DATA_UNALLOCATED;
+			di->flags = CRTX_DIF_DONT_FREE_DATA;
 			
 			di++;
 		}
 		dictit++;
 	}
 	di--;
-	di->flags |= DIF_LAST;
+	di->flags |= CRTX_DIF_LAST_ITEM;
 	
 	data->dict = crtx_create_dict("iDuus",
 					"wd", iev->wd, sizeof(int32_t), 0,

@@ -141,7 +141,7 @@ static char in_create_key_cb(struct crtx_event *event, struct crtx_dict_item *ke
 		
 		key->type = 's';
 		key->string = skey;
-		key->flags |= DIF_KEY_ALLOCATED;
+		key->flags |= CRTX_DIF_ALLOCATED_KEY;
 		
 		return 1;
 	}
@@ -161,7 +161,7 @@ static char out_create_key_cb(struct crtx_event *event, struct crtx_dict_item *k
 	
 	key->type = 's';
 	key->string = skey;
-	key->flags |= DIF_KEY_ALLOCATED;
+	key->flags |= CRTX_DIF_ALLOCATED_KEY;
 	
 	return 1;
 	

@@ -55,11 +55,11 @@ int crtx_genl_msg2dict(struct nl_msg *msg, void *arg) {
 						crtx_fill_data_item(di, 'u', tdi->key, nla_get_u32(g->attrs[i]), 0, 0);
 						break;
 					case 'p':
-						crtx_fill_data_item(di, 'p', tdi->key, nla_data(g->attrs[i]), tdi->size, DIF_DATA_UNALLOCATED);
+						crtx_fill_data_item(di, 'p', tdi->key, nla_data(g->attrs[i]), tdi->size, CRTX_DIF_DONT_FREE_DATA);
 						break;
 					case 's':
 						// nla_strdup
-						crtx_fill_data_item(di, 's', tdi->key, nla_get_string(g->attrs[i]), 0, DIF_DATA_UNALLOCATED);
+						crtx_fill_data_item(di, 's', tdi->key, nla_get_string(g->attrs[i]), 0, CRTX_DIF_DONT_FREE_DATA);
 						break;
 				}
 			} else {
@@ -191,10 +191,10 @@ void acpi_parse_cb(struct nlattr * attr, struct crtx_dict *dict) {
 	ev = (struct acpi_genl_event *) nla_data(attr);
 	
 	di = crtx_alloc_item(dict);
-	crtx_fill_data_item(di, 's', "device_class", ev->device_class, 0, DIF_DATA_UNALLOCATED);
+	crtx_fill_data_item(di, 's', "device_class", ev->device_class, 0, CRTX_DIF_DONT_FREE_DATA);
 	
 	di = crtx_alloc_item(dict);
-	crtx_fill_data_item(di, 's', "bus_id", ev->bus_id, 0, DIF_DATA_UNALLOCATED);
+	crtx_fill_data_item(di, 's', "bus_id", ev->bus_id, 0, CRTX_DIF_DONT_FREE_DATA);
 	
 	di = crtx_alloc_item(dict);
 	crtx_fill_data_item(di, 'u', "type", ev->type, sizeof(ev->type), 0);
@@ -238,7 +238,7 @@ int netlink_main(int argc, char **argv) {
 	g->n_attrs = 2;
 	g->attrs = (struct nlattr**) calloc(1, sizeof(struct nlattr*)*g->n_attrs);
 	g->attrs_template = crtx_create_dict("p", 
-										   "struct", 0, sizeof(struct acpi_genl_event), DIF_DATA_UNALLOCATED
+										   "struct", 0, sizeof(struct acpi_genl_event), CRTX_DIF_DONT_FREE_DATA
 						  );
 	
 	lbase = create_listener("genl", &genl);

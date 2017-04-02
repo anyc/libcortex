@@ -73,7 +73,7 @@ void inspect_array(json_object *jobj, struct crtx_dict *dict) {
 	}
 	
 // 	if (ditem)
-// 		ditem->flags |= DIF_LAST;
+// 		ditem->flags |= CRTX_DIF_LAST_ITEM;
 }
 
 static void inspect_obj(json_object * jobj, struct crtx_dict *dict) {
@@ -86,7 +86,7 @@ static void inspect_obj(json_object * jobj, struct crtx_dict *dict) {
 		ditem = crtx_alloc_item(dict);
 		
 		if (key) {
-			ditem->flags = DIF_KEY_ALLOCATED;
+			ditem->flags = CRTX_DIF_ALLOCATED_KEY;
 			ditem->key = crtx_stracpy(key, 0);
 		}
 		

@@ -151,7 +151,7 @@ static void nfq_raw2dict(struct crtx_event *event) {
 		crtx_fill_data_item(di, 's', "dst_hostname", crtx_stracpy(host, &slen), slen, 0); di++;
 	}
 	
-	crtx_fill_data_item(di, 'D', "payload", 0, 0, DIF_LAST);
+	crtx_fill_data_item(di, 'D', "payload", 0, 0, CRTX_DIF_LAST_ITEM);
 	
 	if (iph->protocol == 6) {
 		struct crtx_dict_item *pdi;
@@ -164,7 +164,7 @@ static void nfq_raw2dict(struct crtx_event *event) {
 		
 		crtx_fill_data_item(pdi, 'u', "src_port", ntohs(tcp->source), 0, 0); pdi++;
 		
-		crtx_fill_data_item(pdi, 'u', "dst_port", ntohs(tcp->dest), 0, DIF_LAST);
+		crtx_fill_data_item(pdi, 'u', "dst_port", ntohs(tcp->dest), 0, CRTX_DIF_LAST_ITEM);
 		
 // 		fprintf(stdout, "TCP{sport=%u; dport=%u; seq=%u; ack_seq=%u; flags=u%ua%up%ur%us%uf%u; window=%u; urg=%u}\n",
 // 				ntohs(tcp->source), ntohs(tcp->dest), ntohl(tcp->seq), ntohl(tcp->ack_seq)
@@ -181,7 +181,7 @@ static void nfq_raw2dict(struct crtx_event *event) {
 		
 		crtx_fill_data_item(pdi, 'u', "src_port", ntohs(udp->source), 0, 0); pdi++;
 		
-		crtx_fill_data_item(pdi, 'u', "dst_port", ntohs(udp->dest), 0, DIF_LAST);
+		crtx_fill_data_item(pdi, 'u', "dst_port", ntohs(udp->dest), 0, CRTX_DIF_LAST_ITEM);
 		
 // 		fprintf(stdout,"UDP{sport=%u; dport=%u; len=%u}\n",
 // 				ntohs(udp->source), ntohs(udp->dest), udp->len);
@@ -286,7 +286,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		pkt->mark_out = nfq_list->default_mark;
 		
 		event = create_event(nfq_list->parent.graph->types[0], pkt, data_size);
-		event->data.raw.flags |= DIF_DATA_UNALLOCATED;
+		event->data.raw.flags |= CRTX_DIF_DONT_FREE_DATA;
 		event->data.raw_to_dict = &nfq_raw2dict;
 		
 		reference_event_release(event);

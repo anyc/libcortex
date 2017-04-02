@@ -183,7 +183,7 @@ struct crtx_dict *crtx_read_dict(read_fct read, void *conn_id) {
 		}
 		
 		di->type = sdi.type;
-		di->flags = sdi.flags | DIF_KEY_ALLOCATED;
+		di->flags = sdi.flags | CRTX_DIF_ALLOCATED_KEY;
 		
 		di->key = (char*) malloc(sdi.key_length+1);
 		ret = crtx_read(read, conn_id, di->key, sdi.key_length);

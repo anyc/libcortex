@@ -79,10 +79,12 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 	
 	di->flags = va_arg(va, int);
 	
-	if ((di->flags & DIF_COPY_STRING) && di->type == 's') {
+	if ((di->flags & CRTX_DIF_CREATE_DATA_COPY) && di->type == 's') {
 		di->size = 0;
 		di->string = crtx_stracpy(di->string, &di->size);
 		di->size += 1; // add space for \0 delimiter
+		
+		di->flags = (di->flags & (~CRTX_DIF_CREATE_DATA_COPY));
 	}
 	
 	return 0;
@@ -118,8 +120,8 @@ char crtx_resize_dict(struct crtx_dict *dict, size_t n_items) {
 	
 	// clear "last" flag
 	if (dict->signature_length > 0)
-		dict->items[dict->signature_length-1].flags &= ~((char)DIF_LAST);
-	dict->items[n_items-1].flags = DIF_LAST;
+		dict->items[dict->signature_length-1].flags &= ~((char)CRTX_DIF_LAST_ITEM);
+	dict->items[n_items-1].flags = CRTX_DIF_LAST_ITEM;
 	
 	if (dict->signature)
 		dict->signature = (char*) realloc(dict->signature, n_items+1);
@@ -141,8 +143,8 @@ struct crtx_dict_item * crtx_alloc_item(struct crtx_dict *dict) {
 // 	
 // 	memset(&dict->items[dict->signature_length-1], 0, sizeof(struct crtx_dict_item));
 // 	if (dict->signature_length > 1)
-// 		dict->items[dict->signature_length-2].flags &= ~((char)DIF_LAST);
-// 	dict->items[dict->signature_length-1].flags = DIF_LAST;
+// 		dict->items[dict->signature_length-2].flags &= ~((char)CRTX_DIF_LAST_ITEM);
+// 	dict->items[dict->signature_length-1].flags = CRTX_DIF_LAST_ITEM;
 // 	return &dict->items[dict->signature_length-1];
 	
 	crtx_resize_dict(dict, dict->signature_length+1);
@@ -172,7 +174,7 @@ struct crtx_dict * crtx_init_dict(char *signature, uint32_t sign_length, size_t 
 // 		ds->items = (struct crtx_dict_item *) ((char*) ds + sizeof(struct crtx_dict));
 		ds->items = (struct crtx_dict_item *) malloc(sign_length * sizeof(struct crtx_dict_item));
 		
-		ds->items[sign_length-1].flags |= DIF_LAST;
+		ds->items[sign_length-1].flags |= CRTX_DIF_LAST_ITEM;
 	}
 	
 	return ds;
@@ -242,7 +244,7 @@ int crtx_append_to_dict(struct crtx_dict **dictionary, char *signature, ...) {
 		dict->signature_length++;
 	}
 	di--;
-	di->flags |= DIF_LAST;
+	di->flags |= CRTX_DIF_LAST_ITEM;
 	
 	va_end(va);
 	
@@ -274,7 +276,7 @@ struct crtx_dict * crtx_create_dict(char *signature, ...) {
 		ds->signature_length++;
 	}
 	di--;
-	di->flags |= DIF_LAST;
+	di->flags |= CRTX_DIF_LAST_ITEM;
 	
 	va_end(va);
 	
@@ -282,17 +284,17 @@ struct crtx_dict * crtx_create_dict(char *signature, ...) {
 }
 
 void crtx_free_dict_item(struct crtx_dict_item *di) {
-	if (di->key && di->flags & DIF_KEY_ALLOCATED)
+	if (di->key && di->flags & CRTX_DIF_ALLOCATED_KEY)
 		free(di->key);
 	
 	switch (di->type) {
 		case 'p':
-			if (di->pointer && !(di->flags & DIF_DATA_UNALLOCATED))
+			if (di->pointer && !(di->flags & CRTX_DIF_DONT_FREE_DATA))
 				free(di->pointer);
 			di->pointer = 0;
 			break;
 		case 's':
-			if (di->string && !(di->flags & DIF_DATA_UNALLOCATED))
+			if (di->string && !(di->flags & CRTX_DIF_DONT_FREE_DATA))
 				free(di->string);
 			di->string = 0;
 			break;
@@ -317,7 +319,7 @@ void crtx_free_dict(struct crtx_dict *ds) {
 	for (i=0; i < ds->signature_length; i++) {
 		crtx_free_dict_item(di);
 		
-		if (DIF_IS_LAST(di))
+		if (CRTX_DIF_IS_LAST(di))
 			break;
 		
 		di++;
@@ -434,7 +436,7 @@ struct crtx_dict_item *crtx_get_first_item(struct crtx_dict *ds) {
 }
 
 struct crtx_dict_item *crtx_get_next_item(struct crtx_dict *ds, struct crtx_dict_item *di) {
-	if (! DIF_IS_LAST(di))
+	if (! CRTX_DIF_IS_LAST(di))
 		return di+1;
 	else
 		return 0;
@@ -881,7 +883,7 @@ struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, 
 // 		ds->signature_length++;
 	}
 	di--;
-	di->flags |= DIF_LAST;
+	di->flags |= CRTX_DIF_LAST_ITEM;
 	
 	return ds;
 }
@@ -1001,11 +1003,11 @@ char crtx_dict_calc_payload_size(struct crtx_dict *orig, size_t *size) {
 // 		dst->ds = crtx_dict_copy(src->ds);
 // 	} else
 // 	if (src->type == 's') {
-// 		if ( !(src->flags & DIF_DATA_UNALLOCATED) )
+// 		if ( !(src->flags & CRTX_DIF_DONT_FREE_DATA) )
 // 			dst->string = stracpy(src->string, 0);
 // 	} else
 // 	if (src->type == 'p') {
-// 		if ( !(src->flags & DIF_DATA_UNALLOCATED) ) {
+// 		if ( !(src->flags & CRTX_DIF_DONT_FREE_DATA) ) {
 // 			dst->pointer = malloc(src->size);
 // 			memcpy(dst->pointer, src->pointer, src->size);
 // 			
@@ -1013,7 +1015,7 @@ char crtx_dict_calc_payload_size(struct crtx_dict *orig, size_t *size) {
 // // 				dst->pointer = src->copy_raw(&event->response);
 // // 			} else {
 // // 				dst->pointer = src->pointer;
-// // 				dst->flags |= DIF_DATA_UNALLOCATED;
+// // 				dst->flags |= CRTX_DIF_DONT_FREE_DATA;
 // // 			}
 // 			dst->size = src->size;
 // 		}
@@ -1026,25 +1028,23 @@ char crtx_dict_calc_payload_size(struct crtx_dict *orig, size_t *size) {
 // }
 
 void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src, char data_only) {
-// 	memcpy(dst, src, sizeof(struct crtx_dict_item));
-	
-// 	crtx_dict_copy_item_data(dst, src);
-	
 	switch (src->type) {
 		case 'D':
 			dst->ds = crtx_dict_copy(src->ds);
 			break;
 		case 's':
-// 			if ( !(src->flags & DIF_DATA_UNALLOCATED) )
 				dst->string = crtx_stracpy(src->string, 0);
 			break;
 		case 'p':
-// 			if ( !(src->flags & DIF_DATA_UNALLOCATED) ) {
+			if (src->size) {
 				dst->pointer = malloc(src->size);
 				memcpy(dst->pointer, src->pointer, src->size);
-				
-				dst->size = src->size;
-// 			}
+			} else {
+				ERROR("copying reference only\n");
+				dst->pointer = src->pointer;
+			}
+			
+			dst->size = src->size;
 			break;
 		default:
 			{
@@ -1067,7 +1067,7 @@ void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src,
 		dst->flags = src->flags;
 		
 		if (src->key) {
-			if (src->flags & DIF_KEY_ALLOCATED)
+			if (src->flags & CRTX_DIF_ALLOCATED_KEY)
 				dst->key = crtx_stracpy(src->key, 0);
 			else
 				dst->key = src->key;
@@ -1105,49 +1105,58 @@ struct crtx_dict *crtx_dict_copy(struct crtx_dict *orig) {
 	return dict;
 }
 
-void crtx_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src) {
-	if (src->key && src->flags & DIF_KEY_ALLOCATED) {
-		size_t slen;
-		
-		slen = strlen(src->key);
-		dst->key = (char*) malloc(slen+1);
-		sprint(dst->key, "%s", src->key);
-		
-		dst->flags = DIF_KEY_ALLOCATED;
-	} else {
-		dst->key = 0;
-		dst->flags = 0;
-	}
-	
-	dst->size = src->size;
-	dst->type = src->type;
-	
-	switch (src->type) {
-		case 'p':
-			if (src->flags & DIF_DATA_UNALLOCATED) {
-				dst->pointer = src->pointer;
-			} else {
-				memcpy(dst->pointer, src->pointer, sizeof(struct crtx_dict_item));
-			}
-			break;
-		case 's':
-			
-	}
-}
+// void crtx_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src) {
+// 	if (src->key && src->flags & CRTX_DIF_ALLOCATED_KEY) {
+// 		size_t slen;
+// 		
+// 		slen = strlen(src->key);
+// 		dst->key = (char*) malloc(slen+1);
+// 		sprint(dst->key, "%s", src->key);
+// 		
+// 		dst->flags = CRTX_DIF_ALLOCATED_KEY;
+// 	} else {
+// 		dst->key = 0;
+// 		dst->flags = 0;
+// 	}
+// 	
+// 	dst->size = src->size;
+// 	dst->type = src->type;
+// 	
+// 	switch (src->type) {
+// 		case 'p':
+// 			if (src->flags & CRTX_DIF_DONT_FREE_DATA) {
+// 				dst->pointer = src->pointer;
+// 			} else {
+// 				memcpy(dst->pointer, src->pointer, sizeof(struct crtx_dict_item));
+// 			}
+// 			break;
+// 		case 's':
+// 			
+// 	}
+// }
 
-void crtx_dict_upgrade_event_data(struct crtx_event *event, struct crtx_dict *dict) {
-	struct crtx_dict *new_dict;
+void crtx_dict_upgrade_event_data(struct crtx_event *event, struct crtx_dict *data_dict) {
+	struct crtx_dict *upgraded_dict;
 	struct crtx_dict_item *di;
+	
 	
 	if (event->data.type != 'p') {
 		ERROR("trying to upgrade an already upgraded event (%s, %p)\n", event->type, event);
 	}
 	
-	new_dict = crtx_init_dict(0, 2, 0);
+	upgraded_dict = crtx_init_dict(0, 2, 0);
 	
-	di = crtx_get_item_by_idx(new_dict, 0);
-// 	memcpy(di, event->data, sizeof(struct crtx_dict_item));
-	crtx_copy_item(di, event->data);
+	di = crtx_get_item_by_idx(upgraded_dict, 0);
 	
+	crtx_dict_copy_item(di, event->data, 0);
 	
+	di = crtx_get_item_by_idx(upgraded_dict, 1);
+	di->type = 'D';
+	di->dict = data_dict;
+	
+	event->data.key = "data";
+	event->data.type = 'D';
+	event->data.size = 0;
+	event->data.flags = 0;
+	event->data.dict = upgraded_dict;
 }

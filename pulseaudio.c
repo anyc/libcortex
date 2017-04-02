@@ -45,7 +45,7 @@ char crtx_pa_proplist2dict(pa_proplist *props, struct crtx_dict **dict_ptr) {
 		value = pa_proplist_gets(props, key);
 		if (value) {
 			di = crtx_alloc_item(*dict_ptr);
-			crtx_fill_data_item(di, 's', crtx_stracpy(key, 0), value, 0, DIF_KEY_ALLOCATED | DIF_COPY_STRING);
+			crtx_fill_data_item(di, 's', crtx_stracpy(key, 0), value, 0, CRTX_DIF_ALLOCATED_KEY | CRTX_DIF_CREATE_DATA_COPY);
 		}
 	}
 	
@@ -91,15 +91,15 @@ static void generic_pa_get_info_callback(pa_context *c, void *info, int eol, voi
 	
 	ev_op = helper->type & PA_SUBSCRIPTION_EVENT_TYPE_MASK;
 	if (ev_op == PA_SUBSCRIPTION_EVENT_REMOVE) {
-		crtx_fill_data_item(di, 's', "operation", "remove", strlen("remove"), DIF_DATA_UNALLOCATED);
+		crtx_fill_data_item(di, 's', "operation", "remove", strlen("remove"), CRTX_DIF_DONT_FREE_DATA);
 		
 		di = crtx_alloc_item(nevent->data.dict);
 		crtx_fill_data_item(di, 'u', "index", helper->index, sizeof(helper->index), 0);
 	} else {
 		if (ev_op == PA_SUBSCRIPTION_EVENT_CHANGE)
-			crtx_fill_data_item(di, 's', "operation", "change", strlen("change"), DIF_DATA_UNALLOCATED);
+			crtx_fill_data_item(di, 's', "operation", "change", strlen("change"), CRTX_DIF_DONT_FREE_DATA);
 		else if (ev_op == PA_SUBSCRIPTION_EVENT_NEW)
-			crtx_fill_data_item(di, 's', "operation", "new", strlen("new"), DIF_DATA_UNALLOCATED);
+			crtx_fill_data_item(di, 's', "operation", "new", strlen("new"), CRTX_DIF_DONT_FREE_DATA);
 		
 		switch ((helper->type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK)) {
 			case PA_SUBSCRIPTION_EVENT_SINK_INPUT:

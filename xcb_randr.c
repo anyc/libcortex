@@ -71,7 +71,7 @@ char get_edid(struct crtx_xcb_randr_listener *xrlist, xcb_randr_output_t output,
 
 struct crtx_dict * crtc_change2dict(struct crtx_xcb_randr_listener *xrlist, xcb_randr_crtc_change_t *cevent) {
 	return crtx_create_dict("suuuuu",
-							"mode", (cevent->mode == XCB_NONE)?"off":"on", 0, DIF_DATA_UNALLOCATED,
+							"mode", (cevent->mode == XCB_NONE)?"off":"on", 0, CRTX_DIF_DONT_FREE_DATA,
 							"crtc", cevent->crtc, sizeof(cevent->crtc), 0,
 							"x", (uint32_t) cevent->x, sizeof(uint32_t), 0,
 							"y", (uint32_t) cevent->y, sizeof(uint32_t), 0,
@@ -94,7 +94,7 @@ struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xc
 		printf("output 0x%08x disconnected\n", oevent->output);
 		
 		di = crtx_alloc_item(dict);
-		crtx_fill_data_item(di, 's', "mode", "off", 3, DIF_DATA_UNALLOCATED);
+		crtx_fill_data_item(di, 's', "mode", "off", 3, CRTX_DIF_DONT_FREE_DATA);
 		
 		di = crtx_alloc_item(dict);
 		crtx_fill_data_item(di, 'u', "crtc", oevent->crtc, sizeof(oevent->crtc), 0);
@@ -103,7 +103,7 @@ struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xc
 		output_info = QRY(xcb_randr_get_output_info, xrlist->conn, error, oevent->output, XCB_CURRENT_TIME);
 		
 		di = crtx_alloc_item(dict);
-		crtx_fill_data_item(di, 's', "mode", "on", 3, DIF_DATA_UNALLOCATED);
+		crtx_fill_data_item(di, 's', "mode", "on", 3, CRTX_DIF_DONT_FREE_DATA);
 		
 // 		char *name = strndup((char *) xcb_randr_get_output_info_name(output_info), 
 // 								xcb_randr_get_output_info_name_length(output_info));
@@ -111,7 +111,7 @@ struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xc
 		
 		di = crtx_alloc_item(dict);
 		crtx_fill_data_item(di, 's', "output_name", (char *) xcb_randr_get_output_info_name(output_info),
-							xcb_randr_get_output_info_name_length(output_info), DIF_DATA_UNALLOCATED);
+							xcb_randr_get_output_info_name_length(output_info), CRTX_DIF_DONT_FREE_DATA);
 		
 		
 		xcb_randr_get_crtc_info_reply_t *crtc_info;
@@ -125,7 +125,7 @@ struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xc
 				di->type = 'D';
 // 				di->key = (char*) malloc(5+floor(log10(abs(crtc[i])))+1);
 // 				sprintf(di->key, "crtc_%u", crtc[i]);
-// 				di->flags |= DIF_KEY_ALLOCATED;
+// 				di->flags |= CRTX_DIF_ALLOCATED_KEY;
 				di->key = "crtc";
 				
 				di->ds = crtx_create_dict("uuuuu",
@@ -151,7 +151,7 @@ struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xc
 		di->type = 'D';
 		
 		di->key = "edid";
-// 		di->flags |= DIF_KEY_ALLOCATED;
+// 		di->flags |= CRTX_DIF_ALLOCATED_KEY;
 		di->ds = crtx_init_dict(0, 0, 0);
 		
 		// 		printf("\tVendorName \"%c%c%c\"\n", (edid[8] >> 2 & 0x1f) + 'A' - 1, (((edid[8] & 0x3) << 3) | ((edid[9] & 0xe0) >> 5)) + 'A' - 1, (edid[9] & 0x1f) + 'A' - 1 );
@@ -204,7 +204,7 @@ struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xc
 	
 // 			di = crtx_alloc_item(dict);
 // 			value = udev_device_get_devnode(dev);
-// 			crtx_fill_data_item(di, 's', "node", value, strlen(value), DIF_DATA_UNALLOCATED);
+// 			crtx_fill_data_item(di, 's', "node", value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
 	
 // 	printf("output %s (0x%08x) on CRTC 0x%08x changed\n", name, oevent->output, oevent->crtc);
 	
@@ -233,7 +233,7 @@ void *xcb_randr_tmain(void *data) {
 						
 						
 						crtx_event = create_event("xcb_randr/crtc_change", &event->u.cc, 0);
-						crtx_event->data.raw.flags = DIF_DATA_UNALLOCATED;
+						crtx_event->data.raw.flags = CRTX_DIF_DONT_FREE_DATA;
 // 						crtx_event->origin = (struct crtx_listener_base *) xrlist;
 						
 						add_event(xrlist->parent.graph, crtx_event);
@@ -250,7 +250,7 @@ void *xcb_randr_tmain(void *data) {
 // 					output_change(xrlist, &event->u.oc);
 					
 					crtx_event = create_event("xcb_randr/output_change", &event->u.oc, 0);
-					crtx_event->data.raw.flags = DIF_DATA_UNALLOCATED;
+					crtx_event->data.raw.flags = CRTX_DIF_DONT_FREE_DATA;
 // 					crtx_event->origin = (struct crtx_listener_base *) xrlist;
 					
 					add_event(xrlist->parent.graph, crtx_event);
@@ -352,7 +352,7 @@ static char xcb_randr_test_handler(struct crtx_event *event, void *userdata, voi
 // 		}
 		
 // 		dict = crtx_create_dict("suuuuu",
-// 					"mode", (cevent->mode == XCB_NONE)?"off":"on", 0, DIF_DATA_UNALLOCATED,
+// 					"mode", (cevent->mode == XCB_NONE)?"off":"on", 0, CRTX_DIF_DONT_FREE_DATA,
 // 					"crtc", cevent->crtc, sizeof(cevent->crtc), 0,
 // 					"x", (uint32_t) cevent->x, sizeof(uint32_t), 0,
 // 					"y", (uint32_t) cevent->y, sizeof(uint32_t), 0,

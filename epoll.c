@@ -179,7 +179,7 @@ void *crtx_epoll_main(void *data) {
 					
 					event->data.raw.pointer = el_payload;
 					event->data.raw.type = 'p';
-					event->data.raw.flags = DIF_DATA_UNALLOCATED;
+					event->data.raw.flags = CRTX_DIF_DONT_FREE_DATA;
 					
 					// TODO we call the event handler directly as walking through the event graph
 					// only causes additional processing overhead in most cases

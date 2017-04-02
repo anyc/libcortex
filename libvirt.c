@@ -556,10 +556,10 @@ static int domain_evt_cb(virConnectPtr conn,
 	crtx_fill_data_item(di, 'u', "id", virDomainGetID(dom), sizeof(unsigned int), 0);
 	
 	di = crtx_alloc_item(dict);
-	crtx_fill_data_item(di, 's', "type", eventToString(event), strlen(eventToString(event)), DIF_DATA_UNALLOCATED);
+	crtx_fill_data_item(di, 's', "type", eventToString(event), strlen(eventToString(event)), CRTX_DIF_DONT_FREE_DATA);
 	
 	di = crtx_alloc_item(dict);
-	crtx_fill_data_item(di, 's', "detail", eventDetailToString(event, detail), strlen(eventDetailToString(event, detail)), DIF_DATA_UNALLOCATED);
+	crtx_fill_data_item(di, 's', "detail", eventDetailToString(event, detail), strlen(eventDetailToString(event, detail)), CRTX_DIF_DONT_FREE_DATA);
 	
 	crtx_event->data.raw.type = 'D';
 	crtx_event->data.raw.ds = dict;

@@ -68,7 +68,7 @@ void *fanotify_tmain(void *data) {
 			}
 			
 			event = create_event(fal->parent.graph->types[0], metadata, sizeof(struct fanotify_event_metadata));
-			event->data.raw.flags |= DIF_DATA_UNALLOCATED;
+			event->data.raw.flags |= CRTX_DIF_DONT_FREE_DATA;
 			
 			reference_event_release(event);
 			

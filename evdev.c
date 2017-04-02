@@ -21,7 +21,7 @@ void send_event(struct crtx_evdev_listener *el, struct input_event *ev, char syn
 	memcpy(new_ev, ev, sizeof(struct input_event));
 	
 	event = create_event(0, ev, sizeof(struct input_event));
-// 	event->data.raw.flags |= DIF_DATA_UNALLOCATED;
+// 	event->data.raw.flags |= CRTX_DIF_DONT_FREE_DATA;
 	
 // 	reference_event_release(event);
 	

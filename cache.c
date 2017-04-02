@@ -273,7 +273,7 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache_task *ct, struct 
 		c_entry = crtx_alloc_item(dc->entries);
 		
 		c_entry->key = key->string;
-		c_entry->flags |= DIF_KEY_ALLOCATED;
+		c_entry->flags |= CRTX_DIF_ALLOCATED_KEY;
 		c_entry->type = 'p';
 		key->string = 0;
 		
@@ -282,7 +282,7 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache_task *ct, struct 
 // 				c_entry->pointer = event->response.copy_raw(&event->response);
 // 			} else {
 // 				c_entry->pointer = event->response.raw.pointer;
-// 				c_entry->flags |= DIF_DATA_UNALLOCATED;
+// 				c_entry->flags |= CRTX_DIF_DONT_FREE_DATA;
 // 			}
 // 			c_entry->size = event->response.raw.size;
 	} else {
@@ -322,7 +322,7 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache_task *ct, struct 
 		
 		memcpy(crtx_get_item_by_idx(c_entry->ds, 0), key, sizeof(struct crtx_dict_item));
 		crtx_get_item_by_idx(c_entry->ds, 0)->key = "key";
-		crtx_get_item_by_idx(c_entry->ds, 0)->flags &= ~DIF_KEY_ALLOCATED;
+		crtx_get_item_by_idx(c_entry->ds, 0)->flags &= ~CRTX_DIF_ALLOCATED_KEY;
 		
 		crtx_fill_data_item(crtx_get_item_by_idx(c_entry->ds, 1), 'p', "value", 0, 0, 0); // event->response.raw.size
 		
@@ -351,7 +351,7 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache_task *ct, struct 
 // 				crtx_get_item_by_idx(c_entry->ds, 1)->pointer = event->response.copy_raw(&event->response);
 // 			} else {
 // 				crtx_get_item_by_idx(c_entry->ds, 1)->pointer = event->response.raw.pointer;
-// 				crtx_get_item_by_idx(c_entry->ds, 1)->flags |= DIF_DATA_UNALLOCATED;
+// 				crtx_get_item_by_idx(c_entry->ds, 1)->flags |= CRTX_DIF_DONT_FREE_DATA;
 // 			}
 	}
 	

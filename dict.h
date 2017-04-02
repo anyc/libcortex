@@ -11,12 +11,12 @@
 	( crtx_printf(CRTX_ERR, "invalid type %c for get_int32\n", (dict_item)->type), 0) \
 	)
 
-#define DIF_KEY_ALLOCATED 1<<0 // key was allocated for this dict_item
-#define DIF_DATA_UNALLOCATED 1<<1 // data was not allocated for the dict_item
-#define DIF_COPY_STRING 1<<2
-#define DIF_LAST 1<<7
+#define CRTX_DIF_ALLOCATED_KEY 1<<0 // key was allocated for this dict_item
+#define CRTX_DIF_DONT_FREE_DATA 1<<1 // data was not allocated for the dict_item
+#define CRTX_DIF_CREATE_DATA_COPY 1<<2 // only used while creating a dict_item
+#define CRTX_DIF_LAST_ITEM 1<<7
 
-#define DIF_IS_LAST(di) ( ((di)->flags & DIF_LAST) != 0 )
+#define CRTX_DIF_IS_LAST(di) ( ((di)->flags & CRTX_DIF_LAST_ITEM) != 0 )
 
 #include <stdint.h>
 
@@ -100,5 +100,9 @@ void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src,
 char crtx_get_item_value(struct crtx_dict_item *di, char type,  void *buffer, size_t buffer_size);
 
 char crtx_resize_dict(struct crtx_dict *dict, size_t n_items);
-int crtx_append_to_dict(struct crtx_dict **dictionary, char *signature, ...);
+int crx_append_to_dict(struct crtx_dict **dictionary, char *signature, ...);
+
+struct crtx_event;
+void crtx_dict_upgrade_event_data(struct crtx_event *event, struct crtx_dict *data_dict);
+
 #endif

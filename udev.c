@@ -27,7 +27,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 	value = udev_device_get_syspath(dev);
 	if (value) {
 		di = crtx_alloc_item(dict);
-		crtx_fill_data_item(di, 's', "SYSPATH", value, strlen(value), DIF_DATA_UNALLOCATED);
+		crtx_fill_data_item(di, 's', "SYSPATH", value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
 	}
 	
 	// get only requested or all attributes
@@ -35,25 +35,25 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 		value = udev_device_get_devnode(dev);
 		if (value) {
 			di = crtx_alloc_item(dict);
-			crtx_fill_data_item(di, 's', "NODE", value, strlen(value), DIF_DATA_UNALLOCATED);
+			crtx_fill_data_item(di, 's', "NODE", value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
 		}
 		
 		value = udev_device_get_subsystem(dev);
 		if (value) {
 			di = crtx_alloc_item(dict);
-			crtx_fill_data_item(di, 's', "SUBSYSTEM", value, strlen(value), DIF_DATA_UNALLOCATED);
+			crtx_fill_data_item(di, 's', "SUBSYSTEM", value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
 		}
 		
 		value = udev_device_get_devtype(dev);
 		if (value) {
 			di = crtx_alloc_item(dict);
-			crtx_fill_data_item(di, 's', "DEVTYPE", value, strlen(value), DIF_DATA_UNALLOCATED);
+			crtx_fill_data_item(di, 's', "DEVTYPE", value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
 		}
 		
 		value = udev_device_get_action(dev);
 		if (value) {
 			di = crtx_alloc_item(dict);
-			crtx_fill_data_item(di, 's', "ACTION", value, strlen(value), DIF_DATA_UNALLOCATED);
+			crtx_fill_data_item(di, 's', "ACTION", value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
 		}
 		
 		i = r2ds;
@@ -77,7 +77,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 			
 			di->key = malloc( (i->subsystem?strlen(i->subsystem):0) + 1 + (i->device_type?strlen(i->device_type):0) + 1);
 			sprintf(di->key, "%s-%s", i->subsystem?i->subsystem:"", i->device_type?i->device_type:"");
-			di->flags |= DIF_KEY_ALLOCATED;
+			di->flags |= CRTX_DIF_ALLOCATED_KEY;
 			di->ds = crtx_init_dict(0, 0, 0);
 			
 			a = i->attributes;
@@ -85,12 +85,12 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 				value = udev_device_get_sysattr_value(dev, *a);
 				if (value) {
 					sdi = crtx_alloc_item(di->ds);
-					crtx_fill_data_item(sdi, 's', *a, value, strlen(value), DIF_DATA_UNALLOCATED);
+					crtx_fill_data_item(sdi, 's', *a, value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
 				} else {
 					value = udev_device_get_property_value(dev, *a);
 					if (value) {
 						sdi = crtx_alloc_item(di->ds);
-						crtx_fill_data_item(sdi, 's', *a, value, strlen(value), DIF_DATA_UNALLOCATED);
+						crtx_fill_data_item(sdi, 's', *a, value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
 					}
 				}
 				
@@ -106,7 +106,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 // 				
 // 				di = crtx_alloc_item(dict);
 // 				if (value)
-// 					crtx_fill_data_item(di, 's', key, value, strlen(value), DIF_DATA_UNALLOCATED);
+// 					crtx_fill_data_item(di, 's', key, value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
 // 			}
 // 			
 			i++;
@@ -121,7 +121,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 			
 			di = crtx_alloc_item(dict);
 			if (value)
-				crtx_fill_data_item(di, 's', key, value, strlen(value), DIF_DATA_UNALLOCATED);
+				crtx_fill_data_item(di, 's', key, value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
 		}
 	}
 	
@@ -141,7 +141,7 @@ void push_new_udev_event(struct crtx_udev_listener *ulist, struct udev_device *d
 	
 	// size of struct udev_device is unknown
 	nevent = create_event(0, dev, sizeof(struct udev_device*));
-	nevent->data.raw.flags |= DIF_DATA_UNALLOCATED;
+	nevent->data.raw.flags |= CRTX_DIF_DONT_FREE_DATA;
 
 	nevent->cb_before_release = &udev_event_before_release_cb;
 	// 		reference_event_release(nevent);
