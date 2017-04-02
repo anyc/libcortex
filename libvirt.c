@@ -539,7 +539,7 @@ static int domain_evt_cb(virConnectPtr conn,
 	
 	lvlist = (struct crtx_libvirt_listener *) opaque;
 	
-	crtx_event = create_event("domain_event", 0, 0);
+	crtx_event = crtx_create_event("domain_event", 0, 0);
 	
 	dict = crtx_init_dict(0, 0, 0);
 	
@@ -561,8 +561,8 @@ static int domain_evt_cb(virConnectPtr conn,
 	di = crtx_alloc_item(dict);
 	crtx_fill_data_item(di, 's', "detail", eventDetailToString(event, detail), strlen(eventDetailToString(event, detail)), CRTX_DIF_DONT_FREE_DATA);
 	
-	crtx_event->data.raw.type = 'D';
-	crtx_event->data.raw.ds = dict;
+	crtx_event->data.type = 'D';
+	crtx_event->data.dict = dict;
 	
 	add_event(lvlist->parent.graph, crtx_event);
 	
@@ -750,14 +750,14 @@ struct crtx_timer_retry_listener *retry_lstnr;
 static char libvirt_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	printf("virt %d timer %d\n", lvlist.parent.state, tlist.parent.state);
 	if (!strcmp(event->type, "listener_state")) {
-// 		printf("ev %d\n", event->data.raw.uint32);
-// 		if (event->data.raw.uint32 == CRTX_LSTNR_STARTED && tlist.parent.state == CRTX_LSTNR_STARTED) {
-		if (event->data.raw.uint32 == CRTX_LSTNR_STARTED) {
+// 		printf("ev %d\n", event->data.uint32);
+// 		if (event->data.uint32 == CRTX_LSTNR_STARTED && tlist.parent.state == CRTX_LSTNR_STARTED) {
+		if (event->data.uint32 == CRTX_LSTNR_STARTED) {
 // 			printf("stop timer\n");
 			crtx_stop_listener(&retry_lstnr->timer_lstnr.parent);
 		}
-// 		if (event->data.raw.uint32 == CRTX_LSTNR_STOPPED && tlist.parent.state == CRTX_LSTNR_STOPPED) {
-		if (event->data.raw.uint32 == CRTX_LSTNR_STOPPED) {
+// 		if (event->data.uint32 == CRTX_LSTNR_STOPPED && tlist.parent.state == CRTX_LSTNR_STOPPED) {
+		if (event->data.uint32 == CRTX_LSTNR_STOPPED) {
 // 			printf("start timer\n");
 			crtx_start_listener(&retry_lstnr->timer_lstnr.parent);
 		}

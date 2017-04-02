@@ -17,8 +17,8 @@ struct crtx_dict *crtx_uevents_raw2dict(struct crtx_event *event) {
 	size_t size;
 	
 	
-	buf = (char *) event->data.raw.string;
-	size = event->data.raw.size;
+	buf = (char *) event->data.string;
+	size = event->data.size;
 	
 	// safety measure
 	buf[size-1] = 0;
@@ -90,15 +90,15 @@ static int uevents_read_cb(struct crtx_netlink_raw_listener *nl_listener, int fd
 // 		i += strlen(buf+i)+1;
 // 	}
 	
-	event = create_event(0, 0, 0);
+	event = crtx_create_event(0, 0, 0);
 	
-// 	event->data.raw.string = crtx_stracpy(buf, &ulen);
-	event->data.raw.string = (char *) malloc(ulen+1);
-	memcpy(event->data.raw.string, buf, ulen);
-	event->data.raw.string[ulen] = 0;
-	event->data.raw.size = ulen + 1;
-	event->data.raw.type = 's';
-// 	event->data.raw.flags = CRTX_DIF_DONT_FREE_DATA;
+// 	event->data.string = crtx_stracpy(buf, &ulen);
+	event->data.string = (char *) malloc(ulen+1);
+	memcpy(event->data.string, buf, ulen);
+	event->data.string[ulen] = 0;
+	event->data.size = ulen + 1;
+	event->data.type = 's';
+// 	event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 	
 // 	reference_event_release(event);
 	
@@ -180,11 +180,11 @@ static char uevents_test_handler(struct crtx_event *event, void *userdata, void 
 	struct crtx_dict *dict;
 	
 	
-	buf = event->data.raw.string;
+	buf = event->data.string;
 	
 	printf("RAW:\n");
 	i = 0;
-	while (i<event->data.raw.size) {
+	while (i<event->data.size) {
 		printf("\"\"\"%s\"\"\"\n", buf+i);
 		i += strlen(buf+i)+1;
 	}

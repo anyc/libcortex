@@ -84,7 +84,7 @@ static void generic_pa_get_info_callback(pa_context *c, void *info, int eol, voi
 	}
 	
 	
-	nevent = create_event(crtx_pa_subscription_etypes[helper->type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK], 0, 0);
+	nevent = crtx_create_event(crtx_pa_subscription_etypes[helper->type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK], 0, 0);
 	nevent->data.dict = crtx_init_dict(0, 0, 0);
 	
 	di = crtx_alloc_item(nevent->data.dict);

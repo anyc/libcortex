@@ -64,7 +64,7 @@ void sd_bus_print_msg(sd_bus_message *m) {
 // 	
 // 	printf("received %s %s\n", type, data);
 // 	
-// 	event = create_event(type, data, strlen(data)+1);
+// 	event = crtx_create_event(type, data, strlen(data)+1);
 // 	
 // 	add_event(args->graph, event);
 // 	
@@ -91,8 +91,8 @@ void sd_bus_print_msg(sd_bus_message *m) {
 // 	
 // 	listener = (struct crtx_listener_base_data*) userdata;
 // 	
-// 	event = create_event(listener->event_type, m, 0);
-// 	event->data.raw.flags |= CRTX_DIF_DONT_FREE_DATA;
+// 	event = crtx_create_event(listener->event_type, m, 0);
+// 	event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
 // 	
 // 	sd_bus_print_msg(m);
 // 	
@@ -102,7 +102,7 @@ void sd_bus_print_msg(sd_bus_message *m) {
 // 	
 // 	wait_on_event(event);
 // 	
-// // 	event->data.raw = 0;
+// // 	event->data.= 0;
 // 	
 // 	dereference_event_release(event);
 // 	
@@ -329,7 +329,7 @@ static int sdbus_match_listener_cb(sd_bus_message *m, void *userdata, sd_bus_err
 	
 	match = (struct crtx_sdbus_match*) userdata;
 	
-	event = create_event(match->event_type, m, 0);
+	event = crtx_create_event(match->event_type, m, 0);
 	event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
 	event->cb_before_release = &cb_event_release;
 	
@@ -613,7 +613,7 @@ static char sdbus_test_handler(struct crtx_event *event, void *userdata, void **
 	// 	struct sdbus_device *dev, *usb_dev;
 // 	struct crtx_dict *dict;
 	
-	// 	dev = (struct sdbus_device *) event->data.raw.pointer;
+	// 	dev = (struct sdbus_device *) event->data.pointer;
 	
 // 	dict = sdbus_raw2dict(event, r2ds);
 	

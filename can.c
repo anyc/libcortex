@@ -26,7 +26,7 @@
 // char *can_msg_etype[] = { CAN_MSG_ETYPE, 0 };
 
 // void can_event_before_release_cb(struct crtx_event *event) {
-// 	free(event->data.raw.pointer);
+// 	free(event->data.pointer);
 // }
 
 static char can_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -36,7 +36,7 @@ static char can_fd_event_handler(struct crtx_event *event, void *userdata, void 
 	struct crtx_can_listener *clist;
 	int r;
 	
-	payload = (struct crtx_event_loop_payload*) event->data.raw.pointer;
+	payload = (struct crtx_event_loop_payload*) event->data.pointer;
 	
 	clist = (struct crtx_can_listener *) payload->data;
 	
@@ -49,10 +49,10 @@ static char can_fd_event_handler(struct crtx_event *event, void *userdata, void 
 	
 // 	printf("0x%04x ", frame->can_id);
 	
-	nevent = create_event("can", frame, sizeof(frame));
+	nevent = crtx_create_event("can", frame, sizeof(frame));
 // 	nevent->cb_before_release = &can_event_before_release_cb;
 	
-// 	memcpy(&nevent->data.raw.uint64, &frame.data, sizeof(uint64_t));
+// 	memcpy(&nevent->data.uint64, &frame.data, sizeof(uint64_t));
 	
 	add_event(clist->parent.graph, nevent);
 	
@@ -320,7 +320,7 @@ void crtx_can_finish() {
 static char can_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct can_frame *frame;
 	
-	frame = (struct can_frame*) event->data.raw.pointer;
+	frame = (struct can_frame*) event->data.pointer;
 	
 	printf("CAN: %d\n", frame->can_id);
 	

@@ -92,7 +92,7 @@ static void pfw_update_ip_entry(struct crtx_cache_task *ct, struct crtx_dict_ite
 	char *s;
 	struct crtx_dict_item *hostname, *key;
 	
-	hostname = crtx_get_item(entry->ds, "host");
+	hostname = crtx_get_item(entry->dict, "host");
 	
 	error = getaddrinfo(hostname->string, NULL, NULL, &result);
 	if (error != 0) {
@@ -113,7 +113,7 @@ static void pfw_update_ip_entry(struct crtx_cache_task *ct, struct crtx_dict_ite
 		s = inet_ntoa(saddr->sin_addr);
 		size = strlen(s);
 		
-		key = crtx_get_item(entry->ds, "key");
+		key = crtx_get_item(entry->dict, "key");
 		if (key->string)
 			free(key->string);
 		
@@ -183,10 +183,12 @@ static char pfw_rcache_create_key_ip(struct crtx_event *event, struct crtx_dict_
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
-	if (!event->data.dict)
-		event->data.raw_to_dict(&event->data);
+// 	if (!event->data.dict)
+// 		event->data.raw_to_dict(&event->data);
+// 	
+// 	ds = event->data.dict;
 	
-	ds = event->data.dict;
+	crtx_event_get_payload(event, 0, 0, &ds);
 	
 	pfw_get_remote_part(ds, &remote_ip, &remote_host);
 	
@@ -194,7 +196,7 @@ static char pfw_rcache_create_key_ip(struct crtx_event *event, struct crtx_dict_
 	key->string = crtx_stracpy(remote_ip, 0);
 	if (!key->string)
 		return 0;
-	key->flags |= DIF_KEY_ALLOCATED;
+	key->flags |= CRTX_DIF_ALLOCATED_KEY;
 	
 	return 1;
 }
@@ -204,10 +206,12 @@ static char pfw_rcache_create_key_hostname(struct crtx_event *event, struct crtx
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
-	if (!event->data.dict)
-		event->data.raw_to_dict(&event->data);
+// 	if (!event->data.dict)
+// 		event->data.raw_to_dict(&event->data);
+// 	
+// 	ds = event->data.dict;
 	
-	ds = event->data.dict;
+	crtx_event_get_payload(event, 0, 0, &ds);
 	
 	pfw_get_remote_part(ds, &remote_ip, &remote_host);
 	
@@ -218,7 +222,7 @@ static char pfw_rcache_create_key_hostname(struct crtx_event *event, struct crtx
 	key->string = crtx_stracpy(remote_host, 0);
 	if (!key->string)
 		return 0;
-	key->flags |= DIF_KEY_ALLOCATED;
+	key->flags |= CRTX_DIF_ALLOCATED_KEY;
 	
 	return 1;
 }
@@ -238,7 +242,7 @@ static char pfw_on_hit_host(struct crtx_cache_task *rc, struct crtx_dict_item *k
 		struct crtx_dict_item ip, *cache_ip;
 		
 		ip.key = 0;
-		cache_ip = crtx_get_item(c_entry->ds, "cache_ip");
+		cache_ip = crtx_get_item(c_entry->dict, "cache_ip");
 		
 		if (!cache_ip || CRTX_DICT_GET_NUMBER(cache_ip) == 1) {
 // 			struct crtx_dict_item *timeout, *ip_c_entry;

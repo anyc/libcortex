@@ -17,6 +17,9 @@
 #define CRTX_DBG 1<<2
 #define CRTX_VDBG 1<<3
 
+#define CRTX_SUCCESS 0
+#define CRTX_ERROR -1
+
 #define INFO(fmt, ...) do { crtx_printf(CRTX_INFO, fmt, ##__VA_ARGS__); } while (0)
 
 #ifndef DEVDEBUG
@@ -87,6 +90,8 @@ struct crtx_listener_base;
 // 	
 // 	struct crtx_dict *dict;
 // };
+
+typedef void (*crtx_raw_to_dict_t)(struct crtx_event *event, struct crtx_dict_item *item, void *user_data);
 
 struct crtx_event {
 	char *type;
@@ -306,7 +311,7 @@ char wait_on_event(struct crtx_event *event);
 struct crtx_listener_base *create_listener(char *id, void *options);
 // void free_listener(struct crtx_listener_base *listener);
 void crtx_free_listener(struct crtx_listener_base *listener);
-struct crtx_event *create_event(char *type, void *data, size_t data_size);
+struct crtx_event *crtx_create_event(char *type, void *data, size_t data_size);
 struct crtx_task *crtx_create_task(struct crtx_graph *graph, unsigned char position, char *id, crtx_handle_task_t handler, void *userdata);
 void crtx_claim_next_event(struct crtx_dll **graph, struct crtx_dll **event);
 void crtx_process_event(struct crtx_graph *graph, struct crtx_dll *queue_entry);
@@ -338,5 +343,9 @@ void crtx_handle_std_signals();
 
 struct crtx_event_loop* crtx_get_event_loop();
 void *crtx_process_graph_tmain(void *arg);
+
+void crtx_event_set_data(struct crtx_event *event, void *raw_pointer, struct crtx_dict *data_dict, unsigned char n_additional_fields);
+char crtx_event_raw2dict(struct crtx_event *event, void *user_data);
+void crtx_event_get_payload(struct crtx_event *event, char *id, void **raw_pointer, struct crtx_dict **dict);
 
 #endif

@@ -86,7 +86,7 @@ static char socket_raw_accept_handler(struct crtx_event *event, void *userdata, 
 	int fd;
 	
 	
-	el_payload = (struct crtx_event_loop_payload*) event->data.raw.pointer;
+	el_payload = (struct crtx_event_loop_payload*) event->data.pointer;
 	
 	slist = (struct crtx_socket_raw_listener *) el_payload->data;
 	
@@ -174,7 +174,7 @@ static char client_read_handler(struct crtx_event *event, void *userdata, void *
 	struct crtx_socket_raw_listener *slist;
 	
 	
-	el_payload = (struct crtx_event_loop_payload*) event->data.raw.pointer;
+	el_payload = (struct crtx_event_loop_payload*) event->data.pointer;
 	
 	slist = (struct crtx_socket_raw_listener *) el_payload->data;
 	

@@ -42,10 +42,10 @@
 // 			break;
 // 		}
 // 		
-// 		event = create_event(CRTX_EVT_TIMER, 0, 0);
-// 		event->data.raw.uint32 = exp;
-// 		event->data.raw.type = 'u';
-// 		event->data.raw.flags = CRTX_DIF_DONT_FREE_DATA;
+// 		event = crtx_create_event(CRTX_EVT_TIMER, 0, 0);
+// 		event->data.uint32 = exp;
+// 		event->data.type = 'u';
+// 		event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 // 		
 // 		add_event(tlist->parent.graph, event);
 // 		
@@ -65,7 +65,7 @@ static char timer_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	ssize_t s;
 	
 	
-	payload = (struct crtx_event_loop_payload*) event->data.raw.pointer;
+	payload = (struct crtx_event_loop_payload*) event->data.pointer;
 	
 	tlist = (struct crtx_timer_listener *) payload->data;
 	
@@ -79,10 +79,10 @@ static char timer_fd_event_handler(struct crtx_event *event, void *userdata, voi
 		return 0;
 	}
 	
-	event = create_event(CRTX_EVT_TIMER, 0, 0);
-	event->data.raw.uint32 = exp;
-	event->data.raw.type = 'u';
-// 	event->data.raw.flags = CRTX_DIF_DONT_FREE_DATA;
+	event = crtx_create_event(CRTX_EVT_TIMER, 0, 0);
+	event->data.uint32 = exp;
+	event->data.type = 'u';
+// 	event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 	
 	add_event(tlist->parent.graph, event);
 	
@@ -215,7 +215,7 @@ void crtx_timer_finish() {
 
 #ifdef CRTX_TEST
 static char timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	printf("received timer event: %u\n", event->data.raw.uint32);
+	printf("received timer event: %u\n", event->data.uint32);
 	
 	return 1;
 }

@@ -47,7 +47,7 @@ static void signal_handler(int signum) {
 	
 	DBG("received signal %s (%d)\n", smap->name, signum);
 	
-	event = create_event(smap->etype, 0, 0);
+	event = crtx_create_event(smap->etype, 0, 0);
 	
 	add_event(signal_list.parent.graph, event);
 }
@@ -114,7 +114,7 @@ static char sigterm_handler(struct crtx_event *event, void *userdata, void **ses
 // 	new_action.sa_flags = 0;
 // 	sigaction(SIGTERM, &new_action, 0);
 	
-	newe = create_event(CRTX_EVT_SHUTDOWN, 0, 0);
+	newe = crtx_create_event(CRTX_EVT_SHUTDOWN, 0, 0);
 	
 	add_event(crtx_root->crtx_ctrl_graph, newe);
 	
@@ -124,7 +124,7 @@ static char sigterm_handler(struct crtx_event *event, void *userdata, void **ses
 static char sigint_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event *newe;
 	
-	newe = create_event(CRTX_EVT_SHUTDOWN, 0, 0);
+	newe = crtx_create_event(CRTX_EVT_SHUTDOWN, 0, 0);
 	
 	add_event(crtx_root->crtx_ctrl_graph, newe);
 	

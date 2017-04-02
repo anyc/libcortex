@@ -30,14 +30,15 @@ void write_event_as_dict(struct crtx_event *event, write_fct write, void *conn_i
 	int ret;
 	
 	if (!event->data.dict) {
-		if (!event->data.raw_to_dict) {
-			printf("cannot prepare this event of type \"%s\" for transmission\n", event->type);
-			return;
-		}
+// 		if (!event->data.to_dict) {
+// 			printf("cannot prepare this event of type \"%s\" for transmission\n", event->type);
+// 			return;
+// 		}
 		
-		event->data.raw_to_dict(&event->data);
+// 		event->data.to_dict(&event->data);
+		ret = crtx_event_raw2dict(event, 0);
 		
-		if (!event->data.dict) {
+		if (ret != CRTX_SUCCESS) {
 			printf("cannot prepare this event of type \"%s\" for transmission\n", event->type);
 			return;
 		}
@@ -97,7 +98,7 @@ struct crtx_event *read_event_as_dict(read_fct read, void *conn_id) {
 		return 0;
 	}
 	
-	event = new_event();
+	event = crtx_create_event(0, 0, 0);
 	event->original_event_id = sev.id;
 	
 	if ((sev.flags & CRTX_SEREV_FLAG_EXPECT_RESPONSE) != 0)

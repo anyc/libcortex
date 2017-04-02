@@ -128,7 +128,7 @@ struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xc
 // 				di->flags |= CRTX_DIF_ALLOCATED_KEY;
 				di->key = "crtc";
 				
-				di->ds = crtx_create_dict("uuuuu",
+				di->dict = crtx_create_dict("uuuuu",
 										"crtc", oevent->crtc, sizeof(oevent->crtc), 0,
 										"x", (uint32_t) crtc_info->x, sizeof(uint32_t), 0,
 										"y", (uint32_t) crtc_info->y, sizeof(uint32_t), 0,
@@ -152,18 +152,18 @@ struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xc
 		
 		di->key = "edid";
 // 		di->flags |= CRTX_DIF_ALLOCATED_KEY;
-		di->ds = crtx_init_dict(0, 0, 0);
+		di->dict = crtx_init_dict(0, 0, 0);
 		
 		// 		printf("\tVendorName \"%c%c%c\"\n", (edid[8] >> 2 & 0x1f) + 'A' - 1, (((edid[8] & 0x3) << 3) | ((edid[9] & 0xe0) >> 5)) + 'A' - 1, (edid[9] & 0x1f) + 'A' - 1 );
 		char *name = (char*) malloc(4);
 		sprintf(name, "%c%c%c", (edid[8] >> 2 & 0x1f) + 'A' - 1, (((edid[8] & 0x3) << 3) | ((edid[9] & 0xe0) >> 5)) + 'A' - 1, (edid[9] & 0x1f) + 'A' - 1 );
-		edi = crtx_alloc_item(di->ds);
+		edi = crtx_alloc_item(di->dict);
 		crtx_fill_data_item(edi, 's', "vendor_name", name, 4, 0);
 		
 		if (edid[21] && edid[22]) {
-			edi = crtx_alloc_item(di->ds);
+			edi = crtx_alloc_item(di->dict);
 			crtx_fill_data_item(edi, 'u', "width_cm", edid[21], 4, 0);
-			edi = crtx_alloc_item(di->ds);
+			edi = crtx_alloc_item(di->dict);
 			crtx_fill_data_item(edi, 'u', "height_cm", edid[22], 4, 0);
 		}
 		
@@ -182,7 +182,7 @@ struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xc
 					name = (char*) malloc(j+1);
 					memcpy(name, mon_desc->data, j);
 					
-					edi = crtx_alloc_item(di->ds);
+					edi = crtx_alloc_item(di->dict);
 					crtx_fill_data_item(edi, 's', "monitor_name", name, j, 0);
 				} else
 				if (mon_desc->desc_type == 0xFF) {
@@ -193,7 +193,7 @@ struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xc
 					name = (char*) malloc(j+1);
 					memcpy(name, mon_desc->data, j);
 					
-					edi = crtx_alloc_item(di->ds);
+					edi = crtx_alloc_item(di->dict);
 					crtx_fill_data_item(edi, 's', "monitor_serial", name, j, 0);
 				}
 			}
@@ -232,8 +232,8 @@ void *xcb_randr_tmain(void *data) {
 // 						xcb_randr_crtc_change_t *cevent = &event->u.cc;
 						
 						
-						crtx_event = create_event("xcb_randr/crtc_change", &event->u.cc, 0);
-						crtx_event->data.raw.flags = CRTX_DIF_DONT_FREE_DATA;
+						crtx_event = crtx_create_event("xcb_randr/crtc_change", &event->u.cc, 0);
+						crtx_event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 // 						crtx_event->origin = (struct crtx_listener_base *) xrlist;
 						
 						add_event(xrlist->parent.graph, crtx_event);
@@ -249,8 +249,8 @@ void *xcb_randr_tmain(void *data) {
 				case XCB_RANDR_NOTIFY_OUTPUT_CHANGE:
 // 					output_change(xrlist, &event->u.oc);
 					
-					crtx_event = create_event("xcb_randr/output_change", &event->u.oc, 0);
-					crtx_event->data.raw.flags = CRTX_DIF_DONT_FREE_DATA;
+					crtx_event = crtx_create_event("xcb_randr/output_change", &event->u.oc, 0);
+					crtx_event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 // 					crtx_event->origin = (struct crtx_listener_base *) xrlist;
 					
 					add_event(xrlist->parent.graph, crtx_event);
@@ -340,9 +340,9 @@ static char xcb_randr_test_handler(struct crtx_event *event, void *userdata, voi
 // 	xrlist = (struct crtx_xcb_randr_listener *) event->origin;
 	
 	if (!strcmp(event->type, "xcb_randr/crtc_change")) {
-		dict = crtc_change2dict(&xrlist, event->data.raw.pointer);
+		dict = crtc_change2dict(&xrlist, event->data.pointer);
 		
-// 		xcb_randr_crtc_change_t *cevent = event->data.raw.pointer;
+// 		xcb_randr_crtc_change_t *cevent = event->data.pointer;
 		
 // 		if (cevent->mode == XCB_NONE) {
 // 			printf("CRTC 0x%08x disabled\n", cevent->crtc);
@@ -362,7 +362,7 @@ static char xcb_randr_test_handler(struct crtx_event *event, void *userdata, voi
 		
 	} else
 	if (!strcmp(event->type, "xcb_randr/output_change")) {
-		dict = output_change2dict(&xrlist, event->data.raw.pointer);
+		dict = output_change2dict(&xrlist, event->data.pointer);
 	}
 	
 	crtx_print_dict(dict);

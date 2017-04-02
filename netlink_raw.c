@@ -27,7 +27,7 @@ static char netlink_el_event_handler(struct crtx_event *event, void *userdata, v
 	struct crtx_netlink_raw_listener *nl_listener;
 	struct crtx_event_loop_payload *payload;
 	
-	payload = (struct crtx_event_loop_payload*) event->data.raw.pointer;
+	payload = (struct crtx_event_loop_payload*) event->data.pointer;
 	
 	nl_listener = (struct crtx_netlink_raw_listener*) payload->data;
 	

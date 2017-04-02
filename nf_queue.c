@@ -113,7 +113,8 @@ static void nfq_raw2dict(struct crtx_event *event) {
 	sa.sin_family = AF_INET;
 	
 	ds = crtx_init_dict(PFW_NEWPACKET_SIGNATURE, strlen(PFW_NEWPACKET_SIGNATURE), 0);
-	crtx_dict_upgrade_event_data(event, ds);
+// 	crtx_dict_upgrade_event_data(event, ds, 0);
+	crtx_event_set_data(event, 0, ds, 1);
 // 	event->data->dict = ds;
 	di = ds->items;
 	
@@ -159,8 +160,8 @@ static void nfq_raw2dict(struct crtx_event *event) {
 		
 		tcp = (struct tcphdr *) (ev->payload + (iph->ihl << 2));
 		
-		di->ds = crtx_init_dict(PFW_NEWPACKET_TCP_SIGNATURE, strlen(PFW_NEWPACKET_TCP_SIGNATURE), 0);
-		pdi = di->ds->items;
+		di->dict = crtx_init_dict(PFW_NEWPACKET_TCP_SIGNATURE, strlen(PFW_NEWPACKET_TCP_SIGNATURE), 0);
+		pdi = di->dict->items;
 		
 		crtx_fill_data_item(pdi, 'u', "src_port", ntohs(tcp->source), 0, 0); pdi++;
 		
@@ -176,8 +177,8 @@ static void nfq_raw2dict(struct crtx_event *event) {
 		
 		udp = (struct udphdr *) (ev->payload + (iph->ihl << 2));
 		
-		di->ds = crtx_init_dict(PFW_NEWPACKET_UDP_SIGNATURE, strlen(PFW_NEWPACKET_UDP_SIGNATURE), 0);
-		pdi = di->ds->items;
+		di->dict = crtx_init_dict(PFW_NEWPACKET_UDP_SIGNATURE, strlen(PFW_NEWPACKET_UDP_SIGNATURE), 0);
+		pdi = di->dict->items;
 		
 		crtx_fill_data_item(pdi, 'u', "src_port", ntohs(udp->source), 0, 0); pdi++;
 		
@@ -285,9 +286,18 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		pkt->mark_out = nfq_list->default_mark;
 		
-		event = create_event(nfq_list->parent.graph->types[0], pkt, data_size);
-		event->data.raw.flags |= CRTX_DIF_DONT_FREE_DATA;
-		event->data.raw_to_dict = &nfq_raw2dict;
+		event = crtx_create_event(nfq_list->parent.graph->types[0], pkt, data_size);
+		event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
+// 		event->data.to_dict = &nfq_raw2dict;
+		
+// 		crtx_dict_upgrade_event_data(event, 0, 1);
+		crtx_event_set_data(event, 0, 0, 1);
+		
+		struct crtx_dict_item *di;
+		di = crtx_get_item_by_idx(event->data.dict, 2);
+		crtx_fill_data_item(di, 'p', "raw2dict", nfq_raw2dict, 0, 0);
+		
+		
 		
 		reference_event_release(event);
 		
@@ -298,8 +308,8 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 // 		if (event->response.raw.type == 'U')
 // 			pkt->mark_out = event->response.raw.uint64;
 		
-		if (event->response.raw.type != 0) {
-			crtx_get_item_value(&event->response.raw, 'u', &pkt->mark_out, sizeof(pkt->mark_out));
+		if (event->response.type != 0) {
+			crtx_get_item_value(&event->response, 'u', &pkt->mark_out, sizeof(pkt->mark_out));
 // 			if (!ret)
 // 				pkt->mark_out = nfq_list->default_mark;
 		}

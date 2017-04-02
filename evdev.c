@@ -20,8 +20,8 @@ void send_event(struct crtx_evdev_listener *el, struct input_event *ev, char syn
 	new_ev = (struct input_event *) malloc(sizeof(struct input_event));
 	memcpy(new_ev, ev, sizeof(struct input_event));
 	
-	event = create_event(0, ev, sizeof(struct input_event));
-// 	event->data.raw.flags |= CRTX_DIF_DONT_FREE_DATA;
+	event = crtx_create_event(0, ev, sizeof(struct input_event));
+// 	event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
 	
 // 	reference_event_release(event);
 	
@@ -71,7 +71,7 @@ static char evdev_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	int ret;
 	
 	
-	payload = (struct crtx_event_loop_payload*) event->data.raw.pointer;
+	payload = (struct crtx_event_loop_payload*) event->data.pointer;
 	evdev = (struct crtx_evdev_listener *) payload->data;
 	
 	do {
@@ -185,7 +185,7 @@ print_event(struct input_event *ev)
 static char evdev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct input_event *ev;
 	
-	ev = (struct input_event *) event->data.raw.pointer;
+	ev = (struct input_event *) event->data.pointer;
 	
 	print_event(ev);
 	

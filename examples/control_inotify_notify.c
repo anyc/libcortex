@@ -31,11 +31,11 @@ static void send_notification(char *msg) {
 	struct crtx_dict *data;
 	size_t msg_len;
 	
-	notif_event = create_event(CRTX_EVT_NOTIFICATION, 0, 0);
+	notif_event = crtx_create_event(CRTX_EVT_NOTIFICATION, 0, 0);
 	
 	msg_len = 0;
 	data = crtx_create_dict("ss",
-			"title", "Inotify", strlen("Inotify"), DIF_DATA_UNALLOCATED,
+			"title", "Inotify", strlen("Inotify"), CRTX_DIF_DONT_FREE_DATA,
 			"message", crtx_stracpy(msg, &msg_len), msg_len, 0
 			);
 	notif_event->data.dict = data;
@@ -48,7 +48,7 @@ static char inotify_event_handler(struct crtx_event *event, void *userdata, void
 	struct inotify_event *in_event;
 	char buf[1024];
 	
-	in_event = (struct inotify_event *) event->data.raw.pointer;
+	in_event = (struct inotify_event *) event->data.pointer;
 	if (in_event->len) {
 		if (in_event->mask & IN_CREATE) {
 			if (in_event->mask & IN_ISDIR) {

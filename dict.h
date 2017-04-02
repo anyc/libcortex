@@ -21,11 +21,12 @@
 #include <stdint.h>
 
 struct crtx_dict_item {
-	char *key;
-	
-	size_t size;
-	unsigned char flags;
 	char type;
+// 	char key_type;
+	unsigned char flags;
+	
+	char *key;
+	size_t size;
 	
 	union {
 // 		uint8_t uint8; // c
@@ -101,8 +102,5 @@ char crtx_get_item_value(struct crtx_dict_item *di, char type,  void *buffer, si
 
 char crtx_resize_dict(struct crtx_dict *dict, size_t n_items);
 int crx_append_to_dict(struct crtx_dict **dictionary, char *signature, ...);
-
-struct crtx_event;
-void crtx_dict_upgrade_event_data(struct crtx_event *event, struct crtx_dict *data_dict);
 
 #endif

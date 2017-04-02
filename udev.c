@@ -20,7 +20,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 	const char *subsystem, *device_type, *value;
 	struct udev_device *dev, *new_dev;
 	
-	dev = (struct udev_device *) event->data.raw.pointer;
+	dev = (struct udev_device *) event->data.pointer;
 	
 	dict = crtx_init_dict(0, 0, 0);
 	
@@ -78,18 +78,18 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 			di->key = malloc( (i->subsystem?strlen(i->subsystem):0) + 1 + (i->device_type?strlen(i->device_type):0) + 1);
 			sprintf(di->key, "%s-%s", i->subsystem?i->subsystem:"", i->device_type?i->device_type:"");
 			di->flags |= CRTX_DIF_ALLOCATED_KEY;
-			di->ds = crtx_init_dict(0, 0, 0);
+			di->dict = crtx_init_dict(0, 0, 0);
 			
 			a = i->attributes;
 			while (*a) {
 				value = udev_device_get_sysattr_value(dev, *a);
 				if (value) {
-					sdi = crtx_alloc_item(di->ds);
+					sdi = crtx_alloc_item(di->dict);
 					crtx_fill_data_item(sdi, 's', *a, value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
 				} else {
 					value = udev_device_get_property_value(dev, *a);
 					if (value) {
-						sdi = crtx_alloc_item(di->ds);
+						sdi = crtx_alloc_item(di->dict);
 						crtx_fill_data_item(sdi, 's', *a, value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
 					}
 				}
@@ -132,7 +132,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 void udev_event_before_release_cb(struct crtx_event *event) {
 	struct udev_device *dev;
 	
-	dev = (struct udev_device *) event->data.raw.pointer;
+	dev = (struct udev_device *) event->data.pointer;
 	udev_device_unref(dev);
 }
 
@@ -140,8 +140,8 @@ void push_new_udev_event(struct crtx_udev_listener *ulist, struct udev_device *d
 	struct crtx_event *nevent;
 	
 	// size of struct udev_device is unknown
-	nevent = create_event(0, dev, sizeof(struct udev_device*));
-	nevent->data.raw.flags |= CRTX_DIF_DONT_FREE_DATA;
+	nevent = crtx_create_event(0, dev, sizeof(struct udev_device*));
+	nevent->data.flags |= CRTX_DIF_DONT_FREE_DATA;
 
 	nevent->cb_before_release = &udev_event_before_release_cb;
 	// 		reference_event_release(nevent);
@@ -161,7 +161,7 @@ static char udev_fd_event_handler(struct crtx_event *event, void *userdata, void
 	struct udev_device *dev;
 	
 	
-	payload = (struct crtx_event_loop_payload*) event->data.raw.pointer;
+	payload = (struct crtx_event_loop_payload*) event->data.pointer;
 	
 	ulist = (struct crtx_udev_listener *) payload->data;
 	
@@ -295,7 +295,7 @@ static char udev_test_handler(struct crtx_event *event, void *userdata, void **s
 // 	struct udev_device *dev, *usb_dev;
 	struct crtx_dict *dict;
 	
-// 	dev = (struct udev_device *) event->data.raw.pointer;
+// 	dev = (struct udev_device *) event->data.pointer;
 	
 	dict = crtx_udev_raw2dict(event, r2ds);
 	

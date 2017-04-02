@@ -107,16 +107,18 @@ char crtx_inotify_mask2string(uint32_t mask, char *string, size_t *string_size) 
 	}
 }
 
-void inotify_to_dict(struct crtx_event_data *data) {
+// void inotify_to_dict(struct crtx_event_data *data) {
+void inotify_to_dict(struct crtx_event *event, struct crtx_dict_item *item) {
 	struct inotify_event *iev;
 	size_t len;
 	unsigned char mlen;
-	struct crtx_dict *mask_dict;
+	struct crtx_dict *mask_dict, *dict;
 	char *mask_signature; //[33]
 	struct inotify_event_dict *dictit;
 	struct crtx_dict_item *di;
 	
-	iev = (struct inotify_event*) data->raw.pointer;
+	
+	iev = (struct inotify_event*) event->data.pointer;
 	len = strlen(iev->name);
 	
 	mlen = POPCOUNT32(iev->mask);
@@ -144,13 +146,16 @@ void inotify_to_dict(struct crtx_event_data *data) {
 	di--;
 	di->flags |= CRTX_DIF_LAST_ITEM;
 	
-	data->dict = crtx_create_dict("iDuus",
+// 	item->dict = crtx_create_dict("iDuus",
+	dict = crtx_create_dict("iDuus",
 					"wd", iev->wd, sizeof(int32_t), 0,
 					"mask", mask_dict, mask_dict->size, 0,
 					"cookie", iev->cookie, sizeof(uint32_t), 0,
 					"len", iev->len, sizeof(uint32_t), 0,
 					"name", crtx_stracpy(iev->name, &len), len, 0
 				);
+	
+	crtx_event_set_data(event, 0, dict, 0);
 }
 
 void *inotify_tmain(void *data) {
@@ -196,8 +201,15 @@ void *inotify_tmain(void *data) {
 				ev_data = (struct inotify_event *) malloc(sizeof(struct inotify_event) + in_event->len);
 				memcpy(ev_data, in_event, sizeof(struct inotify_event) + in_event->len);
 				
-				event = create_event(fal->parent.graph->types[0], ev_data, sizeof(struct inotify_event) + in_event->len);
-				event->data.raw_to_dict = &inotify_to_dict;
+				event = crtx_create_event(fal->parent.graph->types[0], ev_data, sizeof(struct inotify_event) + in_event->len);
+// 				event->data.to_dict = &inotify_to_dict;
+// 				crtx_dict_upgrade_event_data(event, 0, 1);
+				
+				crtx_event_set_data(event, 0, 0, 1);
+				
+				struct crtx_dict_item *di;
+				di = crtx_get_item_by_idx(event->data.dict, 2);
+				crtx_fill_data_item(di, 'p', "raw2dict", inotify_to_dict, 0, 0);
 				
 // 				reference_event_release(event);
 				
@@ -205,7 +217,7 @@ void *inotify_tmain(void *data) {
 				
 // 				wait_on_event(event);
 				
-// 				event->data.raw = 0;
+// 				event->data.= 0;
 				
 // 				dereference_event_release(event);
 			} else {

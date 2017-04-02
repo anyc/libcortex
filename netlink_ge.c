@@ -40,7 +40,7 @@ int crtx_genl_msg2dict(struct nl_msg *msg, void *arg) {
 	// validate msg and parse attributes
 	genlmsg_parse(nlh, 0, g->attrs, g->n_attrs, 0);
 	
-	event = create_event("netlink/genl", 0, 0);
+	event = crtx_create_event("netlink/genl", 0, 0);
 	event->data.dict = crtx_init_dict(0, 0, 0);
 	dict = event->data.dict;
 	
@@ -84,7 +84,7 @@ static char genl_fd_event_handler(struct crtx_event *event, void *userdata, void
 	int r;
 	
 	
-	payload = (struct crtx_event_loop_payload*) event->data.raw.pointer;
+	payload = (struct crtx_event_loop_payload*) event->data.pointer;
 	genlist = (struct crtx_genl_listener *) payload->data;
 	
 	// nl_recvmsgs_default will eventually call the registered callback

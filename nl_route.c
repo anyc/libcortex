@@ -88,12 +88,12 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct crtx_nl_route_listen
 		di->type = 'D';
 		di->key = "flags";
 		
-		di->ds = crtx_init_dict(0, 0, 0);
+		di->dict = crtx_init_dict(0, 0, 0);
 		
 		
 		#define IFA_FLAG(name) \
 		if (ifa->ifa_flags & IFA_F_ ## name) { \
-			cdi = crtx_alloc_item(di->ds); \
+			cdi = crtx_alloc_item(di->dict); \
 			crtx_fill_data_item(cdi, 's', 0, #name, 0, CRTX_DIF_DONT_FREE_DATA); \
 		}
 		
@@ -187,17 +187,17 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct crtx_nl_route_listen
 					di->type = 'D';
 					di->key = "cache";
 					
-					di->ds = crtx_init_dict("uuuu", 4, 0);
+					di->dict = crtx_init_dict("uuuu", 4, 0);
 					
 					cinfo = (struct ifa_cacheinfo*) RTA_DATA(rth);
 					
-					cdi = crtx_get_first_item(di->ds);
+					cdi = crtx_get_first_item(di->dict);
 					crtx_fill_data_item(cdi, 'u', "valid_lft", cinfo->ifa_valid, 0, 0);
-					cdi = crtx_get_next_item(di->ds, cdi);
+					cdi = crtx_get_next_item(di->dict, cdi);
 					crtx_fill_data_item(cdi, 'u', "preferred_lft", cinfo->ifa_prefered, 0, 0);
-					cdi = crtx_get_next_item(di->ds, cdi);
+					cdi = crtx_get_next_item(di->dict, cdi);
 					crtx_fill_data_item(cdi, 'u', "cstamp", cinfo->cstamp, 0, 0);
-					cdi = crtx_get_next_item(di->ds, cdi);
+					cdi = crtx_get_next_item(di->dict, cdi);
 					crtx_fill_data_item(cdi, 'u', "tstamp", cinfo->tstamp, 0, 0);
 					
 					cdi->flags |= CRTX_DIF_LAST_ITEM;
@@ -217,13 +217,13 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct crtx_nl_route_listen
 // 					di->type = 'D';
 // 					di->key = "flags";
 // 					
-// 					di->ds = crtx_init_dict(0, 0, 0);
+// 					di->dict = crtx_init_dict(0, 0, 0);
 // 					
 // 					flags = (unsigned int*) RTA_DATA(rth);
 // 					
 // 					#define IFA_FLAG(name)
 // 						if (*flags & IFA_F_ ## name) {
-// 							cdi = crtx_alloc_item(di->ds);
+// 							cdi = crtx_alloc_item(di->dict);
 // 							crtx_fill_data_item(cdi, 's', 0, #name, 0, CRTX_DIF_DONT_FREE_DATA);
 // 						}
 // 					
@@ -307,11 +307,11 @@ struct crtx_dict *crtx_nl_route_raw2dict_if(struct crtx_nl_route_listener *nlr_l
 		di = crtx_alloc_item(dict);
 		di->type = 'D';
 		di->key = "flags";
-		di->ds = crtx_init_dict(0, 0, 0);
+		di->dict = crtx_init_dict(0, 0, 0);
 		
 		#define IFI_FLAG(name) \
 		if (ifi->ifi_flags & IFF_ ## name) { \
-			cdi = crtx_alloc_item(di->ds); \
+			cdi = crtx_alloc_item(di->dict); \
 			crtx_fill_data_item(cdi, 's', 0, #name, 0, CRTX_DIF_DONT_FREE_DATA); \
 		}
 		
@@ -392,14 +392,14 @@ struct crtx_dict *crtx_nl_route_raw2dict_if(struct crtx_nl_route_listener *nlr_l
 					di = crtx_alloc_item(dict);
 					di->type = 'D';
 					di->key = "stats";
-					di->ds = crtx_init_dict(0, 23, 0);
+					di->dict = crtx_init_dict(0, 23, 0);
 					
 					stats = (struct rtnl_link_stats *) RTA_DATA(rth);
 					
-					#define ADD_ITEM(attr) cdi = crtx_get_next_item(di->ds, cdi); \
+					#define ADD_ITEM(attr) cdi = crtx_get_next_item(di->dict, cdi); \
 					crtx_fill_data_item(cdi, 'u', #attr, stats->attr, 0, 0);
 					
-					cdi = crtx_get_first_item(di->ds);
+					cdi = crtx_get_first_item(di->dict);
 					crtx_fill_data_item(cdi, 'u', "tx_packets", stats->tx_packets, 0, 0);
 					
 					
@@ -481,16 +481,16 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 			while (*it && *it != nlh->nlmsg_type) { it++; }
 			
 			if (nlh->nlmsg_type == *it) {
-				event = create_event(0, 0, 0);
+				event = crtx_create_event(0, 0, 0);
 				
 // 				if (!nlr_list->raw2dict) {
 					// we don't know the size of data, hence we cannot copy it
 					// and we have to wait until all tasks have finished
 					
-					event->data.raw.pointer = malloc(4096);
-					memcpy(event->data.raw.pointer, nlh, 4096);
-					event->data.raw.type = 'p';
-// 					event->data.raw.flags = CRTX_DIF_DONT_FREE_DATA;
+					event->data.pointer = malloc(4096);
+					memcpy(event->data.pointer, nlh, 4096);
+					event->data.type = 'p';
+// 					event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 					
 // 					reference_event_release(event);
 					
@@ -503,7 +503,7 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 				if (nlr_list->raw2dict) {
 					// we copy the data and we do not have to wait
 					
-					// 					event->data.raw.type = 'D';
+					// 					event->data.type = 'D';
 					event->data.dict = nlr_list->raw2dict(nlr_list, nlh);
 					
 					
@@ -645,11 +645,14 @@ struct {
 static uint16_t nlmsg_addr_types[] = {RTM_NEWADDR, RTM_DELADDR, 0};
 static char crtx_get_own_ip_addresses_keygen(struct crtx_event *event, struct crtx_dict_item *key) {
 	struct crtx_dict_item *di;
+	struct crtx_dict *dict;
 	
-	if (!event->data.dict)
-		event->data.raw_to_dict(&event->data);
+// 	if (!event->data.dict)
+// 		event->data.to_dict(&event->data);
 	
-	di = crtx_get_item(event->data.dict, "address");
+	crtx_event_get_payload(event, 0, 0, &dict);
+	
+	di = crtx_get_item(dict, "address");
 	
 	key->key = 0;
 	key->type = 's';

@@ -199,8 +199,8 @@ char crtx_avahi_remove_service(struct crtx_avahi_service *service) {
 }
 
 char crtx_avahi_service(struct crtx_event *event) {
-	if (event->data.raw.type == 'p') {
-		struct crtx_avahi_service *s = event->data.raw.pointer;
+	if (event->data.type == 'p') {
+		struct crtx_avahi_service *s = event->data.pointer;
 		
 		switch (s->action) {
 			case 'a': return crtx_avahi_publish_service(s);
@@ -276,7 +276,7 @@ char crtx_avahi_service(struct crtx_event *event) {
 static void cb_sdbus_event_release(struct crtx_event *event) {
 	struct crtx_avahi_service *service;
 	
-	service = (struct crtx_avahi_service *) event->data.raw.pointer;
+	service = (struct crtx_avahi_service *) event->data.pointer;
 	sd_bus_message_unref(service->payload);
 }
 
@@ -291,7 +291,7 @@ static char sdbus_to_avahi_handler(struct crtx_event *event, void *userdata, voi
 	
 	alist = (struct crtx_avahi_listener*) userdata;
 	
-	m = (sd_bus_message *) event->data.raw.pointer;
+	m = (sd_bus_message *) event->data.pointer;
 	
 	service = calloc(1, sizeof(struct crtx_avahi_service));
 	
@@ -314,8 +314,8 @@ static char sdbus_to_avahi_handler(struct crtx_event *event, void *userdata, voi
 	service->payload = m;
 	sd_bus_message_ref(m);
 	
-	avahi_event = create_event("avahi/event", service, 0);
-// 	avahi_event->data.raw.flags |= CRTX_DIF_DONT_FREE_DATA;
+	avahi_event = crtx_create_event("avahi/event", service, 0);
+// 	avahi_event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
 	avahi_event->cb_before_release = &cb_sdbus_event_release;
 	
 	add_event(alist->parent.graph, avahi_event);
@@ -423,7 +423,7 @@ void crtx_avahi_finish() {
 static char avahi_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_avahi_service *service;
 	
-	service = (struct crtx_avahi_service*) event->data.raw.pointer;
+	service = (struct crtx_avahi_service*) event->data.pointer;
 	
 	printf("new service %s %s %s %u\n", service->name, service->type, service->host, service->port);
 	

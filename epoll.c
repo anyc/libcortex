@@ -175,11 +175,11 @@ void *crtx_epoll_main(void *data) {
 				memcpy(el_payload->el_data, &rec_events[i], sizeof(struct epoll_event));
 				
 				if (el_payload->event_handler) {
-					event = create_event(0, 0, 0);
+					event = crtx_create_event(0, 0, 0);
 					
-					event->data.raw.pointer = el_payload;
-					event->data.raw.type = 'p';
-					event->data.raw.flags = CRTX_DIF_DONT_FREE_DATA;
+					event->data.pointer = el_payload;
+					event->data.type = 'p';
+					event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 					
 					// TODO we call the event handler directly as walking through the event graph
 					// only causes additional processing overhead in most cases
@@ -324,7 +324,7 @@ static char epoll_test_handler(struct crtx_event *event, void *userdata, void **
 	struct crtx_event_loop_payload *payload;
 	ssize_t n_read;
 	
-	payload = (struct crtx_event_loop_payload*) event->data.raw.pointer;
+	payload = (struct crtx_event_loop_payload*) event->data.pointer;
 	
 	n_read = read(payload->fd, buf, sizeof(buf)-1);
 	if (n_read < 0) {

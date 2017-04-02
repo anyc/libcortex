@@ -111,7 +111,7 @@ void crtx_write_dict(write_fct write, void *conn_id, struct crtx_dict *ds) {
 				}
 				break;
 			case 'D':
-				crtx_write_dict(write, conn_id, di->ds);
+				crtx_write_dict(write, conn_id, di->dict);
 				break;
 			default:
 				printf("unknown literal '%c' in signature \"%s\"\n", *s, ds->signature);
@@ -217,7 +217,7 @@ struct crtx_dict *crtx_read_dict(read_fct read, void *conn_id) {
 				di->string[sdi.payload_size] = 0;
 				break;
 			case 'D':
-				di->ds = crtx_read_dict(read, conn_id);
+				di->dict = crtx_read_dict(read, conn_id);
 				break;
 			default:
 				printf("unknown literal '%c' in signature \"%s\"\n", *s, ds->signature);

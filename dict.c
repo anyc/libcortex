@@ -69,7 +69,7 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 			di->size = va_arg(va, size_t);
 			break;
 		case 'D':
-			di->ds = va_arg(va, struct crtx_dict*);
+			di->dict = va_arg(va, struct crtx_dict*);
 			di->size = va_arg(va, size_t);
 			break;
 		default:
@@ -299,8 +299,8 @@ void crtx_free_dict_item(struct crtx_dict_item *di) {
 			di->string = 0;
 			break;
 		case 'D':
-			crtx_free_dict(di->ds);
-			di->ds = 0;
+			crtx_free_dict(di->dict);
+			di->dict = 0;
 			break;
 	}
 }
@@ -344,8 +344,8 @@ void crtx_print_dict_item(struct crtx_dict_item *di, unsigned char level) {
 		case 'd': INFO("(double) %f", di->double_fp); break;
 		case 'D':
 // 			INFO("(dict) ");
-			if (di->ds)
-				crtx_print_dict_rec(di->ds, level+1);
+			if (di->dict)
+				crtx_print_dict_rec(di->dict, level+1);
 			else
 				INFO("(null)");
 			break;
@@ -743,7 +743,7 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 				fmt[min] = 0;
 				
 				char ret;
-				ret = dict_printf(di->ds, fmt, result, rlen, alloc);
+				ret = dict_printf(di->dict, fmt, result, rlen, alloc);
 				
 				free(fmt);
 				if (!ret)
@@ -889,23 +889,25 @@ struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, 
 }
 
 char crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_dict *dict;
+	struct crtx_dict *dict, *orig_dict;
 	struct crtx_event *new_event;
 	struct crtx_transform_dict_handler *trans;
 	
-	if (!event->data.dict)
-		event->data.raw_to_dict(&event->data);
+// 	if (!event->data.dict)
+// 		event->data.to_dict(&event->data);
 	
-	if (!event->data.dict) {
+	crtx_event_get_payload(event, 0, 0, &orig_dict);
+	
+	if (!orig_dict) {
 		ERROR("cannot convert %s to dict", event->type);
 		return 1;
 	}
 	
 	trans = (struct crtx_transform_dict_handler*) userdata;
 	
-	dict = crtx_dict_transform(event->data.dict, trans->signature, trans->transformation);
+	dict = crtx_dict_transform(orig_dict, trans->signature, trans->transformation);
 	
-	new_event = create_event(trans->type, 0, 0);
+	new_event = crtx_create_event(trans->type, 0, 0);
 	new_event->data.dict = dict;
 	
 	if (trans->graph)
@@ -941,16 +943,16 @@ char crtx_cmp_item(struct crtx_dict_item *a, struct crtx_dict_item *b) {
 		case 'I':
 			return MY_CMP(a->int64, b->int64);
 		case 'D':
-			ia = crtx_get_first_item(a->ds);
-			ib = crtx_get_first_item(b->ds);
+			ia = crtx_get_first_item(a->dict);
+			ib = crtx_get_first_item(b->dict);
 			
 			while (ia && ib) {
 				res = crtx_cmp_item(ia, ib);
 				if (res)
 					return res;
 				
-				ia = crtx_get_next_item(a->ds, ia);
-				ib = crtx_get_next_item(b->ds, ib);
+				ia = crtx_get_next_item(a->dict, ia);
+				ib = crtx_get_next_item(b->dict, ib);
 			}
 			if (!ia && !ib)
 				return 0;
@@ -974,7 +976,7 @@ char crtx_dict_calc_payload_size(struct crtx_dict *orig, size_t *size) {
 	lsize = 0;
 	while (di) {
 		if (di->type == 'D') {
-			ret = crtx_dict_calc_payload_size(di->ds, &lsize);
+			ret = crtx_dict_calc_payload_size(di->dict, &lsize);
 			if (!ret)
 				result = 0;
 		} else
@@ -1000,7 +1002,7 @@ char crtx_dict_calc_payload_size(struct crtx_dict *orig, size_t *size) {
 // 	dst->size = src->size;
 // 	
 // 	if (src->type == 'D') {
-// 		dst->ds = crtx_dict_copy(src->ds);
+// 		dst->dict = crtx_dict_copy(src->dict);
 // 	} else
 // 	if (src->type == 's') {
 // 		if ( !(src->flags & CRTX_DIF_DONT_FREE_DATA) )
@@ -1030,7 +1032,7 @@ char crtx_dict_calc_payload_size(struct crtx_dict *orig, size_t *size) {
 void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src, char data_only) {
 	switch (src->type) {
 		case 'D':
-			dst->ds = crtx_dict_copy(src->ds);
+			dst->dict = crtx_dict_copy(src->dict);
 			break;
 		case 's':
 				dst->string = crtx_stracpy(src->string, 0);
@@ -1135,28 +1137,3 @@ struct crtx_dict *crtx_dict_copy(struct crtx_dict *orig) {
 // 	}
 // }
 
-void crtx_dict_upgrade_event_data(struct crtx_event *event, struct crtx_dict *data_dict) {
-	struct crtx_dict *upgraded_dict;
-	struct crtx_dict_item *di;
-	
-	
-	if (event->data.type != 'p') {
-		ERROR("trying to upgrade an already upgraded event (%s, %p)\n", event->type, event);
-	}
-	
-	upgraded_dict = crtx_init_dict(0, 2, 0);
-	
-	di = crtx_get_item_by_idx(upgraded_dict, 0);
-	
-	crtx_dict_copy_item(di, event->data, 0);
-	
-	di = crtx_get_item_by_idx(upgraded_dict, 1);
-	di->type = 'D';
-	di->dict = data_dict;
-	
-	event->data.key = "data";
-	event->data.type = 'D';
-	event->data.size = 0;
-	event->data.flags = 0;
-	event->data.dict = upgraded_dict;
-}

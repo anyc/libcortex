@@ -56,7 +56,7 @@ static char fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 	struct crtx_dict *data, *actions_dict;
 	size_t title_len, buf_len;
 	
-	metadata = (struct fanotify_event_metadata *) event->data.raw.pointer;
+	metadata = (struct fanotify_event_metadata *) event->data.pointer;
 	
 	if ( (metadata->mask & FAN_OPEN_PERM) || (metadata->mask & FAN_OPEN) ) {
 		// replace %s with the file path and store the string in buf
@@ -69,10 +69,10 @@ static char fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 			// create options that are shown to a user
 			// format: action_id, action message, ...
 			actions_dict = crtx_create_dict("ssss",
-				"", "grant", 5, DIF_DATA_UNALLOCATED,
-				"", "Yes", 3, DIF_DATA_UNALLOCATED,
-				"", "deny", 4, DIF_DATA_UNALLOCATED,
-				"", "No", 2, DIF_DATA_UNALLOCATED
+				"", "grant", 5, CRTX_DIF_DONT_FREE_DATA,
+				"", "Yes", 3, CRTX_DIF_DONT_FREE_DATA,
+				"", "deny", 4, CRTX_DIF_DONT_FREE_DATA,
+				"", "No", 2, CRTX_DIF_DONT_FREE_DATA
 				);
 		} else {
 			// fanotify does not expect a response
@@ -88,7 +88,7 @@ static char fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 			"actions", actions_dict, 0, 0
 			);
 		
-		notif_event = create_event(CRTX_EVT_NOTIFICATION, 0, 0);
+		notif_event = crtx_create_event(CRTX_EVT_NOTIFICATION, 0, 0);
 		notif_event->data.dict = data;
 		
 		if (metadata->mask & FAN_OPEN_PERM) {

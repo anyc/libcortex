@@ -33,7 +33,7 @@ static char exec_script_handler(struct crtx_event *event, void *userdata, void *
 	size_t mask_size, cmd_size;
 	
 	script = (char *) userdata;
-	in_event = (struct inotify_event *) event->data.raw.pointer;
+	in_event = (struct inotify_event *) event->data.pointer;
 	
 	// calculate required string length
 	ret = crtx_inotify_mask2string(in_event->mask, 0, &mask_size);
@@ -81,7 +81,7 @@ char init() {
 	for (i=0;i < monitors->signature_length; i++) {
 		if (monitors->items[i].type != 'D')
 			continue;
-		monitor = monitors->items[i].ds;
+		monitor = monitors->items[i].dict;
 		
 		path = crtx_get_string(monitor, "path");
 		mask = crtx_get_dict(monitor, "mask");
@@ -162,7 +162,7 @@ char init() {
 						if (transform_rules->items[k].type != 'D')
 							continue;
 						
-						trule = transform_rules->items[k].ds;
+						trule = transform_rules->items[k].dict;
 						
 						key = crtx_get_string(trule, "key");
 						type = crtx_get_string(trule, "type");
