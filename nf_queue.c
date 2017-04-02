@@ -67,7 +67,7 @@ char crtx_nfq_print_packet(struct crtx_dict *ds) {
 	printf("dst %s %s ", ds->items[PFW_NEWP_DST_IP].string, ds->items[PFW_NEWP_DST_HOST].string);
 	
 	if (ds->items[PFW_NEWP_PROTOCOL].uint32 == 6) {
-		pds = ds->items[PFW_NEWP_PAYLOAD].ds;
+		pds = ds->items[PFW_NEWP_PAYLOAD].dict;
 		
 		if (strcmp(pds->signature, PFW_NEWPACKET_TCP_SIGNATURE)) {
 			printf("error, signature mismatch: %s %s\n", pds->signature, PFW_NEWPACKET_TCP_SIGNATURE);
@@ -77,7 +77,7 @@ char crtx_nfq_print_packet(struct crtx_dict *ds) {
 		printf("%u %u ", pds->items[PFW_NEWP_TCP_SPORT].uint32, pds->items[PFW_NEWP_TCP_DPORT].uint32);
 	} else
 	if (ds->items[PFW_NEWP_PROTOCOL].uint32 == 17) {
-		pds = ds->items[PFW_NEWP_PAYLOAD].ds;
+		pds = ds->items[PFW_NEWP_PAYLOAD].dict;
 		
 		if (strcmp(pds->signature, PFW_NEWPACKET_UDP_SIGNATURE)) {
 			printf("error, signature mismatch: %s %s\n", pds->signature, PFW_NEWPACKET_UDP_SIGNATURE);
@@ -91,7 +91,7 @@ char crtx_nfq_print_packet(struct crtx_dict *ds) {
 	return 1;
 }
 
-static void nfq_raw2dict(struct crtx_event_data *data) {
+static void nfq_raw2dict(struct crtx_event *event) {
 	struct crtx_nfq_packet *ev;
 	int res;
 	char host[NI_MAXHOST];
@@ -102,18 +102,19 @@ static void nfq_raw2dict(struct crtx_event_data *data) {
 	struct sockaddr_in sa;
 	
 	
-	if (data->raw.size < sizeof(struct crtx_nfq_packet))
+	if (event->data.size < sizeof(struct crtx_nfq_packet))
 		return;
 	
 	VDBG("convert nfq raw2dict\n");
 	
-	ev = (struct crtx_nfq_packet*) data->raw.pointer;
+	ev = (struct crtx_nfq_packet*) event->data.pointer;
 	
 	iph = (struct iphdr*)ev->payload;
 	sa.sin_family = AF_INET;
 	
 	ds = crtx_init_dict(PFW_NEWPACKET_SIGNATURE, strlen(PFW_NEWPACKET_SIGNATURE), 0);
-	data->dict = ds;
+	crtx_dict_upgrade_event_data(event, ds);
+// 	event->data->dict = ds;
 	di = ds->items;
 	
 	crtx_fill_data_item(di, 'u', "protocol", iph->protocol, 0, 0); di++;

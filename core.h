@@ -65,25 +65,37 @@ enum crtx_processing_mode {CRTX_PREFER_NONE=0, CRTX_PREFER_THREAD, CRTX_PREFER_E
 struct crtx_event;
 struct crtx_listener_base;
 
-struct crtx_event_data {
-// 	void *raw;
-// 	size_t raw_size;
-	struct crtx_dict_item raw;
-	
-// 	char flags;
-	
-	void *(*copy_raw)(struct crtx_event_data *data);
-	void (*raw_to_dict)(struct crtx_event_data *data);
-	
-	struct crtx_dict *dict;
-};
+// struct crtx_raw_event_data {
+// 	void *(*copy_raw)(struct crtx_event_data *data);
+// 	void *(*release_raw)(struct crtx_event_data *data);
+// 	
+// 	void (*on_copy)(struct crtx_raw_item *item); // reference data
+// 	void (*on_release)(struct crtx_raw_item *item); // dereference data
+// 	
+// 	void (*raw_to_dict)(struct crtx_event_data *data);
+// };
+
+// struct crtx_event_data {
+// // 	void *raw;
+// // 	size_t raw_size;
+// 	struct crtx_dict_item raw;
+// 	
+// // 	char flags;
+// 	
+// 	void *(*copy_raw)(struct crtx_event_data *data);
+// 	void (*raw_to_dict)(struct crtx_event_data *data);
+// 	
+// 	struct crtx_dict *dict;
+// };
 
 struct crtx_event {
 	char *type;
 	
-	struct crtx_event_data data;
+// 	struct crtx_event_data data;
+	struct crtx_dict_item data;
 	
-	struct crtx_event_data response;
+// 	struct crtx_event_data response;
+	struct crtx_dict_item response;
 	char response_expected;
 	
 	char error;
@@ -317,7 +329,7 @@ void dereference_event_release(struct crtx_event *event);
 // void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event);
 char *get_username();
 char is_graph_empty(struct crtx_graph *graph, char *event_type);
-void *crtx_copy_raw_data(struct crtx_event_data *data);
+// void *crtx_copy_raw_data(struct crtx_event_data *data);
 
 void crtx_init_notification_listeners(void **data);
 void crtx_finish_notification_listeners(void *data);

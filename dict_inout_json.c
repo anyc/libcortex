@@ -58,15 +58,15 @@ void inspect_array(json_object *jobj, struct crtx_dict *dict) {
 		
 		if (type == json_type_array) {
 			ditem->type = 'D';
-			ditem->ds = crtx_init_dict(0, 0, 0);
+			ditem->dict = crtx_init_dict(0, 0, 0);
 			
-			inspect_array(jvalue, ditem->ds);
+			inspect_array(jvalue, ditem->dict);
 		} else
 		if (type == json_type_object) {
 			ditem->type = 'D';
-			ditem->ds = crtx_init_dict(0, 0, 0);
+			ditem->dict = crtx_init_dict(0, 0, 0);
 			
-			inspect_obj(jvalue, ditem->ds);
+			inspect_obj(jvalue, ditem->dict);
 		} else {
 			inspect_primitive(jvalue, ditem);
 		}
@@ -100,15 +100,15 @@ static void inspect_obj(json_object * jobj, struct crtx_dict *dict) {
 			
 			case json_type_object:
 				ditem->type = 'D';
-				ditem->ds = crtx_init_dict(0, 0, 0);
+				ditem->dict = crtx_init_dict(0, 0, 0);
 				
-				inspect_obj(val, ditem->ds);
+				inspect_obj(val, ditem->dict);
 				break;
 			case json_type_array:
 				ditem->type = 'D';
-				ditem->ds = crtx_init_dict(0, 0, 0);
+				ditem->dict = crtx_init_dict(0, 0, 0);
 				
-				inspect_array(val, ditem->ds);
+				inspect_array(val, ditem->dict);
 				break;
 			default:break;
 		}

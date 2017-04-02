@@ -82,7 +82,7 @@ static char timer_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	event = create_event(CRTX_EVT_TIMER, 0, 0);
 	event->data.raw.uint32 = exp;
 	event->data.raw.type = 'u';
-	event->data.raw.flags = DIF_DATA_UNALLOCATED;
+// 	event->data.raw.flags = DIF_DATA_UNALLOCATED;
 	
 	add_event(tlist->parent.graph, event);
 	

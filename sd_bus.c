@@ -319,7 +319,7 @@ int crtx_sd_bus_message_read_string(sd_bus_message *m, char **p) {
 }
 
 static void cb_event_release(struct crtx_event *event) {
-	sd_bus_message_unref(event->data.raw.pointer);
+	sd_bus_message_unref(event->data.pointer);
 }
 
 static int sdbus_match_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
@@ -330,7 +330,7 @@ static int sdbus_match_listener_cb(sd_bus_message *m, void *userdata, sd_bus_err
 	match = (struct crtx_sdbus_match*) userdata;
 	
 	event = create_event(match->event_type, m, 0);
-	event->data.raw.flags |= DIF_DATA_UNALLOCATED;
+	event->data.flags |= DIF_DATA_UNALLOCATED;
 	event->cb_before_release = &cb_event_release;
 	
 	sd_bus_print_msg(m);
@@ -362,7 +362,7 @@ static char sdbus_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	struct crtx_sdbus_listener *sdlist;
 	int r;
 	
-	payload = (struct crtx_event_loop_payload*) event->data.raw.pointer;
+	payload = (struct crtx_event_loop_payload*) event->data.pointer;
 	
 	sdlist = (struct crtx_sdbus_listener *) payload->data;
 	

@@ -11,8 +11,8 @@
 	( crtx_printf(CRTX_ERR, "invalid type %c for get_int32\n", (dict_item)->type), 0) \
 	)
 
-#define DIF_KEY_ALLOCATED 1<<0
-#define DIF_DATA_UNALLOCATED 1<<1
+#define DIF_KEY_ALLOCATED 1<<0 // key was allocated for this dict_item
+#define DIF_DATA_UNALLOCATED 1<<1 // data was not allocated for the dict_item
 #define DIF_COPY_STRING 1<<2
 #define DIF_LAST 1<<7
 
@@ -38,7 +38,7 @@ struct crtx_dict_item {
 		
 		char *string; // s
 		void *pointer; // p		
-		struct crtx_dict *ds; // D
+		struct crtx_dict *dict; // D
 // 		char payload[0]; // P
 	};
 };

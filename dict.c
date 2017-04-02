@@ -1104,3 +1104,50 @@ struct crtx_dict *crtx_dict_copy(struct crtx_dict *orig) {
 	
 	return dict;
 }
+
+void crtx_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src) {
+	if (src->key && src->flags & DIF_KEY_ALLOCATED) {
+		size_t slen;
+		
+		slen = strlen(src->key);
+		dst->key = (char*) malloc(slen+1);
+		sprint(dst->key, "%s", src->key);
+		
+		dst->flags = DIF_KEY_ALLOCATED;
+	} else {
+		dst->key = 0;
+		dst->flags = 0;
+	}
+	
+	dst->size = src->size;
+	dst->type = src->type;
+	
+	switch (src->type) {
+		case 'p':
+			if (src->flags & DIF_DATA_UNALLOCATED) {
+				dst->pointer = src->pointer;
+			} else {
+				memcpy(dst->pointer, src->pointer, sizeof(struct crtx_dict_item));
+			}
+			break;
+		case 's':
+			
+	}
+}
+
+void crtx_dict_upgrade_event_data(struct crtx_event *event, struct crtx_dict *dict) {
+	struct crtx_dict *new_dict;
+	struct crtx_dict_item *di;
+	
+	if (event->data.type != 'p') {
+		ERROR("trying to upgrade an already upgraded event (%s, %p)\n", event->type, event);
+	}
+	
+	new_dict = crtx_init_dict(0, 2, 0);
+	
+	di = crtx_get_item_by_idx(new_dict, 0);
+// 	memcpy(di, event->data, sizeof(struct crtx_dict_item));
+	crtx_copy_item(di, event->data);
+	
+	
+}

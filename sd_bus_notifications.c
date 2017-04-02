@@ -105,7 +105,7 @@ static uint32_t sd_bus_send_notification(char *icon, char *title, char *text, ch
 }
 
 static char notification_signal_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	sd_bus_message *m = (sd_bus_message *) event->data.raw.pointer;
+	sd_bus_message *m = (sd_bus_message *) event->data.pointer;
 	struct wait_list_item *it;
 	char *s;
 	const char *signal;
