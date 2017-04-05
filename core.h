@@ -12,10 +12,11 @@
 #define STRINGIFYB(x) #x
 #define STRINGIFY(x) STRINGIFYB(x)
 
-#define CRTX_INFO 1<<0
-#define CRTX_ERR 1<<1
-#define CRTX_DBG 1<<2
-#define CRTX_VDBG 1<<3
+#define CRTX_SILENT 0
+#define CRTX_INFO 1
+#define CRTX_ERR 2
+#define CRTX_DBG 3
+#define CRTX_VDBG 4
 
 #define CRTX_SUCCESS 0
 #define CRTX_ERROR -1

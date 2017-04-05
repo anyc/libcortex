@@ -131,6 +131,7 @@ char *crtx_evt_notification[] = { CRTX_EVT_NOTIFICATION, 0 };
 char *crtx_evt_inbox[] = { CRTX_EVT_INBOX, 0 };
 char *crtx_evt_outbox[] = { CRTX_EVT_OUTBOX, 0 };
 
+char crtx_verbosity = CRTX_INFO;
 
 static void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **event_types);
 
@@ -167,7 +168,7 @@ void crtx_printf_va(char level, char *format, va_list va) {
 	if (level == CRTX_ERR) {
 		vfprintf(stderr, format, va);
 	} else {
-		if (level < CRTX_VDBG)
+		if (level <= crtx_verbosity)
 			vfprintf(stdout, format, va);
 	}
 }
@@ -453,7 +454,7 @@ void traverse_graph_r(struct crtx_graph *graph, struct crtx_task *ti, struct crt
 	char keep_going=1;
 	
 	if (ti->handle && (!ti->event_type_match || !strcmp(ti->event_type_match, event->type))) {
-		INFO("execute task %s with event %s (%p)\n", ti->id, event->type, event);
+		DBG("execute task %s with event %s (%p)\n", ti->id, event->type, event);
 		
 		keep_going = ti->handle(event, ti->userdata, sessiondata);
 	}
@@ -468,7 +469,7 @@ void traverse_graph_r(struct crtx_graph *graph, struct crtx_task *ti, struct crt
 	}
 	
 	if (ti->cleanup) {
-		INFO("execute task %s with event %s (%p) cleanup\n", ti->id, event->type, event);
+		DBG("execute task %s with event %s (%p) cleanup\n", ti->id, event->type, event);
 		
 		ti->cleanup(event, ti->userdata, sessiondata);
 	}
@@ -1174,6 +1175,10 @@ void crtx_init() {
 // 		*root_ptr = (struct crtx_root*) malloc(sizeof(struct crtx_root));
 // 		root = *root_ptr;
 // 	}
+	
+	if (getenv("CRTX_VERBOSITY"))
+		crtx_verbosity = atoi(getenv("CRTX_VERBOSITY"));
+	
 	memset(crtx_root, 0, sizeof(struct crtx_root));
 	
 	DBG("initialized cortex (PID: %d)\n", getpid());

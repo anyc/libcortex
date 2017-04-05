@@ -303,22 +303,24 @@ void crtx_free_dict_item(struct crtx_dict_item *di) {
 	if (di->key && di->flags & CRTX_DIF_ALLOCATED_KEY)
 		free(di->key);
 	
-	switch (di->type) {
-		case 'p':
-			if (di->pointer && !(di->flags & CRTX_DIF_DONT_FREE_DATA))
-				free(di->pointer);
-			di->pointer = 0;
-			break;
-		case 's':
-			if (di->string && !(di->flags & CRTX_DIF_DONT_FREE_DATA))
-				free(di->string);
-			di->string = 0;
-			break;
-		case 'D':
-// 			crtx_free_dict(di->dict);
-			crtx_dict_unref(di->dict);
-			di->dict = 0;
-			break;
+	if (di->pointer) {
+		switch (di->type) {
+			case 'p':
+				if (di->pointer && !(di->flags & CRTX_DIF_DONT_FREE_DATA))
+					free(di->pointer);
+				di->pointer = 0;
+				break;
+			case 's':
+				if (di->string && !(di->flags & CRTX_DIF_DONT_FREE_DATA))
+					free(di->string);
+				di->string = 0;
+				break;
+			case 'D':
+	// 			crtx_free_dict(di->dict);
+				crtx_dict_unref(di->dict);
+				di->dict = 0;
+				break;
+		}
 	}
 }
 
@@ -329,17 +331,19 @@ void crtx_free_dict(struct crtx_dict *ds) {
 	if (!ds)
 		return;
 	
-	di = ds->items;
-	for (i=0; i < ds->signature_length; i++) {
-		crtx_free_dict_item(di);
+	if (ds->items) {
+		di = ds->items;
+		for (i=0; i < ds->signature_length; i++) {
+			crtx_free_dict_item(di);
+			
+			if (CRTX_DIF_IS_LAST(di))
+				break;
+			
+			di++;
+		}
 		
-		if (CRTX_DIF_IS_LAST(di))
-			break;
-		
-		di++;
+		free(ds->items);
 	}
-	
-	free(ds->items);
 	free(ds);
 }
 
@@ -1046,7 +1050,7 @@ char crtx_dict_calc_payload_size(struct crtx_dict *orig, size_t *size) {
 // }
 
 void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src, char data_only) {
-	dst->flags = 0;
+// 	dst->flags = 0;
 	
 	switch (src->type) {
 		case 'D':

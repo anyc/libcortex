@@ -248,7 +248,7 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *cache, struct cr
 	struct crtx_dict_item *c_entry;
 	struct crtx_dict_item *value_item;
 	
-	DBG("new cache entry "); crtx_print_dict_item(key, 0); DBG("\n");
+// 	DBG("new cache entry "); crtx_print_dict_item(key, 0); DBG("\n");
 	
 // 	crtx_print_dict_item(key, 0);
 	
@@ -259,9 +259,11 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *cache, struct cr
 		e = crtx_alloc_item(dc->dict);
 		e->type = 'D';
 		e->dict = 0;
+		e->key = 0;
 		
 		e = crtx_alloc_item(dc->dict);
 		e->type = 'D';
+		e->key = 0;
 		e->dict = crtx_init_dict(0, 0, 0);
 		dc->entries = e->dict;
 	}
@@ -273,7 +275,7 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *cache, struct cr
 		c_entry = crtx_alloc_item(dc->entries);
 		
 		c_entry->key = key->string;
-		c_entry->flags |= CRTX_DIF_ALLOCATED_KEY;
+		c_entry->flags = CRTX_DIF_ALLOCATED_KEY;
 		c_entry->type = 'p';
 		key->string = 0;
 		
@@ -417,7 +419,7 @@ void crtx_cache_remove_entry(struct crtx_cache *cache, struct crtx_dict_item *ke
 	struct crtx_cache *dc = cache;
 	struct crtx_dict_item *c_entry;
 	
-	DBG("new cache entry "); crtx_print_dict_item(key, 0); DBG("\n");
+// 	DBG("new cache entry "); crtx_print_dict_item(key, 0); DBG("\n");
 	
 	if (!dc->entries)
 		return;
@@ -637,7 +639,9 @@ void crtx_free_presence_cache_task(struct crtx_task *task) {
 	ct = (struct crtx_presence_cache_task *) task->userdata;
 	
 	crtx_dict_unref(ct->cache->dict);
-	free(dc);
+	free(ct->cache);
+	free(ct);
+	free_task(task);
 }
 
 char crtx_load_cache(struct crtx_cache *cache, char *path) {

@@ -67,7 +67,6 @@ static void elw_fd_callback(struct crtx_event_loop_payload *el_payload) {
 	
 	
 	wrap = (struct libvirt_eventloop_wrapper*) el_payload->data;
-	
 	epoll_event = (struct epoll_event *) el_payload->el_data;
 	
 	wrap->event_cb(wrap->id, wrap->el_payload.fd, elw_virEventPollFromNativeEvents(epoll_event->events), wrap->opaque);
@@ -75,12 +74,16 @@ static void elw_fd_callback(struct crtx_event_loop_payload *el_payload) {
 
 static void elw_fd_error_cb(struct crtx_event_loop_payload *el_payload, void *data) {
 	struct libvirt_eventloop_wrapper *wrap;
+	struct epoll_event *epoll_event;
+	
 	
 	wrap = (struct libvirt_eventloop_wrapper*) el_payload->data;
+	epoll_event = (struct epoll_event *) el_payload->el_data;
 	
 	DBG("libvirt event loop error callback for fd %d\n", el_payload->fd);
 	
-	wrap->ff(wrap->opaque);
+	wrap->event_cb(wrap->id, wrap->el_payload.fd, elw_virEventPollFromNativeEvents(epoll_event->events), wrap->opaque);
+// 	wrap->ff(wrap->opaque);
 }
 
 static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback cb, void * opaque, virFreeCallback ff) {
@@ -181,7 +184,7 @@ static char elw_timer_event_cb(struct crtx_event *event, void *userdata, void **
 	struct libvirt_eventloop_wrapper *wrap;
 	
 	wrap = (struct libvirt_eventloop_wrapper*) userdata;
-	printf("timer event id %d\n", wrap->id);
+	printf("timer event id %d (%p)\n", wrap->id, wrap->opaque);
 	wrap->time_cb(wrap->id, wrap->opaque);
 	
 	return 1;
@@ -334,7 +337,7 @@ static int elw_virEventRemoveTimeoutFunc(int timer) {
 	
 	DBG("libvirt: remove timer id %d\n", wrap->id);
 	
-	wrap->ff(wrap->opaque);
+// 	wrap->ff(wrap->opaque);
 	
 // 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
 	crtx_free_listener(&wrap->timer_listener.parent);
@@ -653,7 +656,7 @@ static char start_listener(struct crtx_listener_base *base) {
 	int ret;
 	
 	lvlist = (struct crtx_libvirt_listener *) base;
-// 	printf("open\n");
+	
 	lvlist->conn = virConnectOpen(lvlist->hypervisor);
 	if (lvlist->conn == 0) {
 		ERROR("Failed to connect to hypervisor\n");
@@ -715,6 +718,9 @@ struct crtx_listener_base *crtx_new_libvirt_listener(void *options) {
 		return 0;
 	}
 	
+	/*
+	 * libvirt will use these callbacks to register a file handle
+	 */
 	virEventRegisterImpl(elw_virEventAddHandleFunc,
 						elw_virEventUpdateHandleFunc,
 						elw_virEventRemoveHandleFunc,

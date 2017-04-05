@@ -70,3 +70,5 @@ void crtx_cache_add_on_miss(struct crtx_cache_task *ct, struct crtx_dict_item *k
 char crtx_cache_update_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry);
 
 struct crtx_task *crtx_create_presence_cache_task(char *id, create_key_action_cb_t create_key);
+void crtx_free_presence_cache_task(struct crtx_task *task);
+

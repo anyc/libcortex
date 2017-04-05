@@ -66,7 +66,7 @@ void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 // 	event = &el_payload->event;
 	el_payload->el_data = event;
 	
-	printf("epoll add %d %d\n", el_payload->fd, el_payload->event_flags);
+	VDBG("epoll add %d %d\n", el_payload->fd, el_payload->event_flags);
 	
 // 	if (el_payload->event_flags == 0)
 // 		event->events = EPOLLIN;
@@ -98,7 +98,7 @@ void crtx_epoll_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 	int fd;
 	
 	
-	printf("epoll del %d\n", el_payload->fd);
+	VDBG("epoll del %d\n", el_payload->fd);
 	
 	fd = el_payload->fd;
 // 	el_payload->fd = 0;
@@ -148,7 +148,7 @@ void *crtx_epoll_main(void *data) {
 			break;
 		}
 		
-		DBG("epoll returned with %d events\n", n_rdy_events);
+		VDBG("epoll returned with %d events\n", n_rdy_events);
 		
 		for (i=0; i < n_rdy_events; i++) {
 			if (rec_events[i].events & EPOLLERR) {
@@ -163,7 +163,7 @@ void *crtx_epoll_main(void *data) {
 				continue;
 			} else
 			if (rec_events[i].data.ptr == 0) {
-				DBG("epoll received wake-up event\n");
+				VDBG("epoll received wake-up event\n");
 				
 				read(epl->pipe_fds[0], &ecp, sizeof(struct epoll_control_pipe));
 				
