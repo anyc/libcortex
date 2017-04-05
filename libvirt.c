@@ -181,7 +181,7 @@ static char elw_timer_event_cb(struct crtx_event *event, void *userdata, void **
 	struct libvirt_eventloop_wrapper *wrap;
 	
 	wrap = (struct libvirt_eventloop_wrapper*) userdata;
-// 	printf("timer event id %d\n", wrap->id);
+	printf("timer event id %d\n", wrap->id);
 	wrap->time_cb(wrap->id, wrap->opaque);
 	
 	return 1;

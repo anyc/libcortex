@@ -195,10 +195,10 @@ static char pfw_rcache_create_key_ip(struct crtx_event *event, struct crtx_dict_
 	key->type = 's';
 	key->string = crtx_stracpy(remote_ip, 0);
 	if (!key->string)
-		return 0;
+		return 1;
 	key->flags |= CRTX_DIF_ALLOCATED_KEY;
 	
-	return 1;
+	return 0;
 }
 
 /// create a key item for the hostname cache from the given event structure
@@ -216,15 +216,15 @@ static char pfw_rcache_create_key_hostname(struct crtx_event *event, struct crtx
 	pfw_get_remote_part(ds, &remote_ip, &remote_host);
 	
 	if (!remote_host || remote_host[0] == 0)
-		return 0;
+		return 1;
 	
 	key->type = 's';
 	key->string = crtx_stracpy(remote_host, 0);
 	if (!key->string)
-		return 0;
+		return 1;
 	key->flags |= CRTX_DIF_ALLOCATED_KEY;
 	
-	return 1;
+	return 0;
 }
 
 static char pfw_on_hit_host(struct crtx_cache_task *rc, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
@@ -257,7 +257,7 @@ static char pfw_on_hit_host(struct crtx_cache_task *rc, struct crtx_dict_item *k
 			}
 			
 			// add entry to IP cache
-			/* ip_c_entry = */ crtx_cache_add_entry(TASK2CACHETASK(rcache_ip), &ip, event, 0);
+			/* ip_c_entry = */ crtx_cache_add_entry(TASK2CACHETASK(rcache_ip)->cache, &ip, event, 0);
 // 			timeout = crtx_get_item(c_entry->ds, "timeout");
 		}
 	} else

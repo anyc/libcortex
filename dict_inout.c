@@ -166,7 +166,7 @@ struct crtx_dict *crtx_read_dict(read_fct read, void *conn_id) {
 	ds->signature = (char*) malloc(sdict.signature_length+1);
 	ret = crtx_read(read, conn_id, ds->signature, sdict.signature_length);
 	if (!ret) {
-		crtx_free_dict(ds);
+		crtx_dict_unref(ds);
 		return 0;
 	}
 	ds->signature[sdict.signature_length] = 0;
@@ -178,7 +178,7 @@ struct crtx_dict *crtx_read_dict(read_fct read, void *conn_id) {
 	while (*s) {
 		ret = crtx_read(read, conn_id, &sdi, sizeof(struct serialized_dict_item));
 		if (!ret) {
-			crtx_free_dict(ds);
+			crtx_dict_unref(ds);
 			return 0;
 		}
 		
@@ -188,7 +188,7 @@ struct crtx_dict *crtx_read_dict(read_fct read, void *conn_id) {
 		di->key = (char*) malloc(sdi.key_length+1);
 		ret = crtx_read(read, conn_id, di->key, sdi.key_length);
 		if (!ret) {
-			crtx_free_dict(ds);
+			crtx_dict_unref(ds);
 			return 0;
 		}
 		di->key[sdi.key_length] = 0;
@@ -197,13 +197,13 @@ struct crtx_dict *crtx_read_dict(read_fct read, void *conn_id) {
 			case 'u':
 			case 'i':
 				if (sdi.payload_size != sizeof(uint32_t)) {
-					crtx_free_dict(ds);
+					crtx_dict_unref(ds);
 					return 0;
 				}
 				
 				ret = crtx_read(read, conn_id, &di->uint32, sdi.payload_size);
 				if (!ret) {
-					crtx_free_dict(ds);
+					crtx_dict_unref(ds);
 					return 0;
 				}
 				break;
@@ -211,7 +211,7 @@ struct crtx_dict *crtx_read_dict(read_fct read, void *conn_id) {
 				di->string = (char*) malloc(sdi.payload_size+1);
 				ret = crtx_read(read, conn_id, di->string, sdi.payload_size);
 				if (!ret) {
-					crtx_free_dict(ds);
+					crtx_dict_unref(ds);
 					return 0;
 				}
 				di->string[sdi.payload_size] = 0;

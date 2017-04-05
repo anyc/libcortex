@@ -347,5 +347,7 @@ void *crtx_process_graph_tmain(void *arg);
 void crtx_event_set_data(struct crtx_event *event, void *raw_pointer, struct crtx_dict *data_dict, unsigned char n_additional_fields);
 char crtx_event_raw2dict(struct crtx_event *event, void *user_data);
 void crtx_event_get_payload(struct crtx_event *event, char *id, void **raw_pointer, struct crtx_dict **dict);
+struct crtx_dict_item *crtx_event_get_value_by_key(struct crtx_event *event, char *id, char *key);
+void *crtx_event_get_ptr(struct crtx_event *event);
 
 #endif

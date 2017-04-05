@@ -53,6 +53,9 @@ struct crtx_dict {
 	
 // 	struct crtx_dict_item items[0];
 	struct crtx_dict_item *items;
+	
+	MUTEX_TYPE mutex;
+	unsigned int ref_count;
 };
 
 struct crtx_dict_transformation {
@@ -78,7 +81,7 @@ struct crtx_dict_item * crtx_get_item(struct crtx_dict *ds, char *key);
 struct crtx_dict * crtx_init_dict(char *signature, uint32_t sign_length, size_t payload_size);
 struct crtx_dict * crtx_create_dict(char *signature, ...);
 char  crtx_fill_data_item(struct crtx_dict_item *di, char type, ...);
-void crtx_free_dict(struct crtx_dict *ds);
+// void crtx_free_dict(struct crtx_dict *ds);
 char crtx_get_value(struct crtx_dict *ds, char *key, char type, void *buffer, size_t buffer_size);
 char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size);
 void crtx_print_dict(struct crtx_dict *ds);
@@ -102,5 +105,11 @@ char crtx_get_item_value(struct crtx_dict_item *di, char type,  void *buffer, si
 
 char crtx_resize_dict(struct crtx_dict *dict, size_t n_items);
 int crx_append_to_dict(struct crtx_dict **dictionary, char *signature, ...);
+
+void crtx_dict_ref(struct crtx_dict *dict);
+void crtx_dict_unref(struct crtx_dict *dict);
+struct crtx_dict_item * crtx_dict_locate(struct crtx_dict *dict, char *path);
+char crtx_dict_locate_value(struct crtx_dict *dict, char *path, char type, void *buffer, size_t buffer_size);
+void crtx_dict_remove_item(struct crtx_dict *dict, char *key);
 
 #endif

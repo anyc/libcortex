@@ -41,7 +41,8 @@ struct crtx_dict *crtx_uevents_raw2dict(struct crtx_event *event) {
 		}
 		if (sep >= buf+size) {
 			ERROR("wrong format of uevent msg\n");
-			crtx_free_dict(dict);
+// 			crtx_free_dict(dict);
+			crtx_dict_unref(dict);
 			return 0;
 		}
 		
@@ -193,7 +194,8 @@ static char uevents_test_handler(struct crtx_event *event, void *userdata, void 
 	
 	crtx_print_dict(dict);
 	
-	crtx_free_dict(dict);
+// 	crtx_free_dict(dict);
+	crtx_dict_unref(dict);
 	
 	return 1;
 }

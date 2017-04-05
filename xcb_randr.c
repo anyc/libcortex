@@ -367,7 +367,8 @@ static char xcb_randr_test_handler(struct crtx_event *event, void *userdata, voi
 	
 	crtx_print_dict(dict);
 	
-	crtx_free_dict(dict);
+// 	crtx_free_dict(dict);
+	crtx_dict_unref(dict);
 	
 	return 0;
 }

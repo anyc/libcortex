@@ -29,6 +29,8 @@ struct crtx_cache {
 	struct crtx_dict *config;
 	struct crtx_dict *entries;
 	
+	get_time_cb_t get_time;
+	
 	pthread_mutex_t mutex;
 };
 
@@ -41,6 +43,15 @@ struct crtx_cache_task {
 	miss_cb_t on_miss;
 	add_cb_t on_add; // can prevent adding entries to the cache
 	
+};
+
+typedef char (*create_key_action_cb_t)(struct crtx_event *event, struct crtx_dict_item *key, char *add);
+struct crtx_presence_cache_task {
+	struct crtx_cache *cache;
+	
+	create_key_action_cb_t create_key_action;
+	match_cb_t match_event;
+	
 	get_time_cb_t get_time;
 };
 
@@ -49,7 +60,7 @@ struct crtx_task *create_response_cache_task(char *signature, create_key_cb_t cr
 void free_response_cache(struct crtx_cache *dc);
 struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache *rc, struct crtx_dict_item *key, struct crtx_event *event);
 struct crtx_dict_item * rcache_match_cb_t_strcmp(struct crtx_cache *rc, struct crtx_dict_item *key, struct crtx_event *event);
-struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *entry_data);
+struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *entry_data);
 char crtx_load_cache(struct crtx_cache *cache, char *path);
 char crtx_cache_no_add(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event);
 char crtx_cache_on_hit(struct crtx_cache_task *rc, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry);
@@ -58,4 +69,4 @@ void crtx_flush_entries(struct crtx_cache *dc);
 void crtx_cache_add_on_miss(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event);
 char crtx_cache_update_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry);
 
-struct crtx_task *crtx_create_presence_cache_task(char *id, create_key_cb_t create_key);
+struct crtx_task *crtx_create_presence_cache_task(char *id, create_key_action_cb_t create_key);

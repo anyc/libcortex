@@ -5,6 +5,7 @@
 
 #include "core.h"
 #include "udev.h"
+#include "dict.h"
 
 // char *udev_msg_etype[] = { UDEV_MSG_ETYPE, 0 };
 
@@ -12,22 +13,29 @@
  * udev_device_get_sysattr_value() are UTF-8 encoded.
  */
 
-struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_raw2dict_attr_req *r2ds) {
+struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_raw2dict_attr_req *r2ds, char make_persistent) {
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di, *sdi;
 	struct crtx_udev_raw2dict_attr_req *i;
 	char **a;
 	const char *subsystem, *device_type, *value;
 	struct udev_device *dev, *new_dev;
+	int flags;
+	
 	
 	dev = (struct udev_device *) event->data.pointer;
 	
 	dict = crtx_init_dict(0, 0, 0);
 	
+	if (make_persistent)
+		flags = CRTX_DIF_CREATE_DATA_COPY;
+	else
+		flags = CRTX_DIF_DONT_FREE_DATA;
+	
 	value = udev_device_get_syspath(dev);
 	if (value) {
 		di = crtx_alloc_item(dict);
-		crtx_fill_data_item(di, 's', "SYSPATH", value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
+		crtx_fill_data_item(di, 's', "SYSPATH", value, strlen(value), flags);
 	}
 	
 	// get only requested or all attributes
@@ -35,25 +43,29 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 		value = udev_device_get_devnode(dev);
 		if (value) {
 			di = crtx_alloc_item(dict);
-			crtx_fill_data_item(di, 's', "NODE", value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
+			crtx_fill_data_item(di, 's', "NODE", value, strlen(value), flags);
 		}
 		
 		value = udev_device_get_subsystem(dev);
 		if (value) {
 			di = crtx_alloc_item(dict);
-			crtx_fill_data_item(di, 's', "SUBSYSTEM", value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
+			crtx_fill_data_item(di, 's', "SUBSYSTEM", value, strlen(value), flags);
 		}
 		
 		value = udev_device_get_devtype(dev);
 		if (value) {
 			di = crtx_alloc_item(dict);
-			crtx_fill_data_item(di, 's', "DEVTYPE", value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
+			crtx_fill_data_item(di, 's', "DEVTYPE", value, strlen(value), flags);
 		}
 		
 		value = udev_device_get_action(dev);
 		if (value) {
 			di = crtx_alloc_item(dict);
-			crtx_fill_data_item(di, 's', "ACTION", value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
+			crtx_fill_data_item(di, 's', "ACTION", value, strlen(value), flags);
+		} else {
+			// if we query existing devices at startup, there is no action field
+			di = crtx_alloc_item(dict);
+			crtx_fill_data_item(di, 's', "ACTION", "initial", strlen("initial"), flags);
 		}
 		
 		i = r2ds;
@@ -85,12 +97,12 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 				value = udev_device_get_sysattr_value(dev, *a);
 				if (value) {
 					sdi = crtx_alloc_item(di->dict);
-					crtx_fill_data_item(sdi, 's', *a, value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
+					crtx_fill_data_item(sdi, 's', *a, value, strlen(value), flags);
 				} else {
 					value = udev_device_get_property_value(dev, *a);
 					if (value) {
 						sdi = crtx_alloc_item(di->dict);
-						crtx_fill_data_item(sdi, 's', *a, value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
+						crtx_fill_data_item(sdi, 's', *a, value, strlen(value), flags);
 					}
 				}
 				
@@ -106,7 +118,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 // 				
 // 				di = crtx_alloc_item(dict);
 // 				if (value)
-// 					crtx_fill_data_item(di, 's', key, value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
+// 					crtx_fill_data_item(di, 's', key, value, strlen(value), flags);
 // 			}
 // 			
 			i++;
@@ -121,7 +133,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 			
 			di = crtx_alloc_item(dict);
 			if (value)
-				crtx_fill_data_item(di, 's', key, value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
+				crtx_fill_data_item(di, 's', key, value, strlen(value), flags);
 		}
 	}
 	
@@ -132,7 +144,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 void udev_event_before_release_cb(struct crtx_event *event) {
 	struct udev_device *dev;
 	
-	dev = (struct udev_device *) event->data.pointer;
+	dev = (struct udev_device *) crtx_event_get_ptr(event);
 	udev_device_unref(dev);
 }
 
@@ -297,11 +309,16 @@ static char udev_test_handler(struct crtx_event *event, void *userdata, void **s
 	
 // 	dev = (struct udev_device *) event->data.pointer;
 	
-	dict = crtx_udev_raw2dict(event, r2ds);
+	dict = crtx_udev_raw2dict(event, r2ds, 0);
 	
 	crtx_print_dict(dict);
 	
-	crtx_free_dict(dict);
+// 	char r, *s;
+// 	r = crtx_dict_locate_value(dict, "usb-usb_device/idVendor", 's', &s, sizeof(void*));
+// 	printf("%d %s\n", r, s);
+	
+// 	crtx_free_dict(dict);
+	crtx_dict_unref(dict);
 	
 	return 0;
 }

@@ -109,6 +109,8 @@ char crtx_resize_dict(struct crtx_dict *dict, size_t n_items) {
 		return 1;
 	}
 	
+// 	printf("resize %d -> %d\n", dict->signature_length, n_items);
+	
 	if (dict->size && dict->size != sizeof(struct crtx_dict)+dict->signature_length*sizeof(struct crtx_dict_item)) {
 		ERROR("TODO handle payload in crtx_resize_dict (%zu != %zu)\n", dict->size, sizeof(struct crtx_dict)+dict->signature_length*sizeof(struct crtx_dict_item));
 	}
@@ -147,9 +149,21 @@ struct crtx_dict_item * crtx_alloc_item(struct crtx_dict *dict) {
 // 	dict->items[dict->signature_length-1].flags = CRTX_DIF_LAST_ITEM;
 // 	return &dict->items[dict->signature_length-1];
 	
-	crtx_resize_dict(dict, dict->signature_length+1);
+	struct crtx_dict_item *di;
 	
-	return &dict->items[dict->signature_length-1];
+	di = crtx_get_first_item(dict);
+	
+	while (di && di->type != 0) {
+		di = crtx_get_next_item(dict, di);
+	}
+	
+	if (!di) {
+		crtx_resize_dict(dict, dict->signature_length+1);
+		
+		return &dict->items[dict->signature_length-1];
+	} else {
+		return di;
+	}
 }
 
 struct crtx_dict * crtx_init_dict(char *signature, uint32_t sign_length, size_t payload_size) {
@@ -169,10 +183,12 @@ struct crtx_dict * crtx_init_dict(char *signature, uint32_t sign_length, size_t 
 	ds->signature = signature;
 	ds->signature_length = sign_length;
 	ds->size = size;
+	ds->ref_count = 1;
+	INIT_MUTEX(ds->mutex);
 	
 	if (sign_length) {
 // 		ds->items = (struct crtx_dict_item *) ((char*) ds + sizeof(struct crtx_dict));
-		ds->items = (struct crtx_dict_item *) malloc(sign_length * sizeof(struct crtx_dict_item));
+		ds->items = (struct crtx_dict_item *) calloc(1, sign_length * sizeof(struct crtx_dict_item));
 		
 		ds->items[sign_length-1].flags |= CRTX_DIF_LAST_ITEM;
 	}
@@ -299,7 +315,8 @@ void crtx_free_dict_item(struct crtx_dict_item *di) {
 			di->string = 0;
 			break;
 		case 'D':
-			crtx_free_dict(di->dict);
+// 			crtx_free_dict(di->dict);
+			crtx_dict_unref(di->dict);
 			di->dict = 0;
 			break;
 	}
@@ -307,15 +324,12 @@ void crtx_free_dict_item(struct crtx_dict_item *di) {
 
 void crtx_free_dict(struct crtx_dict *ds) {
 	struct crtx_dict_item *di;
-// 	char *s;
 	size_t i;
 	
 	if (!ds)
 		return;
 	
-// 	s = ds->signature;
 	di = ds->items;
-// 	while (*s) {
 	for (i=0; i < ds->signature_length; i++) {
 		crtx_free_dict_item(di);
 		
@@ -323,7 +337,6 @@ void crtx_free_dict(struct crtx_dict *ds) {
 			break;
 		
 		di++;
-// 		s++;
 	}
 	
 	free(ds->items);
@@ -347,9 +360,9 @@ void crtx_print_dict_item(struct crtx_dict_item *di, unsigned char level) {
 			if (di->dict)
 				crtx_print_dict_rec(di->dict, level+1);
 			else
-				INFO("(null)");
+				INFO("(null)\n");
 			break;
-		default: ERROR("print_dict: unknown type '%c'", di->type); break;
+		default: ERROR("print_dict: unknown type '%c'\n", di->type); break;
 	}
 	
 }
@@ -432,11 +445,14 @@ char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size
 }
 
 struct crtx_dict_item *crtx_get_first_item(struct crtx_dict *ds) {
-	return ds?ds->items:0;
+	if (ds && ds->items)
+		return ds->items;
+	else
+		return 0;
 }
 
 struct crtx_dict_item *crtx_get_next_item(struct crtx_dict *ds, struct crtx_dict_item *di) {
-	if (! CRTX_DIF_IS_LAST(di))
+	if (! CRTX_DIF_IS_LAST(di) && (&ds->items[ds->signature_length] > di+1))
 		return di+1;
 	else
 		return 0;
@@ -1030,9 +1046,13 @@ char crtx_dict_calc_payload_size(struct crtx_dict *orig, size_t *size) {
 // }
 
 void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src, char data_only) {
+	dst->flags = 0;
+	
 	switch (src->type) {
 		case 'D':
-			dst->dict = crtx_dict_copy(src->dict);
+// 			dst->dict = crtx_dict_copy(src->dict);
+			crtx_dict_ref(src->dict);
+			dst->dict = src->dict;
 			break;
 		case 's':
 				dst->string = crtx_stracpy(src->string, 0);
@@ -1046,33 +1066,38 @@ void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src,
 				dst->pointer = src->pointer;
 			}
 			
-			dst->size = src->size;
+// 			dst->size = src->size;
 			break;
 		default:
 			{
-				char *key;
-				unsigned char flags;
+				// TODO assumption that uint64 is one of the largest types
+				dst->uint64 = src->uint64;
 				
-				key = dst->key;
-				flags = dst->flags;
-				
-				// copy complete struct as we can't copy the anonymous union
-				memcpy(dst, src, sizeof(struct crtx_dict_item));
-				
-				dst->key = key;
-				dst->flags = flags;
+// 				char *key;
+// 				unsigned char flags;
+// 				
+// 				key = dst->key;
+// 				flags = dst->flags;
+// 				
+// 				// copy complete struct as we can't copy the anonymous union
+// 				memcpy(dst, src, sizeof(struct crtx_dict_item));
+// 				
+// 				dst->key = key;
+// 				dst->flags = flags;
 			}
 			return;
 	}
 	
 	if (!data_only) {
-		dst->flags = src->flags;
+// 		dst->flags = src->flags;
 		
 		if (src->key) {
-			if (src->flags & CRTX_DIF_ALLOCATED_KEY)
+			if (src->flags & CRTX_DIF_ALLOCATED_KEY) {
+				dst->flags |= CRTX_DIF_ALLOCATED_KEY;
 				dst->key = crtx_stracpy(src->key, 0);
-			else
+			} else {
 				dst->key = src->key;
+			}
 		}
 	}
 	
@@ -1080,32 +1105,32 @@ void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src,
 	dst->size = src->size;
 }
 
-struct crtx_dict *crtx_dict_copy(struct crtx_dict *orig) {
-	size_t psize;
-	char ret;
-	struct crtx_dict *dict;
-	struct crtx_dict_item *oitem, *nitem;
-	
-	printf("coipy\n");
-	
-	psize = 0;
-	ret = crtx_dict_calc_payload_size(orig, &psize);
-	if (!ret)
-		ERROR("error while calculating dict payload size (sign \"%s\")\n", orig->signature);
-	
-	dict = crtx_init_dict(orig->signature, orig->signature_length, psize);
-	
-	oitem = crtx_get_first_item(orig);
-	nitem = crtx_get_first_item(dict);
-	while (oitem) {
-		crtx_dict_copy_item(nitem, oitem, 0);
-		
-		oitem = crtx_get_next_item(orig, oitem);
-		nitem = crtx_get_next_item(dict, nitem);
-	}
-	
-	return dict;
-}
+// struct crtx_dict *crtx_dict_copy(struct crtx_dict *orig) {
+// 	size_t psize;
+// 	char ret;
+// 	struct crtx_dict *dict;
+// 	struct crtx_dict_item *oitem, *nitem;
+// 	
+// 	printf("coipy\n");
+// 	
+// 	psize = 0;
+// 	ret = crtx_dict_calc_payload_size(orig, &psize);
+// 	if (!ret)
+// 		ERROR("error while calculating dict payload size (sign \"%s\")\n", orig->signature);
+// 	
+// 	dict = crtx_init_dict(orig->signature, orig->signature_length, psize);
+// 	
+// 	oitem = crtx_get_first_item(orig);
+// 	nitem = crtx_get_first_item(dict);
+// 	while (oitem) {
+// 		crtx_dict_copy_item(nitem, oitem, 0);
+// 		
+// 		oitem = crtx_get_next_item(orig, oitem);
+// 		nitem = crtx_get_next_item(dict, nitem);
+// 	}
+// 	
+// 	return dict;
+// }
 
 // void crtx_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src) {
 // 	if (src->key && src->flags & CRTX_DIF_ALLOCATED_KEY) {
@@ -1137,3 +1162,79 @@ struct crtx_dict *crtx_dict_copy(struct crtx_dict *orig) {
 // 	}
 // }
 
+void crtx_dict_ref(struct crtx_dict *dict) {
+	LOCK(dict->mutex);
+	dict->ref_count++;
+	UNLOCK(dict->mutex);
+}
+
+void crtx_dict_unref(struct crtx_dict *dict) {
+	LOCK(dict->mutex);
+	dict->ref_count--;
+	
+	if (dict->ref_count == 0) {
+// 		printf("unref free dict %p\n", dict);
+		crtx_free_dict(dict);
+	} else {
+		UNLOCK(dict->mutex);
+	}
+}
+
+struct crtx_dict_item * crtx_dict_locate(struct crtx_dict *dict, char *path) {
+	char *p, *sep, *buf;
+	struct crtx_dict_item *di;
+	size_t buflen;
+	
+	buflen = strlen(path)+1;
+	buf = (char*) malloc(buflen);
+	
+	p = path;
+	while (1) {
+		sep = strchr(p, '/');
+		
+		if (sep) {
+			memcpy(buf, p, sep-p);
+			buf[sep-p] = 0;
+		} else {
+			strcpy(buf, p);
+		}
+		
+		di = crtx_get_item(dict, buf);
+		if (!di)
+			break;
+		if (sep == 0)
+			break;
+		
+		if (di->type != 'D') {
+			di = 0;
+			break;
+		}
+		
+		dict = di->dict;
+		p = sep+1;
+	}
+	
+	free(buf);
+	return di;
+}
+
+char crtx_dict_locate_value(struct crtx_dict *dict, char *path, char type, void *buffer, size_t buffer_size) {
+	struct crtx_dict_item * di;
+	char r;
+	
+	di = crtx_dict_locate(dict, path);
+	if (!di)
+		return 1;
+	
+	r = crtx_get_item_value(di, type,  buffer, buffer_size);
+	return !r;
+}
+
+void crtx_dict_remove_item(struct crtx_dict *dict, char *key) {
+	struct crtx_dict_item *di;
+	
+	di = crtx_get_item(dict, key);
+	
+	crtx_free_dict_item(di);
+	memset(di, 0, sizeof(struct crtx_dict_item));
+}

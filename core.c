@@ -246,34 +246,34 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 	if (!listener->el_payload.fd && !listener->thread) {
 		DBG("no method to start listener \"%s\" provided\n", listener->id);
 		
-		UNLOCK(listener->state_mutex);
-		return -1;
-	}
-	
-	mode = crtx_get_mode(listener->mode);
-	
-	if (mode == CRTX_PREFER_ELOOP && listener->el_payload.fd <= 0) {
-		ERROR("listener mode set to \"event loop\" but not event loop data available\n");
-		mode = CRTX_PREFER_THREAD;
-	}
-	if (mode == CRTX_PREFER_THREAD && !listener->thread) {
-		ERROR("listener mode set to \"thread\" but not thread data available\n");
-		mode = CRTX_PREFER_ELOOP;
-	}
-	
-	if (mode == CRTX_PREFER_THREAD) {
-		start_thread(listener->thread);
-	} else 
-	if (mode == CRTX_PREFER_ELOOP) {
-		if (!crtx_root->event_loop.listener)
-			crtx_get_event_loop();
-		
-		DBG("start listener \"%s\"\n", listener->id);
-		crtx_root->event_loop.add_fd(
-			&crtx_root->event_loop.listener->parent,
-			&listener->el_payload);
+// 		UNLOCK(listener->state_mutex);
+// 		return -1;
 	} else {
-		ERROR("invalid start listener mode: %d\n", mode);
+		mode = crtx_get_mode(listener->mode);
+		
+		if (mode == CRTX_PREFER_ELOOP && listener->el_payload.fd <= 0) {
+			ERROR("listener mode set to \"event loop\" but not event loop data available\n");
+			mode = CRTX_PREFER_THREAD;
+		}
+		if (mode == CRTX_PREFER_THREAD && !listener->thread) {
+			ERROR("listener mode set to \"thread\" but not thread data available\n");
+			mode = CRTX_PREFER_ELOOP;
+		}
+		
+		if (mode == CRTX_PREFER_THREAD) {
+			start_thread(listener->thread);
+		} else 
+		if (mode == CRTX_PREFER_ELOOP) {
+			if (!crtx_root->event_loop.listener)
+				crtx_get_event_loop();
+			
+			DBG("start listener \"%s\"\n", listener->id);
+			crtx_root->event_loop.add_fd(
+				&crtx_root->event_loop.listener->parent,
+				&listener->el_payload);
+		} else {
+			ERROR("invalid start listener mode: %d\n", mode);
+		}
 	}
 	
 	listener->state = CRTX_LSTNR_STARTED;
@@ -765,9 +765,10 @@ struct crtx_event *crtx_create_event(char *type, void *data, size_t data_size) {
 	
 	event->type = type;
 	
-	event->data.pointer = data;
+// 	event->data.pointer = data;
+// 	event->data.type = 'p';
+	crtx_event_set_data(event, data, 0, 0);
 	event->data.size = data_size;
-	event->data.type = 'p';
 	
 // 	if (complex_data_layout) {
 // 		crtx_dict_upgrade_event_data(event, 0);
@@ -1415,7 +1416,7 @@ void crtx_event_set_data(struct crtx_event *event, void *raw_pointer, struct crt
 		switch (event->data.type) {
 			case 0:
 			case 'p':
-				event->data.key = "data";
+				event->data.key = "raw";
 				event->data.type = 'p';
 				event->data.size = 0;
 				event->data.flags = 0;
@@ -1437,9 +1438,11 @@ void crtx_event_set_data(struct crtx_event *event, void *raw_pointer, struct crt
 			
 			di = crtx_get_item_by_idx(upgraded_dict, 0);
 			
-			crtx_dict_copy_item(di, &event->data, 0);
+// 			crtx_dict_copy_item(di, &event->data, 0);
+			memcpy(di, &event->data, sizeof(struct crtx_dict_item));
 			
 			di = crtx_get_item_by_idx(upgraded_dict, 1);
+			di->key = "data";
 			di->type = 'D';
 			di->dict = data_dict;
 			
@@ -1449,16 +1452,16 @@ void crtx_event_set_data(struct crtx_event *event, void *raw_pointer, struct crt
 			event->data.flags = 0;
 			event->data.dict = upgraded_dict;
 		} else
-			if (event->data.type == 'D') {
-				if (strcmp(event->data.key, "data"))
-					ERROR("invalid event data structure\n");
-				
-				di = crtx_get_item_by_idx(event->data.dict, 1);
-				di->dict = data_dict;
-				
-				if (event->data.dict->signature_length < 2 + n_additional_fields)
-					crtx_resize_dict(event->data.dict, 2 + n_additional_fields);
-			}
+		if (event->data.type == 'D') {
+			if (strcmp(event->data.key, "data"))
+				ERROR("invalid event data structure\n");
+			
+			di = crtx_get_item_by_idx(event->data.dict, 1);
+			di->dict = data_dict;
+			
+			if (event->data.dict->signature_length < 2 + n_additional_fields)
+				crtx_resize_dict(event->data.dict, 2 + n_additional_fields);
+		}
 	}
 	
 	UNLOCK(event->mutex);
@@ -1512,7 +1515,8 @@ void crtx_event_get_payload(struct crtx_event *event, char *id, void **raw_point
 				*dict = 0;
 				return;
 			}
-		} else {
+		} else
+		if (event->data.type != 'D') {
 			ERROR("unknown event data type %d\n", event->data.type);
 			*dict = 0;
 			return;
@@ -1523,3 +1527,21 @@ void crtx_event_get_payload(struct crtx_event *event, char *id, void **raw_point
 	}
 }
 
+struct crtx_dict_item *crtx_event_get_value_by_key(struct crtx_event *event, char *id, char *key) {
+	struct crtx_dict *dict;
+	
+	crtx_event_get_payload(event, id, 0, &dict);
+	
+	if (!dict)
+		return 0;
+	
+	return crtx_get_item(dict, key);
+}
+
+void *crtx_event_get_ptr(struct crtx_event *event) {
+	void *ptr;
+	
+	crtx_event_get_payload(event, 0, &ptr, 0);
+	
+	return ptr;
+}
