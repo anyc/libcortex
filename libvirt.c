@@ -27,6 +27,9 @@ struct libvirt_eventloop_wrapper {
 	void * opaque;
 	
 	virFreeCallback ff;
+	
+	char delete;
+	struct crtx_ll *llentry;
 };
 
 static struct crtx_ll * event_list = 0;
@@ -61,6 +64,18 @@ static int elw_virEventPollFromNativeEvents(int events) {
 	return ret;
 }
 
+static void elw_fd_cleanup(struct libvirt_eventloop_wrapper* wrap) {
+	if (wrap->ff)
+		wrap->ff(wrap->opaque);
+	
+	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
+	
+	crtx_ll_unlink(&event_list, wrap->llentry);
+	
+	free(wrap->llentry);
+	free(wrap);
+}
+
 static void elw_fd_callback(struct crtx_event_loop_payload *el_payload) {
 	struct libvirt_eventloop_wrapper *wrap;
 	struct epoll_event *epoll_event;
@@ -70,6 +85,9 @@ static void elw_fd_callback(struct crtx_event_loop_payload *el_payload) {
 	epoll_event = (struct epoll_event *) el_payload->el_data;
 	
 	wrap->event_cb(wrap->id, wrap->el_payload.fd, elw_virEventPollFromNativeEvents(epoll_event->events), wrap->opaque);
+	
+	if (wrap->delete)
+		elw_fd_cleanup(wrap);
 }
 
 static void elw_fd_error_cb(struct crtx_event_loop_payload *el_payload, void *data) {
@@ -83,7 +101,9 @@ static void elw_fd_error_cb(struct crtx_event_loop_payload *el_payload, void *da
 	DBG("libvirt event loop error callback for fd %d\n", el_payload->fd);
 	
 	wrap->event_cb(wrap->id, wrap->el_payload.fd, elw_virEventPollFromNativeEvents(epoll_event->events), wrap->opaque);
-// 	wrap->ff(wrap->opaque);
+	
+	if (wrap->delete)
+		elw_fd_cleanup(wrap);
 }
 
 static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback cb, void * opaque, virFreeCallback ff) {
@@ -116,7 +136,7 @@ static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback c
 	
 	DBG("libvirt: new fd %d (id %d flag %d)\n", fd, wrap->id, wrap->el_payload.event_flags);
 	
-	crtx_ll_append_new(&event_list, wrap);
+	wrap->llentry = crtx_ll_append_new(&event_list, wrap);
 	
 	crtx_root->event_loop.add_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
 	
@@ -164,20 +184,36 @@ static int elw_virEventRemoveHandleFunc(int watch) {
 	// this deadlocks. crtx calls an fd handler in libvirt which calls this function, maybe both reference the same
 	// libvirt object
 // 	wrap->ff(wrap->opaque);
+	wrap->delete = 1;
 	
 	// 	printf("rem id %d\n", wrap->id);
 	DBG("libvirt: remove fd %d (id %d)\n", wrap->el_payload.fd, wrap->id);
 	
-	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
-	
-	crtx_ll_unlink(&event_list, it);
-	
-	free(it);
-	free(wrap);
+// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
+// 	
+// 	crtx_ll_unlink(&event_list, it);
+// 	
+// 	free(it);
+// 	free(wrap);
 	
 	
 	
 	return 0;
+}
+
+
+static void elw_timer_cleanup(struct libvirt_eventloop_wrapper *wrap) {
+	if (wrap->ff)
+		wrap->ff(wrap->opaque);
+	
+// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
+	
+	crtx_free_listener(&wrap->timer_listener.parent);
+	
+	crtx_ll_unlink(&timeout_list, wrap->llentry);
+	free(wrap->llentry);
+	
+	free(wrap);
 }
 
 static char elw_timer_event_cb(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -186,6 +222,9 @@ static char elw_timer_event_cb(struct crtx_event *event, void *userdata, void **
 	wrap = (struct libvirt_eventloop_wrapper*) userdata;
 	printf("timer event id %d (%p)\n", wrap->id, wrap->opaque);
 	wrap->time_cb(wrap->id, wrap->opaque);
+	
+	if (wrap->delete)
+		elw_timer_cleanup(wrap);
 	
 	return 1;
 }
@@ -220,7 +259,7 @@ static int elw_virEventAddTimeoutFunc(int timeout, virEventTimeoutCallback cb, v
 	
 	DBG("libvirt: new timer %d (id %d)\n", timeout, wrap->id);
 	
-	crtx_ll_append_new(&timeout_list, wrap);
+	wrap->llentry = crtx_ll_append_new(&timeout_list, wrap);
 	
 	struct crtx_listener_base *blist;
 	
@@ -338,13 +377,14 @@ static int elw_virEventRemoveTimeoutFunc(int timer) {
 	DBG("libvirt: remove timer id %d\n", wrap->id);
 	
 // 	wrap->ff(wrap->opaque);
+	wrap->delete = 1;
 	
 // 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
-	crtx_free_listener(&wrap->timer_listener.parent);
-	
-	crtx_ll_unlink(&timeout_list, it);
-	free(it);
-// 	free(wrap);
+
+// 	crtx_free_listener(&wrap->timer_listener.parent);
+// 	
+// 	crtx_ll_unlink(&timeout_list, it);
+// 	free(it);
 	
 // 	DBG("libvirt: del timeout\n");
 	
