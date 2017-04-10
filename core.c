@@ -222,8 +222,10 @@ void crtx_printf_va(char level, char *format, va_list va) {
 	if (level == CRTX_ERR) {
 		vfprintf(stderr, format, va);
 	} else {
-		if (level <= crtx_verbosity)
+		if (level <= crtx_verbosity) {
 			vfprintf(stdout, format, va);
+			fflush(stdout);
+		}
 	}
 }
 

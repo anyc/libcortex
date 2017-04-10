@@ -187,7 +187,7 @@ static char udev_event_handler(struct crtx_event *event, void *userdata, void **
 	
 	dom = virDomainLookupByName(lvlist.conn, vm_name);
 	if (dom == NULL) {
-		fprintf(stderr, "Failed to find Domain \"%s\"\n", vm_name);
+		ERROR("Failed to find Domain \"%s\"\n", vm_name);
 		return 0;
 	}
 	
@@ -198,7 +198,7 @@ static char udev_event_handler(struct crtx_event *event, void *userdata, void **
 		return 0;
 	}
 	
-	if (!strcmp(crtx_get_string(dict, "ACTION"), "add")) {
+	if (!strcmp(action, "add") || !strcmp(action, "initial")) {
 		if (is_dev_attached(dom, vendor, product)) {
 			INFO("dev already present\n");
 		} else {
@@ -210,7 +210,7 @@ static char udev_event_handler(struct crtx_event *event, void *userdata, void **
 				ERROR("virDomainAttachDevice failed: %d\n", ret);
 			}
 		}
-	} else if (!strcmp(crtx_get_string(dict, "ACTION"), "remove")) {
+	} else if (!strcmp(action, "remove")) {
 		if (!is_dev_attached(dom, vendor, product)) {
 			INFO("dev not present\n");
 		} else {
