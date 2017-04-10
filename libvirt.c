@@ -68,7 +68,7 @@ static void elw_fd_cleanup(struct libvirt_eventloop_wrapper* wrap) {
 	if (wrap->ff)
 		wrap->ff(wrap->opaque);
 	
-	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
+// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
 	
 	crtx_ll_unlink(&event_list, wrap->llentry);
 	
@@ -189,8 +189,8 @@ static int elw_virEventRemoveHandleFunc(int watch) {
 	// 	printf("rem id %d\n", wrap->id);
 	DBG("libvirt: remove fd %d (id %d)\n", wrap->el_payload.fd, wrap->id);
 	
-// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
-// 	
+	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
+	
 // 	crtx_ll_unlink(&event_list, it);
 // 	
 // 	free(it);
@@ -206,9 +206,7 @@ static void elw_timer_cleanup(struct libvirt_eventloop_wrapper *wrap) {
 	if (wrap->ff)
 		wrap->ff(wrap->opaque);
 	
-// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
-	
-	crtx_free_listener(&wrap->timer_listener.parent);
+// 	crtx_free_listener(&wrap->timer_listener.parent);
 	
 	crtx_ll_unlink(&timeout_list, wrap->llentry);
 	free(wrap->llentry);
@@ -220,7 +218,7 @@ static char elw_timer_event_cb(struct crtx_event *event, void *userdata, void **
 	struct libvirt_eventloop_wrapper *wrap;
 	
 	wrap = (struct libvirt_eventloop_wrapper*) userdata;
-	printf("timer event id %d (%p)\n", wrap->id, wrap->opaque);
+// 	printf("timer event id %d (%p)\n", wrap->id, wrap->opaque);
 	wrap->time_cb(wrap->id, wrap->opaque);
 	
 	if (wrap->delete)
@@ -229,9 +227,9 @@ static char elw_timer_event_cb(struct crtx_event *event, void *userdata, void **
 	return 1;
 }
 
-void elw_free_timer_lstnr(struct crtx_listener_base *base, void *userdata) {
-	free(userdata);
-}
+// void elw_free_timer_lstnr(struct crtx_listener_base *base, void *userdata) {
+// 	free(userdata);
+// }
 
 static int elw_virEventAddTimeoutFunc(int timeout, virEventTimeoutCallback cb, void * opaque, virFreeCallback ff) {
 	struct libvirt_eventloop_wrapper *wrap;
@@ -290,8 +288,8 @@ static int elw_virEventAddTimeoutFunc(int timeout, virEventTimeoutCallback cb, v
 	wrap->timer_listener.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
 	wrap->timer_listener.settime_flags = 0;
 	
-	wrap->timer_listener.parent.free = &elw_free_timer_lstnr;
-	wrap->timer_listener.parent.free_userdata = wrap;
+// 	wrap->timer_listener.parent.free = &elw_free_timer_lstnr;
+// 	wrap->timer_listener.parent.free_userdata = wrap;
 	
 	blist = create_listener("timer", &wrap->timer_listener);
 	if (!blist) {
@@ -381,8 +379,8 @@ static int elw_virEventRemoveTimeoutFunc(int timer) {
 	
 // 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
 
-// 	crtx_free_listener(&wrap->timer_listener.parent);
-// 	
+	crtx_free_listener(&wrap->timer_listener.parent);
+	
 // 	crtx_ll_unlink(&timeout_list, it);
 // 	free(it);
 	

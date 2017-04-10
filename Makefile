@@ -64,4 +64,7 @@ tests: libcrtx.so $(TESTS)
 # timer.test: CFLAGS+=-DCRTX_TEST
 # timer.test: timer.o
 
+crtx_examples:
+	$(MAKE) -C examples
+
 -include $(local_mk_rules)
