@@ -117,7 +117,7 @@ static void inspect_obj(json_object * jobj, struct crtx_dict *dict) {
 
 void crtx_dict_parse_json(struct crtx_dict *dict, char *string) {
 	enum json_tokener_error error;
-// 	json_object * jobj = json_tokener_parse(string);
+	
 	json_object * jobj = json_tokener_parse_verbose(string, &error);
 	
 	if (!jobj) {

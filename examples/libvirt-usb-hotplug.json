@@ -1,0 +1,11 @@
+{
+	"comment": "each VM contains a list of [vendorId, productId] lists",
+	"myVM1": [
+			["0123", "4567"],
+			["7654", "3210"],
+			],
+	"myVM2": [
+			["0123", "4567"],
+			["7654", "3210"],
+			],
+}

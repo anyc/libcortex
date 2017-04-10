@@ -32,9 +32,9 @@
 #endif
 
 #ifndef SEGV_ON_ERROR
-	#define ERROR(fmt, ...) do { crtx_printf(CRTX_ERR, "\x1b[31m"); crtx_printf(CRTX_DBG, fmt, ##__VA_ARGS__); crtx_printf(CRTX_DBG, "\x1b[0m"); } while (0)
+	#define ERROR(fmt, ...) do { crtx_printf(CRTX_ERR, "\x1b[31m"); crtx_printf(CRTX_ERR, fmt, ##__VA_ARGS__); crtx_printf(CRTX_ERR, "\x1b[0m"); } while (0)
 #else
-	#define ERROR(fmt, ...) do { crtx_printf(CRTX_ERR, "\x1b[31m"); crtx_printf(CRTX_DBG, fmt, ##__VA_ARGS__); crtx_printf(CRTX_DBG, "\x1b[0m"); char *d = 0; printf("%c", *d); } while (0)
+	#define ERROR(fmt, ...) do { crtx_printf(CRTX_ERR, "\x1b[31m"); crtx_printf(CRTX_ERR, fmt, ##__VA_ARGS__); crtx_printf(CRTX_ERR, "\x1b[0m"); char *d = 0; printf("%c", *d); } while (0)
 #endif
 
 #define ASSERT(x) do { if (!(x)) { ERROR(__FILE__ ":" STRINGIFY(__LINE__) " assertion failed: " #x "\n"); exit(1); } } while (0)
