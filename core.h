@@ -255,6 +255,18 @@ struct crtx_event_loop {
 	char start_thread;
 };
 
+struct crtx_lstnr_plugin {
+	char *path;
+	char *basename;
+	
+	void *handle;
+	
+	char initialized;
+	char (*init)();
+	void (*finish)();
+	void (*get_listener_repository)(struct crtx_listener_repository **listener_repository, unsigned int *listener_repository_length);
+};
+
 struct crtx_root {
 	struct crtx_graph **graphs;
 	unsigned int n_graphs;

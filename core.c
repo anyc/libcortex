@@ -15,38 +15,54 @@
 #include "core.h"
 #include "socket.h"
 #include "socket_raw.h"
-#ifdef STATIC_SD_BUS
+#ifdef STATIC_sdbus
 #include "sd_bus.h"
+#include "sd_bus_notifications.h"
 #endif
-#ifdef STATIC_NF_QUEUE
+#ifdef STATIC_nf_queue
 #include "nf_queue.h"
 #endif
+#ifdef STATIC_readline
 #include "readline.h"
+#endif
 #include "controls.h"
 #include "fanotify.h"
 #include "inotify.h"
-#include "sd_bus_notifications.h"
 #include "threads.h"
 #include "signals.h"
 #include "timer.h"
+#ifdef STATIC_netlink_raw
 #include "netlink_raw.h"
-#ifdef STATIC_NETLINK_GE
+#endif
+#ifdef STATIC_netlink_ge
 #include "netlink_ge.h"
 #endif
 #include "epoll.h"
+#ifdef STATIC_evdev
 #include "evdev.h"
+#endif
 #include "udev.h"
-#ifdef STATIC_XCB_RANDR
+#ifdef STATIC_xcb_randr
 #include "xcb_randr.h"
 #endif
-#ifdef STATIC_PULSEAUDIO
+#ifdef STATIC_pulseaudio
 #include "pulseaudio.h"
 #endif
+#ifdef STATIC_can
 #include "can.h"
+#endif
+#ifdef STATIC_avahi
 #include "avahi.h"
+#endif
+#ifdef STATIC_uevents
 #include "uevents.h"
+#endif
+#ifdef STATIC_nl_route
 #include "nl_route.h"
+#endif
+#ifdef STATIC_libvirt
 #include "libvirt.h"
+#endif
 
 
 struct crtx_root crtx_global_root;
@@ -58,38 +74,52 @@ struct crtx_module static_modules[] = {
 	{"signals", &crtx_signals_init, &crtx_signals_finish},
 	{"socket", &crtx_socket_init, &crtx_socket_finish},
 	{"socket_raw", &crtx_socket_raw_init, &crtx_socket_raw_finish},
-#ifdef STATIC_SD_BUS
+#ifdef STATIC_sdbus
 	{"sdbus", &crtx_sdbus_init, &crtx_sdbus_finish},
 	{"sd_bus_notification", &crtx_sdbus_notification_init, &crtx_sdbus_notification_finish},
 #endif
-#ifdef STATIC_NF_QUEUE
+#ifdef STATIC_nfqueue
 	{"nf-queue", &crtx_nf_queue_init, &crtx_nf_queue_finish},
 #endif
+#ifdef STATIC_readline
 	{"readline", &crtx_readline_init, &crtx_readline_finish},
+#endif
 	{"fanotify", &crtx_fanotify_init, &crtx_fanotify_finish},
 	{"inotify", &crtx_inotify_init, &crtx_inotify_finish},
+#ifdef STATIC_netlink_raw
 	{"netlink_raw", &crtx_netlink_raw_init, &crtx_netlink_raw_finish},
-#ifdef STATIC_NETLINK_GE
+#endif
+#ifdef STATIC_netlink_ge
 	{"netlink_ge", &crtx_netlink_ge_init, &crtx_netlink_ge_finish},
 #endif
 	{"epoll", &crtx_epoll_init, &crtx_epoll_finish},
+#ifdef STATIC_evdev
 	{"evdev", &crtx_evdev_init, &crtx_evdev_finish},
+#endif
 	{"udev", &crtx_udev_init, &crtx_udev_finish},
-#ifdef STATIC_XCB_RANDR
+#ifdef STATIC_xcb_randr
 	{"xcb_randr", &crtx_xcb_randr_init, &crtx_xcb_randr_finish},
 #endif
-#ifdef STATIC_PULSEAUDIO
+#ifdef STATIC_pulseaudio
 	{"pulseaudio", &crtx_pa_init, &crtx_pa_finish},
 #endif
+#ifdef STATIC_can
 	{"can", &crtx_can_init, &crtx_can_finish},
+#endif
+#ifdef STATIC_avahi
 	{"avahi", &crtx_avahi_init, &crtx_avahi_finish},
+#endif
+#ifdef STATIC_uevents
 	{"uevents", &crtx_uevents_init, &crtx_uevents_finish},
+#endif
+#ifdef STATIC_nl_route
 	{"nl_route", &crtx_nl_route_init, &crtx_nl_route_finish},
+#endif
 	{0, 0}
 };
 
-struct crtx_listener_repository listener_factory[] = {
-#ifdef STATIC_NF_QUEUE
+struct crtx_listener_repository static_listener_repository[] = {
+#ifdef STATIC_nfqueue
 	{"nf_queue", &crtx_new_nf_queue_listener},
 #endif
 	{"fanotify", &crtx_new_fanotify_listener},
@@ -98,33 +128,57 @@ struct crtx_listener_repository listener_factory[] = {
 	{"socket_raw_server", &crtx_new_socket_raw_server_listener},
 	{"socket_client", &crtx_new_socket_client_listener},
 	{"socket_raw_client", &crtx_new_socket_raw_client_listener},
-#ifdef STATIC_SD_BUS
+#ifdef STATIC_sdbus
 	{"sd_bus_notification", &crtx_new_sd_bus_notification_listener},
 #endif
 	{"signals", &crtx_new_signals_listener},
+#ifdef STATIC_readline
 	{"readline", &crtx_new_readline_listener},
+#endif
 	{"timer", &crtx_new_timer_listener},
+#ifdef STATIC_netlink_raw
 	{"netlink_raw", &crtx_new_netlink_raw_listener},
-#ifdef STATIC_NETLINK_GE
+#endif
+#ifdef STATIC_netling_ge
 	{"genl", &crtx_new_genl_listener},
 #endif
 	{"epoll", &crtx_new_epoll_listener},
+#ifdef STATIC_evdev
 	{"evdev", &crtx_new_evdev_listener},
+#endif
 	{"udev", &crtx_new_udev_listener},
-#ifdef STATIC_XCB_RANDR
+#ifdef STATIC_xcb_randr
 	{"xcb_randr", &crtx_new_xcb_randr_listener},
 #endif
+#ifdef STATIC_sdbus
 	{"sdbus", &crtx_new_sdbus_listener},
-#ifdef STATIC_PULSEAUDIO
+#endif
+#ifdef STATIC_pulseaudio
 	{"pulseaudio", &crtx_new_pa_listener},
 #endif
+#ifdef STATIC_can
 	{"can", &crtx_new_can_listener},
+#endif
+#ifdef STATIC_avahi
 	{"avahi", &crtx_new_avahi_listener},
+#endif
+#ifdef STATIC_uevents
 	{"uevents", &crtx_new_uevents_listener},
+#endif
+#ifdef STATIC_nl_route
 	{"nl_route", &crtx_new_nl_route_listener},
+#endif
+#ifdef STATIC_libvirt
 	{"libvirt", &crtx_new_libvirt_listener},
+#endif
 	{0, 0}
 };
+
+struct crtx_listener_repository *listener_repository = 0;
+unsigned int listener_repository_length = 0;
+
+struct crtx_lstnr_plugin *plugins = 0;
+unsigned int n_plugins = 0;
 
 char * crtx_evt_control[] = { CRTX_EVT_MOD_INIT, CRTX_EVT_SHUTDOWN, 0 };
 char *crtx_evt_notification[] = { CRTX_EVT_NOTIFICATION, 0 };
@@ -310,22 +364,33 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 	DBG("new listener %s\n", id);
 	
 	lbase = 0;
-	l = listener_factory;
-	while (l->id) {
-		if (!strcmp(l->id, id)) {
-			lbase = l->create(options);
-			
-			if (!lbase) {
-				ERROR("creating listener \"%s\" failed\n", id);
-				return 0;
+	l = static_listener_repository;
+	while (l) {
+		while (l->id) {
+			if (!strcmp(l->id, id)) {
+				lbase = l->create(options);
+				
+				if (!lbase) {
+					ERROR("creating listener \"%s\" failed\n", id);
+					return 0;
+				}
+				
+				if (lbase->thread)
+					reference_signal(&lbase->thread->finished);
+				
+				break;
 			}
-			
-			if (lbase->thread)
-				reference_signal(&lbase->thread->finished);
-			
-			break;
+			l++;
 		}
-		l++;
+		if (lbase)
+			break;
+		
+		l = listener_repository;
+	}
+	
+	if (!lbase) {
+		ERROR("creating listener \"%s\" failed\n", id);
+		return 0;
 	}
 	
 	lbase->id = id;
@@ -1126,6 +1191,90 @@ static char handle_shutdown(struct crtx_event *event, void *userdata, void **ses
 	return 1;
 }
 
+
+#include <dlfcn.h>
+#include <dirent.h>
+static void load_plugin(char *path, char *basename) {
+	struct crtx_lstnr_plugin *p;
+	struct crtx_listener_repository *lrepo;
+	char buf[1024];
+	char plugin_name[1024];
+	size_t len;
+	
+	printf("load plugin \"%s\"\n", path);
+	
+	n_plugins++;
+	plugins = (struct crtx_lstnr_plugin*) realloc(plugins, sizeof(struct crtx_lstnr_plugin)*n_plugins);
+	p = &plugins[n_plugins-1];
+	
+	memset(p, 0, sizeof(struct crtx_lstnr_plugin));
+	p->path = path;
+	p->basename = basename;
+	p->handle = dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
+	
+	if (!p->handle)
+		return;
+	
+	len = strlen(basename);
+	if (len <= 11)
+		return;
+	
+	memcpy(plugin_name, basename+8, len - 8 - 3);
+	
+	p->initialized = 1;
+	snprintf(buf, 1024, "crtx_%s_init", plugin_name);
+	p->init = dlsym(p->handle, buf);
+	snprintf(buf, 1024, "crtx_%s_finish", plugin_name);
+	p->finish = dlsym(p->handle, buf);
+	snprintf(buf, 1024, "crtx_%s_get_listener_factory", plugin_name);
+	p->get_listener_repository = dlsym(p->handle, buf);
+	
+	if (p->init)
+		p->initialized = p->init();
+	
+	if (p->get_listener_repository) {
+		p->get_listener_repository(&listener_repository, &listener_repository_length);
+	} else {
+		void * create;
+		snprintf(buf, 1024, "crtx_new_%s_listener", plugin_name);
+		create = dlsym(p->handle, buf);
+		
+		if (create) {
+			listener_repository_length++;
+			listener_repository = (struct crtx_listener_repository*) realloc(listener_repository, sizeof(struct crtx_listener_repository)*listener_repository_length);
+			lrepo = &listener_repository[listener_repository_length-1];
+			
+			lrepo->id = crtx_stracpy(plugin_name, 0);
+			lrepo->create = create;
+		}
+	}
+}
+
+static void load_plugins(char * directory) {
+	DIR *dhandle;
+	struct dirent *dent;
+	
+	if (!directory)
+		return;
+	
+	dhandle = opendir(directory);
+	if (dhandle != NULL) {
+		while ((dent = readdir(dhandle)) != NULL) {
+			if (!strncmp(dent->d_name, "libcrtx_", 8)) {
+				char * fullname = (char*) malloc(strlen(directory)+strlen(dent->d_name)+2);
+				sprintf(fullname, "%s/%s", directory, dent->d_name);
+				
+				load_plugin(fullname, dent->d_name);
+			}
+		}
+		closedir(dhandle);
+	} else {
+		printf("cannot open plugin directory \"%s\"\n", directory);
+	}
+	
+	return;
+}
+
 #include <sys/types.h>
 #include <sys/stat.h>
 void crtx_daemonize() {
@@ -1205,6 +1354,8 @@ void crtx_init() {
 		static_modules[i].init();
 		i++;
 	}
+	
+	load_plugins(PLUGIN_DIR);
 }
 
 void crtx_finish() {
@@ -1330,12 +1481,12 @@ void crtx_loop() {
 }
 
 void crtx_init_notification_listeners(void **data) {
+#ifdef TODO
 	void *result, *tmp;
 	struct crtx_sd_bus_notification_listener *notify_listener;
 	struct crtx_readline_listener *rl_listener;
 	
-	
-	*data = calloc(1, 
+	*data = calloc(1,
 			sizeof(struct crtx_sd_bus_notification_listener) +
 			sizeof(struct crtx_readline_listener));
 	tmp = *data;
@@ -1357,9 +1508,11 @@ void crtx_init_notification_listeners(void **data) {
 	if (!result) {
 		printf("cannot create fanotify listener\n");
 	}
+#endif
 }
 
 void crtx_finish_notification_listeners(void *data) {
+#ifdef TODO
 	struct crtx_listener_base *base;
 	void *tmp;
 	
@@ -1374,6 +1527,7 @@ void crtx_finish_notification_listeners(void *data) {
 	tmp += sizeof(struct crtx_readline_listener);
 	
 	free(data);
+#endif
 }
 
 struct crtx_event_loop* crtx_get_event_loop() {

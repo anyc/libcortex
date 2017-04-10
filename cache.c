@@ -10,7 +10,9 @@
 #include "core.h"
 #include "cache.h"
 #include "threads.h"
+#ifdef CRTX_WITH_JSON
 #include "dict_inout_json.h"
+#endif
 
 
 struct crtx_dict_item * rcache_match_cb_t_strcmp(struct crtx_cache *rc, struct crtx_dict_item *key, struct crtx_event *event) {
@@ -645,6 +647,7 @@ void crtx_free_presence_cache_task(struct crtx_task *task) {
 }
 
 char crtx_load_cache(struct crtx_cache *cache, char *path) {
+#ifdef CRTX_WITH_JSON
 	char ret;
 	struct crtx_dict_item *cfg, *entries;
 	
@@ -662,7 +665,10 @@ char crtx_load_cache(struct crtx_cache *cache, char *path) {
 	if (entries)
 		cache->entries = entries->dict;
 	
-	crtx_print_dict(cache->dict);
+// 	crtx_print_dict(cache->dict);
 	
 	return 1;
+#else
+	return 0;
+#endif
 }

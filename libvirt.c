@@ -478,12 +478,14 @@ static const char *eventDetailToString(int event, int detail) {
 			case VIR_DOMAIN_EVENT_SUSPENDED_API_ERROR:
 				ret = "API error";
 				break;
+#if LIBVIR_CHECK_VERSION(2,5,0)
 			case VIR_DOMAIN_EVENT_SUSPENDED_POSTCOPY:
 				ret = "Suspended postcopy";
 				break;
 			case VIR_DOMAIN_EVENT_SUSPENDED_POSTCOPY_FAILED:
 				ret = "Suspended postcopy failed";
 				break;
+#endif
 			}
 			break;
 		case VIR_DOMAIN_EVENT_RESUMED:
@@ -497,9 +499,11 @@ static const char *eventDetailToString(int event, int detail) {
 			case VIR_DOMAIN_EVENT_RESUMED_FROM_SNAPSHOT:
 				ret = "Snapshot";
 				break;
+#if LIBVIR_CHECK_VERSION(2,5,0)
 			case VIR_DOMAIN_EVENT_RESUMED_POSTCOPY:
 				ret = "Postcopy";
 				break;
+#endif
 			}
 			break;
 		case VIR_DOMAIN_EVENT_STOPPED:

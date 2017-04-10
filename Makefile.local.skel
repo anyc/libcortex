@@ -1,4 +1,8 @@
 
+PLUGINS=udev libvirt
+
+CFLAGS+=-DPLUGIN_DIR=\"/usr/lib/cortexd/plugins/\"
+
 # CFLAGS+=-DCONTROLDIR=\"/usr/lib/cortexd/controls/\"
 
 # CFLAGS+=-DCRTX_DICT_DB_PATH=\"/var/lib/cortex/dict_db/\"
@@ -10,66 +14,69 @@
 # CFLAGS+=$(shell pkg-config --cflags json-c)
 # LDLIBS+=$(shell pkg-config --libs json-c)
 
-CFLAGS+=-DSTATIC_SD_BUS
-TESTS+=sd_bus.test
-OBJS+=sd_bus.o sd_bus_notifications.o
-CFLAGS+=$(shell pkg-config --cflags libsystemd)
-LDLIBS+=$(shell pkg-config --libs libsystemd)
-
-CFLAGS+=-DSTATIC_NETLINK_GE
-OBJS+=netlink_ge.o
-TESTS+=netlink_ge.test
-CFLAGS+=$(shell pkg-config --cflags libnl-genl-3.0)
-LDLIBS+=$(shell pkg-config --libs libnl-genl-3.0)
-
-CFLAGS+=-DSTATIC_NF_QUEUE
-OBJS+=nf_queue.o
-CFLAGS+=$(shell pkg-config --cflags libnetfilter_queue)
-LDLIBS+=$(shell pkg-config --libs libnetfilter_queue)
-
-CFLAGS+=-DSTATIC_NETLINK
-OBJS+=netlink_raw.o
-
-OBJS+=nl_route.o
-TESTS+=nl_route.test
-
-OBJS+=evdev.o
-TESTS+=evdev.test
-CFLAGS+=$(shell pkg-config --cflags libevdev)
-LDLIBS+=$(shell pkg-config --libs libevdev)
-
-OBJS+=udev.o
-TESTS+=udev.test
-CFLAGS+=$(shell pkg-config --cflags libudev)
-LDLIBS+=$(shell pkg-config --libs libudev)
-
-CFLAGS+=-DSTATIC_XCB_RANDR
-OBJS+=xcb_randr.o
-TESTS+=xcb_randr.test
-CFLAGS+=$(shell pkg-config --cflags xcb xcb-randr)
-LDLIBS+=$(shell pkg-config --libs xcb xcb-randr)
-
-CFLAGS+=-DSTATIC_PULSEAUDIO
-OBJS+=pulseaudio.o
-TESTS+=pulseaudio.test
-CFLAGS+=$(shell pkg-config --cflags libpulse)
-LDLIBS+=$(shell pkg-config --libs libpulse)
-
-OBJS+=uevents.o
-TESTS+=uevents.test
-
-OBJS+=can.o
-CFLAGS+=$(shell pkg-config --cflags libnl-route-3.0 libcap-ng)
-LDLIBS+=$(shell pkg-config --libs libnl-route-3.0 libcap-ng)
-TESTS+=can.test
-
-OBJS+=nl_route.o
-CFLAGS+=$(shell pkg-config --cflags libnl-route-3.0)
-LDLIBS+=$(shell pkg-config --libs libnl-route-3.0)
-TESTS+=nl_route.test
-
-OBJS+=libvirt.o
-TESTS+=libvirt.test
-
-OBJS+=avahi.o
-TESTS+=avahi.test
+# CFLAGS+=-DSTATIC_SD_BUS
+# TESTS+=sd_bus.test
+# OBJS+=sd_bus.o sd_bus_notifications.o
+# CFLAGS+=$(shell pkg-config --cflags libsystemd)
+# LDLIBS+=$(shell pkg-config --libs libsystemd)
+# 
+# CFLAGS+=-DSTATIC_NETLINK_GE
+# OBJS+=netlink_ge.o
+# TESTS+=netlink_ge.test
+# CFLAGS+=$(shell pkg-config --cflags libnl-genl-3.0)
+# LDLIBS+=$(shell pkg-config --libs libnl-genl-3.0)
+# 
+# CFLAGS+=-DSTATIC_NF_QUEUE
+# OBJS+=nf_queue.o
+# CFLAGS+=$(shell pkg-config --cflags libnetfilter_queue)
+# LDLIBS+=$(shell pkg-config --libs libnetfilter_queue)
+# 
+# CFLAGS+=-DSTATIC_NETLINK
+# OBJS+=netlink_raw.o
+# 
+# OBJS+=nl_route.o
+# TESTS+=nl_route.test
+# 
+# OBJS+=readline.o
+# LDLIBS+=-lreadline
+# 
+# OBJS+=evdev.o
+# TESTS+=evdev.test
+# CFLAGS+=$(shell pkg-config --cflags libevdev)
+# LDLIBS+=$(shell pkg-config --libs libevdev)
+# 
+# OBJS+=udev.o
+# TESTS+=udev.test
+# CFLAGS+=$(shell pkg-config --cflags libudev)
+# LDLIBS+=$(shell pkg-config --libs libudev)
+# 
+# CFLAGS+=-DSTATIC_XCB_RANDR
+# OBJS+=xcb_randr.o
+# TESTS+=xcb_randr.test
+# CFLAGS+=$(shell pkg-config --cflags xcb xcb-randr)
+# LDLIBS+=$(shell pkg-config --libs xcb xcb-randr)
+# 
+# CFLAGS+=-DSTATIC_PULSEAUDIO
+# OBJS+=pulseaudio.o
+# TESTS+=pulseaudio.test
+# CFLAGS+=$(shell pkg-config --cflags libpulse)
+# LDLIBS+=$(shell pkg-config --libs libpulse)
+# 
+# OBJS+=uevents.o
+# TESTS+=uevents.test
+# 
+# OBJS+=can.o
+# CFLAGS+=$(shell pkg-config --cflags libnl-route-3.0 libcap-ng)
+# LDLIBS+=$(shell pkg-config --libs libnl-route-3.0 libcap-ng)
+# TESTS+=can.test
+# 
+# OBJS+=nl_route.o
+# CFLAGS+=$(shell pkg-config --cflags libnl-route-3.0)
+# LDLIBS+=$(shell pkg-config --libs libnl-route-3.0)
+# TESTS+=nl_route.test
+# 
+# OBJS+=libvirt.o
+# TESTS+=libvirt.test
+# 
+# OBJS+=avahi.o
+# TESTS+=avahi.test
