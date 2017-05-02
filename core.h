@@ -13,8 +13,8 @@
 #define STRINGIFY(x) STRINGIFYB(x)
 
 #define CRTX_SILENT 0
-#define CRTX_INFO 1
-#define CRTX_ERR 2
+#define CRTX_ERR 1
+#define CRTX_INFO 2
 #define CRTX_DBG 3
 #define CRTX_VDBG 4
 

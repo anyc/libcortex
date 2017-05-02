@@ -63,7 +63,13 @@
 #ifdef STATIC_libvirt
 #include "libvirt.h"
 #endif
+#ifdef STATIC_sip
+#include "sip.h"
+#endif
 
+#ifndef CRTX_PLUGIN_DIR
+#define CRTX_PLUGIN_DIR "/usr/lib/cortexd/plugins/"
+#endif
 
 struct crtx_root crtx_global_root;
 struct crtx_root *crtx_root = &crtx_global_root;
@@ -114,6 +120,9 @@ struct crtx_module static_modules[] = {
 #endif
 #ifdef STATIC_nl_route
 	{"nl_route", &crtx_nl_route_init, &crtx_nl_route_finish},
+#endif
+#ifdef STATIC_sip
+	{"sip", &crtx_sip_init, &crtx_sip_finish},
 #endif
 	{0, 0}
 };
@@ -170,6 +179,9 @@ struct crtx_listener_repository static_listener_repository[] = {
 #endif
 #ifdef STATIC_libvirt
 	{"libvirt", &crtx_new_libvirt_listener},
+#endif
+#ifdef STATIC_sip
+	{"sip", &crtx_new_sip_listener},
 #endif
 	{0, 0}
 };
@@ -1357,7 +1369,7 @@ void crtx_init() {
 		i++;
 	}
 	
-	load_plugins(PLUGIN_DIR);
+	load_plugins(CRTX_PLUGIN_DIR);
 }
 
 void crtx_finish() {

@@ -80,3 +80,7 @@ CFLAGS+=-DPLUGIN_DIR=\"/usr/lib/cortexd/plugins/\"
 # 
 # OBJS+=avahi.o
 # TESTS+=avahi.test
+
+# OBJS+=sip.o
+# LDLIBS+=-leXosip2 -losipparser2
+# TESTS+=sip.test
