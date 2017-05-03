@@ -241,7 +241,10 @@ tu = index.parse(args.hdr_file[0], options=1)
 #addition = sys.argv[2:]
 output = False
 
-print("/* This file has been generated with hdr2dict.py from "+sys.argv[1]+" */")
+print("/*")
+print(" * This file has been generated using:")# "+sys.argv[1]+" */")
+print(" *  "+" ".join(sys.argv)+"")
+print(" */")
 print("")
 print("#include <string.h>")
 print("// #include <"+os.path.basename(sys.argv[1])+">")
