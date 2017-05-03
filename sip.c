@@ -69,10 +69,19 @@ void print_event_type(int type) {
 	}
 }
 
+void sip_event_before_release_cb(struct crtx_event *event) {
+	eXosip_event_t *evt;
+	
+	evt = (eXosip_event_t *) crtx_event_get_ptr(event);
+	eXosip_event_free(evt);
+}
+
+
 static char sip_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event_loop_payload *payload;
 	struct crtx_sip_listener *slist;
 	eXosip_event_t *evt;
+	struct crtx_event *nevent;
 	
 	
 	payload = (struct crtx_event_loop_payload*) event->data.pointer;
@@ -89,7 +98,14 @@ static char sip_fd_event_handler(struct crtx_event *event, void *userdata, void 
 		if (!evt)
 			break;
 		
-		print_event_type(evt->type); print("\n");
+		nevent = crtx_create_event(0, evt, sizeof(eXosip_event_t*));
+		nevent->data.flags |= CRTX_DIF_DONT_FREE_DATA;
+		
+		nevent->cb_before_release = &sip_event_before_release_cb;
+		
+		add_event(slist->parent.graph, nevent);
+		
+// 		print_event_type(evt->type); print("\n");
 		
 // 		switch (evt->type) {
 // 			case EXOSIP_REGISTRATION_SUCCESS:
@@ -159,7 +175,7 @@ static char sip_fd_event_handler(struct crtx_event *event, void *userdata, void 
 // 				print("unhandled event %d\n", evt->type);
 // 		}
 		
-		eXosip_event_free(evt);
+// 		eXosip_event_free(evt);
 	}
 	
 	return 0;
@@ -286,14 +302,30 @@ void crtx_sip_finish() {
 
 #include <netinet/in.h>
 
+#include "sip_eXosip_event2dict.c"
+
 static char sip_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	struct crtx_dict *dict;
-// 	
-// 	dict = crtx_udev_raw2dict(event, r2ds, 0);
-// 	
-// 	crtx_print_dict(dict);
-// 	
-// 	crtx_dict_unref(dict);
+	struct crtx_dict *dict;
+	struct eXosip_event *evt;
+	
+	dict = 0;
+	evt = (struct eXosip_event *) event->data.pointer;
+	
+	if (evt->type == EXOSIP_CALL_INVITE) {
+		char *displayname, *username;
+		char r;
+		
+		crtx_eXosip_event2dict(evt, &dict);
+		
+// 		crtx_print_dict(dict);
+		
+		r = crtx_dict_locate_value(dict, "request/from/displayname", 's', &displayname, sizeof(displayname));
+		r |= crtx_dict_locate_value(dict, "request/from/url/username", 's', &username, sizeof(username));
+		if (r == 0)
+			printf("%s %s\n", displayname, username);
+		
+		crtx_dict_unref(dict);
+	}
 	
 	return 0;
 }

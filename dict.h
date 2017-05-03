@@ -20,6 +20,8 @@
 
 #include <stdint.h>
 
+#include "threads.h"
+
 struct crtx_dict_item {
 	char type;
 // 	char key_type;
@@ -36,6 +38,8 @@ struct crtx_dict_item {
 		uint64_t uint64; // U
 		int64_t int64; // I
 		double double_fp; // d
+		size_t sizet; // z
+		ssize_t ssizet; // Z
 		
 		char *string; // s
 		void *pointer; // p		

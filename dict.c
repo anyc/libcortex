@@ -49,6 +49,16 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 				return 0;
 			}
 			break;
+		case 'z':
+		case 'Z':
+			di->sizet = va_arg(va, size_t);
+			
+			di->size = va_arg(va, size_t);
+			if (di->size > 0 && di->size != sizeof(size_t)) {
+				ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint64_t));
+				return 0;
+			}
+			break;
 		case 'd':
 			di->double_fp = va_arg(va, double);
 			
@@ -356,9 +366,11 @@ void crtx_print_dict_item(struct crtx_dict_item *di, unsigned char level) {
 		case 'i': INFO("(int32_t) %d", di->int32); break;
 		case 's': INFO("(char*) \"%s\"", di->string); break;
 		case 'p': INFO("(void*) %p", di->pointer); break;
-		case 'U': INFO("(uint64_t) %zu", di->uint64); break;
-		case 'I': INFO("(int64_t) %d", di->int32); break;
+		case 'U': INFO("(uint64_t) %" PRIu64, di->uint64); break;
+		case 'I': INFO("(int64_t) %" PRId64, di->int32); break;
 		case 'd': INFO("(double) %f", di->double_fp); break;
+		case 'z': INFO("(size_t) %zu", di->sizet); break;
+		case 'Z': INFO("(ssize_t) %zu", di->ssizet); break;
 		case 'D':
 // 			INFO("(dict) ");
 			if (di->dict)
@@ -423,6 +435,13 @@ char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size
 		case 'I':
 			if (buffer_size == sizeof(uint64_t)) {
 				memcpy(buffer, &di->uint64, buffer_size);
+				return 1;
+			}
+			break;
+		case 'z':
+		case 'Z':
+			if (buffer_size == sizeof(size_t)) {
+				memcpy(buffer, &di->sizet, buffer_size);
 				return 1;
 			}
 			break;
@@ -1227,8 +1246,10 @@ char crtx_dict_locate_value(struct crtx_dict *dict, char *path, char type, void 
 	char r;
 	
 	di = crtx_dict_locate(dict, path);
-	if (!di)
+	if (!di) {
+		DBG("could not find \"%s\" in dict\n", path);
 		return 1;
+	}
 	
 	r = crtx_get_item_value(di, type,  buffer, buffer_size);
 	return !r;
