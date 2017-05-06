@@ -284,27 +284,29 @@ static char notify_send_handler(struct crtx_event *event, void *userdata, void *
 	return 1;
 }
 
-struct crtx_listener_base *crtx_new_sd_bus_notification_listener(void *options) {
-	struct crtx_sd_bus_notification_listener *slistener;
-	struct crtx_graph *global_notify_graph;
-	
-	// TODO: convert this into a module as we likely need only one listener?
-	
-	slistener = (struct crtx_sd_bus_notification_listener *) options;
-	slistener->parent.graph = get_graph_for_event_type(EV_NOTIF_SIGNAL, notif_event_types);
-	
-	/*
-	 * add this listener to the global notification graph
-	 */
-	
-	global_notify_graph = get_graph_for_event_type(CRTX_EVT_NOTIFICATION, crtx_evt_notification);
-	
-	crtx_create_task(global_notify_graph, 0, "sd_bus_notify_send", &notify_send_handler, slistener);
-	
-	return &slistener->parent;
-}
+// struct crtx_listener_base *crtx_new_sd_bus_notification_listener(void *options) {
+// 	struct crtx_sd_bus_notification_listener *slistener;
+// 	struct crtx_graph *global_notify_graph;
+// 	
+// 	// TODO: convert this into a module as we likely need only one listener?
+// 	
+// 	slistener = (struct crtx_sd_bus_notification_listener *) options;
+// 	slistener->parent.graph = get_graph_for_event_type(EV_NOTIF_SIGNAL, notif_event_types);
+// 	
+// 	/*
+// 	 * add this listener to the global notification graph
+// 	 */
+// 	
+// 	global_notify_graph = get_graph_for_event_type(CRTX_EVT_NOTIFICATION, crtx_evt_notification);
+// 	
+// 	crtx_create_task(global_notify_graph, 0, "sd_bus_notify_send", &notify_send_handler, slistener);
+// 	
+// 	return &slistener->parent;
+// }
 
-void crtx_sdbus_notification_init() {}
+void crtx_sdbus_notification_init() {
+	crtx_register_task_for_event_type("user_notification", "dbus_notification", &notify_send_handler);
+}
 
 void crtx_sdbus_notification_finish() {
 	if (def_bus) {

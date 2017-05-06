@@ -267,6 +267,17 @@ struct crtx_lstnr_plugin {
 	void (*get_listener_repository)(struct crtx_listener_repository **listener_repository, unsigned int *listener_repository_length);
 };
 
+struct crtx_handler_category_entry {
+	char *handler_name;
+	crtx_handle_task_t function;
+	void *handler_data;
+};
+
+struct crtx_handler_category {
+	char *event_type;
+	struct crtx_ll *entries;
+};
+
 struct crtx_root {
 	struct crtx_graph **graphs;
 	unsigned int n_graphs;
@@ -286,6 +297,8 @@ struct crtx_root {
 	struct crtx_graph *crtx_ctrl_graph;
 	
 	void *notification_listeners_handle;
+	
+	struct crtx_ll *handler_categories;
 };
 
 extern struct crtx_module static_modules[];
@@ -313,7 +326,7 @@ void crtx_create_graph(struct crtx_graph **crtx_graph, char *name, char **event_
 void add_task(struct crtx_graph *graph, struct crtx_task *task);
 void add_event_type(char *event_type);
 void add_raw_event(struct crtx_event *event);
-void add_event(struct crtx_graph *graph, struct crtx_event *event);
+void crtx_add_event(struct crtx_graph *graph, struct crtx_event *event);
 void add_event_sync(struct crtx_graph *graph, struct crtx_event *event);
 struct crtx_graph *find_graph_for_event_type(char *event_type);
 struct crtx_graph *find_graph_by_name(char *na6me);
@@ -362,5 +375,8 @@ char crtx_event_raw2dict(struct crtx_event *event, void *user_data);
 void crtx_event_get_payload(struct crtx_event *event, char *id, void **raw_pointer, struct crtx_dict **dict);
 struct crtx_dict_item *crtx_event_get_value_by_key(struct crtx_event *event, char *id, char *key);
 void *crtx_event_get_ptr(struct crtx_event *event);
+
+void crtx_register_handler_for_event_type(char *event_type, char *handler_name, crtx_handle_task_t *handler_function, void *handler_data);
+void crtx_autofill_graph_with_tasks(char *event_type, struct crtx_graph *graph);
 
 #endif

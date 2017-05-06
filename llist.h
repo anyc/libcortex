@@ -31,6 +31,8 @@ CRTX_DLL_TYPE {
 		struct crtx_graph *graph;
 		struct crtx_inotify_listener *in_listener;
 		struct crtx_transform_dict_handler *transform_handler;
+		struct crtx_handler_category *handler_category;
+		struct crtx_handler_category_entry *handler_category_entry;
 	};
 };
 

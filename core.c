@@ -751,7 +751,7 @@ void graph_consumer_stop(struct crtx_thread *t, void *data) {
 	pthread_cond_broadcast(&graph->queue_cond);
 }
 
-void add_event(struct crtx_graph *graph, struct crtx_event *event) {
+void crtx_add_event(struct crtx_graph *graph, struct crtx_event *event) {
 // 	unsigned int new_n_consumers;
 	
 	// we do not accept new events if shutdown has begun
@@ -1717,4 +1717,47 @@ void *crtx_event_get_ptr(struct crtx_event *event) {
 	crtx_event_get_payload(event, 0, &ptr, 0);
 	
 	return ptr;
+}
+
+void crtx_register_handler_for_event_type(char *event_type, char *handler_name, crtx_handle_task_t *handler_function, void *handler_data) {
+	struct crtx_ll *catit, *last_catit, *entry;
+	
+	last_catit = 0;
+	for (catit = crtx_root->handler_categories; catit && !strcmp(catit->handler_category->event_type, event_type); catit=catit->next) {
+		last_catit = catit;
+	}
+	
+	if (!last_catit)
+		catit = crtx_ll_append_new(&crtx_root->handler_categories, 0);
+	
+	if (!catit)
+		catit = crtx_ll_append_new(&last_catit, 0);
+	
+	if (!catit->handler_category) {
+		catit->handler_category = (struct crtx_handler_repo_category *) malloc(sizeof(struct crtx_handler_repo_category));
+		catit->handler_category->event_type = event_type;
+		catit->handler_category->entries = 0;
+	}
+	
+	entry = crtx_ll_append_new(&catit->handler_category->entries, 0);
+	
+	entry->handler_category_entry = (struct crtx_handler_category_entry *) malloc(sizeof(struct crtx_handler_category_entry));
+	entry->handler_category_entry->name = handler_name;
+	entry->handler_category_entry->function = handler_function;
+	entry->handler_category_entry->handler_data = handler_data;
+}
+
+void crtx_autofill_graph_with_tasks(char *event_type, struct crtx_graph *graph) {
+	struct crtx_ll *catit, *entry;
+	
+	for (catit = crtx_root->handler_categories; catit && !strcmp(catit->handler_category->event_type, event_type); catit=catit->next) {}
+	
+	if (catit) {
+		for (entry = catit->entries; entry; entry=entry->next) {
+			crtx_create_task(graph, 0,
+							entry->handler_category_entry->name,
+							entry->handler_category_entry->function,
+							entry->handler_category_entry->handler_data);
+		}
+	}
 }

@@ -104,78 +104,6 @@ static char sip_fd_event_handler(struct crtx_event *event, void *userdata, void 
 		nevent->cb_before_release = &sip_event_before_release_cb;
 		
 		add_event(slist->parent.graph, nevent);
-		
-// 		print_event_type(evt->type); print("\n");
-		
-// 		switch (evt->type) {
-// 			case EXOSIP_REGISTRATION_SUCCESS:
-// 				print("login success\n");
-// 				break;
-// 			case EXOSIP_REGISTRATION_FAILURE:
-// 				print("login failed\n");
-// 				break;
-// 			case EXOSIP_CALL_INVITE:
-// 			{
-// 				char *tmp = NULL;
-// 				osip_from_t *from;
-// 				char *start, *at, *username, *display;
-// 				int len;
-// 				
-// 				
-// 				osip_from_to_str(evt->request->from, &tmp);
-// 				
-// 				// manually parse From line as the osip parser doesn't work here
-// 				display = 0;
-// 				start = strchr(tmp, '"');
-// 				if (start) {
-// 					start = start + 1;
-// 					at = strchr(start, '"');
-// 					if (at) {
-// 						len = at - start + 1;
-// 						display = (char*) malloc(len+1);
-// 						strncpy(display, start, len);
-// 						display[len-1] = 0;
-// 					}
-// 				}
-// 				
-// 				username = 0;
-// 				start = strchr(tmp, '<')+1;
-// 				if (start && !strncmp(start, "sip:", 4)) {
-// 					at = strchr(start, '@');
-// 					if (at) {
-// 						len = at - start - 3;
-// 						username = (char*) malloc(len+1);
-// 						strncpy(username, start+4, len);
-// 						username[len-1] = 0;
-// 					}
-// 				}
-// 				
-// 				print("new call %s %s %s \n", tmp, display, username);
-// 				
-// 				char notify[256], time_buffer[24];
-// 				time_t timer;
-// 				struct tm *tm_info;
-// 				
-// 				time(&timer);
-// 				tm_info = localtime(&timer);
-// 				
-// 				strftime(time_buffer, 24, "%H:%M:%S", tm_info);
-// 				snprintf(notify, 255, format, display, username, time_buffer);
-// 				system(notify);
-// 				
-// 				osip_free(tmp);
-// 				
-// 				if (display)
-// 					free(display);
-// 				if (username)
-// 					free(username);
-// 			}
-// 			break;
-// 			default:
-// 				print("unhandled event %d\n", evt->type);
-// 		}
-		
-// 		eXosip_event_free(evt);
 	}
 	
 	return 0;
@@ -301,19 +229,42 @@ void crtx_sip_finish() {
 #ifdef CRTX_TEST
 
 #include <netinet/in.h>
+#include <unistd.h>
 
 #include "sip_eXosip_event2dict.c"
+
+void help(char **argv) {
+	fprintf(stderr, "Usage: %s [options]\n", argv[0]);
+	fprintf(stderr, "\n");
+	fprintf(stderr, "Options:\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "  -s <server>   \n");
+	fprintf(stderr, "  -u <user>     \n");
+	fprintf(stderr, "  -p <password> \n");
+}
+
+struct crtx_dict_transformation transf[] = {
+	// key, type, flag, format
+	{ "title", 's', 0, "New phone call" },
+	{ "message", 's', 0, "New call from %[request/from/displayname]s %[request/from/url/username]s" },
+};
 
 static char sip_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *dict;
 	struct eXosip_event *evt;
+	struct crtx_graph *notify_graph;
 	
 	dict = 0;
 	evt = (struct eXosip_event *) event->data.pointer;
 	
+	notify_graph = (struct crtx_graph *) userdata;
+	
 	if (evt->type == EXOSIP_CALL_INVITE) {
-		char *displayname, *username;
+		char *displayname, *username, *msg;
+		size_t msg_len;
 		char r;
+		struct crtx_event *notify_event;
+		struct crtx_dict *dict;
 		
 		crtx_eXosip_event2dict(evt, &dict);
 		
@@ -321,8 +272,26 @@ static char sip_test_handler(struct crtx_event *event, void *userdata, void **se
 		
 		r = crtx_dict_locate_value(dict, "request/from/displayname", 's', &displayname, sizeof(displayname));
 		r |= crtx_dict_locate_value(dict, "request/from/url/username", 's', &username, sizeof(username));
-		if (r == 0)
-			printf("%s %s\n", displayname, username);
+		if (r == 0 && displayname && username) {
+// 			printf("%s %s\n", displayname, username);
+			
+			msg = (char *) malloc(strlen(displayname) + strlen(username)
+			
+			notify_event = crtx_create_event(0, 0, 0);
+// 			nevent->data.flags |= CRTX_DIF_DONT_FREE_DATA;
+// 			nevent->cb_before_release = &sip_event_before_release_cb;
+			
+// 			dict = crtx_create_dict("ss", 
+// 				's', "title", "new call", sizeof("new call"), CRTX_DIF_DONT_FREE_DATA,
+// 				's', "message", msg, msg_len, 0,
+// 				);
+			
+			dict = crtx_dict_transform(dict, "ss", transformation);
+			
+			crtx_event_set_data(notify_event, 0, dict, 0);
+			
+			crtx_add_event(notify_graph, notify_event);
+		}
 		
 		crtx_dict_unref(dict);
 	}
@@ -333,7 +302,33 @@ static char sip_test_handler(struct crtx_event *event, void *userdata, void **se
 int sip_main(int argc, char **argv) {
 	struct crtx_sip_listener slist;
 	struct crtx_listener_base *lbase;
-	char ret;
+	struct crtx_graph *notify_graph;
+	char ret, opt;
+	char *username, *password, *server;
+	
+	username = password = server = 0;
+	while ((opt = getopt (argc, argv, "hu:p:s:")) != -1) {
+		switch (opt) {
+			case 'u':
+				username = optarg;
+				break;
+			case 'p':
+				password = optarg;
+				break;
+			case 's':
+				server = optarg;
+				break;
+			default:
+				help(argv);
+				return 1;
+		}
+	}
+	
+	if (!username || !password || !server) {
+		help(argv);
+		return 1;
+	}
+	
 	
 	TRACE_INITIALIZE (6, NULL);
 	
@@ -345,10 +340,10 @@ int sip_main(int argc, char **argv) {
 	slist.family = AF_INET;
 	slist.secure = 0;
 	
-	slist.username = "620";
-	slist.userid = "620";
-	slist.password = "mariomario";
-	slist.dst_addr = "fritz.box";
+	slist.username = username;
+	slist.userid = username;
+	slist.password = password;
+	slist.dst_addr = server;
 	
 	lbase = create_listener("sip", &slist);
 	if (!lbase) {
@@ -356,7 +351,10 @@ int sip_main(int argc, char **argv) {
 		exit(1);
 	}
 	
-	crtx_create_task(lbase->graph, 0, "sip_test", sip_test_handler, 0);
+	crtx_create_graph(&notify_graph, "notify_graph", 0);
+	crtx_autofill_graph_with_tasks("user_notification", notify_graph);
+	
+	crtx_create_task(lbase->graph, 0, "sip_test", sip_test_handler, notify_graph);
 	
 	ret = crtx_start_listener(lbase);
 	if (!ret) {

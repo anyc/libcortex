@@ -125,26 +125,28 @@ static char rl_notify_send_handler(struct crtx_event *event, void *userdata, voi
 	return 1;
 }
 
-struct crtx_listener_base *crtx_new_readline_listener(void *options) {
-	struct crtx_readline_listener *slistener;
-	struct crtx_graph *global_notify_graph;
-	
-	slistener = (struct crtx_readline_listener *) options;
-	slistener->parent.graph = get_graph_for_event_type(EV_RL_REQUEST, rl_event_types);
-	
-	/*
-	 * add this listener to the global notification graph
-	 */
-	
-	global_notify_graph = get_graph_for_event_type(CRTX_EVT_NOTIFICATION, crtx_evt_notification);
-	
-	crtx_create_task(global_notify_graph, 0, "rl_notify_send_handler", &rl_notify_send_handler, slistener);
-	
-	return &slistener->parent;
-}
+// struct crtx_listener_base *crtx_new_readline_listener(void *options) {
+// 	struct crtx_readline_listener *slistener;
+// 	struct crtx_graph *global_notify_graph;
+// 	
+// 	slistener = (struct crtx_readline_listener *) options;
+// 	slistener->parent.graph = get_graph_for_event_type(EV_RL_REQUEST, rl_event_types);
+// 	
+// 	/*
+// 	 * add this listener to the global notification graph
+// 	 */
+// 	
+// 	global_notify_graph = get_graph_for_event_type(CRTX_EVT_NOTIFICATION, crtx_evt_notification);
+// 	
+// 	crtx_create_task(global_notify_graph, 0, "rl_notify_send_handler", &rl_notify_send_handler, slistener);
+// 	
+// 	return &slistener->parent;
+// }
 
 void crtx_readline_init() {
 	int ret;
+	
+	crtx_register_task_for_event_type("user_notification", "readline_notify", &rl_notify_send_handler);
 	
 	ret = pthread_mutex_init(&stdout_mutex, 0); ASSERT(ret >= 0);
 }

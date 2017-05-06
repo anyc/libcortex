@@ -756,7 +756,9 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 			
 			// do we print specific item referenced by key or all items (*)?
 			if (*key != '*')
-				di = crtx_get_item(ds, key);
+// 				di = crtx_get_item(ds, key);
+				di = crtx_dict_locate(ds, key);
+// 				crtx_dict_locate_value(struct crtx_dict *dict, char *path, char type, void *buffer, size_t buffer_size)
 			else
 				di = &ds->items[0];
 			
