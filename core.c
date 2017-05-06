@@ -197,7 +197,7 @@ struct crtx_lstnr_plugin *plugins = 0;
 unsigned int n_plugins = 0;
 
 char * crtx_evt_control[] = { CRTX_EVT_MOD_INIT, CRTX_EVT_SHUTDOWN, 0 };
-char *crtx_evt_notification[] = { CRTX_EVT_NOTIFICATION, 0 };
+// char *crtx_evt_notification[] = { CRTX_EVT_NOTIFICATION, 0 };
 char *crtx_evt_inbox[] = { CRTX_EVT_INBOX, 0 };
 char *crtx_evt_outbox[] = { CRTX_EVT_OUTBOX, 0 };
 
@@ -1026,11 +1026,11 @@ void add_raw_event(struct crtx_event *event) {
 	
 	graph = find_graph_for_event_type(event->type);
 	
-	if (!graph && !strcmp(event->type, CRTX_EVT_NOTIFICATION)) {
-		crtx_init_notification_listeners(&crtx_root->notification_listeners_handle);
-		
-		graph = find_graph_for_event_type(event->type);
-	}
+// 	if (!graph && !strcmp(event->type, CRTX_EVT_NOTIFICATION)) {
+// 		crtx_init_notification_listeners(&crtx_root->notification_listeners_handle);
+// 		
+// 		graph = find_graph_for_event_type(event->type);
+// 	}
 	
 	if (!graph) {
 		ERROR("did not find graph for event type %s\n", event->type);
@@ -1044,10 +1044,10 @@ static void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **ev
 	struct crtx_graph *graph;
 	int i, ret;
 	
-	if (crtx_graph && *crtx_graph) {
-		ERROR("new_eventgraph: will not overwrite graph ptr\n");
-		return;
-	}
+// 	if (crtx_graph && *crtx_graph) {
+// 		ERROR("new_eventgraph: will not overwrite graph ptr\n");
+// 		return;
+// 	}
 	
 	graph = (struct crtx_graph*) calloc(1, sizeof(struct crtx_graph)); ASSERT(graph);
 	
@@ -1385,8 +1385,8 @@ void crtx_finish() {
 	while (static_modules[i].id) { i++; }
 	i--;
 	
-	if (crtx_root->notification_listeners_handle)
-		crtx_finish_notification_listeners(crtx_root->notification_listeners_handle);
+// 	if (crtx_root->notification_listeners_handle)
+// 		crtx_finish_notification_listeners(crtx_root->notification_listeners_handle);
 	
 	// stop threads first
 // 	static_modules[0].finish();
@@ -1759,7 +1759,7 @@ void crtx_register_handler_for_event_type(char *event_type, char *handler_name, 
 // 	printf("new handler %s\n", event_type);
 }
 
-void crtx_autofill_graph_with_tasks(char *event_type, struct crtx_graph *graph) {
+void crtx_autofill_graph_with_tasks(struct crtx_graph *graph, char *event_type) {
 	struct crtx_ll *catit, *entry;
 	
 	for (catit = crtx_root->handler_categories; catit && strcmp(catit->handler_category->event_type, event_type); catit=catit->next) {}

@@ -146,7 +146,7 @@ static char rl_notify_send_handler(struct crtx_event *event, void *userdata, voi
 void crtx_readline_init() {
 	int ret;
 	
-	crtx_register_task_for_event_type("user_notification", "readline_notify", &rl_notify_send_handler);
+	crtx_register_task_for_event_type("cortex.user_notification", "readline_notify", &rl_notify_send_handler);
 	
 	ret = pthread_mutex_init(&stdout_mutex, 0); ASSERT(ret >= 0);
 }

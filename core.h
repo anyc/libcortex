@@ -296,7 +296,7 @@ struct crtx_root {
 	
 	struct crtx_graph *crtx_ctrl_graph;
 	
-	void *notification_listeners_handle;
+// 	void *notification_listeners_handle;
 	
 	struct crtx_ll *handler_categories;
 };
@@ -377,6 +377,6 @@ struct crtx_dict_item *crtx_event_get_value_by_key(struct crtx_event *event, cha
 void *crtx_event_get_ptr(struct crtx_event *event);
 
 void crtx_register_handler_for_event_type(char *event_type, char *handler_name, crtx_handle_task_t handler_function, void *handler_data);
-void crtx_autofill_graph_with_tasks(char *event_type, struct crtx_graph *graph);
+void crtx_autofill_graph_with_tasks(struct crtx_graph *graph, char *event_type);
 
 #endif

@@ -1,4 +1,7 @@
-/* This file has been generated with hdr2dict.py from /usr/include/eXosip2/eXosip.h */
+/*
+ * This file has been generated using:
+ *  ./hdr2dict.py --structs eXosip_event /usr/include/eXosip2/eXosip.h --max-recursion 4
+ */
 
 #include <string.h>
 #include <eXosip2/eXosip.h>
@@ -16,6 +19,151 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 	di = crtx_alloc_item(dict);
 	crtx_fill_data_item(di, 'i', "type", ptr->type, sizeof(ptr->type), 0);
+
+	di = crtx_alloc_item(dict);
+	switch (ptr->type) {
+		case EXOSIP_REGISTRATION_SUCCESS:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_REGISTRATION_SUCCESS", sizeof("EXOSIP_REGISTRATION_SUCCESS"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_REGISTRATION_FAILURE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_REGISTRATION_FAILURE", sizeof("EXOSIP_REGISTRATION_FAILURE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_INVITE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_INVITE", sizeof("EXOSIP_CALL_INVITE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_REINVITE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_REINVITE", sizeof("EXOSIP_CALL_REINVITE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_NOANSWER:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_NOANSWER", sizeof("EXOSIP_CALL_NOANSWER"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_PROCEEDING:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_PROCEEDING", sizeof("EXOSIP_CALL_PROCEEDING"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_RINGING:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_RINGING", sizeof("EXOSIP_CALL_RINGING"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_ANSWERED:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_ANSWERED", sizeof("EXOSIP_CALL_ANSWERED"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_REDIRECTED:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_REDIRECTED", sizeof("EXOSIP_CALL_REDIRECTED"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_REQUESTFAILURE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_REQUESTFAILURE", sizeof("EXOSIP_CALL_REQUESTFAILURE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_SERVERFAILURE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_SERVERFAILURE", sizeof("EXOSIP_CALL_SERVERFAILURE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_GLOBALFAILURE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_GLOBALFAILURE", sizeof("EXOSIP_CALL_GLOBALFAILURE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_ACK:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_ACK", sizeof("EXOSIP_CALL_ACK"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_CANCELLED:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_CANCELLED", sizeof("EXOSIP_CALL_CANCELLED"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_MESSAGE_NEW:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_MESSAGE_NEW", sizeof("EXOSIP_CALL_MESSAGE_NEW"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_MESSAGE_PROCEEDING:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_MESSAGE_PROCEEDING", sizeof("EXOSIP_CALL_MESSAGE_PROCEEDING"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_MESSAGE_ANSWERED:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_MESSAGE_ANSWERED", sizeof("EXOSIP_CALL_MESSAGE_ANSWERED"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_MESSAGE_REDIRECTED:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_MESSAGE_REDIRECTED", sizeof("EXOSIP_CALL_MESSAGE_REDIRECTED"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_MESSAGE_REQUESTFAILURE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_MESSAGE_REQUESTFAILURE", sizeof("EXOSIP_CALL_MESSAGE_REQUESTFAILURE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_MESSAGE_SERVERFAILURE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_MESSAGE_SERVERFAILURE", sizeof("EXOSIP_CALL_MESSAGE_SERVERFAILURE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_MESSAGE_GLOBALFAILURE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_MESSAGE_GLOBALFAILURE", sizeof("EXOSIP_CALL_MESSAGE_GLOBALFAILURE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_CLOSED:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_CLOSED", sizeof("EXOSIP_CALL_CLOSED"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_CALL_RELEASED:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_CALL_RELEASED", sizeof("EXOSIP_CALL_RELEASED"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_MESSAGE_NEW:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_MESSAGE_NEW", sizeof("EXOSIP_MESSAGE_NEW"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_MESSAGE_PROCEEDING:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_MESSAGE_PROCEEDING", sizeof("EXOSIP_MESSAGE_PROCEEDING"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_MESSAGE_ANSWERED:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_MESSAGE_ANSWERED", sizeof("EXOSIP_MESSAGE_ANSWERED"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_MESSAGE_REDIRECTED:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_MESSAGE_REDIRECTED", sizeof("EXOSIP_MESSAGE_REDIRECTED"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_MESSAGE_REQUESTFAILURE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_MESSAGE_REQUESTFAILURE", sizeof("EXOSIP_MESSAGE_REQUESTFAILURE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_MESSAGE_SERVERFAILURE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_MESSAGE_SERVERFAILURE", sizeof("EXOSIP_MESSAGE_SERVERFAILURE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_MESSAGE_GLOBALFAILURE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_MESSAGE_GLOBALFAILURE", sizeof("EXOSIP_MESSAGE_GLOBALFAILURE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_SUBSCRIPTION_NOANSWER:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_SUBSCRIPTION_NOANSWER", sizeof("EXOSIP_SUBSCRIPTION_NOANSWER"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_SUBSCRIPTION_PROCEEDING:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_SUBSCRIPTION_PROCEEDING", sizeof("EXOSIP_SUBSCRIPTION_PROCEEDING"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_SUBSCRIPTION_ANSWERED:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_SUBSCRIPTION_ANSWERED", sizeof("EXOSIP_SUBSCRIPTION_ANSWERED"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_SUBSCRIPTION_REDIRECTED:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_SUBSCRIPTION_REDIRECTED", sizeof("EXOSIP_SUBSCRIPTION_REDIRECTED"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_SUBSCRIPTION_REQUESTFAILURE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_SUBSCRIPTION_REQUESTFAILURE", sizeof("EXOSIP_SUBSCRIPTION_REQUESTFAILURE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_SUBSCRIPTION_SERVERFAILURE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_SUBSCRIPTION_SERVERFAILURE", sizeof("EXOSIP_SUBSCRIPTION_SERVERFAILURE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_SUBSCRIPTION_GLOBALFAILURE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_SUBSCRIPTION_GLOBALFAILURE", sizeof("EXOSIP_SUBSCRIPTION_GLOBALFAILURE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_SUBSCRIPTION_NOTIFY:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_SUBSCRIPTION_NOTIFY", sizeof("EXOSIP_SUBSCRIPTION_NOTIFY"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_IN_SUBSCRIPTION_NEW:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_IN_SUBSCRIPTION_NEW", sizeof("EXOSIP_IN_SUBSCRIPTION_NEW"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_NOTIFICATION_NOANSWER:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_NOTIFICATION_NOANSWER", sizeof("EXOSIP_NOTIFICATION_NOANSWER"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_NOTIFICATION_PROCEEDING:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_NOTIFICATION_PROCEEDING", sizeof("EXOSIP_NOTIFICATION_PROCEEDING"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_NOTIFICATION_ANSWERED:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_NOTIFICATION_ANSWERED", sizeof("EXOSIP_NOTIFICATION_ANSWERED"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_NOTIFICATION_REDIRECTED:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_NOTIFICATION_REDIRECTED", sizeof("EXOSIP_NOTIFICATION_REDIRECTED"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_NOTIFICATION_REQUESTFAILURE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_NOTIFICATION_REQUESTFAILURE", sizeof("EXOSIP_NOTIFICATION_REQUESTFAILURE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_NOTIFICATION_SERVERFAILURE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_NOTIFICATION_SERVERFAILURE", sizeof("EXOSIP_NOTIFICATION_SERVERFAILURE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_NOTIFICATION_GLOBALFAILURE:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_NOTIFICATION_GLOBALFAILURE", sizeof("EXOSIP_NOTIFICATION_GLOBALFAILURE"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case EXOSIP_EVENT_COUNT:
+			crtx_fill_data_item(di, 's', "type", "EXOSIP_EVENT_COUNT", sizeof("EXOSIP_EVENT_COUNT"), CRTX_DIF_DONT_FREE_DATA);
+			break;
+	}
 
 	di = crtx_alloc_item(dict);
 	crtx_fill_data_item(di, 's', "textinfo", ptr->textinfo, sizeof(ptr->textinfo), CRTX_DIF_CREATE_DATA_COPY);
@@ -80,30 +228,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "node", 0, 0, 0);
-				if (ptr->request->req_uri->url_params.node) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->req_uri->url_params.node, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->req_uri->url_params.node->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->req_uri->url_params.node->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->req_uri->url_params.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->req_uri->url_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 			}
 
 			di = crtx_alloc_item(dict);
@@ -119,30 +245,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "node", 0, 0, 0);
-				if (ptr->request->req_uri->url_headers.node) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->req_uri->url_headers.node, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->req_uri->url_headers.node->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->req_uri->url_headers.node->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->req_uri->url_headers.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->req_uri->url_headers.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 			}
 
 			if (ptr->request->req_uri->string) {
@@ -184,30 +288,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->accepts.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->accepts.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->accepts.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->accepts.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->accepts.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->accepts.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->accepts.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -234,30 +316,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->accept_encodings.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->accept_encodings.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->accept_encodings.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->accept_encodings.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->accept_encodings.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->accept_encodings.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->accept_encodings.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -284,30 +344,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->accept_languages.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->accept_languages.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->accept_languages.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->accept_languages.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->accept_languages.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->accept_languages.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->accept_languages.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -334,30 +372,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->alert_infos.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->alert_infos.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->alert_infos.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->alert_infos.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->alert_infos.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->alert_infos.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->alert_infos.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -384,30 +400,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->allows.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->allows.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->allows.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->allows.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->allows.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->allows.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->allows.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -434,30 +428,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->authentication_infos.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->authentication_infos.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->authentication_infos.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->authentication_infos.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->authentication_infos.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->authentication_infos.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->authentication_infos.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -484,30 +456,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->authorizations.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->authorizations.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->authorizations.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->authorizations.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->authorizations.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->authorizations.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->authorizations.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -552,30 +502,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->call_infos.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->call_infos.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->call_infos.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->call_infos.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->call_infos.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->call_infos.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->call_infos.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -602,30 +530,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->contacts.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->contacts.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->contacts.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->contacts.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->contacts.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->contacts.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->contacts.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -652,30 +558,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->content_encodings.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->content_encodings.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->content_encodings.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->content_encodings.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->content_encodings.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->content_encodings.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->content_encodings.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -725,30 +609,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "node", 0, 0, 0);
-				if (ptr->request->content_type->gen_params.node) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->content_type->gen_params.node, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->content_type->gen_params.node->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->content_type->gen_params.node->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->content_type->gen_params.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->content_type->gen_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 			}
 		}
 
@@ -790,30 +652,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->error_infos.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->error_infos.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->error_infos.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->error_infos.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->error_infos.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->error_infos.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->error_infos.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -866,59 +706,13 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "url_params", 0, 0, 0);
+				// crtx_osip_list2dict(&ptr->request->from->url->url_params, di2->dict);
 
-				{
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'i', "nb_elt", ptr->request->from->url->url_params.nb_elt, sizeof(ptr->request->from->url->url_params.nb_elt), 0);
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "node", 0, 0, 0);
-					if (ptr->request->from->url->url_params.node) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->from->url->url_params.node->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->from->url->url_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "url_headers", 0, 0, 0);
+				// crtx_osip_list2dict(&ptr->request->from->url->url_headers, di2->dict);
 
-				{
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'i', "nb_elt", ptr->request->from->url->url_headers.nb_elt, sizeof(ptr->request->from->url->url_headers.nb_elt), 0);
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "node", 0, 0, 0);
-					if (ptr->request->from->url->url_headers.node) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->from->url->url_headers.node->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->from->url->url_headers.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-				}
 
 				if (ptr->request->from->url->string) {
 					di2 = crtx_alloc_item(dict);
@@ -939,30 +733,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "node", 0, 0, 0);
-				if (ptr->request->from->gen_params.node) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->from->gen_params.node, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->from->gen_params.node->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->from->gen_params.node->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->from->gen_params.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->from->gen_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 			}
 		}
 
@@ -999,30 +771,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->proxy_authenticates.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->proxy_authenticates.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->proxy_authenticates.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->proxy_authenticates.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->proxy_authenticates.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->proxy_authenticates.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->proxy_authenticates.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -1049,30 +799,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->proxy_authentication_infos.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->proxy_authentication_infos.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->proxy_authentication_infos.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->proxy_authentication_infos.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->proxy_authentication_infos.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->proxy_authentication_infos.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->proxy_authentication_infos.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -1099,30 +827,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->proxy_authorizations.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->proxy_authorizations.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->proxy_authorizations.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->proxy_authorizations.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->proxy_authorizations.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->proxy_authorizations.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->proxy_authorizations.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -1149,30 +855,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->record_routes.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->record_routes.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->record_routes.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->record_routes.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->record_routes.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->record_routes.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->record_routes.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -1199,30 +883,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->routes.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->routes.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->routes.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->routes.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->routes.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->routes.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->routes.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -1275,59 +937,13 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "url_params", 0, 0, 0);
+				// crtx_osip_list2dict(&ptr->request->to->url->url_params, di2->dict);
 
-				{
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'i', "nb_elt", ptr->request->to->url->url_params.nb_elt, sizeof(ptr->request->to->url->url_params.nb_elt), 0);
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "node", 0, 0, 0);
-					if (ptr->request->to->url->url_params.node) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->to->url->url_params.node->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->to->url->url_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "url_headers", 0, 0, 0);
+				// crtx_osip_list2dict(&ptr->request->to->url->url_headers, di2->dict);
 
-				{
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'i', "nb_elt", ptr->request->to->url->url_headers.nb_elt, sizeof(ptr->request->to->url->url_headers.nb_elt), 0);
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "node", 0, 0, 0);
-					if (ptr->request->to->url->url_headers.node) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->to->url->url_headers.node->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->to->url->url_headers.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-				}
 
 				if (ptr->request->to->url->string) {
 					di2 = crtx_alloc_item(dict);
@@ -1348,30 +964,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "node", 0, 0, 0);
-				if (ptr->request->to->gen_params.node) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->to->gen_params.node, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->to->gen_params.node->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->to->gen_params.node->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->to->gen_params.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->to->gen_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 			}
 		}
 
@@ -1395,30 +989,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->vias.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->vias.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->vias.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->vias.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->vias.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->vias.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->vias.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -1445,30 +1017,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->www_authenticates.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->www_authenticates.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->www_authenticates.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->www_authenticates.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->www_authenticates.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->www_authenticates.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->www_authenticates.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -1495,30 +1045,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->headers.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->headers.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->headers.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->headers.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->headers.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->headers.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->headers.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -1545,30 +1073,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->request->bodies.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->request->bodies.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->request->bodies.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->request->bodies.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->request->bodies.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->request->bodies.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->request->bodies.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -1647,30 +1153,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "node", 0, 0, 0);
-				if (ptr->response->req_uri->url_params.node) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->req_uri->url_params.node, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->req_uri->url_params.node->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->req_uri->url_params.node->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->req_uri->url_params.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->req_uri->url_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 			}
 
 			di = crtx_alloc_item(dict);
@@ -1686,30 +1170,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "node", 0, 0, 0);
-				if (ptr->response->req_uri->url_headers.node) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->req_uri->url_headers.node, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->req_uri->url_headers.node->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->req_uri->url_headers.node->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->req_uri->url_headers.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->req_uri->url_headers.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 			}
 
 			if (ptr->response->req_uri->string) {
@@ -1751,30 +1213,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->accepts.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->accepts.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->accepts.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->accepts.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->accepts.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->accepts.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->accepts.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -1801,30 +1241,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->accept_encodings.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->accept_encodings.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->accept_encodings.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->accept_encodings.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->accept_encodings.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->accept_encodings.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->accept_encodings.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -1851,30 +1269,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->accept_languages.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->accept_languages.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->accept_languages.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->accept_languages.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->accept_languages.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->accept_languages.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->accept_languages.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -1901,30 +1297,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->alert_infos.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->alert_infos.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->alert_infos.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->alert_infos.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->alert_infos.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->alert_infos.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->alert_infos.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -1951,30 +1325,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->allows.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->allows.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->allows.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->allows.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->allows.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->allows.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->allows.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -2001,30 +1353,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->authentication_infos.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->authentication_infos.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->authentication_infos.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->authentication_infos.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->authentication_infos.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->authentication_infos.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->authentication_infos.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -2051,30 +1381,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->authorizations.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->authorizations.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->authorizations.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->authorizations.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->authorizations.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->authorizations.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->authorizations.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -2119,30 +1427,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->call_infos.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->call_infos.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->call_infos.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->call_infos.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->call_infos.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->call_infos.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->call_infos.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -2169,30 +1455,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->contacts.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->contacts.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->contacts.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->contacts.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->contacts.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->contacts.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->contacts.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -2219,30 +1483,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->content_encodings.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->content_encodings.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->content_encodings.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->content_encodings.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->content_encodings.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->content_encodings.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->content_encodings.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -2292,30 +1534,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "node", 0, 0, 0);
-				if (ptr->response->content_type->gen_params.node) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->content_type->gen_params.node, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->content_type->gen_params.node->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->content_type->gen_params.node->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->content_type->gen_params.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->content_type->gen_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 			}
 		}
 
@@ -2357,30 +1577,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->error_infos.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->error_infos.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->error_infos.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->error_infos.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->error_infos.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->error_infos.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->error_infos.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -2433,59 +1631,13 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "url_params", 0, 0, 0);
+				// crtx_osip_list2dict(&ptr->response->from->url->url_params, di2->dict);
 
-				{
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'i', "nb_elt", ptr->response->from->url->url_params.nb_elt, sizeof(ptr->response->from->url->url_params.nb_elt), 0);
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "node", 0, 0, 0);
-					if (ptr->response->from->url->url_params.node) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->from->url->url_params.node->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->from->url->url_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "url_headers", 0, 0, 0);
+				// crtx_osip_list2dict(&ptr->response->from->url->url_headers, di2->dict);
 
-				{
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'i', "nb_elt", ptr->response->from->url->url_headers.nb_elt, sizeof(ptr->response->from->url->url_headers.nb_elt), 0);
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "node", 0, 0, 0);
-					if (ptr->response->from->url->url_headers.node) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->from->url->url_headers.node->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->from->url->url_headers.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-				}
 
 				if (ptr->response->from->url->string) {
 					di2 = crtx_alloc_item(dict);
@@ -2506,30 +1658,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "node", 0, 0, 0);
-				if (ptr->response->from->gen_params.node) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->from->gen_params.node, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->from->gen_params.node->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->from->gen_params.node->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->from->gen_params.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->from->gen_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 			}
 		}
 
@@ -2566,30 +1696,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->proxy_authenticates.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->proxy_authenticates.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->proxy_authenticates.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->proxy_authenticates.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->proxy_authenticates.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->proxy_authenticates.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->proxy_authenticates.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -2616,30 +1724,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->proxy_authentication_infos.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->proxy_authentication_infos.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->proxy_authentication_infos.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->proxy_authentication_infos.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->proxy_authentication_infos.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->proxy_authentication_infos.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->proxy_authentication_infos.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -2666,30 +1752,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->proxy_authorizations.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->proxy_authorizations.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->proxy_authorizations.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->proxy_authorizations.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->proxy_authorizations.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->proxy_authorizations.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->proxy_authorizations.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -2716,30 +1780,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->record_routes.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->record_routes.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->record_routes.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->record_routes.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->record_routes.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->record_routes.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->record_routes.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -2766,30 +1808,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->routes.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->routes.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->routes.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->routes.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->routes.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->routes.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->routes.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -2842,59 +1862,13 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "url_params", 0, 0, 0);
+				// crtx_osip_list2dict(&ptr->response->to->url->url_params, di2->dict);
 
-				{
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'i', "nb_elt", ptr->response->to->url->url_params.nb_elt, sizeof(ptr->response->to->url->url_params.nb_elt), 0);
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "node", 0, 0, 0);
-					if (ptr->response->to->url->url_params.node) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->to->url->url_params.node->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->to->url->url_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "url_headers", 0, 0, 0);
+				// crtx_osip_list2dict(&ptr->response->to->url->url_headers, di2->dict);
 
-				{
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'i', "nb_elt", ptr->response->to->url->url_headers.nb_elt, sizeof(ptr->response->to->url->url_headers.nb_elt), 0);
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "node", 0, 0, 0);
-					if (ptr->response->to->url->url_headers.node) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->to->url->url_headers.node->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->to->url->url_headers.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-				}
 
 				if (ptr->response->to->url->string) {
 					di2 = crtx_alloc_item(dict);
@@ -2915,30 +1889,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "node", 0, 0, 0);
-				if (ptr->response->to->gen_params.node) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->to->gen_params.node, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->to->gen_params.node->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->to->gen_params.node->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->to->gen_params.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->to->gen_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 			}
 		}
 
@@ -2962,30 +1914,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->vias.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->vias.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->vias.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->vias.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->vias.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->vias.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->vias.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -3012,30 +1942,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->www_authenticates.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->www_authenticates.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->www_authenticates.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->www_authenticates.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->www_authenticates.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->www_authenticates.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->www_authenticates.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -3062,30 +1970,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->headers.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->headers.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->headers.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->headers.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->headers.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->headers.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->headers.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -3112,30 +1998,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->response->bodies.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->response->bodies.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->response->bodies.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->response->bodies.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->response->bodies.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->response->bodies.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->response->bodies.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -3214,30 +2078,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "node", 0, 0, 0);
-				if (ptr->ack->req_uri->url_params.node) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->req_uri->url_params.node, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->req_uri->url_params.node->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->req_uri->url_params.node->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->req_uri->url_params.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->req_uri->url_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 			}
 
 			di = crtx_alloc_item(dict);
@@ -3253,30 +2095,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "node", 0, 0, 0);
-				if (ptr->ack->req_uri->url_headers.node) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->req_uri->url_headers.node, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->req_uri->url_headers.node->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->req_uri->url_headers.node->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->req_uri->url_headers.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->req_uri->url_headers.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 			}
 
 			if (ptr->ack->req_uri->string) {
@@ -3318,30 +2138,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->accepts.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->accepts.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->accepts.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->accepts.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->accepts.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->accepts.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->accepts.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -3368,30 +2166,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->accept_encodings.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->accept_encodings.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->accept_encodings.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->accept_encodings.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->accept_encodings.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->accept_encodings.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->accept_encodings.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -3418,30 +2194,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->accept_languages.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->accept_languages.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->accept_languages.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->accept_languages.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->accept_languages.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->accept_languages.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->accept_languages.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -3468,30 +2222,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->alert_infos.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->alert_infos.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->alert_infos.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->alert_infos.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->alert_infos.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->alert_infos.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->alert_infos.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -3518,30 +2250,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->allows.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->allows.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->allows.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->allows.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->allows.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->allows.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->allows.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -3568,30 +2278,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->authentication_infos.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->authentication_infos.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->authentication_infos.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->authentication_infos.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->authentication_infos.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->authentication_infos.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->authentication_infos.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -3618,30 +2306,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->authorizations.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->authorizations.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->authorizations.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->authorizations.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->authorizations.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->authorizations.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->authorizations.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -3686,30 +2352,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->call_infos.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->call_infos.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->call_infos.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->call_infos.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->call_infos.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->call_infos.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->call_infos.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -3736,30 +2380,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->contacts.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->contacts.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->contacts.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->contacts.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->contacts.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->contacts.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->contacts.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -3786,30 +2408,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->content_encodings.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->content_encodings.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->content_encodings.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->content_encodings.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->content_encodings.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->content_encodings.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->content_encodings.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -3859,30 +2459,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "node", 0, 0, 0);
-				if (ptr->ack->content_type->gen_params.node) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->content_type->gen_params.node, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->content_type->gen_params.node->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->content_type->gen_params.node->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->content_type->gen_params.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->content_type->gen_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 			}
 		}
 
@@ -3924,30 +2502,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->error_infos.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->error_infos.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->error_infos.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->error_infos.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->error_infos.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->error_infos.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->error_infos.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -4000,59 +2556,13 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "url_params", 0, 0, 0);
+				// crtx_osip_list2dict(&ptr->ack->from->url->url_params, di2->dict);
 
-				{
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'i', "nb_elt", ptr->ack->from->url->url_params.nb_elt, sizeof(ptr->ack->from->url->url_params.nb_elt), 0);
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "node", 0, 0, 0);
-					if (ptr->ack->from->url->url_params.node) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->from->url->url_params.node->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->from->url->url_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "url_headers", 0, 0, 0);
+				// crtx_osip_list2dict(&ptr->ack->from->url->url_headers, di2->dict);
 
-				{
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'i', "nb_elt", ptr->ack->from->url->url_headers.nb_elt, sizeof(ptr->ack->from->url->url_headers.nb_elt), 0);
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "node", 0, 0, 0);
-					if (ptr->ack->from->url->url_headers.node) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->from->url->url_headers.node->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->from->url->url_headers.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-				}
 
 				if (ptr->ack->from->url->string) {
 					di2 = crtx_alloc_item(dict);
@@ -4073,30 +2583,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "node", 0, 0, 0);
-				if (ptr->ack->from->gen_params.node) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->from->gen_params.node, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->from->gen_params.node->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->from->gen_params.node->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->from->gen_params.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->from->gen_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 			}
 		}
 
@@ -4133,30 +2621,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->proxy_authenticates.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->proxy_authenticates.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->proxy_authenticates.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->proxy_authenticates.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->proxy_authenticates.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->proxy_authenticates.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->proxy_authenticates.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -4183,30 +2649,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->proxy_authentication_infos.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->proxy_authentication_infos.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->proxy_authentication_infos.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->proxy_authentication_infos.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->proxy_authentication_infos.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->proxy_authentication_infos.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->proxy_authentication_infos.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -4233,30 +2677,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->proxy_authorizations.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->proxy_authorizations.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->proxy_authorizations.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->proxy_authorizations.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->proxy_authorizations.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->proxy_authorizations.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->proxy_authorizations.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -4283,30 +2705,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->record_routes.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->record_routes.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->record_routes.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->record_routes.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->record_routes.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->record_routes.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->record_routes.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -4333,30 +2733,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->routes.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->routes.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->routes.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->routes.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->routes.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->routes.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->routes.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -4409,59 +2787,13 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "url_params", 0, 0, 0);
+				// crtx_osip_list2dict(&ptr->ack->to->url->url_params, di2->dict);
 
-				{
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'i', "nb_elt", ptr->ack->to->url->url_params.nb_elt, sizeof(ptr->ack->to->url->url_params.nb_elt), 0);
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "node", 0, 0, 0);
-					if (ptr->ack->to->url->url_params.node) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->to->url->url_params.node->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->to->url->url_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "url_headers", 0, 0, 0);
+				// crtx_osip_list2dict(&ptr->ack->to->url->url_headers, di2->dict);
 
-				{
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'i', "nb_elt", ptr->ack->to->url->url_headers.nb_elt, sizeof(ptr->ack->to->url->url_headers.nb_elt), 0);
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "node", 0, 0, 0);
-					if (ptr->ack->to->url->url_headers.node) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->to->url->url_headers.node->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->to->url->url_headers.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-				}
 
 				if (ptr->ack->to->url->string) {
 					di2 = crtx_alloc_item(dict);
@@ -4482,30 +2814,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "node", 0, 0, 0);
-				if (ptr->ack->to->gen_params.node) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->to->gen_params.node, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->to->gen_params.node->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->to->gen_params.node->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->to->gen_params.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->to->gen_params.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 			}
 		}
 
@@ -4529,30 +2839,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->vias.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->vias.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->vias.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->vias.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->vias.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->vias.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->vias.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -4579,30 +2867,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->www_authenticates.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->www_authenticates.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->www_authenticates.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->www_authenticates.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->www_authenticates.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->www_authenticates.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->www_authenticates.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -4629,30 +2895,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->headers.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->headers.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->headers.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->headers.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->headers.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->headers.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->headers.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -4679,30 +2923,8 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-				if (ptr->ack->bodies.node->next) {
-					di2->dict = crtx_init_dict(0, 0, 0);
-					struct crtx_dict *dict = di2->dict;
-					struct crtx_dict_item *di;
+				// crtx___node2dict(ptr->ack->bodies.node->next, di2->dict);
 
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'D', "next", 0, 0, 0);
-					if (ptr->ack->bodies.node->next->next) {
-						di->dict = crtx_init_dict(0, 0, 0);
-						struct crtx_dict *dict = di->dict;
-						struct crtx_dict_item *di2;
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'D', "next", 0, 0, 0);
-						// crtx___node2dict(ptr->ack->bodies.node->next->next->next, di2->dict);
-
-
-						di2 = crtx_alloc_item(dict);
-						crtx_fill_data_item(di2, 'p', "element", ptr->ack->bodies.node->next->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-					}
-
-					di = crtx_alloc_item(dict);
-					crtx_fill_data_item(di, 'p', "element", ptr->ack->bodies.node->next->element, 0, CRTX_DIF_DONT_FREE_DATA);
-				}
 
 				di2 = crtx_alloc_item(dict);
 				crtx_fill_data_item(di2, 'p', "element", ptr->ack->bodies.node->element, 0, CRTX_DIF_DONT_FREE_DATA);
@@ -4718,7 +2940,7 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 		}
 
 		di2 = crtx_alloc_item(dict);
-		crtx_fill_data_item(di2, 'i', "message_length", ptr->ack->message_length, sizeof(ptr->ack->message_length), 0);
+		crtx_fill_data_item(di2, 'z', "message_length", ptr->ack->message_length, sizeof(ptr->ack->message_length), 0);
 
 		di2 = crtx_alloc_item(dict);
 		crtx_fill_data_item(di2, 'p', "application_data", ptr->ack->application_data, 0, CRTX_DIF_DONT_FREE_DATA);

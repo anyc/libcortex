@@ -108,6 +108,34 @@ def output_cursor(cursor, level, di, prefix=""):
 			else:
 				print(indent(level) + "crtx_fill_data_item("+di+", 's', \""+spelling+"\", "+prefix+spelling+", sizeof("+prefix+spelling+"), CRTX_DIF_CREATE_DATA_COPY);")
 				#print("")
+		elif typ.kind == clang.cindex.TypeKind.ENUM:
+			if cursor.type.get_declaration().kind == clang.cindex.CursorKind.TYPEDEF_DECL:
+				cur = list(cursor.type.get_declaration().get_children())[0]
+			else:
+				cur = cursor
+			#print(cursor.type.get_declaration().kind)
+			#for c in cursor.type.get_declaration().get_children():
+				#print(c, c.spelling, c.displayname)
+				#print(c.type, c.kind)
+				#print(c.enum_type.kind, clang.cindex.TypeKind.UINT)
+				#for cc in c.get_children():
+					#print(cc.spelling, cc.displayname, cc.enum_value)
+			
+			
+			crtx_typ = type_clang2crtx(cur.type.get_canonical())
+			if crtx_typ in ["u", "U", "i", "I", "d"]:
+				print(indent(level) + di + " = crtx_alloc_item(dict);")
+				print(indent(level) + "crtx_fill_data_item("+di+", '"+crtx_typ+"', \""+spelling+"\", "+prefix+spelling+", sizeof("+prefix+spelling+"), 0);")
+			
+			print("")
+			print(indent(level) + di + " = crtx_alloc_item(dict);")
+			print(indent(level) + "switch ("+prefix+spelling+") {")
+			for enum in cur.get_children():
+				#print(enum.spelling, enum.displayname, enum.enum_value)
+				print(indent(level+1) + "case "+enum.displayname+":")
+				print(indent(level+2) + "crtx_fill_data_item("+di+", 's', \""+spelling+"\", \""+enum.displayname+"\", sizeof(\""+enum.displayname+"\"), CRTX_DIF_DONT_FREE_DATA);")
+				print(indent(level+2) + "break;")
+			print(indent(level) + "}")
 		else:
 			print(indent(level) + di + " = crtx_alloc_item(dict);")
 			
@@ -247,7 +275,7 @@ print(" *  "+" ".join(sys.argv)+"")
 print(" */")
 print("")
 print("#include <string.h>")
-print("// #include <"+os.path.basename(sys.argv[1])+">")
+print("// #include <"+os.path.basename(args.hdr_file[0])+">")
 print("")
 print("#include \"dict.h\"\n")
 

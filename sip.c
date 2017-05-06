@@ -8,74 +8,13 @@
 #include "core.h"
 #include "sip.h"
 
-void print(char*s) { printf("%s\n", s); }
-void print_event_type(int type) {
-	switch (type) {
-		case EXOSIP_REGISTRATION_SUCCESS: print("EXOSIP_REGISTRATION_SUCCESS"); break;
-		case EXOSIP_REGISTRATION_FAILURE: print("EXOSIP_REGISTRATION_FAILURE"); break;
-		
-		case EXOSIP_CALL_INVITE: print("EXOSIP_CALL_INVITE"); break;
-		case EXOSIP_CALL_REINVITE: print("EXOSIP_CALL_REINVITE"); break;
-		
-		case EXOSIP_CALL_NOANSWER: print("EXOSIP_CALL_NOANSWER"); break;
-		case EXOSIP_CALL_PROCEEDING: print("EXOSIP_CALL_PROCEEDING"); break;
-		case EXOSIP_CALL_RINGING: print("EXOSIP_CALL_RINGING"); break;
-		case EXOSIP_CALL_ANSWERED: print("EXOSIP_CALL_ANSWERED"); break;
-		case EXOSIP_CALL_REDIRECTED: print("EXOSIP_CALL_REDIRECTED"); break;
-		case EXOSIP_CALL_REQUESTFAILURE: print("EXOSIP_CALL_REQUESTFAILURE"); break;
-		case EXOSIP_CALL_SERVERFAILURE: print("EXOSIP_CALL_SERVERFAILURE"); break;
-		case EXOSIP_CALL_GLOBALFAILURE: print("EXOSIP_CALL_GLOBALFAILURE"); break;
-		case EXOSIP_CALL_ACK: print("EXOSIP_CALL_ACK"); break;
-		case EXOSIP_CALL_CANCELLED: print("EXOSIP_CALL_CANCELLED"); break;
-		
-		case EXOSIP_CALL_MESSAGE_NEW: print("EXOSIP_CALL_MESSAGE_NEW"); break;
-		case EXOSIP_CALL_MESSAGE_PROCEEDING: print("EXOSIP_CALL_MESSAGE_PROCEEDING"); break;
-		case EXOSIP_CALL_MESSAGE_ANSWERED: print("EXOSIP_CALL_MESSAGE_ANSWERED"); break;
-		case EXOSIP_CALL_MESSAGE_REDIRECTED: print("EXOSIP_CALL_MESSAGE_REDIRECTED"); break;
-		case EXOSIP_CALL_MESSAGE_REQUESTFAILURE: print("EXOSIP_CALL_MESSAGE_REQUESTFAILURE"); break;
-		case EXOSIP_CALL_MESSAGE_SERVERFAILURE: print("EXOSIP_CALL_MESSAGE_SERVERFAILURE"); break;
-		case EXOSIP_CALL_MESSAGE_GLOBALFAILURE: print("EXOSIP_CALL_MESSAGE_GLOBALFAILURE"); break;
-		case EXOSIP_CALL_CLOSED: print("EXOSIP_CALL_CLOSED"); break;
-		case EXOSIP_CALL_RELEASED: print("EXOSIP_CALL_RELEASED"); break;
-		
-		case EXOSIP_MESSAGE_NEW: print("EXOSIP_MESSAGE_NEW"); break;
-		case EXOSIP_MESSAGE_PROCEEDING: print("EXOSIP_MESSAGE_PROCEEDING"); break;
-		case EXOSIP_MESSAGE_ANSWERED: print("EXOSIP_MESSAGE_ANSWERED"); break;
-		case EXOSIP_MESSAGE_REDIRECTED: print("EXOSIP_MESSAGE_REDIRECTED"); break;
-		case EXOSIP_MESSAGE_REQUESTFAILURE: print("EXOSIP_MESSAGE_REQUESTFAILURE"); break;
-		case EXOSIP_MESSAGE_SERVERFAILURE: print("EXOSIP_MESSAGE_SERVERFAILURE"); break;
-		case EXOSIP_MESSAGE_GLOBALFAILURE: print("EXOSIP_MESSAGE_GLOBALFAILURE"); break;
-		
-		case EXOSIP_SUBSCRIPTION_NOANSWER: print("EXOSIP_SUBSCRIPTION_NOANSWER"); break;
-		case EXOSIP_SUBSCRIPTION_PROCEEDING: print("EXOSIP_SUBSCRIPTION_PROCEEDING"); break;
-		case EXOSIP_SUBSCRIPTION_ANSWERED: print("EXOSIP_SUBSCRIPTION_ANSWERED"); break;
-		case EXOSIP_SUBSCRIPTION_REDIRECTED: print("EXOSIP_SUBSCRIPTION_REDIRECTED"); break;
-		case EXOSIP_SUBSCRIPTION_REQUESTFAILURE: print("EXOSIP_SUBSCRIPTION_REQUESTFAILURE"); break;
-		case EXOSIP_SUBSCRIPTION_SERVERFAILURE: print("EXOSIP_SUBSCRIPTION_SERVERFAILURE"); break;
-		case EXOSIP_SUBSCRIPTION_GLOBALFAILURE: print("EXOSIP_SUBSCRIPTION_GLOBALFAILURE"); break;
-		case EXOSIP_SUBSCRIPTION_NOTIFY: print("EXOSIP_SUBSCRIPTION_NOTIFY"); break;
-		
-		case EXOSIP_IN_SUBSCRIPTION_NEW: print("EXOSIP_IN_SUBSCRIPTION_NEW"); break;
-		
-		case EXOSIP_NOTIFICATION_NOANSWER: print("EXOSIP_NOTIFICATION_NOANSWER"); break;
-		case EXOSIP_NOTIFICATION_PROCEEDING: print("EXOSIP_NOTIFICATION_PROCEEDING"); break;
-		case EXOSIP_NOTIFICATION_ANSWERED: print("EXOSIP_NOTIFICATION_ANSWERED"); break;
-		case EXOSIP_NOTIFICATION_REDIRECTED: print("EXOSIP_NOTIFICATION_REDIRECTED"); break;
-		case EXOSIP_NOTIFICATION_REQUESTFAILURE: print("EXOSIP_NOTIFICATION_REQUESTFAILURE"); break;
-		case EXOSIP_NOTIFICATION_SERVERFAILURE: print("EXOSIP_NOTIFICATION_SERVERFAILURE"); break;
-		case EXOSIP_NOTIFICATION_GLOBALFAILURE: print("EXOSIP_NOTIFICATION_GLOBALFAILURE"); break;
-		default:
-			print("TODO\n");
-	}
-}
 
-void sip_event_before_release_cb(struct crtx_event *event) {
+static void sip_event_before_release_cb(struct crtx_event *event) {
 	eXosip_event_t *evt;
 	
 	evt = (eXosip_event_t *) crtx_event_get_ptr(event);
 	eXosip_event_free(evt);
 }
-
 
 static char sip_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event_loop_payload *payload;
@@ -152,13 +91,13 @@ static char start_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
-int stop_listener(struct crtx_listener_base *listener) {
+static char stop_listener(struct crtx_listener_base *listener) {
 	osip_message_t *reg = NULL;
 	int r;
 	struct crtx_sip_listener *slist;
 	
-	slist = (struct crtx_sip_listener *) listener;
 	
+	slist = (struct crtx_sip_listener *) listener;
 	
 	eXosip_lock(slist->ctx);
 	r = eXosip_register_build_register(slist->ctx, slist->rid, 0, &reg);
@@ -176,7 +115,6 @@ int stop_listener(struct crtx_listener_base *listener) {
 
 static void free_listener(struct crtx_listener_base *listener, void *userdata) {
 	struct crtx_sip_listener *slist;
-// 	int r;
 	
 	slist = (struct crtx_sip_listener *) listener;
 	
@@ -187,7 +125,10 @@ struct crtx_listener_base *crtx_new_sip_listener(void *options) {
 	struct crtx_sip_listener *slist;
 	int r;
 	
+	
 	slist = (struct crtx_sip_listener *) options;
+	
+// 	TRACE_INITIALIZE(6, NULL);
 	
 	slist->ctx = eXosip_malloc();
 	if (!slist->ctx) {
@@ -213,6 +154,7 @@ struct crtx_listener_base *crtx_new_sip_listener(void *options) {
 	eXosip_unlock(slist->ctx);
 	
 	slist->parent.start_listener = &start_listener;
+	slist->parent.stop_listener = &stop_listener;
 	slist->parent.free = &free_listener;
 	
 	return &slist->parent;
@@ -244,12 +186,11 @@ void help(char **argv) {
 }
 
 struct crtx_dict_transformation dict_transformation[] = {
-	// key, type, flag, format
 	{ "title", 's', 0, "New phone call" },
 	{ "message", 's', 0, "New call from %[request/from/displayname]s %[request/from/url/username]s" },
 };
 
-static char sip_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char sip2notify_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *dict;
 	struct eXosip_event *evt;
 	struct crtx_graph *notify_graph;
@@ -260,38 +201,23 @@ static char sip_test_handler(struct crtx_event *event, void *userdata, void **se
 	notify_graph = (struct crtx_graph *) userdata;
 	
 	if (evt->type == EXOSIP_CALL_INVITE) {
-		char *displayname, *username, *msg;
-// 		size_t msg_len;
-		char r;
 		struct crtx_event *notify_event;
 		struct crtx_dict *notify_dict;
 		
 		crtx_eXosip_event2dict(evt, &dict);
 		
-// 		crtx_print_dict(dict);
+// 		char *displayname, *username;
+// 		char r;
+// 		r = crtx_dict_locate_value(dict, "request/from/displayname", 's', &displayname, sizeof(displayname));
+// 		r |= crtx_dict_locate_value(dict, "request/from/url/username", 's', &username, sizeof(username));
+// 		if (r == 0 && displayname && username)
+// 			crtx_print_dict(notify_dict);
+			
+		notify_event = crtx_create_event(0, 0, 0);
+		notify_dict = crtx_dict_transform(dict, "ss", dict_transformation);
 		
-		r = crtx_dict_locate_value(dict, "request/from/displayname", 's', &displayname, sizeof(displayname));
-		r |= crtx_dict_locate_value(dict, "request/from/url/username", 's', &username, sizeof(username));
-		if (r == 0 && displayname && username) {
-// 			printf("%s %s\n", displayname, username);
-			
-// 			msg = (char *) malloc(strlen(displayname) + strlen(username)
-			
-			notify_event = crtx_create_event(0, 0, 0);
-// 			nevent->data.flags |= CRTX_DIF_DONT_FREE_DATA;
-// 			nevent->cb_before_release = &sip_event_before_release_cb;
-			
-// 			dict = crtx_create_dict("ss", 
-// 				's', "title", "new call", sizeof("new call"), CRTX_DIF_DONT_FREE_DATA,
-// 				's', "message", msg, msg_len, 0,
-// 				);
-			
-			notify_dict = crtx_dict_transform(dict, "ss", dict_transformation);
-			crtx_print_dict(notify_dict);
-			crtx_event_set_data(notify_event, 0, notify_dict, 0);
-			
-			crtx_add_event(notify_graph, notify_event);
-		}
+		crtx_event_set_data(notify_event, 0, notify_dict, 0);
+		crtx_add_event(notify_graph, notify_event);
 		
 		crtx_dict_unref(dict);
 	}
@@ -305,6 +231,7 @@ int sip_main(int argc, char **argv) {
 	struct crtx_graph *notify_graph;
 	char ret, opt;
 	char *username, *password, *server;
+	
 	
 	username = password = server = 0;
 	while ((opt = getopt (argc, argv, "hu:p:s:")) != -1) {
@@ -330,8 +257,6 @@ int sip_main(int argc, char **argv) {
 	}
 	
 	
-	TRACE_INITIALIZE (6, NULL);
-	
 	memset(&slist, 0, sizeof(struct crtx_sip_listener));
 	
 	slist.transport = IPPROTO_UDP;
@@ -351,11 +276,12 @@ int sip_main(int argc, char **argv) {
 		exit(1);
 	}
 	
-	notify_graph = 0;
+	// create a new graph and add all known task handlers for the event type "user_notification"
 	crtx_create_graph(&notify_graph, "notify_graph", 0);
-	crtx_autofill_graph_with_tasks("user_notification", notify_graph);
+	crtx_autofill_graph_with_tasks(notify_graph, "cortex.user_notification");
 	
-	crtx_create_task(lbase->graph, 0, "sip_test", sip_test_handler, notify_graph);
+	// add the handler that will transform sip events into user notification events
+	crtx_create_task(lbase->graph, 0, "sip2notify", sip2notify_handler, notify_graph);
 	
 	ret = crtx_start_listener(lbase);
 	if (!ret) {
@@ -364,6 +290,8 @@ int sip_main(int argc, char **argv) {
 	}
 	
 	crtx_loop();
+	
+	crtx_free_listener(lbase);
 	
 	return 0;  
 }

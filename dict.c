@@ -760,12 +760,16 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 			key[keylen] = 0;
 			
 			// do we print specific item referenced by key or all items (*)?
-			if (*key != '*')
+			if (*key != '*') {
 // 				di = crtx_get_item(ds, key);
 				di = crtx_dict_locate(ds, key);
-// 				crtx_dict_locate_value(struct crtx_dict *dict, char *path, char type, void *buffer, size_t buffer_size)
-			else
+				if (!di) {
+					ERROR("dict transformation failed, no entry \"%s\"\n", key);
+					return 0;
+				}
+			} else {
 				di = &ds->items[0];
+			}
 			
 			
 			// check if this part of the format string contains a sub-group

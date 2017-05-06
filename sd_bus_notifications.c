@@ -310,7 +310,7 @@ static char notify_send_handler(struct crtx_event *event, void *userdata, void *
 // }
 
 void crtx_sdbus_notification_init() {
-	crtx_register_handler_for_event_type("user_notification", "dbus_notification", &notify_send_handler, 0);
+	crtx_register_handler_for_event_type("cortex.user_notification", "dbus_notification", &notify_send_handler, 0);
 }
 
 void crtx_sdbus_notification_finish() {
