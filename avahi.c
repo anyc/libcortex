@@ -318,7 +318,7 @@ static char sdbus_to_avahi_handler(struct crtx_event *event, void *userdata, voi
 // 	avahi_event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
 	avahi_event->cb_before_release = &cb_sdbus_event_release;
 	
-	add_event(alist->parent.graph, avahi_event);
+	crtx_add_event(alist->parent.graph, avahi_event);
 	
 	return 0;
 }

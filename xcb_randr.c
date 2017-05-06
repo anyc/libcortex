@@ -236,7 +236,7 @@ void *xcb_randr_tmain(void *data) {
 						crtx_event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 // 						crtx_event->origin = (struct crtx_listener_base *) xrlist;
 						
-						add_event(xrlist->parent.graph, crtx_event);
+						crtx_add_event(xrlist->parent.graph, crtx_event);
 						
 // 						if (cevent->mode == XCB_NONE) {
 // 							printf("CRTC 0x%08x disabled\n", cevent->crtc);
@@ -253,7 +253,7 @@ void *xcb_randr_tmain(void *data) {
 					crtx_event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 // 					crtx_event->origin = (struct crtx_listener_base *) xrlist;
 					
-					add_event(xrlist->parent.graph, crtx_event);
+					crtx_add_event(xrlist->parent.graph, crtx_event);
 					
 					break;
 				default:

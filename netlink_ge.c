@@ -72,7 +72,7 @@ int crtx_genl_msg2dict(struct nl_msg *msg, void *arg) {
 	
 // 	crtx_print_dict(dict);
 	
-	add_event(genlist->parent.graph, event);
+	crtx_add_event(genlist->parent.graph, event);
 	
 	return 0;
 }

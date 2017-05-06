@@ -158,7 +158,7 @@ void push_new_udev_event(struct crtx_udev_listener *ulist, struct udev_device *d
 	nevent->cb_before_release = &udev_event_before_release_cb;
 	// 		reference_event_release(nevent);
 
-	add_event(ulist->parent.graph, nevent);
+	crtx_add_event(ulist->parent.graph, nevent);
 
 	// 		wait_on_event(nevent);
 

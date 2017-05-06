@@ -25,7 +25,7 @@ void send_event(struct crtx_evdev_listener *el, struct input_event *ev, char syn
 	
 // 	reference_event_release(event);
 	
-	add_event(el->parent.graph, event);
+	crtx_add_event(el->parent.graph, event);
 	
 // 	wait_on_event(event);
 	

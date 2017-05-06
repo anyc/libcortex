@@ -494,7 +494,7 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 					
 // 					reference_event_release(event);
 					
-// 					add_event(nl_listener->parent.graph, event);
+// 					crtx_add_event(nl_listener->parent.graph, event);
 					
 // 					wait_on_event(event);
 					
@@ -508,7 +508,7 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 					
 					
 				}
-				add_event(nl_listener->parent.graph, event);
+				crtx_add_event(nl_listener->parent.graph, event);
 			}
 			
 			nlh = NLMSG_NEXT(nlh, len);

@@ -213,7 +213,7 @@ void *inotify_tmain(void *data) {
 				
 // 				reference_event_release(event);
 				
-				add_event(fal->parent.graph, event);
+				crtx_add_event(fal->parent.graph, event);
 				
 // 				wait_on_event(event);
 				

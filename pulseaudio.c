@@ -114,7 +114,7 @@ static void generic_pa_get_info_callback(pa_context *c, void *info, int eol, voi
 		}
 	}
 	
-	add_event(helper->palist->parent.graph, nevent);
+	crtx_add_event(helper->palist->parent.graph, nevent);
 	
 	free(helper);
 }

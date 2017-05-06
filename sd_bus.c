@@ -7,13 +7,11 @@
 
 // busctl --user tree org.cortexd.main
 // busctl --user introspect org.cortexd.main /org/cortexd/main
-// busctl --user call org.cortexd.main /org/cortexd/main org.cortexd.main add_event ss blubber data
+// busctl --user call org.cortexd.main /org/cortexd/main org.cortexd.main crtx_add_event ss blubber data
 
 // busctl --user call org.cortexd.main /org/cortexd/main org.cortexd.main add_signal s test
 // busctl --user call org.cortexd.main /org/cortexd/main org.cortexd.main add_listener ss "/Mixers/PulseAudio__Playback_Devices_1" test
 // dbus-monitor type=signal interface="org.cortexd.dbus.signal"
-
-
 
 
 
@@ -47,7 +45,7 @@ void sd_bus_print_msg(sd_bus_message *m) {
 	}
 }
 
-// static int sd_bus_add_event(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
+// static int sd_bus_crtx_add_event(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
 // 	char *type, *data;
 // 	int r;
 // 	struct crtx_event *event;
@@ -66,7 +64,7 @@ void sd_bus_print_msg(sd_bus_message *m) {
 // 	
 // 	event = crtx_create_event(type, data, strlen(data)+1);
 // 	
-// 	add_event(args->graph, event);
+// 	crtx_add_event(args->graph, event);
 // 	
 // 	return sd_bus_reply_method_return(m, "");
 // }
@@ -234,7 +232,7 @@ void sd_bus_add_signal_listener(sd_bus *bus, char *path, char *event_type) {
 // 
 // static const sd_bus_vtable cortexd_vtable[] = {
 // 	SD_BUS_VTABLE_START(0),
-// 	SD_BUS_METHOD("add_event", "ss", "", sd_bus_add_event, SD_BUS_VTABLE_UNPRIVILEGED),
+// 	SD_BUS_METHOD("crtx_add_event", "ss", "", sd_bus_crtx_add_event, SD_BUS_VTABLE_UNPRIVILEGED),
 // 	SD_BUS_METHOD("add_signal_listener", "ss", "", sd_bus_add_signal_listener_cb, SD_BUS_VTABLE_UNPRIVILEGED),
 // 	SD_BUS_METHOD("add_signal", "s", "", sd_bus_add_signal, SD_BUS_VTABLE_UNPRIVILEGED),
 // 	SD_BUS_VTABLE_END
@@ -337,7 +335,7 @@ static int sdbus_match_listener_cb(sd_bus_message *m, void *userdata, sd_bus_err
 	
 	sd_bus_message_ref(m);
 	
-	add_event(match->listener->parent.graph, event);
+	crtx_add_event(match->listener->parent.graph, event);
 	
 	return 0;
 }

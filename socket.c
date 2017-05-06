@@ -102,7 +102,7 @@ static void setup_response_event_cb(struct crtx_event *event) {
 	event->response.pointer = 0;
 // 	event->response.dict = 0;
 	
-	add_event(slist->outbox, resp_event);
+	crtx_add_event(slist->outbox, resp_event);
 }
 
 static char outbound_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -130,7 +130,7 @@ static char inbound_event_handler(struct crtx_event *event, void *userdata, void
 		slistener->crtx_inbox = get_graph_for_event_type(CRTX_EVT_INBOX, crtx_evt_inbox);
 	
 	// write inbound event to the main inbox graph
-	add_event(slistener->crtx_inbox, event);
+	crtx_add_event(slistener->crtx_inbox, event);
 	
 	return 1;
 }
@@ -166,7 +166,7 @@ static void *socket_connection_tmain(void *data) {
 		}
 		
 		if (slist.parent.graph)
-			add_event(slist.parent.graph, event);
+			crtx_add_event(slist.parent.graph, event);
 		else
 			add_raw_event(event);
 	}
@@ -284,7 +284,7 @@ static void *socket_client_tmain(void *data) {
 		}
 		
 		if (listeners->parent.graph)
-			add_event(listeners->parent.graph, event);
+			crtx_add_event(listeners->parent.graph, event);
 		else
 			add_raw_event(event);
 	}

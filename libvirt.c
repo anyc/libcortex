@@ -609,7 +609,7 @@ static int domain_evt_cb(virConnectPtr conn,
 	crtx_event->data.type = 'D';
 	crtx_event->data.dict = dict;
 	
-	add_event(lvlist->parent.graph, crtx_event);
+	crtx_add_event(lvlist->parent.graph, crtx_event);
 	
 	return 0;
 }

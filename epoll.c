@@ -189,7 +189,7 @@ void *crtx_epoll_main(void *data) {
 					
 					// TODO if this is called, either create individual graph per fd or ensure
 					// the event handlers check if the event is meant for them
-// 					add_event(epl->parent.graph, event);
+// 					crtx_add_event(epl->parent.graph, event);
 				} else
 				if (el_payload->simple_callback) {
 					el_payload->simple_callback(el_payload);

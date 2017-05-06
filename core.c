@@ -15,8 +15,10 @@
 #include "core.h"
 #include "socket.h"
 #include "socket_raw.h"
-#ifdef STATIC_sdbus
+#ifdef STATIC_sd_bus
 #include "sd_bus.h"
+#endif
+#ifdef STATIC_sd_bus_notifications
 #include "sd_bus_notifications.h"
 #endif
 #ifdef STATIC_nf_queue
@@ -82,6 +84,8 @@ struct crtx_module static_modules[] = {
 	{"socket_raw", &crtx_socket_raw_init, &crtx_socket_raw_finish},
 #ifdef STATIC_sdbus
 	{"sdbus", &crtx_sdbus_init, &crtx_sdbus_finish},
+#endif
+#ifdef STATIC_sd_bus_notifications
 	{"sd_bus_notification", &crtx_sdbus_notification_init, &crtx_sdbus_notification_finish},
 #endif
 #ifdef STATIC_nfqueue
@@ -137,9 +141,9 @@ struct crtx_listener_repository static_listener_repository[] = {
 	{"socket_raw_server", &crtx_new_socket_raw_server_listener},
 	{"socket_client", &crtx_new_socket_client_listener},
 	{"socket_raw_client", &crtx_new_socket_raw_client_listener},
-#ifdef STATIC_sdbus
-	{"sd_bus_notification", &crtx_new_sd_bus_notification_listener},
-#endif
+// #ifdef STATIC_sd_bus_notifications
+// 	{"sd_bus_notification", &crtx_new_sd_bus_notification_listener},
+// #endif
 	{"signals", &crtx_new_signals_listener},
 #ifdef STATIC_readline
 	{"readline", &crtx_new_readline_listener},
@@ -304,7 +308,7 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 			event->data.type = 'u';
 			event->data.uint32 = CRTX_LSTNR_STOPPED;
 			
-			add_event(listener->state_graph, event);
+			crtx_add_event(listener->state_graph, event);
 			
 			UNLOCK(listener->state_mutex);
 			
@@ -351,7 +355,7 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 		event = crtx_create_event("listener_state", 0, 0);
 		event->data.type = 'u';
 		event->data.uint32 = CRTX_LSTNR_STARTED;
-		add_event(listener->state_graph, event);
+		crtx_add_event(listener->state_graph, event);
 	}
 	
 	UNLOCK(listener->state_mutex);
@@ -472,7 +476,7 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 		event = crtx_create_event("listener_state", 0, 0);
 		event->data.type = 'u';
 		event->data.uint32 = CRTX_LSTNR_STOPPED;
-		add_event(listener->state_graph, event);
+		crtx_add_event(listener->state_graph, event);
 	}
 	
 	UNLOCK(listener->state_mutex);
@@ -1033,7 +1037,7 @@ void add_raw_event(struct crtx_event *event) {
 		return;
 	}
 	
-	add_event(graph, event);
+	crtx_add_event(graph, event);
 }
 
 static void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **event_types) {
@@ -1412,6 +1416,8 @@ void crtx_finish() {
 	}
 	free(crtx_root->graphs);
 	UNLOCK(crtx_root->graphs_mutex);
+	
+	DBG("finished shutdown\n");
 }
 
 void print_tasks(struct crtx_graph *graph) {
@@ -1719,22 +1725,26 @@ void *crtx_event_get_ptr(struct crtx_event *event) {
 	return ptr;
 }
 
-void crtx_register_handler_for_event_type(char *event_type, char *handler_name, crtx_handle_task_t *handler_function, void *handler_data) {
+void crtx_register_handler_for_event_type(char *event_type, char *handler_name, crtx_handle_task_t handler_function, void *handler_data) {
 	struct crtx_ll *catit, *last_catit, *entry;
 	
 	last_catit = 0;
-	for (catit = crtx_root->handler_categories; catit && !strcmp(catit->handler_category->event_type, event_type); catit=catit->next) {
+	for (catit = crtx_root->handler_categories; catit && strcmp(catit->handler_category->event_type, event_type); catit=catit->next) {
 		last_catit = catit;
 	}
 	
-	if (!last_catit)
+	if (!last_catit) {
 		catit = crtx_ll_append_new(&crtx_root->handler_categories, 0);
+		catit->handler_category = 0;
+	}
 	
-	if (!catit)
+	if (!catit) {
 		catit = crtx_ll_append_new(&last_catit, 0);
+		catit->handler_category = 0;
+	}
 	
 	if (!catit->handler_category) {
-		catit->handler_category = (struct crtx_handler_repo_category *) malloc(sizeof(struct crtx_handler_repo_category));
+		catit->handler_category = (struct crtx_handler_category *) malloc(sizeof(struct crtx_handler_category));
 		catit->handler_category->event_type = event_type;
 		catit->handler_category->entries = 0;
 	}
@@ -1742,20 +1752,22 @@ void crtx_register_handler_for_event_type(char *event_type, char *handler_name, 
 	entry = crtx_ll_append_new(&catit->handler_category->entries, 0);
 	
 	entry->handler_category_entry = (struct crtx_handler_category_entry *) malloc(sizeof(struct crtx_handler_category_entry));
-	entry->handler_category_entry->name = handler_name;
+	entry->handler_category_entry->handler_name = handler_name;
 	entry->handler_category_entry->function = handler_function;
 	entry->handler_category_entry->handler_data = handler_data;
+	
+// 	printf("new handler %s\n", event_type);
 }
 
 void crtx_autofill_graph_with_tasks(char *event_type, struct crtx_graph *graph) {
 	struct crtx_ll *catit, *entry;
 	
-	for (catit = crtx_root->handler_categories; catit && !strcmp(catit->handler_category->event_type, event_type); catit=catit->next) {}
+	for (catit = crtx_root->handler_categories; catit && strcmp(catit->handler_category->event_type, event_type); catit=catit->next) {}
 	
 	if (catit) {
-		for (entry = catit->entries; entry; entry=entry->next) {
+		for (entry = catit->handler_category->entries; entry; entry=entry->next) {
 			crtx_create_task(graph, 0,
-							entry->handler_category_entry->name,
+							entry->handler_category_entry->handler_name,
 							entry->handler_category_entry->function,
 							entry->handler_category_entry->handler_data);
 		}

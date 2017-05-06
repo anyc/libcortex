@@ -103,7 +103,7 @@ static char sip_fd_event_handler(struct crtx_event *event, void *userdata, void 
 		
 		nevent->cb_before_release = &sip_event_before_release_cb;
 		
-		add_event(slist->parent.graph, nevent);
+		crtx_add_event(slist->parent.graph, nevent);
 	}
 	
 	return 0;
@@ -243,7 +243,7 @@ void help(char **argv) {
 	fprintf(stderr, "  -p <password> \n");
 }
 
-struct crtx_dict_transformation transf[] = {
+struct crtx_dict_transformation dict_transformation[] = {
 	// key, type, flag, format
 	{ "title", 's', 0, "New phone call" },
 	{ "message", 's', 0, "New call from %[request/from/displayname]s %[request/from/url/username]s" },
@@ -261,10 +261,10 @@ static char sip_test_handler(struct crtx_event *event, void *userdata, void **se
 	
 	if (evt->type == EXOSIP_CALL_INVITE) {
 		char *displayname, *username, *msg;
-		size_t msg_len;
+// 		size_t msg_len;
 		char r;
 		struct crtx_event *notify_event;
-		struct crtx_dict *dict;
+		struct crtx_dict *notify_dict;
 		
 		crtx_eXosip_event2dict(evt, &dict);
 		
@@ -275,7 +275,7 @@ static char sip_test_handler(struct crtx_event *event, void *userdata, void **se
 		if (r == 0 && displayname && username) {
 // 			printf("%s %s\n", displayname, username);
 			
-			msg = (char *) malloc(strlen(displayname) + strlen(username)
+// 			msg = (char *) malloc(strlen(displayname) + strlen(username)
 			
 			notify_event = crtx_create_event(0, 0, 0);
 // 			nevent->data.flags |= CRTX_DIF_DONT_FREE_DATA;
@@ -286,9 +286,9 @@ static char sip_test_handler(struct crtx_event *event, void *userdata, void **se
 // 				's', "message", msg, msg_len, 0,
 // 				);
 			
-			dict = crtx_dict_transform(dict, "ss", transformation);
-			
-			crtx_event_set_data(notify_event, 0, dict, 0);
+			notify_dict = crtx_dict_transform(dict, "ss", dict_transformation);
+			crtx_print_dict(notify_dict);
+			crtx_event_set_data(notify_event, 0, notify_dict, 0);
 			
 			crtx_add_event(notify_graph, notify_event);
 		}
@@ -351,6 +351,7 @@ int sip_main(int argc, char **argv) {
 		exit(1);
 	}
 	
+	notify_graph = 0;
 	crtx_create_graph(&notify_graph, "notify_graph", 0);
 	crtx_autofill_graph_with_tasks("user_notification", notify_graph);
 	

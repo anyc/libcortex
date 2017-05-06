@@ -47,7 +47,7 @@
 // 		event->data.type = 'u';
 // 		event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 // 		
-// 		add_event(tlist->parent.graph, event);
+// 		crtx_add_event(tlist->parent.graph, event);
 // 		
 // 		if (tlist->newtimer.it_interval.tv_sec == 0 && tlist->newtimer.it_interval.tv_nsec == 0)
 // 			break;
@@ -84,7 +84,7 @@ static char timer_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	event->data.type = 'u';
 // 	event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 	
-	add_event(tlist->parent.graph, event);
+	crtx_add_event(tlist->parent.graph, event);
 	
 // 	if (tlist->newtimer->it_interval.tv_sec == 0 && tlist->newtimer->it_interval.tv_nsec == 0)
 // 		break;

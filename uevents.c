@@ -103,7 +103,7 @@ static int uevents_read_cb(struct crtx_netlink_raw_listener *nl_listener, int fd
 	
 // 	reference_event_release(event);
 	
-	add_event(ulist->parent.graph, event);
+	crtx_add_event(ulist->parent.graph, event);
 	
 // 	wait_on_event(event);
 	

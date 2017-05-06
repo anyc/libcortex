@@ -310,28 +310,33 @@ struct crtx_dict * crtx_create_dict(char *signature, ...) {
 }
 
 void crtx_free_dict_item(struct crtx_dict_item *di) {
+// 	printf("key %s\n", di->key);
 	if (di->key && di->flags & CRTX_DIF_ALLOCATED_KEY)
 		free(di->key);
 	
-	if (di->pointer) {
-		switch (di->type) {
-			case 'p':
-				if (di->pointer && !(di->flags & CRTX_DIF_DONT_FREE_DATA))
-					free(di->pointer);
-				di->pointer = 0;
-				break;
-			case 's':
-				if (di->string && !(di->flags & CRTX_DIF_DONT_FREE_DATA))
-					free(di->string);
-				di->string = 0;
-				break;
-			case 'D':
-	// 			crtx_free_dict(di->dict);
+// 	if (di->pointer) {
+	switch (di->type) {
+		case 'p':
+			if (di->pointer && !(di->flags & CRTX_DIF_DONT_FREE_DATA))
+				free(di->pointer);
+			di->pointer = 0;
+			break;
+		case 's':
+			if (di->string && !(di->flags & CRTX_DIF_DONT_FREE_DATA))
+				free(di->string);
+			di->string = 0;
+			break;
+		case 'D':
+// 			crtx_free_dict(di->dict);
+			if (di->dict)
 				crtx_dict_unref(di->dict);
-				di->dict = 0;
-				break;
-		}
+			di->dict = 0;
+			break;
+		default:
+			// nothing to do here
+			break;
 	}
+// 	}
 }
 
 void crtx_free_dict(struct crtx_dict *ds) {
@@ -817,13 +822,13 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 							s = di->string;
 							len = strlen(s);
 							
-							*alloc += len + 1;
+							*alloc = *alloc + len + 1;
 							*result = (char*) realloc(*result, *alloc);
 							
 							*rlen += sprintf( &((*result)[*rlen]), "%s", s);
 							
-							// add separator, if present
-							if (keylen > 1 && i < ds->signature_length-1)
+							// add separator, if present TODO
+							if (*key == '*' && keylen > 1 && i < ds->signature_length-1)
 								*rlen += sprintf( &((*result)[*rlen]), "%s", &key[1]);
 							
 // 							di = crtx_get_next_item(di);
@@ -952,7 +957,7 @@ char crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void 
 	new_event->data.dict = dict;
 	
 	if (trans->graph)
-		add_event(trans->graph, new_event);
+		crtx_add_event(trans->graph, new_event);
 	else
 		add_raw_event(new_event);
 	

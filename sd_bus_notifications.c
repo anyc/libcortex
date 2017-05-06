@@ -218,16 +218,21 @@ static char notify_send_handler(struct crtx_event *event, void *userdata, void *
 	size_t answer_length;
 	struct crtx_dict *data, *actions_dict;
 	char **actions;
+	struct crtx_dict *dict;
 	
-	ret = crtx_get_value(event->data.dict, "title", 's', &title, sizeof(void*));
+	
+	crtx_event_get_payload(event, 0, 0, &dict);
+	
+	ret = crtx_get_value(dict, "title", 's', &title, sizeof(void*));
 	if (!ret) {
-		printf("error parsing event\n");
+		ERROR("error, no title in dict\n");
 		return 1;
 	}
 	
-	ret = crtx_get_value(event->data.dict, "message", 's', &msg, sizeof(void*));
+	ret = crtx_get_value(dict, "message", 's', &msg, sizeof(void*));
 	if (!ret) {
-		printf("error parsing event\n");
+		ERROR("error, no message in dict\n");
+		crtx_print_dict(event->data.dict);
 		return 1;
 	}
 	
@@ -305,7 +310,7 @@ static char notify_send_handler(struct crtx_event *event, void *userdata, void *
 // }
 
 void crtx_sdbus_notification_init() {
-	crtx_register_task_for_event_type("user_notification", "dbus_notification", &notify_send_handler);
+	crtx_register_handler_for_event_type("user_notification", "dbus_notification", &notify_send_handler, 0);
 }
 
 void crtx_sdbus_notification_finish() {

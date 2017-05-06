@@ -54,7 +54,7 @@ static char can_fd_event_handler(struct crtx_event *event, void *userdata, void 
 	
 // 	memcpy(&nevent->data.uint64, &frame.data, sizeof(uint64_t));
 	
-	add_event(clist->parent.graph, nevent);
+	crtx_add_event(clist->parent.graph, nevent);
 	
 // 	exit(1);
 	

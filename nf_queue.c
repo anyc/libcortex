@@ -301,7 +301,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		reference_event_release(event);
 		
-		add_event(nfq_list->parent.graph, event);
+		crtx_add_event(nfq_list->parent.graph, event);
 		
 		wait_on_event(event);
 		

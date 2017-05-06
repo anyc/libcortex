@@ -49,7 +49,7 @@ static void signal_handler(int signum) {
 	
 	event = crtx_create_event(smap->etype, 0, 0);
 	
-	add_event(signal_list.parent.graph, event);
+	crtx_add_event(signal_list.parent.graph, event);
 }
 
 static char start_listener(struct crtx_listener_base *listener) {
@@ -116,7 +116,7 @@ static char sigterm_handler(struct crtx_event *event, void *userdata, void **ses
 	
 	newe = crtx_create_event(CRTX_EVT_SHUTDOWN, 0, 0);
 	
-	add_event(crtx_root->crtx_ctrl_graph, newe);
+	crtx_add_event(crtx_root->crtx_ctrl_graph, newe);
 	
 	return 1;
 }
@@ -126,7 +126,7 @@ static char sigint_handler(struct crtx_event *event, void *userdata, void **sess
 	
 	newe = crtx_create_event(CRTX_EVT_SHUTDOWN, 0, 0);
 	
-	add_event(crtx_root->crtx_ctrl_graph, newe);
+	crtx_add_event(crtx_root->crtx_ctrl_graph, newe);
 	
 	return 1;
 }
