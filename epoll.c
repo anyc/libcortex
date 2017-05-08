@@ -62,6 +62,13 @@ void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 	struct epoll_event *event;
 	struct crtx_epoll_listener *epl;
 	
+	
+	epl = (struct crtx_epoll_listener *) lbase;
+	
+	// ignore our own epoll fd
+// 	if (epl->epoll_fd == el_payload->fd)
+// 		return;
+	
 	event = (struct epoll_event*) calloc(1, sizeof(struct epoll_event));
 // 	event = &el_payload->event;
 	el_payload->el_data = event;
@@ -76,7 +83,6 @@ void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 // 	event->events = el_payload->event_flags;
 	event->data.ptr = el_payload;
 	
-	epl = (struct crtx_epoll_listener *) lbase;
 	
 // 	crtx_create_task(lbase->graph, 0, el_payload->event_handler_name, el_payload->event_handler, 0);
 	
@@ -271,6 +277,12 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 // 	if (!epl->no_thread) {
 		epl->parent.thread = get_thread(crtx_epoll_main, epl, 0);
 		epl->parent.thread->do_stop = &stop_thread;
+		
+		// either the main thread will execute crtx_epoll_main or we spawn a new thread
+		epl->parent.mode = CRTX_PREFER_THREAD;
+		
+		// we only set our fd here to avoid warnings, the add_fd function will ignore our fd
+// 		epl->parent.el_payload.fd = epl->epoll_fd;
 // 	} 
 // 	else {
 // 		if (crtx_root->event_loop.listener)

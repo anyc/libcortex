@@ -136,7 +136,7 @@ char response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 	char ret;
 	struct cache_sessiondata *sd;
 	
-	sd = (struct cache_sessiondata*) malloc(sizeof(struct cache_sessiondata));
+	sd = (struct cache_sessiondata*) calloc(1, sizeof(struct cache_sessiondata));
 	*sessiondata = sd;
 	
 // 	if (event->data.type == 'p' && !event->data.dict)
@@ -267,6 +267,8 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *cache, struct cr
 		e->type = 'D';
 		e->key = 0;
 		e->dict = crtx_init_dict(0, 0, 0);
+		e->dict->id = "entries";
+		
 		dc->entries = e->dict;
 	}
 	
@@ -312,6 +314,8 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *cache, struct cr
 		
 		if (key->type == 's') {
 			c_entry->key = key->string;
+			if (key->flags & CRTX_DIF_ALLOCATED_KEY)
+				c_entry->flags |= CRTX_DIF_ALLOCATED_KEY;
 			key->string = 0;
 		}
 		
@@ -321,8 +325,9 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *cache, struct cr
 		if (!(dc->flags & CRTX_CACHE_NO_EXT_FIELDS))
 			n_items += 3;
 		
-		if (!c_entry->dict)
+		if (!c_entry->dict) {
 			c_entry->dict = crtx_init_dict(0, n_items, 0);
+		}
 		
 		memcpy(crtx_get_item_by_idx(c_entry->dict, 0), key, sizeof(struct crtx_dict_item));
 		crtx_get_item_by_idx(c_entry->dict, 0)->key = "key";
@@ -456,13 +461,14 @@ char crtx_cache_update_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item 
 
 void crtx_cache_add_on_miss(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
 	struct crtx_dict_item di;
-	printf("add\n");
+// 	printf("add\n");
 	di.type = 'D';
-	di.dict = event->data.dict;
+// 	di.dict = event->data.dict;
+	crtx_event_get_payload(event, 0, 0, &di.dict);
 	
 	crtx_cache_add_entry(ct->cache, key, 0, &di);
 	
-	crtx_print_dict(ct->cache->entries);
+// 	crtx_print_dict(ct->cache->entries);
 }
 
 
@@ -542,16 +548,22 @@ struct crtx_task *create_response_cache_task(char *id, create_key_cb_t create_ke
 	return task;
 }
 
-void crtx_flush_entries(struct crtx_cache *dc) {
-// 	crtx_free_dict(dc->entries);
-	crtx_dict_unref(dc->entries);
-}
+// void crtx_flush_entries(struct crtx_cache *dc) {
+// // 	crtx_free_dict(dc->entries);
+// 	crtx_dict_unref(dc->entries);
+// // 	crtx_get_item_by_idx(dc->dict, 1)->dict = 0;
+// }
 
 void free_response_cache(struct crtx_cache *dc) {
-	crtx_flush_entries(dc);
+// 	crtx_flush_entries(dc);
+	crtx_dict_unref(dc->dict);
 	free(dc);
 }
 
+void free_response_cache_task(struct crtx_cache_task *ct) {
+	free_response_cache(ct->cache);
+	free(ct);
+}
 
 
 

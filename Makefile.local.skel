@@ -1,7 +1,7 @@
 
-PLUGINS=udev libvirt
+# PLUGINS=udev libvirt
 
-CFLAGS+=-DPLUGIN_DIR=\"/usr/lib/cortexd/plugins/\"
+# CFLAGS+=-DPLUGIN_DIR=\"/usr/lib/cortexd/plugins/\"
 
 # CFLAGS+=-DCONTROLDIR=\"/usr/lib/cortexd/controls/\"
 

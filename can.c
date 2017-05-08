@@ -10,11 +10,9 @@
 #include <fcntl.h>
 #include <cap-ng.h>
 
-// #include <linux/if.h>
 #include <net/if.h>
 #include <netlink/netlink.h>
 #include <netlink/socket.h>
-// #include <netlink/route/rtnl.h>
 #include <netlink/route/link.h>
 #include <netlink/route/link/can.h>
 

@@ -8,18 +8,14 @@ OBJS+=cortexd.o core.o socket.o socket_raw.o controls.o fanotify.o inotify.o \
 	event_comm.o cache.o threads.o signals.o dict.o dict_inout.o \
 	llist.o dllist.o timer.o epoll.o
 
-TESTS+=timer.test epoll.test
+TESTS+=timer.test epoll.test uevents.test nl_route.test
 
 CFLAGS+=$(DEBUG_CFLAGS) -D_FILE_OFFSET_BITS=64 -fPIC
 
 LDLIBS+=-lpthread -ldl
 
 # LDFLAGS=-rdynamic
-
 # CONTROLS+=$(patsubst examples/control_%.c,examples/libcrtx_%.so,$(wildcard examples/*.c))
-
-
-
 
 CFLAGS_udev=$(shell pkg-config --cflags libudev)
 LDLIBS_udev=$(shell pkg-config --libs libudev)
@@ -29,9 +25,12 @@ LDLIBS_libvirt=$(shell pkg-config --libs libvirt)
 
 -include $(local_mk)
 
-CFLAGS+=$(patsubst %,-DSTATIC_%,$(STATIC_MODULES))
+STATIC_MODULES?=netlink_raw nl_route uevents
 
+CFLAGS+=$(patsubst %,-DSTATIC_%,$(STATIC_MODULES))
 OBJS+=$(patsubst %,%.o,$(STATIC_MODULES))
+
+PLUGINS?=
 
 PLUGIN_LIST=$(patsubst %,libcrtx_%.so, $(PLUGINS))
 

@@ -146,6 +146,7 @@ static void * thread_main(void *data) {
 		thread->fct_data = 0;
 		thread->on_finish = 0;
 		thread->on_finish_data = 0;
+		thread->do_stop = 0;
 		UNLOCK(pool_mutex);
 	}
 	
@@ -247,6 +248,8 @@ void crtx_threads_interrupt_thread(struct crtx_thread *t) {
 }
 
 void crtx_threads_stop(struct crtx_thread *t) {
+// 	LOCK(pool_mutex);
+	
 	t->stop = 1;
 	
 // 	if (!t->in_use) {
@@ -255,6 +258,8 @@ void crtx_threads_stop(struct crtx_thread *t) {
 		if (t->do_stop)
 			t->do_stop(t, t->fct_data);
 // 	}
+	
+// 	UNLOCK(pool_mutex);
 }
 
 void crtx_threads_stop_all() {

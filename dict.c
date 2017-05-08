@@ -127,7 +127,7 @@ char crtx_resize_dict(struct crtx_dict *dict, size_t n_items) {
 	
 	dict->items = (struct crtx_dict_item*) realloc(dict->items, n_items*sizeof(struct crtx_dict_item));
 	
-	if (dict->signature_length > 0)
+// 	if (dict->signature_length > 0)
 		memset(&dict->items[dict->signature_length], 0, sizeof(struct crtx_dict_item) * (n_items - dict->signature_length));
 	
 	// clear "last" flag
@@ -349,6 +349,7 @@ void crtx_free_dict(struct crtx_dict *ds) {
 	if (ds->items) {
 		di = ds->items;
 		for (i=0; i < ds->signature_length; i++) {
+// 			printf("di %p %p\n", di, di->key);
 			crtx_free_dict_item(di);
 			
 			if (CRTX_DIF_IS_LAST(di))
@@ -983,6 +984,10 @@ char crtx_cmp_item(struct crtx_dict_item *a, struct crtx_dict_item *b) {
 	
 	switch (a->type) {
 		case 's':
+			if (!a->string)
+				return -1;
+			if (!b->string)
+				return 1;
 			return strcmp(a->string, b->string);
 		case 'u':
 			return MY_CMP(a->uint32, b->uint32);
@@ -1089,7 +1094,7 @@ void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src,
 			dst->dict = src->dict;
 			break;
 		case 's':
-				dst->string = crtx_stracpy(src->string, 0);
+			dst->string = crtx_stracpy(src->string, 0);
 			break;
 		case 'p':
 			if (src->size) {

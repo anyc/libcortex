@@ -170,8 +170,8 @@ struct crtx_graph {
 	enum crtx_processing_mode mode;
 	
 // 	struct crtx_thread *consumers;
-	unsigned int n_consumers;
-	unsigned int n_max_consumers;
+// 	unsigned int n_consumers;
+// 	unsigned int n_max_consumers;
 	
 // 	struct crtx_event_ll *equeue;
 	struct crtx_dll *equeue;
@@ -339,7 +339,7 @@ struct crtx_listener_base *create_listener(char *id, void *options);
 void crtx_free_listener(struct crtx_listener_base *listener);
 struct crtx_event *crtx_create_event(char *type, void *data, size_t data_size);
 struct crtx_task *crtx_create_task(struct crtx_graph *graph, unsigned char position, char *id, crtx_handle_task_t handler, void *userdata);
-void crtx_claim_next_event(struct crtx_dll **graph, struct crtx_dll **event);
+// void crtx_claim_next_event(struct crtx_dll **graph, struct crtx_dll **event);
 void crtx_process_event(struct crtx_graph *graph, struct crtx_dll *queue_entry);
 void crtx_init_shutdown();
 
@@ -378,5 +378,8 @@ void *crtx_event_get_ptr(struct crtx_event *event);
 
 void crtx_register_handler_for_event_type(char *event_type, char *handler_name, crtx_handle_task_t handler_function, void *handler_data);
 void crtx_autofill_graph_with_tasks(struct crtx_graph *graph, char *event_type);
+
+void crtx_wait_on_graph_empty(struct crtx_graph *graph);
+// struct crtx_thread * crtx_start_detached_event_loop();
 
 #endif
