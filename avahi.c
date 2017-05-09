@@ -13,6 +13,7 @@
 #include "avahi.h"
 #include "sd_bus.h"
 
+#ifndef CRTX_TEST
 
 int crtx_avahi_resolve_service(struct crtx_avahi_service *service) {
 	int r;
@@ -417,8 +418,7 @@ void crtx_avahi_init() {
 void crtx_avahi_finish() {
 }
 
-
-#ifdef CRTX_TEST
+#else /* CRTX_TEST */
 
 static char avahi_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_avahi_service *service;

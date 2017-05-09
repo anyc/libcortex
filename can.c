@@ -27,6 +27,8 @@
 // 	free(event->data.pointer);
 // }
 
+#ifndef CRTX_TEST
+
 static char can_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event_loop_payload *payload;
 	struct can_frame *frame;
@@ -313,7 +315,7 @@ void crtx_can_init() {
 void crtx_can_finish() {
 }
 
-#ifdef CRTX_TEST
+#else /* CRTX_TEST */
 
 static char can_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct can_frame *frame;
