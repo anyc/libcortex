@@ -309,11 +309,11 @@ static char notify_send_handler(struct crtx_event *event, void *userdata, void *
 // 	return &slistener->parent;
 // }
 
-void crtx_sdbus_notification_init() {
+void crtx_sd_bus_notifications_init() {
 	crtx_register_handler_for_event_type("cortex.user_notification", "dbus_notification", &notify_send_handler, 0);
 }
 
-void crtx_sdbus_notification_finish() {
+void crtx_sd_bus_notifications_finish() {
 	if (def_bus) {
 		sd_bus_flush(def_bus);
 		sd_bus_unref(def_bus);

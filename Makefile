@@ -19,6 +19,10 @@ AVAILABLE_TESTS=avahi can epoll evdev libvirt netlink_ge nl_route pulseaudio sd_
 CFLAGS+=$(DEBUG_CFLAGS) -D_FILE_OFFSET_BITS=64 -fPIC
 LDLIBS+=-lpthread -ldl
 
+#
+# module-specific flags
+#
+
 CFLAGS_avahi+=
 LDLIBS_avahi+=
 DEPS_avahi+=sd_bus
@@ -54,6 +58,8 @@ LDLIBS_udev+=$(shell $(PKG_CONFIG) --libs libudev)
 CFLAGS_xcb_randr+=$(shell $(PKG_CONFIG) --cflags xcb xcb-randr)
 LDLIBS_xcb_randr+=$(shell $(PKG_CONFIG) --libs xcb xcb-randr)
 
+
+# default module sets
 STATIC_MODULES+=netlink_raw nl_route uevents dict_inout_json
 DYN_MODULES+=avahi can evdev libvirt netlink_ge nf_queue pulseaudio readline sd_bus sd_bus_notifications sip udev xcb_randr
 
@@ -61,10 +67,6 @@ DYN_MODULES+=avahi can evdev libvirt netlink_ge nf_queue pulseaudio readline sd_
 
 # build tests for enabled modules
 TESTS+=$(foreach t,$(STATIC_MODULES) $(DYN_MODULES),$(if $(findstring $(t),$(AVAILABLE_TESTS)), $(t).test))
-
-# add required flags for each static module
-# CFLAGS+=$(foreach d,$(patsubst %,CFLAGS_%,$(STATIC_MODULES)),$($(d)))
-# LDLIBS+=$(foreach d,$(patsubst %,LDLIBS_%,$(STATIC_MODULES)),$($(d)))
 
 OBJS+=$(patsubst %,%.o,$(STATIC_MODULES))
 
@@ -77,20 +79,20 @@ ifneq ($(MISSING_DEPS),)
 $(error error missing dep(s) for module(s) $(MISSING_DEPS): $(foreach m,$(MISSING_DEPS),$(foreach d,$(DEPS_$(m)), $(if $(findstring $(d),$(STATIC_MODULES) $(DYN_MODULES)),,$(d)) )))
 endif
 
+#
+# make rules
+#
+
 .PHONY: clean
 
 all: $(local_mk) $(CONTROLS) plugins shared
-
-$(local_mk):
-	cp $(local_mk).skel $(local_mk)
 
 $(APP): $(OBJS)
 
 shared: $(SHAREDLIB)
 
-%.o: CFLAGS+=$(CFLAGS_${@:.o=})
-%.o: %.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+$(local_mk):
+	cp $(local_mk).skel $(local_mk)
 
 clean:
 	rm -rf *.o $(APP) $(CONTROLS) $(TESTS) $(SHAREDLIB) libcrtx_*.so
@@ -98,35 +100,39 @@ clean:
 debug:
 	$(MAKE) $(MAKEFILE) DEBUG_CFLAGS="-g -g3 -gdwarf-2 -DDEBUG -Wall" #-Werror 
 
+
+
 dllist.o: CFLAGS+=-DCRTX_DLL
 dllist.o: llist.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-examples/libcrtx_%.so: examples/control_%.c
-	$(CC) -shared -o $@ -fPIC $< $(LDFLAGS) $(CFLAGS) -I. $(LDLIBS)
+%.o: CFLAGS+=$(CFLAGS_${@:.o=})
+%.o: %.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(SHAREDLIB): LDLIBS+=$(foreach o,$(STATIC_MODULES), $(LDLIBS_$(o)) )
 $(SHAREDLIB): $(OBJS)
 	$(CC) -shared -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS)
+
+libcrtx_%.so: LDLIBS+=$(LDLIBS_$(patsubst libcrtx_%.so,%,$@)) $(foreach d,$(DEPS_$(patsubst libcrtx_%.so,%,$@)),$(if $(findstring $(d),$(DYN_MODULES)),$(LDLIBS_$(d))) )
+libcrtx_%.so: %.o $(SHAREDLIB)
+	$(CC) -shared $(LDFLAGS) $< -o $@ $(LDLIBS) -L. -lcrtx
+
+plugins: $(SHAREDLIB) $(DYN_MODULES_LIST)
+
+
 
 tests: $(SHAREDLIB) $(TESTS)
 
 %.test: CFLAGS+=-DCRTX_TEST -g -g3 -gdwarf-2 -DDEBUG -Wall $(CFLAGS_${@:.test=})
 %.test: LDLIBS+=$(LDLIBS_${@:.test=}) $(foreach d,${@:.test=} $(DEPS_${@:.test=}),$(if $(findstring $(d),$(DYN_MODULES)),-lcrtx_$(d)))
 %.test: %.c
-# 	rm -f $(<:.c=.o)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $< -o $@ $(LDFLAGS) $(LDLIBS) -L. -lcrtx
-# 	rm -f $(<:.c=.o)
-# 	LD_LIBRARY_PATH=. ./$@ > /dev/null
 
+examples/libcrtx_%.so: examples/control_%.c
+	$(CC) -shared -o $@ -fPIC $< $(LDFLAGS) $(CFLAGS) -I. $(LDLIBS)
 
 crtx_examples:
 	$(MAKE) -C examples
-
-libcrtx_%.so: LDLIBS+=$(LDLIBS_$(patsubst libcrtx_%.so,%,$@)) $(foreach d,$(DEPS_$(patsubst libcrtx_%.so,%,$@)),$(if $(findstring $(d),$(DYN_MODULES)),$(LDLIBS_$(d))) )
-libcrtx_%.so: %.o
-	$(CC) -shared $(LDFLAGS) $< -o $@ $(LDLIBS)
-
-plugins: $(SHAREDLIB) $(DYN_MODULES_LIST)
 
 -include $(local_mk_rules)

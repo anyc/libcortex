@@ -150,10 +150,10 @@ struct crtx_listener_repository static_listener_repository[] = {
 // 	{"sd_bus_notification", &crtx_new_sd_bus_notification_listener},
 // #endif
 	{"signals", &crtx_new_signals_listener},
+	{"timer", &crtx_new_timer_listener},
 #ifdef STATIC_readline
 	{"readline", &crtx_new_readline_listener},
 #endif
-	{"timer", &crtx_new_timer_listener},
 #ifdef STATIC_netlink_raw
 	{"netlink_raw", &crtx_new_netlink_raw_listener},
 #endif
@@ -197,11 +197,11 @@ struct crtx_listener_repository static_listener_repository[] = {
 	{0, 0}
 };
 
-struct crtx_listener_repository *listener_repository = 0;
-unsigned int listener_repository_length = 0;
+// struct crtx_listener_repository *listener_repository = 0;
+// unsigned int listener_repository_length = 0;
 
-struct crtx_lstnr_plugin *plugins = 0;
-unsigned int n_plugins = 0;
+// struct crtx_lstnr_plugin *plugins = 0;
+// unsigned int n_plugins = 0;
 
 char * crtx_evt_control[] = { CRTX_EVT_MOD_INIT, CRTX_EVT_SHUTDOWN, 0 };
 // char *crtx_evt_notification[] = { CRTX_EVT_NOTIFICATION, 0 };
@@ -394,9 +394,11 @@ char crtx_update_listener(struct crtx_listener_base *listener) {
 struct crtx_listener_base *create_listener(char *id, void *options) {
 	struct crtx_listener_repository *l;
 	struct crtx_listener_base *lbase;
+	char static_lstnr;
 	
 	DBG("new listener %s\n", id);
 	
+	static_lstnr = 1;
 	lbase = 0;
 	l = static_listener_repository;
 	while (l) {
@@ -409,9 +411,6 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 					return 0;
 				}
 				
-				if (lbase->thread)
-					reference_signal(&lbase->thread->finished);
-				
 				break;
 			}
 			l++;
@@ -419,7 +418,10 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 		if (lbase)
 			break;
 		
-		l = listener_repository;
+		if (static_lstnr) {
+			l = crtx_root->listener_repository;
+			static_lstnr = 0;
+		}
 	}
 	
 	if (!lbase) {
@@ -433,23 +435,26 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 // 	printf("if %s\n", id);
 	new_eventgraph(&lbase->graph, lbase->id, 0);
 	lbase->graph->listener = lbase;
+// 	if (lbase->thread)
+// 		reference_signal(&lbase->thread->finished);
 	
 // 	new_eventgraph(&lbase->state_graph, 0, 0);
 	
-	if (!lbase) {
-		ERROR("listener \"%s\" not found\n", id);
-	} else {
-		if (lbase->el_payload.fd > 0) {
-			if (!crtx_root->event_loop.listener)
-				crtx_get_event_loop();
-		} else
-		if (lbase->thread) {
+// 	if (!lbase) {
+// 		ERROR("listener \"%s\" not found\n", id);
+// 	} else {
+	if (lbase->el_payload.fd > 0) {
+		if (!crtx_root->event_loop.listener)
+			crtx_get_event_loop();
+	} else
+	if (lbase->thread) {
+		reference_signal(&lbase->thread->finished);
 // 			if (lbase->thread->on_finish)
 // 				ERROR("thread->on_finish already set\n");
 // 			lbase->thread->on_finish = &listener_thread_on_finish;
 // 			lbase->thread->on_finish_data = lbase;
-		}
 	}
+// 	}
 	
 	return lbase;
 }
@@ -1253,9 +1258,9 @@ static void load_plugin(char *path, char *basename) {
 	
 	printf("load plugin \"%s\"\n", path);
 	
-	n_plugins++;
-	plugins = (struct crtx_lstnr_plugin*) realloc(plugins, sizeof(struct crtx_lstnr_plugin)*n_plugins);
-	p = &plugins[n_plugins-1];
+	crtx_root->n_plugins++;
+	crtx_root->plugins = (struct crtx_lstnr_plugin*) realloc(crtx_root->plugins, sizeof(struct crtx_lstnr_plugin)*crtx_root->n_plugins);
+	p = &crtx_root->plugins[crtx_root->n_plugins-1];
 	
 	memset(p, 0, sizeof(struct crtx_lstnr_plugin));
 	p->path = path;
@@ -1266,10 +1271,11 @@ static void load_plugin(char *path, char *basename) {
 		return;
 	
 	len = strlen(basename);
-	if (len <= 11)
+	if (len <= 12)
 		return;
 	
 	memcpy(plugin_name, basename+8, len - 8 - 3);
+	plugin_name[len - 8 - 3] = 0;
 	
 	p->initialized = 1;
 	snprintf(buf, 1024, "crtx_%s_init", plugin_name);
@@ -1283,19 +1289,43 @@ static void load_plugin(char *path, char *basename) {
 		p->initialized = p->init();
 	
 	if (p->get_listener_repository) {
-		p->get_listener_repository(&listener_repository, &listener_repository_length);
+		p->get_listener_repository(&crtx_root->listener_repository, &crtx_root->listener_repository_length);
 	} else {
-		void * create;
+		char **crtx_listener_list;
+		void *create;
+		
 		snprintf(buf, 1024, "crtx_new_%s_listener", plugin_name);
 		create = dlsym(p->handle, buf);
 		
 		if (create) {
-			listener_repository_length++;
-			listener_repository = (struct crtx_listener_repository*) realloc(listener_repository, sizeof(struct crtx_listener_repository)*listener_repository_length);
-			lrepo = &listener_repository[listener_repository_length-1];
+			crtx_root->listener_repository_length++;
+			crtx_root->listener_repository = (struct crtx_listener_repository*) realloc(crtx_root->listener_repository, sizeof(struct crtx_listener_repository)*crtx_root->listener_repository_length);
+			lrepo = &crtx_root->listener_repository[crtx_root->listener_repository_length-1];
 			
 			lrepo->id = crtx_stracpy(plugin_name, 0);
 			lrepo->create = create;
+		}
+		
+		crtx_listener_list = (char**) dlsym(p->handle, "crtx_listener_list");
+		
+		if (crtx_listener_list) {
+			char **s;
+			
+			s = crtx_listener_list;
+			while (*s) {
+				snprintf(buf, 1024, "crtx_new_%s_listener", *s);
+				create = dlsym(p->handle, buf);
+				
+				if (create) {
+					crtx_root->listener_repository_length++;
+					crtx_root->listener_repository = (struct crtx_listener_repository*) realloc(crtx_root->listener_repository, sizeof(struct crtx_listener_repository)*crtx_root->listener_repository_length);
+					lrepo = &crtx_root->listener_repository[crtx_root->listener_repository_length-1];
+					
+					lrepo->id = *s;
+					lrepo->create = create;
+				}
+				s++;
+			}
 		}
 	}
 }
@@ -1778,20 +1808,17 @@ void *crtx_event_get_ptr(struct crtx_event *event) {
 }
 
 void crtx_register_handler_for_event_type(char *event_type, char *handler_name, crtx_handle_task_t handler_function, void *handler_data) {
-	struct crtx_ll *catit, *last_catit, *entry;
+	struct crtx_ll *catit, *entry;
 	
-	last_catit = 0;
-	for (catit = crtx_root->handler_categories; catit && strcmp(catit->handler_category->event_type, event_type); catit=catit->next) {
-		last_catit = catit;
-	}
+	for (catit = crtx_root->handler_categories; catit && strcmp(catit->handler_category->event_type, event_type); catit=catit->next) {}
 	
-	if (!last_catit) {
-		catit = crtx_ll_append_new(&crtx_root->handler_categories, 0);
-		catit->handler_category = 0;
-	}
+// 	if (!last_catit) {
+// 		catit = crtx_ll_append_new(&crtx_root->handler_categories, 0);
+// 		catit->handler_category = 0;
+// 	}
 	
 	if (!catit) {
-		catit = crtx_ll_append_new(&last_catit, 0);
+		catit = crtx_ll_append_new(&crtx_root->handler_categories, 0);
 		catit->handler_category = 0;
 	}
 	
@@ -1808,7 +1835,7 @@ void crtx_register_handler_for_event_type(char *event_type, char *handler_name, 
 	entry->handler_category_entry->function = handler_function;
 	entry->handler_category_entry->handler_data = handler_data;
 	
-// 	printf("new handler %s\n", event_type);
+	VDBG("new handler %s for etype %s\n", handler_name, event_type);
 }
 
 void crtx_autofill_graph_with_tasks(struct crtx_graph *graph, char *event_type) {
@@ -1818,6 +1845,7 @@ void crtx_autofill_graph_with_tasks(struct crtx_graph *graph, char *event_type) 
 	
 	if (catit) {
 		for (entry = catit->handler_category->entries; entry; entry=entry->next) {
+			VDBG("auto-add %s to %s\n", entry->handler_category_entry->handler_name, graph->name);
 			crtx_create_task(graph, 0,
 							entry->handler_category_entry->handler_name,
 							entry->handler_category_entry->function,

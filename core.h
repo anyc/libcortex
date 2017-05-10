@@ -298,6 +298,12 @@ struct crtx_root {
 	
 // 	void *notification_listeners_handle;
 	
+	struct crtx_lstnr_plugin *plugins;
+	unsigned int n_plugins;
+	
+	struct crtx_listener_repository *listener_repository;
+	unsigned int listener_repository_length;
+	
 	struct crtx_ll *handler_categories;
 };
 

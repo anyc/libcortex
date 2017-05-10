@@ -11,8 +11,8 @@
 #include "threads.h"
 #include "dict.h"
 
-#define EV_RL_REQUEST "cortex.readline.request"
-static char *rl_event_types[] = { EV_RL_REQUEST, 0 };
+// #define EV_RL_REQUEST "cortex.readline.request"
+// static char *rl_event_types[] = { EV_RL_REQUEST, 0 };
 
 static pthread_mutex_t stdout_mutex;
 
@@ -60,20 +60,23 @@ static char rl_notify_send_handler(struct crtx_event *event, void *userdata, voi
 	size_t answer_length;
 	struct crtx_dict *data, *actions_dict;
 	char **actions;
+	struct crtx_dict *dict;
 	
-	ret = crtx_get_value(event->data.dict, "title", 's', &title, sizeof(void*));
+	crtx_event_get_payload(event, 0, 0, &dict);
+	
+	ret = crtx_get_value(dict, "title", 's', &title, sizeof(void*));
 	if (!ret) {
 		printf("error parsing event\n");
 		return 1;
 	}
 	
-	ret = crtx_get_value(event->data.dict, "message", 's', &msg, sizeof(void*));
+	ret = crtx_get_value(dict, "message", 's', &msg, sizeof(void*));
 	if (!ret) {
 		printf("error parsing event\n");
 		return 1;
 	}
 	
-	ret = crtx_get_value(event->data.dict, "actions", 'D', &actions_dict, sizeof(void*));
+	ret = crtx_get_value(dict, "actions", 'D', &actions_dict, sizeof(void*));
 	if (ret && actions_dict) {
 		struct crtx_dict_item *di;
 		unsigned char i;
@@ -146,7 +149,7 @@ static char rl_notify_send_handler(struct crtx_event *event, void *userdata, voi
 void crtx_readline_init() {
 	int ret;
 	
-	crtx_register_task_for_event_type("cortex.user_notification", "readline_notify", &rl_notify_send_handler);
+	crtx_register_handler_for_event_type("cortex.user_notification", "readline_notify", &rl_notify_send_handler, 0);
 	
 	ret = pthread_mutex_init(&stdout_mutex, 0); ASSERT(ret >= 0);
 }
