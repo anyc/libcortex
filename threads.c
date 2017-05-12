@@ -150,7 +150,7 @@ static void * thread_main(void *data) {
 		UNLOCK(pool_mutex);
 	}
 	
-	printf("thread %p ends\n", data);
+// 	printf("thread %p ends\n", data);
 	
 	return 0;
 }

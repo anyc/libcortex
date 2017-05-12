@@ -186,8 +186,9 @@ void help(char **argv) {
 }
 
 struct crtx_dict_transformation dict_transformation[] = {
-	{ "title", 's', 0, "New phone call" },
-	{ "message", 's', 0, "New call from %[request/from/displayname]s %[request/from/url/username]s" },
+	{ "title", 's', 0, "New phone call from %[request/from/displayname]s" },
+	{ "message", 's', 0, "%[request/from/displayname]s (%[request/from/url/username]s) called" },
+	{ "icon", 's', 0, "phone" },
 };
 
 static char sip2notify_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -214,7 +215,7 @@ static char sip2notify_handler(struct crtx_event *event, void *userdata, void **
 // 			crtx_print_dict(notify_dict);
 			
 		notify_event = crtx_create_event(0, 0, 0);
-		notify_dict = crtx_dict_transform(dict, "ss", dict_transformation);
+		notify_dict = crtx_dict_transform(dict, "sss", dict_transformation);
 		
 		crtx_event_set_data(notify_event, 0, notify_dict, 0);
 		crtx_add_event(notify_graph, notify_event);

@@ -213,7 +213,7 @@ void crtx_send_notification(char *icon, char *title, char *text, char **actions,
 
 /// extract necessary information from the cortex dict to call send_notification
 static char notify_send_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	char *title, *msg, *answer;
+	char *title, *msg, *answer, *icon;
 	char ret;
 	size_t answer_length;
 	struct crtx_dict *data, *actions_dict;
@@ -223,15 +223,13 @@ static char notify_send_handler(struct crtx_event *event, void *userdata, void *
 	
 	crtx_event_get_payload(event, 0, 0, &dict);
 	
-	ret = crtx_get_value(dict, "title", 's', &title, sizeof(void*));
-	if (!ret) {
-		ERROR("error, no title in dict\n");
-		return 1;
-	}
+	title = msg = icon = 0;
+	crtx_get_value(dict, "title", 's', &title, sizeof(void*));
+	crtx_get_value(dict, "message", 's', &msg, sizeof(void*));
+	crtx_get_value(dict, "icon", 's', &icon, sizeof(void*));
 	
-	ret = crtx_get_value(dict, "message", 's', &msg, sizeof(void*));
-	if (!ret) {
-		ERROR("error, no message in dict\n");
+	if (!title && !msg) {
+		ERROR("error, no title and no message in dict\n");
 		crtx_print_dict(event->data.dict);
 		return 1;
 	}
@@ -267,7 +265,7 @@ static char notify_send_handler(struct crtx_event *event, void *userdata, void *
 	} else
 		actions = 0;
 	
-	crtx_send_notification("", title, msg, actions, &answer);
+	crtx_send_notification(icon, title, msg, actions, &answer);
 	
 	data = 0;
 	if (actions) {
