@@ -18,7 +18,7 @@ struct edid_monitor_descriptor {
 	uint8_t  data[13];
 };
 
-char crtx_xcb_randr_get_edid(struct crtx_xcb_randr_listener *xrlist, xcb_randr_output_t output, unsigned char **edid, int *length) {
+char crtx_xcb_randr_get_edid(struct crtx_xcb_randr_listener *xrlist, xcb_randr_output_t output, unsigned char **edid, int *length, void **to_free) {
 	xcb_generic_error_t* error;
 	xcb_randr_get_output_property_reply_t *out_prop;
 	
@@ -46,20 +46,23 @@ char crtx_xcb_randr_get_edid(struct crtx_xcb_randr_listener *xrlist, xcb_randr_o
 	if (error) {
 		ERROR("xcb_randr_get_output_property returned: %d\n", error->error_code);
 		free(error);
+		free(out_prop);
 		return 1;
 	}
 	
+	*to_free = out_prop;
 	*edid = xcb_randr_get_output_property_data(out_prop);
 	*length = xcb_randr_get_output_property_data_length(out_prop);
-	free(out_prop);
+	
 	if ((*edid == NULL) || (*length < 1)) {
 		ERROR("xcb_randr_get_output_property_data returned no data\n");
+		free(out_prop);
 		return 1;
 	}
 	
-	// 	FILE *f = fopen("test.edid", "w");
-	// 	fwrite(*edid, *length, 1, f);
-	// 	fclose(f);
+// 	FILE *f = fopen("test.edid", "w");
+// 	fwrite(*edid, *length, 1, f);
+// 	fclose(f);
 	
 	unsigned char sum, i;
 	sum = 0;
@@ -68,28 +71,19 @@ char crtx_xcb_randr_get_edid(struct crtx_xcb_randr_listener *xrlist, xcb_randr_o
 	
 	if (sum) {
 		ERROR("received EDID has wrong checksum\n");
+		free(out_prop);
 		return 1;
 	}
 	
 	unsigned char magic[] = { 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00 };
 	if (memcmp(magic, *edid, 8)) {
 		ERROR("received EDID has wrong header\n");
+		free(out_prop);
 		return 1;
 	}
 	
 	return 0;
 }
-
-// static struct crtx_dict * crtc_change2dict(struct crtx_xcb_randr_listener *xrlist, xcb_randr_crtc_change_t *cevent) {
-// 	return crtx_create_dict("suuuuu",
-// 							"mode", (cevent->mode == XCB_NONE)?"off":"on", 0, CRTX_DIF_DONT_FREE_DATA,
-// 							"crtc", cevent->crtc, sizeof(cevent->crtc), 0,
-// 							"x", (uint32_t) cevent->x, sizeof(uint32_t), 0,
-// 							"y", (uint32_t) cevent->y, sizeof(uint32_t), 0,
-// 							"width", (uint32_t) cevent->width, sizeof(uint32_t), 0,
-// 							"height", (uint32_t) cevent->height, sizeof(uint32_t), 0
-// 						);
-// }
 
 char crtx_xcb_randr_crtc_change_t2dict(struct xcb_randr_crtc_change_t *ptr, struct crtx_dict **dict_ptr) {
 	struct crtx_dict *dict;
@@ -247,7 +241,7 @@ char crtx_xcb_randr_get_output_info_reply_t2dict(struct xcb_randr_get_output_inf
 	return 0;
 }
 
-static struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xcb_randr_output_change_t *oevent) {
+struct crtx_dict * crtx_output_change2dict(struct crtx_xcb_randr_listener *xrlist, xcb_randr_output_change_t *oevent) {
 	xcb_randr_get_output_info_reply_t *output_info;
 	xcb_generic_error_t* error;
 	int i;
@@ -256,22 +250,12 @@ static struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrl
 	char *name;
 	size_t length;
 	
-	printf("output\n");
+	
 	dict = crtx_init_dict(0, 0, 0);
 	
 	crtx_xcb_randr_output_change_t2dict(oevent, &dict);
 	
-	if (oevent->crtc == XCB_NONE) {
-// 		printf("output 0x%08x disconnected\n", oevent->output);
-		
-// 		di = crtx_alloc_item(dict);
-// 		crtx_fill_data_item(di, 's', "mode", "off", 3, CRTX_DIF_DONT_FREE_DATA);
-// 		
-// 		di = crtx_alloc_item(dict);
-// 		crtx_fill_data_item(di, 'u', "crtc", oevent->crtc, sizeof(oevent->crtc), 0);
-		
-		
-	} else {
+	if (oevent->crtc != XCB_NONE) {
 		output_info = QRY(xcb_randr_get_output_info, xrlist->conn, error, oevent->output, XCB_CURRENT_TIME);
 		if (error) {
 			ERROR("xcb_randr_get_output_info returned: %d\n", error->error_code);
@@ -284,17 +268,15 @@ static struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrl
 		di->key = "output_info";
 		
 		crtx_xcb_randr_get_output_info_reply_t2dict(output_info, &di->dict);
-		
 		oi_dict = di->dict;
 		
 		
 		length = xcb_randr_get_output_info_name_length(output_info);
 		// name is not null-terminated!
 		name = strndup((char *) xcb_randr_get_output_info_name(output_info), length);
-// 		printf("output %d\n", output_info->num_crtcs);
 		
 		di = crtx_alloc_item(oi_dict);
-		crtx_fill_data_item(di, 's', "output_name", name, length, CRTX_DIF_DONT_FREE_DATA);
+		crtx_fill_data_item(di, 's', "output_name", name, length, 0);
 		
 		
 		xcb_randr_get_crtc_info_reply_t *crtc_info;
@@ -324,6 +306,7 @@ static struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrl
 										"height_px", (uint32_t) crtc_info->height, sizeof(uint32_t), 0
 						);
 			}
+			free(crtc_info);
 		}
 		
 		free(output_info);
@@ -335,9 +318,10 @@ static struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrl
 		unsigned char *edid;
 		int edid_size;
 		struct edid_monitor_descriptor *mon_desc;
+		void *to_free;
 		
 		
-		i = crtx_xcb_randr_get_edid(xrlist, oevent->output, &edid, &edid_size);
+		i = crtx_xcb_randr_get_edid(xrlist, oevent->output, &edid, &edid_size, &to_free);
 		if (i)
 			return dict;
 		
@@ -345,12 +329,12 @@ static struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrl
 		di->type = 'D';
 		
 		di->key = "edid";
-// 		di->flags |= CRTX_DIF_ALLOCATED_KEY;
 		di->dict = crtx_init_dict(0, 0, 0);
 		
-		// 		printf("\tVendorName \"%c%c%c\"\n", (edid[8] >> 2 & 0x1f) + 'A' - 1, (((edid[8] & 0x3) << 3) | ((edid[9] & 0xe0) >> 5)) + 'A' - 1, (edid[9] & 0x1f) + 'A' - 1 );
+// 		printf("\tVendorName \"%c%c%c\"\n", (edid[8] >> 2 & 0x1f) + 'A' - 1, (((edid[8] & 0x3) << 3) | ((edid[9] & 0xe0) >> 5)) + 'A' - 1, (edid[9] & 0x1f) + 'A' - 1 );
 		name = (char*) malloc(4);
 		sprintf(name, "%c%c%c", (edid[8] >> 2 & 0x1f) + 'A' - 1, (((edid[8] & 0x3) << 3) | ((edid[9] & 0xe0) >> 5)) + 'A' - 1, (edid[9] & 0x1f) + 'A' - 1 );
+		
 		edi = crtx_alloc_item(di->dict);
 		crtx_fill_data_item(edi, 's', "vendor_name", name, 4, 0);
 		
@@ -394,13 +378,8 @@ static struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrl
 			mon_desc++;
 		}
 		
+		free(to_free);
 	}
-	
-// 			di = crtx_alloc_item(dict);
-// 			value = udev_device_get_devnode(dev);
-// 			crtx_fill_data_item(di, 's', "node", value, strlen(value), CRTX_DIF_DONT_FREE_DATA);
-	
-// 	printf("output %s (0x%08x) on CRTC 0x%08x changed\n", name, oevent->output, oevent->crtc);
 	
 	return dict;
 }
@@ -496,18 +475,10 @@ static void xcb_handle_event(struct crtx_xcb_randr_listener *xrlist, xcb_generic
 			case XCB_RANDR_NOTIFY_CRTC_CHANGE:
 				event_type = "xcb_randr/crtc_change";
 				data_ptr = &xcb_event->u.cc;
-// 				crtx_event = crtx_create_event("xcb_randr/crtc_change", &xcb_event->u.cc, 0);
-// 				crtx_event->data.flags = CRTX_DIF_DONT_FREE_DATA;
-// 				
-// 				crtx_add_event(xrlist->parent.graph, crtx_event);
 				break;
 			case XCB_RANDR_NOTIFY_OUTPUT_CHANGE:
 				event_type = "xcb_randr/output_change";
 				data_ptr = &xcb_event->u.oc;
-// 				crtx_event = crtx_create_event("xcb_randr/output_change", &xcb_event->u.oc, 0);
-// 				crtx_event->data.flags = CRTX_DIF_DONT_FREE_DATA;
-// 				
-// 				crtx_add_event(xrlist->parent.graph, crtx_event);
 				break;
 			case XCB_RANDR_NOTIFY_OUTPUT_PROPERTY:
 				event_type = "xcb_randr/output_property";
@@ -618,9 +589,6 @@ struct crtx_listener_base *crtx_new_xcb_randr_listener(void *options) {
 		return 0;
 	}
 	
-// 	version = xcb_randr_query_version_reply(xrlist->conn,
-// 				xcb_randr_query_version(xrlist->conn, XCB_RANDR_MAJOR_VERSION, XCB_RANDR_MINOR_VERSION),
-// 				NULL);
 	version = QRY(xcb_randr_query_version, xrlist->conn, error, XCB_RANDR_MAJOR_VERSION, XCB_RANDR_MINOR_VERSION);
 	if (!version || version->major_version < 1 || (version->major_version == 1 && version->minor_version < 2)) {
 		ERROR("randr extension too old\n");
@@ -630,9 +598,7 @@ struct crtx_listener_base *crtx_new_xcb_randr_listener(void *options) {
 	
 	xrlist->parent.start_listener = &start_listener;
 	xrlist->parent.free = &crtx_free_xcb_randr_listener;
-// 	new_eventgraph(&xrlist->parent.graph, "xcb_randr", xcb_randr_msg_etype);
 	
-// 	xrlist->parent.thread = get_thread(xcb_randr_tmain, xrlist, 0);
 	xrlist->parent.thread_job.fct = &xcb_randr_tmain;
 	xrlist->parent.thread_job.fct_data = xrlist;
 	
@@ -659,37 +625,16 @@ struct crtx_xcb_randr_listener xrlist;
 static char xcb_randr_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *dict;
 	void *ptr;
-// 	struct crtx_xcb_randr_listener *xrlist;
+	
 	
 	ptr = crtx_event_get_ptr(event);
-// 	xrlist = (struct crtx_xcb_randr_listener *) event->origin;
 	
 	dict = 0;
 	if (!strcmp(event->type, "xcb_randr/crtc_change")) {
-// 		dict = crtc_change2dict(&xrlist, ptr);
 		crtx_xcb_randr_crtc_change_t2dict(ptr, &dict);
-		
-// 		xcb_randr_crtc_change_t *cevent = event->data.pointer;
-		
-// 		if (cevent->mode == XCB_NONE) {
-// 			printf("CRTC 0x%08x disabled\n", cevent->crtc);
-// 		} else {
-// 			printf("CRTC 0x%08x now has geometry (%d, %d), (%d, %d)\n",
-// 				cevent->crtc, cevent->x, cevent->y, cevent->width, cevent->height);
-// 		}
-		
-// 		dict = crtx_create_dict("suuuuu",
-// 					"mode", (cevent->mode == XCB_NONE)?"off":"on", 0, CRTX_DIF_DONT_FREE_DATA,
-// 					"crtc", cevent->crtc, sizeof(cevent->crtc), 0,
-// 					"x", (uint32_t) cevent->x, sizeof(uint32_t), 0,
-// 					"y", (uint32_t) cevent->y, sizeof(uint32_t), 0,
-// 					"width", (uint32_t) cevent->width, sizeof(uint32_t), 0,
-// 					"height", (uint32_t) cevent->height, sizeof(uint32_t), 0
-// 			   );
-		
 	} else
 	if (!strcmp(event->type, "xcb_randr/output_change")) {
-		dict = output_change2dict(&xrlist, ptr);
+		dict = crtx_output_change2dict(&xrlist, ptr);
 	} else
 	if (!strcmp(event->type, "xcb_randr/output_property")) {
 		crtx_xcb_randr_output_property_t2dict(&xrlist, ptr, &dict);
@@ -698,8 +643,6 @@ static char xcb_randr_test_handler(struct crtx_event *event, void *userdata, voi
 	
 	if (dict) {
 		crtx_print_dict(dict);
-		
-	// 	crtx_free_dict(dict);
 		crtx_dict_unref(dict);
 	}
 	
@@ -710,10 +653,8 @@ int xcb_randr_main(int argc, char **argv) {
 	struct crtx_listener_base *lbase;
 	char ret;
 	
-// 	crtx_root->no_threads = 1;
 	
 	memset(&xrlist, 0, sizeof(struct crtx_xcb_randr_listener));
-	
 	
 	lbase = create_listener("xcb_randr", &xrlist);
 	if (!lbase) {
@@ -730,8 +671,6 @@ int xcb_randr_main(int argc, char **argv) {
 	}
 	
 	crtx_loop();
-	
-// 	crtx_free_listener(lbase);
 	
 	return 0;  
 }
