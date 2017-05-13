@@ -141,7 +141,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 }
 
 
-void udev_event_before_release_cb(struct crtx_event *event) {
+void udev_event_before_release_cb(struct crtx_event *event, void *userdata) {
 	struct udev_device *dev;
 	
 	dev = (struct udev_device *) crtx_event_get_ptr(event);

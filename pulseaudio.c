@@ -179,7 +179,7 @@ static void * pa_tmain(void *data) {
 	
 	palist = (struct crtx_pa_listener *) data;
 	
-	while (!palist->parent.thread->stop) {
+	while (!palist->parent.eloop_thread->stop) {
 		pa_mainloop_iterate(palist->mainloop, 1, 0);
 	}
 	
@@ -201,7 +201,7 @@ static void crtx_free_pa_listener(struct crtx_listener_base *data, void *userdat
 	
 	pa_mainloop_wakeup(palist->mainloop);
 	
-	wait_on_signal(&palist->parent.thread->finished);
+	wait_on_signal(&palist->parent.eloop_thread->finished);
 	
 	pa_context_unref(palist->context);
 	pa_mainloop_free(palist->mainloop);
@@ -266,7 +266,9 @@ struct crtx_listener_base *crtx_new_pa_listener(void *options) {
 	
 	// TODO set own poll function that wraps our epoll listener
 	// 	pa_mainloop_set_poll_func(palist->mainloop, pa_poll_func, data);
-	palist->parent.thread = get_thread(pa_tmain, palist, 0);
+// 	palist->parent.thread = get_thread(pa_tmain, palist, 0);
+	palist->parent.thread_job.fct = &pa_tmain;
+	palist->parent.thread_job.fct_data = palist;
 	
 	return &palist->parent;
 }

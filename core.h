@@ -119,7 +119,7 @@ struct crtx_event {
 	
 // 	void (*event_to_str)(struct crtx_event *event);
 	
-	void (*cb_before_release)(struct crtx_event *event);
+	void (*cb_before_release)(struct crtx_event *event, void *cb_before_release_data);
 	void *cb_before_release_data;
 	
 	pthread_mutex_t mutex;
@@ -182,6 +182,8 @@ struct crtx_graph {
 	
 	struct crtx_listener_base *listener;
 	
+	struct crtx_thread_job_description thread_job;
+	
 	struct crtx_dll ll_hdr;
 };
 
@@ -225,7 +227,8 @@ struct crtx_listener_base {
 	
 	struct crtx_event_loop_payload el_payload;
 	
-	struct crtx_thread *thread;
+	struct crtx_thread_job_description thread_job;
+	struct crtx_thread *eloop_thread;
 // 	thread_fct thread_fct;
 // 	void *thread_data;
 	void (*thread_stop)(struct crtx_thread *thread, void *data);
@@ -385,6 +388,7 @@ void *crtx_event_get_ptr(struct crtx_event *event);
 void crtx_register_handler_for_event_type(char *event_type, char *handler_name, crtx_handle_task_t handler_function, void *handler_data);
 void crtx_autofill_graph_with_tasks(struct crtx_graph *graph, char *event_type);
 
+enum crtx_processing_mode crtx_get_mode(enum crtx_processing_mode local_mode);
 void crtx_wait_on_graph_empty(struct crtx_graph *graph);
 // struct crtx_thread * crtx_start_detached_event_loop();
 

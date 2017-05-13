@@ -10,6 +10,7 @@
 #include "dict.h"
 #include "inotify.h"
 #include "threads.h"
+#include "epoll.h"
 
 static int inotify_fd = -1;
 // char *inotify_msg_etype[] = { INOTIFY_MSG_ETYPE, 0 };
@@ -18,7 +19,9 @@ static struct crtx_inotify_listener **listeners = 0;
 static unsigned int n_listeners = 0;
 MUTEX_TYPE mutex;
 
-struct crtx_thread *t;
+static struct crtx_thread_job_description thread_job = {0};
+static struct crtx_thread *global_thread = 0;
+static struct crtx_event_loop_payload el_payload = {0};
 static char stop = 0;
 
 #define INOFITY_BUFLEN (sizeof(struct inotify_event) + NAME_MAX + 1)
@@ -158,7 +161,7 @@ void inotify_to_dict(struct crtx_event *event, struct crtx_dict_item *item) {
 	crtx_event_set_data(event, 0, dict, 0);
 }
 
-void *inotify_tmain(void *data) {
+static char inotify_eloop() {
 	char buffer[INOFITY_BUFLEN];
 	ssize_t length;
 	size_t i;
@@ -168,65 +171,82 @@ void *inotify_tmain(void *data) {
 	struct crtx_inotify_listener *fal;
 	struct inotify_event *in_event;
 	
-// 	fal = (struct crtx_inotify_listener*) data;
 	
-	while (!stop) {
-		length = read(inotify_fd, buffer, INOFITY_BUFLEN);
-		
-		if (stop)
-			break;
-		
-		if (length < 0) {
-			printf("inotify read failed\n");
-			break;
-		}
-		
-		i=0;
-		while (i < length) {
-			in_event = (struct inotify_event *) &buffer[i];
-			
-			fal = 0;
-			LOCK(mutex);
-			for (j=0; j < n_listeners; j++) {
-				if (listeners[j]->wd == in_event->wd) {
-					fal = listeners[j];
-					break;
-				}
-			}
-			UNLOCK(mutex);
-			
-			if (fal) {
-				struct inotify_event *ev_data;
-				
-				ev_data = (struct inotify_event *) malloc(sizeof(struct inotify_event) + in_event->len);
-				memcpy(ev_data, in_event, sizeof(struct inotify_event) + in_event->len);
-				
-				event = crtx_create_event(fal->parent.graph->types[0], ev_data, sizeof(struct inotify_event) + in_event->len);
-// 				event->data.to_dict = &inotify_to_dict;
-// 				crtx_dict_upgrade_event_data(event, 0, 1);
-				
-				crtx_event_set_data(event, 0, 0, 1);
-				
-				struct crtx_dict_item *di;
-				di = crtx_get_item_by_idx(event->data.dict, 2);
-				crtx_fill_data_item(di, 'p', "raw2dict", inotify_to_dict, 0, 0);
-				
-// 				reference_event_release(event);
-				
-				crtx_add_event(fal->parent.graph, event);
-				
-// 				wait_on_event(event);
-				
-// 				event->data.= 0;
-				
-// 				dereference_event_release(event);
-			} else {
-				ERROR("inotify listener for wd %d not found\n", in_event->wd);
-			}
-			
-			i += sizeof(struct inotify_event) + in_event->len;
-		}
+	length = read(inotify_fd, buffer, INOFITY_BUFLEN);
+	
+	if (stop)
+		return 1;
+	
+	if (length < 0) {
+		printf("inotify read failed\n");
+		return 1;
 	}
+	
+	i=0;
+	while (i < length) {
+		in_event = (struct inotify_event *) &buffer[i];
+		
+		fal = 0;
+		LOCK(mutex);
+		for (j=0; j < n_listeners; j++) {
+			if (listeners[j]->wd == in_event->wd) {
+				fal = listeners[j];
+				break;
+			}
+		}
+		UNLOCK(mutex);
+		
+		if (fal) {
+			struct inotify_event *ev_data;
+			
+			ev_data = (struct inotify_event *) malloc(sizeof(struct inotify_event) + in_event->len);
+			memcpy(ev_data, in_event, sizeof(struct inotify_event) + in_event->len);
+			
+			event = crtx_create_event(fal->parent.graph->types[0], ev_data, sizeof(struct inotify_event) + in_event->len);
+			// 				event->data.to_dict = &inotify_to_dict;
+			// 				crtx_dict_upgrade_event_data(event, 0, 1);
+			
+			crtx_event_set_data(event, 0, 0, 1);
+			
+			struct crtx_dict_item *di;
+			di = crtx_get_item_by_idx(event->data.dict, 2);
+			crtx_fill_data_item(di, 'p', "raw2dict", inotify_to_dict, 0, 0);
+			
+			// 				reference_event_release(event);
+			
+			crtx_add_event(fal->parent.graph, event);
+			
+			// 				wait_on_event(event);
+			
+			// 				event->data.= 0;
+			
+			// 				dereference_event_release(event);
+		} else {
+			ERROR("inotify listener for wd %d not found\n", in_event->wd);
+		}
+		
+		i += sizeof(struct inotify_event) + in_event->len;
+	}
+	
+	return 0;
+}
+
+void *inotify_tmain(void *data) {
+	while (!stop) {
+		if (inotify_eloop())
+			break;
+	}
+	
+	return 0;
+}
+
+static char inotify_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+// 	struct crtx_event_loop_payload *payload;
+	
+	
+// 	payload = (struct crtx_event_loop_payload*) event->data.pointer;
+	
+	inotify_eloop();
 	
 	return 0;
 }
@@ -252,6 +272,49 @@ static char start_listener(struct crtx_listener_base *listener) {
 	
 	inlist = (struct crtx_inotify_listener*) listener;
 	
+	
+	// start the global inotify loop
+	if (inotify_fd == -1) {
+		enum crtx_processing_mode mode;
+		
+		inotify_fd = inotify_init();
+		if (inotify_fd == -1) {
+			printf("inotify initialization failed\n");
+			return 0;
+		}
+		
+		INIT_MUTEX(mutex);
+		
+		mode = crtx_get_mode(CRTX_PREFER_NONE);
+		
+		if (mode == CRTX_PREFER_THREAD) {
+			thread_job.fct = &inotify_tmain;
+			thread_job.do_stop = &stop_thread;
+	// 		global_thread = get_thread(inotify_tmain, 0, 1);
+			global_thread = crtx_thread_assign_job(&thread_job);
+			
+			reference_signal(&global_thread->finished);
+			
+			crtx_thread_start_job(global_thread);
+	// 		global_thread->do_stop = &stop_thread;
+		} else
+		if (mode == CRTX_PREFER_ELOOP) {
+			if (!crtx_root->event_loop.listener)
+				crtx_get_event_loop();
+			
+			el_payload.fd = inotify_fd;
+			el_payload.event_flags = EPOLLIN;
+			el_payload.data = 0;
+			el_payload.event_handler = &inotify_fd_event_handler;
+			el_payload.event_handler_name = "inotify fd handler";
+			
+			crtx_root->event_loop.add_fd(
+				&crtx_root->event_loop.listener->parent,
+				&el_payload);
+		}
+		
+	}
+	
 	inlist->wd = inotify_add_watch(inotify_fd, inlist->path, inlist->mask);
 	if (inlist->wd == -1) {
 		printf("inotify_add_watch(\"%s\") failed with %d: %s\n", inlist->path, errno, strerror(errno));
@@ -267,18 +330,23 @@ struct crtx_listener_base *crtx_new_inotify_listener(void *options) {
 	
 	inlist = (struct crtx_inotify_listener*) options;
 	
-	if (inotify_fd == -1) {
-		inotify_fd = inotify_init();
-		if (inotify_fd == -1) {
-			printf("inotify initialization failed\n");
-			return 0;
-		}
-		
-		INIT_MUTEX(mutex);
-		
-		t = get_thread(inotify_tmain, 0, 1);
-		t->do_stop = &stop_thread;
-	}
+// 	// start the global inotify loop
+// 	if (inotify_fd == -1) {
+// 		inotify_fd = inotify_init();
+// 		if (inotify_fd == -1) {
+// 			printf("inotify initialization failed\n");
+// 			return 0;
+// 		}
+// 		
+// 		INIT_MUTEX(mutex);
+// 		
+// 		thread_job.fct = &inotify_tmain;
+// 		thread_job.do_stop = &stop_thread;
+// // 		global_thread = get_thread(inotify_tmain, 0, 1);
+// 		global_thread = crtx_thread_assign_job(&thread_job);
+// 		crtx_thread_start_job(global_thread);
+// // 		global_thread->do_stop = &stop_thread;
+// 	}
 	
 	LOCK(mutex);
 	if (listeners == 0) {
@@ -308,7 +376,7 @@ struct crtx_listener_base *crtx_new_inotify_listener(void *options) {
 	
 // 	new_eventgraph(&inlist->parent.graph, 0, inotify_msg_etype);
 	
-	inlist->parent.thread = 0;
+// 	inlist->parent.thread = 0;
 	inlist->parent.start_listener = &start_listener;
 	
 	return &inlist->parent;

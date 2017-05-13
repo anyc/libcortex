@@ -9,7 +9,7 @@
 #include "sip.h"
 
 
-static void sip_event_before_release_cb(struct crtx_event *event) {
+static void sip_event_before_release_cb(struct crtx_event *event, void *userdata) {
 	eXosip_event_t *evt;
 	
 	evt = (eXosip_event_t *) crtx_event_get_ptr(event);

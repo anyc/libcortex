@@ -114,7 +114,7 @@ char crtx_signal_is_active(struct crtx_signal *s) {
 // 	printf("thread sign\n");
 // }
 
-static void * thread_main(void *data) {
+static void * crtx_thread_tmain(void *data) {
 	struct crtx_thread *thread = (struct crtx_thread*) data;
 	
 	DBG("thread %p started\n", data);
@@ -130,23 +130,24 @@ static void * thread_main(void *data) {
 		}
 		
 		// execute
-		thread->fct(thread->fct_data);
+		thread->job->fct(thread->job->fct_data);
 		
 		send_signal(&thread->finished, 1);
 		
-		if (thread->on_finish)
-			thread->on_finish(thread, thread->on_finish_data);
+		if (thread->job->on_finish)
+			thread->job->on_finish(thread, thread->job->on_finish_data);
 		
 		reset_signal(&thread->finished);
 		
 		LOCK(pool_mutex);
 		reset_signal(&thread->start);
 		thread->in_use = 0;
-		thread->fct = 0;
-		thread->fct_data = 0;
-		thread->on_finish = 0;
-		thread->on_finish_data = 0;
-		thread->do_stop = 0;
+		thread->job = 0;
+// 		thread->fct = 0;
+// 		thread->fct_data = 0;
+// 		thread->on_finish = 0;
+// 		thread->on_finish_data = 0;
+// 		thread->do_stop = 0;
 		UNLOCK(pool_mutex);
 	}
 	
@@ -175,16 +176,17 @@ struct crtx_thread *spawn_thread(char create) {
 	init_signal(&t->finished);
 	
 	if (create) {
-		pthread_create(&t->handle, NULL, &thread_main, t);
+		pthread_create(&t->handle, NULL, &crtx_thread_tmain, t);
 	} else {
 		t->handle = 0;
-		thread_main(t);
+		crtx_thread_tmain(t);
 	}
 	
 	return t;
 }
 
-static struct crtx_thread *get_thread_intern(thread_fct fct, void *data, char start, char main_thread) {
+// static struct crtx_thread *get_thread_intern(thread_fct fct, void *data, char start, char main_thread) {
+static struct crtx_thread *get_thread_intern(char main_thread) {
 	struct crtx_thread *t;
 	
 	LOCK(pool_mutex);
@@ -210,25 +212,31 @@ static struct crtx_thread *get_thread_intern(thread_fct fct, void *data, char st
 	
 	UNLOCK(pool_mutex);
 	
-	t->fct = fct;
-	t->fct_data = data;
+// 	t->fct = fct;
+// 	t->fct_data = data;
 	
-	if (start)
+// 	if (start)
 // 		send_signal(&t->start, 0);
-		start_thread(t);
+// 		start_thread(t);
 	
 	return t;
 }
 
-struct crtx_thread *get_thread(thread_fct fct, void *data, char start) {
-	return get_thread_intern(fct, data, start, 0);
+// struct crtx_thread *get_thread(thread_fct fct, void *data, char start) {
+struct crtx_thread *crtx_thread_assign_job(struct crtx_thread_job_description *job) {
+	struct crtx_thread *t;
+	
+	t = get_thread_intern(0);
+	t->job = job;
+	
+	return t;
 }
 
-struct crtx_thread *get_main_thread(thread_fct fct, void *data, char start) {
-	return get_thread_intern(fct, data, start, 1);
-}
+// struct crtx_thread *get_main_thread(thread_fct fct, void *data, char start) {
+// 	return get_thread_intern(fct, data, start, 1);
+// }
 
-void start_thread(struct crtx_thread *t) {
+void crtx_thread_start_job(struct crtx_thread *t) {
 // 	if (t->handle == 0)
 // 		pthread_create(&t->handle, NULL, &thread_main, t);
 	
@@ -253,10 +261,10 @@ void crtx_threads_stop(struct crtx_thread *t) {
 	t->stop = 1;
 	
 // 	if (!t->in_use) {
-		start_thread(t);
+	crtx_thread_start_job(t);
 // 	} else {
-		if (t->do_stop)
-			t->do_stop(t, t->fct_data);
+		if (t->job->do_stop)
+			t->job->do_stop(t, t->job->fct_data);
 // 	}
 	
 // 	UNLOCK(pool_mutex);

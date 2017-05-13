@@ -89,7 +89,7 @@ struct crtx_module static_modules[] = {
 	{"sdbus", &crtx_sdbus_init, &crtx_sdbus_finish},
 #endif
 #ifdef STATIC_sd_bus_notifications
-	{"sd_bus_notification", &crtx_sdbus_notification_init, &crtx_sdbus_notification_finish},
+	{"sd_bus_notifications", &crtx_sd_bus_notifications_init, &crtx_sd_bus_notifications_finish},
 #endif
 #ifdef STATIC_nfqueue
 	{"nf-queue", &crtx_nf_queue_init, &crtx_nf_queue_finish},
@@ -296,7 +296,7 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 		return 1;
 	}
 	
-	if (!listener->el_payload.fd && !listener->thread && !listener->start_listener) {
+	if (!listener->el_payload.fd && listener->thread_job.fct && !listener->start_listener) {
 		DBG("no method to start listener \"%s\" provided\n", listener->id);
 		
 		UNLOCK(listener->state_mutex);
@@ -338,20 +338,24 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 // // 		UNLOCK(listener->state_mutex);
 // // 		return -1;
 // 	} else {
-	if (listener->el_payload.fd || listener->thread) {
+	if (listener->el_payload.fd || listener->thread_job.fct) {
 		mode = crtx_get_mode(listener->mode);
 		
 		if (mode == CRTX_PREFER_ELOOP && listener->el_payload.fd <= 0) {
 			ERROR("listener mode set to \"event loop\" but no event loop data available\n");
 			mode = CRTX_PREFER_THREAD;
 		}
-		if (mode == CRTX_PREFER_THREAD && !listener->thread) {
+		if (mode == CRTX_PREFER_THREAD && !listener->thread_job.fct) {
 			ERROR("listener mode set to \"thread\" but no thread data available\n");
 			mode = CRTX_PREFER_ELOOP;
 		}
 		
 		if (mode == CRTX_PREFER_THREAD) {
-			start_thread(listener->thread);
+			listener->eloop_thread = crtx_thread_assign_job(&listener->thread_job);
+			
+			reference_signal(&listener->eloop_thread->finished);
+			
+			crtx_thread_start_job(listener->eloop_thread);
 		} else 
 		if (mode == CRTX_PREFER_ELOOP) {
 			if (!crtx_root->event_loop.listener)
@@ -446,14 +450,14 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 	if (lbase->el_payload.fd > 0) {
 		if (!crtx_root->event_loop.listener)
 			crtx_get_event_loop();
-	} else
-	if (lbase->thread) {
-		reference_signal(&lbase->thread->finished);
+	}
+// 	if (lbase->thread) {
+// 		reference_signal(&lbase->thread->finished);
 // 			if (lbase->thread->on_finish)
 // 				ERROR("thread->on_finish already set\n");
 // 			lbase->thread->on_finish = &listener_thread_on_finish;
 // 			lbase->thread->on_finish_data = lbase;
-	}
+// 	}
 // 	}
 	
 	return lbase;
@@ -481,9 +485,9 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 			&listener->el_payload);
 	}
 	
-	if (listener->thread) {
+	if (listener->eloop_thread) {
 // 		listener->thread->stop = 1;
-		crtx_threads_stop(listener->thread);
+		crtx_threads_stop(listener->eloop_thread);
 	}
 	
 	if (listener->stop_listener) {
@@ -516,9 +520,10 @@ static void free_listener_intern(struct crtx_listener_base *listener) {
 		free_eventgraph(listener->graph);
 	
 // 	&& crtx_signal_is_active(&listener->thread->start)
-	if (listener->thread) {
-		wait_on_signal(&listener->thread->finished);
-		dereference_signal(&listener->thread->finished);
+	if (listener->eloop_thread) {
+		wait_on_signal(&listener->eloop_thread->finished);
+		dereference_signal(&listener->eloop_thread->finished);
+		listener->eloop_thread = 0;
 	}
 	
 	if (listener->free) {
@@ -857,14 +862,19 @@ void crtx_add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	if (mode == CRTX_PREFER_THREAD) {
 		struct crtx_thread *t;
 		
-		t = get_thread(&crtx_process_graph_tmain, graph, 0);
-		if (t) {
+// 		t = get_thread(&crtx_process_graph_tmain, graph, 0);
+		graph->thread_job.fct = &crtx_process_graph_tmain;
+		graph->thread_job.fct_data = graph;
+		graph->thread_job.do_stop = &graph_consumer_stop;
+		t = crtx_thread_assign_job(&graph->thread_job);
+// 		if (t) {
 // 			t->on_finish = &graph_on_thread_finish;
 // 			t->on_finish_data = graph;
-			t->do_stop = &graph_consumer_stop;
+// 			t->do_stop = &graph_consumer_stop;
 			
-			start_thread(t);
-		}
+// 			start_thread(t);
+			crtx_thread_start_job(t);
+// 		}
 	} else {
 		if (!crtx_root->event_loop.listener)
 			crtx_get_event_loop();
@@ -1011,7 +1021,7 @@ void free_event(struct crtx_event *event) {
 	
 	
 	if (event->cb_before_release)
-		event->cb_before_release(event);
+		event->cb_before_release(event, event->cb_before_release_data);
 	
 // 	free_event_data(&event->data);
 // 	free_event_data(&event->response);

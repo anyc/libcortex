@@ -275,8 +275,10 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	epl->parent.shutdown = &shutdown_epoll_listener;
 	
 // 	if (!epl->no_thread) {
-		epl->parent.thread = get_thread(crtx_epoll_main, epl, 0);
-		epl->parent.thread->do_stop = &stop_thread;
+// 		epl->parent.thread = get_thread(crtx_epoll_main, epl, 0);
+		epl->parent.thread_job.fct = &crtx_epoll_main;
+		epl->parent.thread_job.fct_data = epl;
+		epl->parent.thread_job.do_stop = &stop_thread;
 		
 		// either the main thread will execute crtx_epoll_main or we spawn a new thread
 		epl->parent.mode = CRTX_PREFER_THREAD;

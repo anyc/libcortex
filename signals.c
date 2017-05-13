@@ -99,7 +99,7 @@ struct crtx_listener_base *crtx_new_signals_listener(void *options) {
 	if (!slistener->signals)
 		return 0;
 	
-	signal_list.parent.thread = 0;
+// 	signal_list.parent.thread = 0;
 	signal_list.parent.start_listener = &start_listener;
 	
 	return &signal_list.parent;

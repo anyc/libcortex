@@ -18,17 +18,21 @@ struct edid_monitor_descriptor {
 	uint8_t  data[13];
 };
 
-char get_edid(struct crtx_xcb_randr_listener *xrlist, xcb_randr_output_t output, unsigned char **edid, int *length) {
+char crtx_xcb_randr_get_edid(struct crtx_xcb_randr_listener *xrlist, xcb_randr_output_t output, unsigned char **edid, int *length) {
 	xcb_generic_error_t* error;
+	xcb_randr_get_output_property_reply_t *out_prop;
+	
 	
 	xcb_intern_atom_reply_t *atom = QRY(xcb_intern_atom, xrlist->conn, error,
-									0,
+									1,
 									4,
 									"EDID");
-	if (error)
-		fprintf(stderr, "error xcb_intern_atom\n");
+	if (error) {
+		ERROR("xcb_intern_atom returned: %d\n", error->error_code);
+		free(error);
+		return 1;
+	}
 	
-	xcb_randr_get_output_property_reply_t *out_prop;
 	out_prop = QRY(xcb_randr_get_output_property, xrlist->conn, error,
 				output,
 				atom->atom,
@@ -37,14 +41,20 @@ char get_edid(struct crtx_xcb_randr_listener *xrlist, xcb_randr_output_t output,
 				256,
 				0,
 				0
-	);
-	if (error)
-		fprintf(stderr, "error xcb_randr_get_output_property\n");
+			);
+	free(atom);
+	if (error) {
+		ERROR("xcb_randr_get_output_property returned: %d\n", error->error_code);
+		free(error);
+		return 1;
+	}
 	
 	*edid = xcb_randr_get_output_property_data(out_prop);
 	*length = xcb_randr_get_output_property_data_length(out_prop);
+	free(out_prop);
 	if ((*edid == NULL) || (*length < 1)) {
-		fprintf(stderr, "error xcb_randr_get_output_property_data\n");
+		ERROR("xcb_randr_get_output_property_data returned no data\n");
+		return 1;
 	}
 	
 	// 	FILE *f = fopen("test.edid", "w");
@@ -52,81 +62,259 @@ char get_edid(struct crtx_xcb_randr_listener *xrlist, xcb_randr_output_t output,
 	// 	fclose(f);
 	
 	unsigned char sum, i;
+	sum = 0;
 	for (i=0; i<128; i++)
 		sum += (*edid)[i];
 	
 	if (sum) {
-		fprintf(stderr, "wrong checksum\n");
+		ERROR("received EDID has wrong checksum\n");
 		return 1;
 	}
 	
 	unsigned char magic[] = { 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00 };
 	if (memcmp(magic, *edid, 8)) {
-		fprintf(stderr, "wrong edid header\n");
+		ERROR("received EDID has wrong header\n");
 		return 1;
 	}
 	
 	return 0;
 }
 
-struct crtx_dict * crtc_change2dict(struct crtx_xcb_randr_listener *xrlist, xcb_randr_crtc_change_t *cevent) {
-	return crtx_create_dict("suuuuu",
-							"mode", (cevent->mode == XCB_NONE)?"off":"on", 0, CRTX_DIF_DONT_FREE_DATA,
-							"crtc", cevent->crtc, sizeof(cevent->crtc), 0,
-							"x", (uint32_t) cevent->x, sizeof(uint32_t), 0,
-							"y", (uint32_t) cevent->y, sizeof(uint32_t), 0,
-							"width", (uint32_t) cevent->width, sizeof(uint32_t), 0,
-							"height", (uint32_t) cevent->height, sizeof(uint32_t), 0
-						);
+// static struct crtx_dict * crtc_change2dict(struct crtx_xcb_randr_listener *xrlist, xcb_randr_crtc_change_t *cevent) {
+// 	return crtx_create_dict("suuuuu",
+// 							"mode", (cevent->mode == XCB_NONE)?"off":"on", 0, CRTX_DIF_DONT_FREE_DATA,
+// 							"crtc", cevent->crtc, sizeof(cevent->crtc), 0,
+// 							"x", (uint32_t) cevent->x, sizeof(uint32_t), 0,
+// 							"y", (uint32_t) cevent->y, sizeof(uint32_t), 0,
+// 							"width", (uint32_t) cevent->width, sizeof(uint32_t), 0,
+// 							"height", (uint32_t) cevent->height, sizeof(uint32_t), 0
+// 						);
+// }
+
+char crtx_xcb_randr_crtc_change_t2dict(struct xcb_randr_crtc_change_t *ptr, struct crtx_dict **dict_ptr) {
+	struct crtx_dict *dict;
+	struct crtx_dict_item *di;
+	
+	if (! *dict_ptr)
+		*dict_ptr = crtx_init_dict(0, 0, 0);
+	dict = *dict_ptr;
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "mode", ptr->mode, sizeof(ptr->mode), 0);
+	
+	di = crtx_alloc_item(dict);
+	if (ptr->mode == XCB_NONE)
+		crtx_fill_data_item(di, 's', "state", "off", 0, CRTX_DIF_DONT_FREE_DATA);
+	else
+		crtx_fill_data_item(di, 's', "state", "on", 0, CRTX_DIF_DONT_FREE_DATA);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "timestamp", ptr->timestamp, sizeof(ptr->timestamp), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "window", ptr->window, sizeof(ptr->window), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "crtc", ptr->crtc, sizeof(ptr->crtc), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "rotation", ptr->rotation, sizeof(ptr->rotation), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'D', "pad0", 0, 0, 0);
+	
+	// TypeKind.UCHAR
+	di->dict = crtx_init_dict("uu", 2, 0);
+	{
+		crtx_fill_data_item(&di->dict->items[0], 'u', 0, ptr->pad0[0], sizeof(ptr->pad0[0]), 0);
+		crtx_fill_data_item(&di->dict->items[1], 'u', 0, ptr->pad0[1], sizeof(ptr->pad0[1]), 0);
+	}
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'i', "x", ptr->x, sizeof(ptr->x), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'i', "y", ptr->y, sizeof(ptr->y), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "width", ptr->width, sizeof(ptr->width), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "height", ptr->height, sizeof(ptr->height), 0);
+	
+	return 0;
 }
 
-struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xcb_randr_output_change_t *oevent) {
+char crtx_xcb_randr_output_change_t2dict(struct xcb_randr_output_change_t *ptr, struct crtx_dict **dict_ptr)
+{
+	struct crtx_dict *dict;
+	struct crtx_dict_item *di;
+	
+	if (! *dict_ptr)
+		*dict_ptr = crtx_init_dict(0, 0, 0);
+	dict = *dict_ptr;
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "timestamp", ptr->timestamp, sizeof(ptr->timestamp), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "config_timestamp", ptr->config_timestamp, sizeof(ptr->config_timestamp), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "window", ptr->window, sizeof(ptr->window), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "output", ptr->output, sizeof(ptr->output), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "crtc", ptr->crtc, sizeof(ptr->crtc), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "mode", ptr->mode, sizeof(ptr->mode), 0);
+	
+	di = crtx_alloc_item(dict);
+	if (ptr->mode == XCB_NONE)
+		crtx_fill_data_item(di, 's', "state", "off", 0, CRTX_DIF_DONT_FREE_DATA);
+	else
+		crtx_fill_data_item(di, 's', "state", "on", 0, CRTX_DIF_DONT_FREE_DATA);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "rotation", ptr->rotation, sizeof(ptr->rotation), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "connection", ptr->connection, sizeof(ptr->connection), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "subpixel_order", ptr->subpixel_order, sizeof(ptr->subpixel_order), 0);
+	
+	return 0;
+}
+
+char crtx_xcb_randr_get_output_info_reply_t2dict(struct xcb_randr_get_output_info_reply_t *ptr, struct crtx_dict **dict_ptr)
+{
+	struct crtx_dict *dict;
+	struct crtx_dict_item *di;
+	
+	if (! *dict_ptr)
+		*dict_ptr = crtx_init_dict(0, 0, 0);
+	dict = *dict_ptr;
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "response_type", ptr->response_type, sizeof(ptr->response_type), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "status", ptr->status, sizeof(ptr->status), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "sequence", ptr->sequence, sizeof(ptr->sequence), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "length", ptr->length, sizeof(ptr->length), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "timestamp", ptr->timestamp, sizeof(ptr->timestamp), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "crtc", ptr->crtc, sizeof(ptr->crtc), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "mm_width", ptr->mm_width, sizeof(ptr->mm_width), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "mm_height", ptr->mm_height, sizeof(ptr->mm_height), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "connection", ptr->connection, sizeof(ptr->connection), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "subpixel_order", ptr->subpixel_order, sizeof(ptr->subpixel_order), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "num_crtcs", ptr->num_crtcs, sizeof(ptr->num_crtcs), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "num_modes", ptr->num_modes, sizeof(ptr->num_modes), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "num_preferred", ptr->num_preferred, sizeof(ptr->num_preferred), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "num_clones", ptr->num_clones, sizeof(ptr->num_clones), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "name_len", ptr->name_len, sizeof(ptr->name_len), 0);
+	
+	return 0;
+}
+
+static struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xcb_randr_output_change_t *oevent) {
 	xcb_randr_get_output_info_reply_t *output_info;
 	xcb_generic_error_t* error;
 	int i;
-	struct crtx_dict *dict;
+	struct crtx_dict *dict, *oi_dict;
 	struct crtx_dict_item *di, *edi;
+	char *name;
+	size_t length;
 	
-	
+	printf("output\n");
 	dict = crtx_init_dict(0, 0, 0);
 	
+	crtx_xcb_randr_output_change_t2dict(oevent, &dict);
+	
 	if (oevent->crtc == XCB_NONE) {
-		printf("output 0x%08x disconnected\n", oevent->output);
+// 		printf("output 0x%08x disconnected\n", oevent->output);
 		
-		di = crtx_alloc_item(dict);
-		crtx_fill_data_item(di, 's', "mode", "off", 3, CRTX_DIF_DONT_FREE_DATA);
+// 		di = crtx_alloc_item(dict);
+// 		crtx_fill_data_item(di, 's', "mode", "off", 3, CRTX_DIF_DONT_FREE_DATA);
+// 		
+// 		di = crtx_alloc_item(dict);
+// 		crtx_fill_data_item(di, 'u', "crtc", oevent->crtc, sizeof(oevent->crtc), 0);
 		
-		di = crtx_alloc_item(dict);
-		crtx_fill_data_item(di, 'u', "crtc", oevent->crtc, sizeof(oevent->crtc), 0);
-		return 0;
+		
 	} else {
 		output_info = QRY(xcb_randr_get_output_info, xrlist->conn, error, oevent->output, XCB_CURRENT_TIME);
+		if (error) {
+			ERROR("xcb_randr_get_output_info returned: %d\n", error->error_code);
+			free(error);
+			return 0;
+		}
 		
 		di = crtx_alloc_item(dict);
-		crtx_fill_data_item(di, 's', "mode", "on", 3, CRTX_DIF_DONT_FREE_DATA);
+		di->type = 'D';
+		di->key = "output_info";
 		
-// 		char *name = strndup((char *) xcb_randr_get_output_info_name(output_info), 
-// 								xcb_randr_get_output_info_name_length(output_info));
+		crtx_xcb_randr_get_output_info_reply_t2dict(output_info, &di->dict);
+		
+		oi_dict = di->dict;
+		
+		
+		length = xcb_randr_get_output_info_name_length(output_info);
+		// name is not null-terminated!
+		name = strndup((char *) xcb_randr_get_output_info_name(output_info), length);
 // 		printf("output %d\n", output_info->num_crtcs);
 		
-		di = crtx_alloc_item(dict);
-		crtx_fill_data_item(di, 's', "output_name", (char *) xcb_randr_get_output_info_name(output_info),
-							xcb_randr_get_output_info_name_length(output_info), CRTX_DIF_DONT_FREE_DATA);
+		di = crtx_alloc_item(oi_dict);
+		crtx_fill_data_item(di, 's', "output_name", name, length, CRTX_DIF_DONT_FREE_DATA);
 		
 		
 		xcb_randr_get_crtc_info_reply_t *crtc_info;
 		xcb_randr_crtc_t *crtc = xcb_randr_get_output_info_crtcs(output_info);
 		for (i=0; i < output_info->num_crtcs; i++) {
 			crtc_info = QRY(xcb_randr_get_crtc_info, xrlist->conn, error, crtc[i], XCB_CURRENT_TIME);
+			if (error) {
+				ERROR("xcb_randr_get_crtc_info returned: %d\n", error->error_code);
+				free(error);
+				continue;
+			}
 // 			printf("crtc %d: 0x%08x %d,%d %d,%d\n", i, crtc[i], crtc_info->x, crtc_info->y, crtc_info->width, crtc_info->height);
 			
 			if (crtc[i] == oevent->crtc) {
-				di = crtx_alloc_item(dict);
+				di = crtx_alloc_item(oi_dict);
 				di->type = 'D';
 // 				di->key = (char*) malloc(5+floor(log10(abs(crtc[i])))+1);
 // 				sprintf(di->key, "crtc_%u", crtc[i]);
 // 				di->flags |= CRTX_DIF_ALLOCATED_KEY;
-				di->key = "crtc";
+				di->key = "crtc_dict";
 				
 				di->dict = crtx_create_dict("uuuuu",
 										"crtc", oevent->crtc, sizeof(oevent->crtc), 0,
@@ -138,12 +326,18 @@ struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xc
 			}
 		}
 		
+		free(output_info);
+		
+		/*
+		 * get EDID data
+		 */
 		
 		unsigned char *edid;
 		int edid_size;
 		struct edid_monitor_descriptor *mon_desc;
 		
-		i = get_edid(xrlist, oevent->output, &edid, &edid_size);
+		
+		i = crtx_xcb_randr_get_edid(xrlist, oevent->output, &edid, &edid_size);
 		if (i)
 			return dict;
 		
@@ -155,7 +349,7 @@ struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xc
 		di->dict = crtx_init_dict(0, 0, 0);
 		
 		// 		printf("\tVendorName \"%c%c%c\"\n", (edid[8] >> 2 & 0x1f) + 'A' - 1, (((edid[8] & 0x3) << 3) | ((edid[9] & 0xe0) >> 5)) + 'A' - 1, (edid[9] & 0x1f) + 'A' - 1 );
-		char *name = (char*) malloc(4);
+		name = (char*) malloc(4);
 		sprintf(name, "%c%c%c", (edid[8] >> 2 & 0x1f) + 'A' - 1, (((edid[8] & 0x3) << 3) | ((edid[9] & 0xe0) >> 5)) + 'A' - 1, (edid[9] & 0x1f) + 'A' - 1 );
 		edi = crtx_alloc_item(di->dict);
 		crtx_fill_data_item(edi, 's', "vendor_name", name, 4, 0);
@@ -171,7 +365,6 @@ struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xc
 		
 		for (i=0;i<4;i++) {
 			if (mon_desc->zero0 == 0 && mon_desc->zero1 == 0 && mon_desc->zero2 == 0) {
-				char *name;
 				int j;
 				
 				if (mon_desc->desc_type == 0xFC) {
@@ -181,6 +374,7 @@ struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xc
 					
 					name = (char*) malloc(j+1);
 					memcpy(name, mon_desc->data, j);
+					name[j] = 0;
 					
 					edi = crtx_alloc_item(di->dict);
 					crtx_fill_data_item(edi, 's', "monitor_name", name, j, 0);
@@ -211,70 +405,192 @@ struct crtx_dict * output_change2dict(struct crtx_xcb_randr_listener *xrlist, xc
 	return dict;
 }
 
-void *xcb_randr_tmain(void *data) {
-	struct crtx_xcb_randr_listener *xrlist;
-	xcb_generic_event_t *ev;
-	struct crtx_event *crtx_event;
+char crtx_xcb_randr_output_property_t2dict(struct crtx_xcb_randr_listener *xrlist, struct xcb_randr_output_property_t *ptr, struct crtx_dict **dict_ptr)
+{
+	struct crtx_dict *dict;
+	struct crtx_dict_item *di;
+	xcb_get_atom_name_reply_t *atom_reply;
+	xcb_generic_error_t* error;
 	
-	xrlist = (struct crtx_xcb_randr_listener*) data;
 	
-	while ((ev = xcb_wait_for_event(xrlist->conn)) != NULL) {
-		const xcb_query_extension_reply_t *randr;
-		uint8_t type = ev->response_type & 0x7f;
-		int sent = !!(ev->response_type & 0x80);
+	if (! *dict_ptr)
+		*dict_ptr = crtx_init_dict(0, 0, 0);
+	dict = *dict_ptr;
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "window", ptr->window, sizeof(ptr->window), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "output", ptr->output, sizeof(ptr->output), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "atom", ptr->atom, sizeof(ptr->atom), 0);
+	
+	atom_reply = QRY(xcb_get_atom_name, xrlist->conn, error, ptr->atom);
+	if (error) {
+		ERROR("xcb_get_atom_name returned: %d\n", error->error_code);
+		free(error);
+	} else {
+		char *prop;
 		
-		randr = xcb_get_extension_data(xrlist->conn, &xcb_randr_id);
-		if (type == randr->first_event + XCB_RANDR_NOTIFY) {
-			xcb_randr_notify_event_t *event = (xcb_randr_notify_event_t *) ev;
-			switch (event->subCode) {
-				case XCB_RANDR_NOTIFY_CRTC_CHANGE:
-					{
-// 						xcb_randr_crtc_change_t *cevent = &event->u.cc;
-						
-						
-						crtx_event = crtx_create_event("xcb_randr/crtc_change", &event->u.cc, 0);
-						crtx_event->data.flags = CRTX_DIF_DONT_FREE_DATA;
-// 						crtx_event->origin = (struct crtx_listener_base *) xrlist;
-						
-						crtx_add_event(xrlist->parent.graph, crtx_event);
-						
-// 						if (cevent->mode == XCB_NONE) {
-// 							printf("CRTC 0x%08x disabled\n", cevent->crtc);
-// 						} else {
-// 							printf("CRTC 0x%08x now has geometry (%d, %d), (%d, %d)\n",
-// 								cevent->crtc, cevent->x, cevent->y, cevent->width, cevent->height);
-// 						}
-					}
-					break;
-				case XCB_RANDR_NOTIFY_OUTPUT_CHANGE:
-// 					output_change(xrlist, &event->u.oc);
-					
-					crtx_event = crtx_create_event("xcb_randr/output_change", &event->u.oc, 0);
-					crtx_event->data.flags = CRTX_DIF_DONT_FREE_DATA;
-// 					crtx_event->origin = (struct crtx_listener_base *) xrlist;
-					
-					crtx_add_event(xrlist->parent.graph, crtx_event);
-					
-					break;
-				default:
-					fprintf(stderr, "Unhandled RandR Notify event of subcode %d\n", event->subCode);
-			}
-		} else {
-			fprintf(stderr, "Unhandled event of type %d (%d) %s\n", type, randr->first_event, sent ? " (generated)" : "");
-		}
+		prop = xcb_get_atom_name_name(atom_reply);
 		
-		free(ev);
+		di = crtx_alloc_item(dict);
+		crtx_fill_data_item(di, 's', "property", prop, 0, 0);
+		
+		di = crtx_alloc_item(dict);
+		crtx_fill_data_item(di, 's', "property_status", ptr->status?"DELETE":"NEW", 0, CRTX_DIF_DONT_FREE_DATA);
+	}
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "timestamp", ptr->timestamp, sizeof(ptr->timestamp), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'u', "status", ptr->status, sizeof(ptr->status), 0);
+	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'D', "pad0", 0, 0, 0);
+	
+	// TypeKind.UCHAR
+	di->dict = crtx_init_dict("uuuuuuuuuuu", 11, 0);
+	{
+		crtx_fill_data_item(&di->dict->items[0], 'u', 0, ptr->pad0[0], sizeof(ptr->pad0[0]), 0);
+		crtx_fill_data_item(&di->dict->items[1], 'u', 0, ptr->pad0[1], sizeof(ptr->pad0[1]), 0);
+		crtx_fill_data_item(&di->dict->items[2], 'u', 0, ptr->pad0[2], sizeof(ptr->pad0[2]), 0);
+		crtx_fill_data_item(&di->dict->items[3], 'u', 0, ptr->pad0[3], sizeof(ptr->pad0[3]), 0);
+		crtx_fill_data_item(&di->dict->items[4], 'u', 0, ptr->pad0[4], sizeof(ptr->pad0[4]), 0);
+		crtx_fill_data_item(&di->dict->items[5], 'u', 0, ptr->pad0[5], sizeof(ptr->pad0[5]), 0);
+		crtx_fill_data_item(&di->dict->items[6], 'u', 0, ptr->pad0[6], sizeof(ptr->pad0[6]), 0);
+		crtx_fill_data_item(&di->dict->items[7], 'u', 0, ptr->pad0[7], sizeof(ptr->pad0[7]), 0);
+		crtx_fill_data_item(&di->dict->items[8], 'u', 0, ptr->pad0[8], sizeof(ptr->pad0[8]), 0);
+		crtx_fill_data_item(&di->dict->items[9], 'u', 0, ptr->pad0[9], sizeof(ptr->pad0[9]), 0);
+		crtx_fill_data_item(&di->dict->items[10], 'u', 0, ptr->pad0[10], sizeof(ptr->pad0[10]), 0);
 	}
 	
 	return 0;
 }
 
-void crtx_free_xcb_randr_listener(struct crtx_listener_base *data, void *userdata) {
+void xcb_event_before_release_cb(struct crtx_event *event, void *userdata) {
+	free(userdata);
+}
+
+static void xcb_handle_event(struct crtx_xcb_randr_listener *xrlist, xcb_generic_event_t *ev) {
+	struct crtx_event *crtx_event;
+	const xcb_query_extension_reply_t *randr;
+	xcb_randr_notify_event_t *xcb_event;
+	char *event_type;
+	uint8_t type;
+	int sent;
+	void *data_ptr;
+	
+	
+	type = ev->response_type & 0x7f;
+	sent = !!(ev->response_type & 0x80);
+	
+	randr = xcb_get_extension_data(xrlist->conn, &xcb_randr_id);
+	if (type == randr->first_event + XCB_RANDR_NOTIFY) {
+		xcb_event = (xcb_randr_notify_event_t *) ev;
+		
+		event_type = 0;
+		switch (xcb_event->subCode) {
+			case XCB_RANDR_NOTIFY_CRTC_CHANGE:
+				event_type = "xcb_randr/crtc_change";
+				data_ptr = &xcb_event->u.cc;
+// 				crtx_event = crtx_create_event("xcb_randr/crtc_change", &xcb_event->u.cc, 0);
+// 				crtx_event->data.flags = CRTX_DIF_DONT_FREE_DATA;
+// 				
+// 				crtx_add_event(xrlist->parent.graph, crtx_event);
+				break;
+			case XCB_RANDR_NOTIFY_OUTPUT_CHANGE:
+				event_type = "xcb_randr/output_change";
+				data_ptr = &xcb_event->u.oc;
+// 				crtx_event = crtx_create_event("xcb_randr/output_change", &xcb_event->u.oc, 0);
+// 				crtx_event->data.flags = CRTX_DIF_DONT_FREE_DATA;
+// 				
+// 				crtx_add_event(xrlist->parent.graph, crtx_event);
+				break;
+			case XCB_RANDR_NOTIFY_OUTPUT_PROPERTY:
+				event_type = "xcb_randr/output_property";
+				data_ptr = &xcb_event->u.op;
+				break;
+			default:
+				{
+					char *s;
+					#define XCBRANDR2STR(id) case id: s = #id; break;
+					switch (xcb_event->subCode) {
+// 						XCBRANDR2STR(XCB_RANDR_NOTIFY_CRTC_CHANGE)
+// 						XCBRANDR2STR(XCB_RANDR_NOTIFY_OUTPUT_CHANGE)
+// 						XCBRANDR2STR(XCB_RANDR_NOTIFY_OUTPUT_PROPERTY)
+						XCBRANDR2STR(XCB_RANDR_NOTIFY_PROVIDER_CHANGE)
+						XCBRANDR2STR(XCB_RANDR_NOTIFY_PROVIDER_PROPERTY)
+						XCBRANDR2STR(XCB_RANDR_NOTIFY_RESOURCE_CHANGE)
+					}
+					INFO("unhandled xcb_randr notify event with subcode %d: %s\n", xcb_event->subCode, s);
+				}
+		}
+		if (event_type) {
+			crtx_event = crtx_create_event(event_type, data_ptr, 0);
+			crtx_event->data.flags = CRTX_DIF_DONT_FREE_DATA;
+			crtx_event->cb_before_release = &xcb_event_before_release_cb;
+			crtx_event->cb_before_release_data = xcb_event;
+			
+			crtx_add_event(xrlist->parent.graph, crtx_event);
+		} else {
+			free(xcb_event);
+		}
+	} else {
+		INFO("unhandled event of type %d (randr starts at: %d) %s\n", type, randr->first_event, sent ? " (generated)" : "");
+		free(ev);
+	}
+}
+
+static void *xcb_randr_tmain(void *data) {
 	struct crtx_xcb_randr_listener *xrlist;
+	xcb_generic_event_t *ev;
 	
 	xrlist = (struct crtx_xcb_randr_listener*) data;
 	
+	while ((ev = xcb_wait_for_event(xrlist->conn)) != NULL) {
+		xcb_handle_event(xrlist, ev);
+	}
+	
+	return 0;
+}
+
+static char xcb_randr_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_event_loop_payload *payload;
+	struct crtx_xcb_randr_listener *xrlist;
+	xcb_generic_event_t *ev;
+	
+	
+	payload = (struct crtx_event_loop_payload*) event->data.pointer;
+	
+	xrlist = (struct crtx_xcb_randr_listener *) payload->data;
+	
+	ev = xcb_poll_for_event(xrlist->conn);
+	
+	xcb_handle_event(xrlist, ev);
+	
+	return 0;
+}
+
+static void crtx_free_xcb_randr_listener(struct crtx_listener_base *listener, void *userdata) {
+	struct crtx_xcb_randr_listener *xrlist;
+	
+	xrlist = (struct crtx_xcb_randr_listener*) listener;
+	
 	xcb_disconnect(xrlist->conn);
+}
+
+static char start_listener(struct crtx_listener_base *listener) {
+	struct crtx_xcb_randr_listener *xrlist;
+	
+	xrlist = (struct crtx_xcb_randr_listener*) listener;
+	
+	xcb_randr_select_input(xrlist->conn, xrlist->screen->root, XCB_RANDR_NOTIFY_MASK_CRTC_CHANGE | XCB_RANDR_NOTIFY_MASK_OUTPUT_CHANGE);
+	xcb_flush(xrlist->conn);
+	
+	return 0;
 }
 
 struct crtx_listener_base *crtx_new_xcb_randr_listener(void *options) {
@@ -284,12 +600,13 @@ struct crtx_listener_base *crtx_new_xcb_randr_listener(void *options) {
 	int ret;
 	xcb_generic_error_t* error;
 	
+	
 	xrlist = (struct crtx_xcb_randr_listener *) options;
 	
 	xrlist->conn = xcb_connect(NULL, NULL);
 	ret = xcb_connection_has_error(xrlist->conn);
 	if (ret) {
-		fprintf(stderr, "xcb_connect failed: %d\n", ret);
+		ERROR("xcb_connect failed: %d\n", ret);
 		return 0;
 	}
 	
@@ -297,7 +614,7 @@ struct crtx_listener_base *crtx_new_xcb_randr_listener(void *options) {
 	
 	query = xcb_get_extension_data(xrlist->conn, &xcb_randr_id);
 	if (!query || !query->present) {
-		fprintf(stderr, "error, randr not present\n");
+		ERROR("randr extension not present\n");
 		return 0;
 	}
 	
@@ -306,17 +623,24 @@ struct crtx_listener_base *crtx_new_xcb_randr_listener(void *options) {
 // 				NULL);
 	version = QRY(xcb_randr_query_version, xrlist->conn, error, XCB_RANDR_MAJOR_VERSION, XCB_RANDR_MINOR_VERSION);
 	if (!version || version->major_version < 1 || (version->major_version == 1 && version->minor_version < 2)) {
-		fprintf(stderr, "error, randr too old\n");
+		ERROR("randr extension too old\n");
 		return 0;
 	}
+	free(version);
 	
-	xcb_randr_select_input(xrlist->conn, xrlist->screen->root, XCB_RANDR_NOTIFY_MASK_CRTC_CHANGE | XCB_RANDR_NOTIFY_MASK_OUTPUT_CHANGE);
-	xcb_flush(xrlist->conn);
-	
+	xrlist->parent.start_listener = &start_listener;
 	xrlist->parent.free = &crtx_free_xcb_randr_listener;
 // 	new_eventgraph(&xrlist->parent.graph, "xcb_randr", xcb_randr_msg_etype);
 	
-	xrlist->parent.thread = get_thread(xcb_randr_tmain, xrlist, 0);
+// 	xrlist->parent.thread = get_thread(xcb_randr_tmain, xrlist, 0);
+	xrlist->parent.thread_job.fct = &xcb_randr_tmain;
+	xrlist->parent.thread_job.fct_data = xrlist;
+	
+	xrlist->parent.el_payload.fd = xcb_get_file_descriptor(xrlist->conn);
+	xrlist->parent.el_payload.event_flags = EPOLLIN;
+	xrlist->parent.el_payload.data = xrlist;
+	xrlist->parent.el_payload.event_handler = &xcb_randr_fd_event_handler;
+	xrlist->parent.el_payload.event_handler_name = "xcb-randr fd handler";
 	
 	return &xrlist->parent;
 }
@@ -334,13 +658,16 @@ struct crtx_xcb_randr_listener xrlist;
 
 static char xcb_randr_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *dict;
+	void *ptr;
 // 	struct crtx_xcb_randr_listener *xrlist;
 	
-	
+	ptr = crtx_event_get_ptr(event);
 // 	xrlist = (struct crtx_xcb_randr_listener *) event->origin;
 	
+	dict = 0;
 	if (!strcmp(event->type, "xcb_randr/crtc_change")) {
-		dict = crtc_change2dict(&xrlist, event->data.pointer);
+// 		dict = crtc_change2dict(&xrlist, ptr);
+		crtx_xcb_randr_crtc_change_t2dict(ptr, &dict);
 		
 // 		xcb_randr_crtc_change_t *cevent = event->data.pointer;
 		
@@ -362,13 +689,19 @@ static char xcb_randr_test_handler(struct crtx_event *event, void *userdata, voi
 		
 	} else
 	if (!strcmp(event->type, "xcb_randr/output_change")) {
-		dict = output_change2dict(&xrlist, event->data.pointer);
+		dict = output_change2dict(&xrlist, ptr);
+	} else
+	if (!strcmp(event->type, "xcb_randr/output_property")) {
+		crtx_xcb_randr_output_property_t2dict(&xrlist, ptr, &dict);
 	}
 	
-	crtx_print_dict(dict);
 	
-// 	crtx_free_dict(dict);
-	crtx_dict_unref(dict);
+	if (dict) {
+		crtx_print_dict(dict);
+		
+	// 	crtx_free_dict(dict);
+		crtx_dict_unref(dict);
+	}
 	
 	return 0;
 }

@@ -399,7 +399,9 @@ struct crtx_listener_base *crtx_new_nf_queue_listener(void *options) {
 	
 // 	new_eventgraph(&nfq_listata->parent.graph, 0, nfq_packet_msg_etype);
 	
-	nfq_listata->parent.thread = get_thread(nfq_tmain, nfq_listata, 0);
+// 	nfq_listata->parent.thread = get_thread(nfq_tmain, nfq_listata, 0);
+	nfq_listata->parent.thread_job.fct = &nfq_tmain;
+	nfq_listata->parent.thread_job.fct_data = nfq_listata;
 	nfq_listata->parent.start_listener = 0;
 	
 	return &nfq_listata->parent;

@@ -274,7 +274,7 @@ char crtx_avahi_service(struct crtx_event *event) {
 	return 0;
 }
 
-static void cb_sdbus_event_release(struct crtx_event *event) {
+static void cb_sdbus_event_release(struct crtx_event *event, void *userdata) {
 	struct crtx_avahi_service *service;
 	
 	service = (struct crtx_avahi_service *) event->data.pointer;

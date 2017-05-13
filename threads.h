@@ -29,6 +29,19 @@ struct crtx_signal {
 	pthread_cond_t cond;
 };
 
+struct crtx_thread;
+struct crtx_thread_job_description {
+	thread_fct fct;
+	void *fct_data;
+	
+	void (*do_stop)(struct crtx_thread *thread, void *data);
+	
+	void (*on_finish)(struct crtx_thread *thread, void *on_finish_data);
+	void *on_finish_data;
+	
+// 	struct crtx_thread *thread;
+};
+
 struct crtx_thread {
 	pthread_t handle;
 	
@@ -36,16 +49,10 @@ struct crtx_thread {
 	
 	char in_use;
 	
-	thread_fct fct;
-	void *fct_data;
-	
 	struct crtx_signal start;
 	struct crtx_signal finished;
 	
-	void (*do_stop)(struct crtx_thread *thread, void *data);
-	
-	void (*on_finish)(struct crtx_thread *thread, void *on_finish_data);
-	void *on_finish_data;
+	struct crtx_thread_job_description *job;
 	
 // 	MUTEX_TYPE mutex;
 	
@@ -65,8 +72,8 @@ void reference_signal(struct crtx_signal *s);
 void dereference_signal(struct crtx_signal *s);
 char crtx_signal_is_active(struct crtx_signal *s);
 
-struct crtx_thread *get_thread(thread_fct fct, void *data, char start);
-void start_thread(struct crtx_thread *t);
+struct crtx_thread *crtx_thread_assign_job(struct crtx_thread_job_description *job);
+void crtx_thread_start_job(struct crtx_thread *t);
 struct crtx_thread *spawn_thread(char create);
 
 void crtx_threads_stop(struct crtx_thread *t);

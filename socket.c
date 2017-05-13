@@ -37,6 +37,8 @@
 struct socket_connection_tmain_args {
 	struct crtx_socket_listener *slistener;
 	int sockfd;
+	struct crtx_thread_job_description thread_job;
+	struct crtx_thread *thread;
 };
 
 static struct addrinfo *crtx_get_addrinfo(struct crtx_socket_listener *listener) {
@@ -87,7 +89,7 @@ static void crtx_free_addrinfo(struct addrinfo *result) {
 }
 
 /// before original event is released, setup and write the response event
-static void setup_response_event_cb(struct crtx_event *event) {
+static void setup_response_event_cb(struct crtx_event *event, void *userdata) {
 	struct crtx_socket_listener *slist;
 	struct crtx_event *resp_event;
 	
@@ -235,7 +237,12 @@ static void *socket_server_tmain(void *data) {
 		args->slistener = listeners;
 		args->sockfd = accept(listeners->sockfd, cliaddr, &addrlen); ASSERT(args->sockfd >= 0);
 		
-		get_thread(socket_connection_tmain, args, 1);
+// 		get_thread(socket_connection_tmain, args, 1);
+		args->thread_job.fct = &socket_connection_tmain;
+		args->thread_job.fct_data = args;
+		
+		args->thread = crtx_thread_assign_job(&args->thread_job);
+		crtx_thread_start_job(args->thread);
 	}
 	close(listeners->sockfd);
 	
@@ -316,8 +323,11 @@ struct crtx_listener_base *crtx_new_socket_server_listener(void *options) {
 	create_in_out_box();
 	
 	slistener->parent.start_listener = 0;
-	slistener->parent.thread = get_thread(socket_server_tmain, slistener, 0);
-	slistener->parent.thread->do_stop = &stop_thread;
+// 	slistener->parent.thread = get_thread(socket_server_tmain, slistener, 0);
+// 	slistener->parent.thread->do_stop = &stop_thread;
+	slistener->parent.thread_job.fct = &socket_server_tmain;
+	slistener->parent.thread_job.fct_data = slistener;
+	slistener->parent.thread_job.do_stop = &stop_thread;
 	
 	return &slistener->parent;
 }
@@ -336,8 +346,10 @@ struct crtx_listener_base *crtx_new_socket_client_listener(void *options) {
 	crtx_create_task(slistener->outbox, 200, "outbound_event_handler", &outbound_event_handler, slistener);
 	
 	slistener->parent.start_listener = 0;
-	slistener->parent.thread = get_thread(socket_client_tmain, slistener, 0);
-	slistener->parent.thread->do_stop = &stop_thread;
+// 	slistener->parent.thread = get_thread(socket_client_tmain, slistener, 0);
+	slistener->parent.thread_job.fct = &socket_client_tmain;
+	slistener->parent.thread_job.fct_data = slistener;
+	slistener->parent.thread_job.do_stop = &stop_thread;
 	
 	return &slistener->parent;
 }

@@ -316,7 +316,7 @@ int crtx_sd_bus_message_read_string(sd_bus_message *m, char **p) {
 	return r;
 }
 
-static void cb_event_release(struct crtx_event *event) {
+static void cb_event_release(struct crtx_event *event, void *userdata) {
 	sd_bus_message_unref(event->data.pointer);
 }
 
