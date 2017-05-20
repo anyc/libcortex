@@ -80,10 +80,10 @@ static void elw_fd_callback(struct crtx_event_loop_payload *el_payload) {
 	struct libvirt_eventloop_wrapper *wrap;
 	struct epoll_event *epoll_event;
 	
-	
 	wrap = (struct libvirt_eventloop_wrapper*) el_payload->data;
 	epoll_event = (struct epoll_event *) el_payload->el_data;
 	
+	printf("lv fd cb %d\n", wrap->id);
 	wrap->event_cb(wrap->id, wrap->el_payload.fd, elw_virEventPollFromNativeEvents(epoll_event->events), wrap->opaque);
 	
 	if (wrap->delete)

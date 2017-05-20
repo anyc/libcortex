@@ -182,6 +182,8 @@ void *crtx_epoll_main(void *data) {
 				
 				memcpy(el_payload->el_data, &rec_events[i], sizeof(struct epoll_event));
 				
+				VDBG("received wakeup for fd %d\n", el_payload->fd);
+				
 				if (el_payload->event_handler) {
 					event = crtx_create_event(0);
 					
