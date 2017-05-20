@@ -11,7 +11,7 @@ EXAMPLES=libvirt-usb-hotplug
 all: $(EXAMPLES)
 
 libvirt-usb-hotplug: CFLAGS+=$(shell pkg-config --cflags libvirt) $(shell xml2-config --cflags)
-libvirt-usb-hotplug: LDLIBS+=$(shell pkg-config --libs libvirt) $(shell xml2-config --libs)
+libvirt-usb-hotplug: LDLIBS+=$(shell pkg-config --libs libvirt) $(shell xml2-config --libs) -lcrtx_udev
 libvirt-usb-hotplug: libvirt-usb-hotplug.c
 
 clean:
