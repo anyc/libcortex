@@ -481,16 +481,19 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 			while (*it && *it != nlh->nlmsg_type) { it++; }
 			
 			if (nlh->nlmsg_type == *it) {
-				event = crtx_create_event(0, 0, 0);
+				char *ptr;
+				event = crtx_create_event(0);
 				
 // 				if (!nlr_list->raw2dict) {
 					// we don't know the size of data, hence we cannot copy it
 					// and we have to wait until all tasks have finished
 					
-					event->data.pointer = malloc(4096);
-					memcpy(event->data.pointer, nlh, 4096);
-					event->data.type = 'p';
+// 					event->data.pointer = malloc(4096);
+					ptr = malloc(4096);
+					memcpy(ptr, nlh, 4096);
+// 					event->data.type = 'p';
 // 					event->data.flags = CRTX_DIF_DONT_FREE_DATA;
+					crtx_event_set_raw_data(event, 'p', ptr, sizeof(ptr), 0);
 					
 // 					reference_event_release(event);
 					
@@ -505,7 +508,8 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 					
 					// 					event->data.type = 'D';
 // 					event->data.dict = nlr_list->raw2dict(nlr_list, nlh);
-					crtx_event_set_data(event, event->data.pointer, nlr_list->raw2dict(nlr_list, nlh), 0);
+// 					crtx_event_set_data(event, event->data.pointer, nlr_list->raw2dict(nlr_list, nlh), 0);
+					crtx_event_set_dict_data(event, nlr_list->raw2dict(nlr_list, nlh), 0);
 					
 				}
 				crtx_add_event(nlr_list->parent.graph, event);

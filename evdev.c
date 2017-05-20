@@ -13,15 +13,23 @@
 
 // char *evdev_msg_etype[] = { EVDEV_MSG_ETYPE, 0 };
 
-void send_event(struct crtx_evdev_listener *el, struct input_event *ev, char sync) {
+void evdev_event_before_release_cb(struct crtx_event *event, void *userdata) {
+	free(crtx_event_get_ptr(event));
+// 	crtx_event_set_data(event, 0, 0, 0);
+	crtx_event_set_raw_data(event, 'p', 0, 0, 0);
+}
+
+static void send_event(struct crtx_evdev_listener *el, struct input_event *ev, char sync) {
 	struct crtx_event *event;
 	
 	struct input_event *new_ev;
 	new_ev = (struct input_event *) malloc(sizeof(struct input_event));
 	memcpy(new_ev, ev, sizeof(struct input_event));
 	
-	event = crtx_create_event(0, ev, sizeof(struct input_event));
+	event = crtx_create_event(0);
+	crtx_event_set_raw_data(event, 'p', new_ev, sizeof(struct input_event), 0);
 // 	event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
+	event->cb_before_release = &evdev_event_before_release_cb;
 	
 // 	reference_event_release(event);
 	
@@ -145,6 +153,7 @@ struct crtx_listener_base *crtx_new_evdev_listener(void *options) {
 	
 	evdev->parent.el_payload.fd = evdev->fd;
 	evdev->parent.el_payload.data = evdev;
+	evdev->parent.el_payload.event_flags = EPOLLIN;
 	evdev->parent.el_payload.event_handler = &evdev_fd_event_handler;
 	evdev->parent.el_payload.event_handler_name = "evdev fd handler";
 	
@@ -185,7 +194,7 @@ print_event(struct input_event *ev)
 static char evdev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct input_event *ev;
 	
-	ev = (struct input_event *) event->data.pointer;
+	ev = (struct input_event *) crtx_event_get_ptr(event);
 	
 	print_event(ev);
 	

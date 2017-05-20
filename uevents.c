@@ -68,6 +68,7 @@ static int uevents_read_cb(struct crtx_netlink_raw_listener *nl_listener, int fd
 	size_t ulen;
 	struct crtx_event *event;
 	struct crtx_uevents_listener *ulist;
+	char *s;
 	
 	
 	ulist = (struct crtx_uevents_listener*) userdata;
@@ -91,14 +92,17 @@ static int uevents_read_cb(struct crtx_netlink_raw_listener *nl_listener, int fd
 // 		i += strlen(buf+i)+1;
 // 	}
 	
-	event = crtx_create_event(0, 0, 0);
+	event = crtx_create_event(0);
 	
 // 	event->data.string = crtx_stracpy(buf, &ulen);
-	event->data.string = (char *) malloc(ulen+1);
-	memcpy(event->data.string, buf, ulen);
-	event->data.string[ulen] = 0;
-	event->data.size = ulen + 1;
-	event->data.type = 's';
+// 	event->data.string = (char *) malloc(ulen+1);
+	s = (char *) malloc(ulen+1);
+	memcpy(s, buf, ulen);
+	s[ulen] = 0;
+// 	event->data.size = ulen + 1;
+// 	event->data.type = 's';
+	crtx_event_set_raw_data(event, 's', s, ulen, 0);
+	
 // 	event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 	
 // 	reference_event_release(event);

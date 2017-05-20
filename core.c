@@ -319,7 +319,7 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 // 		if (ret == 0) {
 			listener->state = CRTX_LSTNR_STOPPED;
 			
-			event = crtx_create_event("listener_state", 0, 0);
+			event = crtx_create_event("listener_state");
 			
 			event->data.type = 'u';
 			event->data.uint32 = CRTX_LSTNR_STOPPED;
@@ -372,7 +372,7 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 	listener->state = CRTX_LSTNR_STARTED;
 	
 	if (listener->state_graph) {
-		event = crtx_create_event("listener_state", 0, 0);
+		event = crtx_create_event("listener_state");
 		event->data.type = 'u';
 		event->data.uint32 = CRTX_LSTNR_STARTED;
 		crtx_add_event(listener->state_graph, event);
@@ -498,7 +498,7 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 	
 	if (listener->state_graph) {
 		struct crtx_event *event;
-		event = crtx_create_event("listener_state", 0, 0);
+		event = crtx_create_event("listener_state");
 		event->data.type = 'u';
 		event->data.uint32 = CRTX_LSTNR_STOPPED;
 		crtx_add_event(listener->state_graph, event);
@@ -884,7 +884,7 @@ void crtx_add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	pthread_mutex_unlock(&graph->mutex);
 }
 
-struct crtx_event *crtx_create_event(char *type, void *data, size_t data_size) {
+struct crtx_event *crtx_create_event(char *type) { // , void *data, size_t data_size, unsigned char flags) {
 	struct crtx_event *event;
 	int ret;
 	
@@ -898,8 +898,8 @@ struct crtx_event *crtx_create_event(char *type, void *data, size_t data_size) {
 	
 // 	event->data.pointer = data;
 // 	event->data.type = 'p';
-	crtx_event_set_data(event, data, 0, 0);
-	event->data.size = data_size;
+// 	crtx_event_set_raw_data(event, data, data_size, 0);
+// 	event->data.size = data_size;
 	
 // 	if (complex_data_layout) {
 // 		crtx_dict_upgrade_event_data(event, 0);
@@ -1676,35 +1676,174 @@ struct crtx_event_loop* crtx_get_event_loop() {
 	return &crtx_root->event_loop;
 }
 
-void crtx_event_set_data(struct crtx_event *event, void *raw_pointer, struct crtx_dict *data_dict, unsigned char n_additional_fields) {
+// void crtx_event_set_data(struct crtx_event *event, void *raw_pointer, unsigned char flags, struct crtx_dict *data_dict, unsigned char n_additional_fields) {
+// 	struct crtx_dict *upgraded_dict;
+// 	struct crtx_dict_item *di;
+// 	
+// 	
+// 	LOCK(event->mutex);
+// 	
+// 	if (raw_pointer || event->data.type == 0) {
+// 		switch (event->data.type) {
+// 			case 0:
+// 			case 'p':
+// 				event->data.key = "raw";
+// 				event->data.type = 'p';
+// 				event->data.size = 0;
+// 				event->data.flags = 0;
+// 				event->data.pointer = raw_pointer;
+// 				break;
+// 			case 'D':
+// 				di = crtx_get_item_by_idx(event->data.dict, 0);
+// 				di->pointer = raw_pointer;
+// 				break;
+// 			default:
+// 				ERROR("invalid event data type %c (%d)\n", event->data.type, event->data.type);
+// 				break;
+// 		}
+// 	}
+// 	
+// 	if (data_dict || n_additional_fields > 0) {
+// 		if (event->data.type == 'p') {
+// 			upgraded_dict = crtx_init_dict(0, 2+n_additional_fields, 0);
+// 			
+// 			di = crtx_get_item_by_idx(upgraded_dict, 0);
+// 			
+// // 			crtx_dict_copy_item(di, &event->data, 0);
+// 			memcpy(di, &event->data, sizeof(struct crtx_dict_item));
+// 			
+// 			di = crtx_get_item_by_idx(upgraded_dict, 1);
+// 			di->key = "data";
+// 			di->type = 'D';
+// 			di->dict = data_dict;
+// 			
+// 			event->data.key = "data";
+// 			event->data.type = 'D';
+// 			event->data.size = 0;
+// 			event->data.flags = 0;
+// 			event->data.dict = upgraded_dict;
+// 		} else
+// 		if (event->data.type == 'D') {
+// 			if (strcmp(event->data.key, "data"))
+// 				ERROR("invalid event data structure\n");
+// 			
+// 			di = crtx_get_item_by_idx(event->data.dict, 1);
+// 			di->dict = data_dict;
+// 			
+// 			if (event->data.dict->signature_length < 2 + n_additional_fields)
+// 				crtx_resize_dict(event->data.dict, 2 + n_additional_fields);
+// 		}
+// 	}
+// 	
+// 	UNLOCK(event->mutex);
+// }
+
+// void crtx_event_set_raw_data(struct crtx_event *event, void *raw_pointer, size_t size, unsigned char flags) {
+void crtx_event_set_raw_data(struct crtx_event *event, unsigned char type, ...) {
 	struct crtx_dict *upgraded_dict;
 	struct crtx_dict_item *di;
+	va_list va;
 	
 	
 	LOCK(event->mutex);
 	
-	if (raw_pointer || event->data.type == 0) {
-		switch (event->data.type) {
-			case 0:
-			case 'p':
-				event->data.key = "raw";
-				event->data.type = 'p';
-				event->data.size = 0;
-				event->data.flags = 0;
-				event->data.pointer = raw_pointer;
-				break;
-			case 'D':
-				di = crtx_get_item_by_idx(event->data.dict, 0);
-				di->pointer = raw_pointer;
-				break;
-			default:
-				ERROR("invalid event data type %c (%d)\n", event->data.type, event->data.type);
-				break;
+	va_start(va, type);
+// 	
+// 	ret = crtx_fill_data_item_va(di, type, va);
+// 	
+// 	va_end(va);
+// 	crtx_fill_data_item(&event->data, type, "crtx_raw_data", raw_pointer, size, flags);
+	
+	if (event->data.type == 'D') {
+		if (event->data.key && !strcmp(event->data.key, "crtx_raw_data")) {
+			di = crtx_get_item_by_idx(event->data.dict, 0);
+			crtx_fill_data_item_va2(di, type, "crtx_raw_data", va);
+		} else {
+			upgraded_dict = crtx_init_dict(0, 2, 0);
+			
+			di = crtx_get_item_by_idx(upgraded_dict, 0);
+			
+			crtx_fill_data_item_va2(di, type, "crtx_raw_data", va);
+			
+			di = crtx_get_item_by_idx(upgraded_dict, 1);
+// 			di->key = event->data.key;
+// 			di->type = 'D';
+// 			di->size = event->data.size;
+// 			di->flags = event->data.flags;
+// 			di->dict = &event->data;
+			memcpy(di, &event->data, sizeof(struct crtx_dict_item));
+			
+			event->data.key = "crtx_dict_data";
+			event->data.type = 'D';
+			event->data.size = 0;
+			event->data.flags = 0;
+			event->data.dict = upgraded_dict;
 		}
+	} else {
+		crtx_fill_data_item_va2(&event->data, type, "crtx_raw_data", va);
 	}
 	
-	if (data_dict || n_additional_fields > 0) {
-		if (event->data.type == 'p') {
+	va_end(va);
+	
+// 	if (raw_pointer || event->data.type == 0) {
+// 	switch (event->data.type) {
+// 		case 0:
+// 		case 'p':
+// 			event->data.key = "crtx_raw_data";
+// 			event->data.type = 'p';
+// 			event->data.size = size;
+// 			event->data.flags = flags;
+// 			event->data.pointer = raw_pointer;
+// 			break;
+// 		case 'D':
+// 			if (event->data.key && !strcmp(event->data.key, "crtx_raw_data")) {
+// 				di = crtx_get_item_by_idx(event->data.dict, 0);
+// 				di->pointer = raw_pointer;
+// 			} else {
+// 				upgraded_dict = crtx_init_dict(0, 2+n_additional_fields, 0);
+// 				
+// 				di = crtx_get_item_by_idx(upgraded_dict, 0);
+// 				
+// 	// 			crtx_dict_copy_item(di, &event->data, 0);
+// // 				memcpy(di, &event->data, sizeof(struct crtx_dict_item));
+// 				di->key = "crtx_raw_data";
+// 				di->type = 'p';
+// 				di->size = size;
+// 				di->flags = flags;
+// 				di->pointer = raw_pointer;
+// 				
+// 				di = crtx_get_item_by_idx(upgraded_dict, 1);
+// 				di->key = event->data.key;
+// 				di->type = 'D';
+// 				di->size = event->data.size;
+// 				di->flags = event->data.flags;
+// 				di->dict = &event->data;
+// 				
+// 				event->data.key = "crtx_dict_data";
+// 				event->data.type = 'D';
+// 				event->data.size = 0;
+// 				event->data.flags = 0;
+// 				event->data.dict = upgraded_dict;
+// 			}
+// 			break;
+// 		default:
+// 			ERROR("invalid event data type %c (%d)\n", event->data.type, event->data.type);
+// 			break;
+// 	}
+	
+	UNLOCK(event->mutex);
+}
+
+void crtx_event_set_dict_data(struct crtx_event *event, struct crtx_dict *data_dict, unsigned char n_additional_fields) {
+	struct crtx_dict *upgraded_dict;
+	struct crtx_dict_item *di;
+// 	unsigned char n_additional_fields = 0;
+// 	crtx_event_set_data(event, 0, 0, data_dict, n_additional_fields);
+	
+	LOCK(event->mutex);
+	
+// 	if (data_dict || n_additional_fields > 0) {
+		if (event->data.type != 'D') {
 			upgraded_dict = crtx_init_dict(0, 2+n_additional_fields, 0);
 			
 			di = crtx_get_item_by_idx(upgraded_dict, 0);
@@ -1713,27 +1852,33 @@ void crtx_event_set_data(struct crtx_event *event, void *raw_pointer, struct crt
 			memcpy(di, &event->data, sizeof(struct crtx_dict_item));
 			
 			di = crtx_get_item_by_idx(upgraded_dict, 1);
-			di->key = "data";
+			di->key = "crtx_dict_data";
 			di->type = 'D';
 			di->dict = data_dict;
 			
-			event->data.key = "data";
+			event->data.key = "crtx_dict_data";
 			event->data.type = 'D';
 			event->data.size = 0;
 			event->data.flags = 0;
 			event->data.dict = upgraded_dict;
 		} else
 		if (event->data.type == 'D') {
-			if (strcmp(event->data.key, "data"))
-				ERROR("invalid event data structure\n");
+// 			if (strcmp(event->data.key, "data"))
+// 				ERROR("invalid event data structure\n");
 			
-			di = crtx_get_item_by_idx(event->data.dict, 1);
-			di->dict = data_dict;
-			
-			if (event->data.dict->signature_length < 2 + n_additional_fields)
-				crtx_resize_dict(event->data.dict, 2 + n_additional_fields);
+			if (!strcmp(event->data.key, "crtx_dict_data")) {
+				di = crtx_get_item_by_idx(event->data.dict, 1);
+				di->dict = data_dict;
+				
+				if (event->data.dict->signature_length < 2 + n_additional_fields)
+					crtx_resize_dict(event->data.dict, 2 + n_additional_fields);
+			} else {
+				event->data.dict = data_dict;
+				if (n_additional_fields > 0)
+					ERROR("TODO\n");
+			}
 		}
-	}
+// 	}
 	
 	UNLOCK(event->mutex);
 }
@@ -1760,6 +1905,13 @@ char crtx_event_raw2dict(struct crtx_event *event, void *user_data) {
 	return CRTX_SUCCESS;
 }
 
+// static struct crtx_dict_item *crtx_event_get_data_dict(struct crtx_event *event) {
+// 	if (event->data.type != 'D' || strcmp(event->data.key, "crtx_dict_data"))
+// 		return &event->data;
+// 	
+// 	return crtx_get_item_by_idx(event->data.dict, 1);
+// }
+
 void crtx_event_get_payload(struct crtx_event *event, char *id, void **raw_pointer, struct crtx_dict **dict) {
 	struct crtx_dict_item *di;
 	
@@ -1768,16 +1920,20 @@ void crtx_event_get_payload(struct crtx_event *event, char *id, void **raw_point
 			*raw_pointer = event->data.pointer;
 		} else
 		if (event->data.type == 'D') {
-			di = crtx_get_item_by_idx(event->data.dict, 0);
-			*raw_pointer = di->pointer;
+			if (!strcmp(event->data.key, "crtx_dict_data")) {
+				di = crtx_get_item_by_idx(event->data.dict, 0);
+				*raw_pointer = di->pointer;
+			} else {
+				ERROR("unknown event dict %p\n", event->data.dict);
+				*raw_pointer = 0;
+			}
 		} else {
 			ERROR("unknown event data type %d\n", event->data.type);
 			*raw_pointer = 0;
-			return;
 		}
 	}
 	if (dict) {
-		if (event->data.type == 'p') {
+		if (event->data.type != 'D') {
 			int ret;
 			
 			ret = crtx_event_raw2dict(event, 0);
@@ -1786,15 +1942,20 @@ void crtx_event_get_payload(struct crtx_event *event, char *id, void **raw_point
 				*dict = 0;
 				return;
 			}
-		} else
-		if (event->data.type != 'D') {
-			ERROR("unknown event data type %d\n", event->data.type);
-			*dict = 0;
-			return;
-		}
+		} 
+// 		else
+// 		if (event->data.type != 'D') {
+// 			ERROR("unknown event data type %d\n", event->data.type);
+// 			*dict = 0;
+// 			return;
+// 		}
 		
-		di = crtx_get_item_by_idx(event->data.dict, 1);
-		*dict = di->dict;
+		if (!strcmp(event->data.key, "crtx_dict_data")) {
+			di = crtx_get_item_by_idx(event->data.dict, 1);
+			*dict = di->dict;
+		} else {
+			*dict = event->data.dict;
+		}
 	}
 }
 

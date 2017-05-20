@@ -584,7 +584,7 @@ static int domain_evt_cb(virConnectPtr conn,
 	
 	lvlist = (struct crtx_libvirt_listener *) opaque;
 	
-	crtx_event = crtx_create_event("domain_event", 0, 0);
+	crtx_event = crtx_create_event("domain_event"); //, 0, 0);
 	
 	dict = crtx_init_dict(0, 0, 0);
 	
@@ -606,8 +606,9 @@ static int domain_evt_cb(virConnectPtr conn,
 	di = crtx_alloc_item(dict);
 	crtx_fill_data_item(di, 's', "detail", eventDetailToString(event, detail), strlen(eventDetailToString(event, detail)), CRTX_DIF_DONT_FREE_DATA);
 	
-	crtx_event->data.type = 'D';
-	crtx_event->data.dict = dict;
+// 	crtx_event->data.type = 'D';
+// 	crtx_event->data.dict = dict;
+	crtx_event_set_dict_data(crtx_event, dict, 0);
 	
 	crtx_add_event(lvlist->parent.graph, crtx_event);
 	

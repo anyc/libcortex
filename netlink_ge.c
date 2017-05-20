@@ -40,9 +40,10 @@ int crtx_genl_msg2dict(struct nl_msg *msg, void *arg) {
 	// validate msg and parse attributes
 	genlmsg_parse(nlh, 0, g->attrs, g->n_attrs, 0);
 	
-	event = crtx_create_event("netlink/genl", 0, 0);
-	event->data.dict = crtx_init_dict(0, 0, 0);
-	dict = event->data.dict;
+	event = crtx_create_event("netlink/genl");
+	dict = crtx_init_dict(0, 0, 0);
+// 	dict = event->data.dict;
+	crtx_event_set_dict_data(event, dict, 0);
 	
 	tdi = crtx_get_first_item(g->attrs_template);
 	for (i=0; i < g->n_attrs; i++) {

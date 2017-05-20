@@ -500,8 +500,9 @@ static void xcb_handle_event(struct crtx_xcb_randr_listener *xrlist, xcb_generic
 				}
 		}
 		if (event_type) {
-			crtx_event = crtx_create_event(event_type, data_ptr, 0);
-			crtx_event->data.flags = CRTX_DIF_DONT_FREE_DATA;
+			crtx_event = crtx_create_event(event_type); //, data_ptr, 0);
+// 			crtx_event->data.flags = CRTX_DIF_DONT_FREE_DATA;
+			crtx_event_set_raw_data(crtx_event, 'p', data_ptr, 0, CRTX_DIF_DONT_FREE_DATA);
 			crtx_event->cb_before_release = &xcb_event_before_release_cb;
 			crtx_event->cb_before_release_data = xcb_event;
 			

@@ -327,8 +327,9 @@ static int sdbus_match_listener_cb(sd_bus_message *m, void *userdata, sd_bus_err
 	
 	match = (struct crtx_sdbus_match*) userdata;
 	
-	event = crtx_create_event(match->event_type, m, 0);
-	event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
+	event = crtx_create_event(match->event_type);
+// 	event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
+	crtx_event_set_raw_data(event, 'p', m, sizeof(m), CRTX_DIF_DONT_FREE_DATA);
 	event->cb_before_release = &cb_event_release;
 	
 	sd_bus_print_msg(m);

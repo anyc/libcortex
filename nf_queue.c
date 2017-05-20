@@ -114,7 +114,7 @@ static void nfq_raw2dict(struct crtx_event *event) {
 	
 	ds = crtx_init_dict(PFW_NEWPACKET_SIGNATURE, strlen(PFW_NEWPACKET_SIGNATURE), 0);
 // 	crtx_dict_upgrade_event_data(event, ds, 0);
-	crtx_event_set_data(event, 0, ds, 1);
+	crtx_event_set_dict_data(event, ds, 1);
 // 	event->data->dict = ds;
 	di = ds->items;
 	
@@ -286,12 +286,13 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		pkt->mark_out = nfq_list->default_mark;
 		
-		event = crtx_create_event(nfq_list->parent.graph->types[0], pkt, data_size);
-		event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
+		event = crtx_create_event(nfq_list->parent.graph->types[0]); //, pkt, data_size);
+// 		event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
 // 		event->data.to_dict = &nfq_raw2dict;
+		crtx_event_set_raw_data(event, 'p', pkt, data_size, CRTX_DIF_DONT_FREE_DATA);
 		
 // 		crtx_dict_upgrade_event_data(event, 0, 1);
-		crtx_event_set_data(event, 0, 0, 1);
+		crtx_event_set_dict_data(event, 0, 1);
 		
 		struct crtx_dict_item *di;
 		di = crtx_get_item_by_idx(event->data.dict, 2);

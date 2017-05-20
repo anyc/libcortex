@@ -10,7 +10,7 @@
 #include "dict.h"
 
 
-char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
+char crtx_fill_data_item_va2(struct crtx_dict_item *di, unsigned char type, char *key, va_list va) {
 // 	if (ds) {
 // 		size_t idx;
 // 		
@@ -23,7 +23,8 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 // 	}
 	
 	di->type = type;
-	di->key = va_arg(va, char*);
+// 	di->key = va_arg(va, char*);
+	di->key = key;
 	
 	switch (di->type) {
 		case 'i':
@@ -100,13 +101,92 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, char type, va_list va) {
 	return 0;
 }
 
-char crtx_fill_data_item(struct crtx_dict_item *di, char type, ...) {
+char crtx_fill_data_item_va(struct crtx_dict_item *di, unsigned char type, va_list va) {
+	di->type = type;
+	di->key = va_arg(va, char*);
+	
+	switch (di->type) {
+		case 'i':
+		case 'u':
+			di->uint32 = va_arg(va, uint32_t);
+			
+			di->size = va_arg(va, size_t);
+			// 			if (di->size > 0 && di->size != sizeof(uint32_t)) {
+			
+			// TODO smaller types are promoted to int
+			if (di->size > 0 && di->size > sizeof(uint32_t)) {
+				ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint32_t));
+				return 0;
+			}
+			break;
+		case 'I':
+		case 'U':
+			di->uint64 = va_arg(va, uint64_t);
+			
+			di->size = va_arg(va, size_t);
+			if (di->size > 0 && di->size != sizeof(uint64_t)) {
+				ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint64_t));
+				return 0;
+			}
+			break;
+		case 'z':
+		case 'Z':
+			di->sizet = va_arg(va, size_t);
+			
+			di->size = va_arg(va, size_t);
+			if (di->size > 0 && di->size != sizeof(size_t)) {
+				ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint64_t));
+				return 0;
+			}
+			break;
+		case 'd':
+			di->double_fp = va_arg(va, double);
+			
+			di->size = va_arg(va, size_t);
+			if (di->size > 0 && di->size != sizeof(double)) {
+				ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(double));
+				return 0;
+			}
+			break;
+		case 's':
+			di->string = va_arg(va, char*);
+			
+			di->size = va_arg(va, size_t) + 1; // add space for \0 delimiter
+			break;
+		case 'p':
+			di->pointer = va_arg(va, void*);
+			
+			di->size = va_arg(va, size_t);
+			break;
+		case 'D':
+			di->dict = va_arg(va, struct crtx_dict*);
+			di->size = va_arg(va, size_t);
+			break;
+		default:
+			ERROR("unknown literal '%c'\n", di->type);
+			return -1;
+	}
+	
+	di->flags = va_arg(va, int);
+	
+	if ((di->flags & CRTX_DIF_CREATE_DATA_COPY) && di->type == 's') {
+		di->size = 0;
+		di->string = crtx_stracpy(di->string, &di->size);
+		di->size += 1; // add space for \0 delimiter
+		
+		di->flags = (di->flags & (~CRTX_DIF_CREATE_DATA_COPY));
+	}
+	
+	return 0;
+}
+
+char crtx_fill_data_item(struct crtx_dict_item *di, unsigned char type, char *key, ...) {
 	va_list va;
 	char ret;
 	
-	va_start(va, type);
+	va_start(va, key);
 	
-	ret = crtx_fill_data_item_va(di, type, va);
+	ret = crtx_fill_data_item_va2(di, type, key, va);
 	
 	va_end(va);
 	
@@ -958,8 +1038,9 @@ char crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void 
 	
 	dict = crtx_dict_transform(orig_dict, trans->signature, trans->transformation);
 	
-	new_event = crtx_create_event(trans->type, 0, 0);
-	new_event->data.dict = dict;
+	new_event = crtx_create_event(trans->type);
+// 	new_event->data.dict = dict;
+	crtx_event_set_dict_data(new_event, dict, 0);
 	
 	if (trans->graph)
 		crtx_add_event(trans->graph, new_event);

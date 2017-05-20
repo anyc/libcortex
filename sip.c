@@ -37,8 +37,9 @@ static char sip_fd_event_handler(struct crtx_event *event, void *userdata, void 
 		if (!evt)
 			break;
 		
-		nevent = crtx_create_event(0, evt, sizeof(eXosip_event_t*));
-		nevent->data.flags |= CRTX_DIF_DONT_FREE_DATA;
+		nevent = crtx_create_event(0); // evt, sizeof(eXosip_event_t*));
+// 		nevent->data.flags |= CRTX_DIF_DONT_FREE_DATA;
+		crtx_event_set_raw_data(nevent, 'p', evt, sizeof(eXosip_event_t*), CRTX_DIF_DONT_FREE_DATA);
 		
 		nevent->cb_before_release = &sip_event_before_release_cb;
 		
@@ -214,10 +215,10 @@ static char sip2notify_handler(struct crtx_event *event, void *userdata, void **
 // 		if (r == 0 && displayname && username)
 // 			crtx_print_dict(notify_dict);
 			
-		notify_event = crtx_create_event(0, 0, 0);
+		notify_event = crtx_create_event(0);
 		notify_dict = crtx_dict_transform(dict, "sss", dict_transformation);
 		
-		crtx_event_set_data(notify_event, 0, notify_dict, 0);
+		crtx_event_set_dict_data(notify_event, notify_dict, 0);
 		crtx_add_event(notify_graph, notify_event);
 		
 		crtx_dict_unref(dict);

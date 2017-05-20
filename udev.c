@@ -133,7 +133,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct crtx_event *event, struct crtx_udev_
 			
 			di = crtx_alloc_item(dict);
 			if (value)
-				crtx_fill_data_item(di, 's', key, value, strlen(value), flags);
+				crtx_fill_data_item(di, 's', (char*) key, value, strlen(value), flags);
 		}
 	}
 	
@@ -152,8 +152,9 @@ void push_new_udev_event(struct crtx_udev_listener *ulist, struct udev_device *d
 	struct crtx_event *nevent;
 	
 	// size of struct udev_device is unknown
-	nevent = crtx_create_event(0, dev, sizeof(struct udev_device*));
-	nevent->data.flags |= CRTX_DIF_DONT_FREE_DATA;
+	nevent = crtx_create_event(0); //, dev, sizeof(struct udev_device*));
+// 	nevent->data.flags |= CRTX_DIF_DONT_FREE_DATA;
+	crtx_event_set_raw_data(nevent, 'p', dev, sizeof(struct udev_device*), CRTX_DIF_DONT_FREE_DATA);
 
 	nevent->cb_before_release = &udev_event_before_release_cb;
 	// 		reference_event_release(nevent);

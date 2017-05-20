@@ -96,8 +96,10 @@ static void setup_response_event_cb(struct crtx_event *event, void *userdata) {
 	slist = (struct crtx_socket_listener*) event->cb_before_release_data;
 	
 	// copy the data from the original event
-	resp_event = crtx_create_event("cortex.socket.response", event->response.pointer, event->response.size);
-	resp_event->data.dict = event->response.dict;
+	resp_event = crtx_create_event("cortex.socket.response");
+	crtx_event_set_dict_data(resp_event, event->response.dict, 0);
+	crtx_event_set_raw_data(resp_event, 'p', event->response.pointer, event->response.size, 0);
+// 	resp_event->data.dict = event->response.dict;
 	resp_event->original_event_id = event->original_event_id;
 	
 	// strip original event to prevent release of data

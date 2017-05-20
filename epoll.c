@@ -75,7 +75,9 @@ void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 	
 	VDBG("epoll add %d %d\n", el_payload->fd, el_payload->event_flags);
 	
-// 	if (el_payload->event_flags == 0)
+	if (el_payload->event_flags == 0)
+		DBG("epoll %d: no event flags\n", el_payload->fd, el_payload->event_flags);
+	
 // 		event->events = EPOLLIN;
 // 	else
 		event->events = el_payload->event_flags;
@@ -181,11 +183,12 @@ void *crtx_epoll_main(void *data) {
 				memcpy(el_payload->el_data, &rec_events[i], sizeof(struct epoll_event));
 				
 				if (el_payload->event_handler) {
-					event = crtx_create_event(0, 0, 0);
+					event = crtx_create_event(0);
 					
-					event->data.pointer = el_payload;
-					event->data.type = 'p';
-					event->data.flags = CRTX_DIF_DONT_FREE_DATA;
+// 					event->data.pointer = el_payload;
+// 					event->data.type = 'p';
+// 					event->data.flags = CRTX_DIF_DONT_FREE_DATA;
+					crtx_event_set_raw_data(event, 'p', el_payload, sizeof(el_payload), CRTX_DIF_DONT_FREE_DATA);
 					
 					// TODO we call the event handler directly as walking through the event graph
 					// only causes additional processing overhead in most cases

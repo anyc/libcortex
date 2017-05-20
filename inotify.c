@@ -158,7 +158,8 @@ void inotify_to_dict(struct crtx_event *event, struct crtx_dict_item *item) {
 					"name", crtx_stracpy(iev->name, &len), len, 0
 				);
 	
-	crtx_event_set_data(event, 0, dict, 0);
+// 	crtx_event_set_data(event, 0, dict, 0);
+	crtx_event_set_dict_data(event, dict, 0);
 }
 
 static char inotify_eloop() {
@@ -202,11 +203,12 @@ static char inotify_eloop() {
 			ev_data = (struct inotify_event *) malloc(sizeof(struct inotify_event) + in_event->len);
 			memcpy(ev_data, in_event, sizeof(struct inotify_event) + in_event->len);
 			
-			event = crtx_create_event(fal->parent.graph->types[0], ev_data, sizeof(struct inotify_event) + in_event->len);
+			event = crtx_create_event(fal->parent.graph->types[0]); // ev_data, sizeof(struct inotify_event) + in_event->len);
 			// 				event->data.to_dict = &inotify_to_dict;
 			// 				crtx_dict_upgrade_event_data(event, 0, 1);
 			
-			crtx_event_set_data(event, 0, 0, 1);
+// 			crtx_event_set_data(event, 0, 0, 1);
+			
 			
 			struct crtx_dict_item *di;
 			di = crtx_get_item_by_idx(event->data.dict, 2);

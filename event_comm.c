@@ -84,6 +84,7 @@ void write_event_as_dict(struct crtx_event *event, write_fct write, void *conn_i
 struct crtx_event *read_event_as_dict(read_fct read, void *conn_id) {
 	struct serialized_event sev;
 	struct crtx_event *event;
+	struct crtx_dict *dict;
 	char ret;
 	
 	printf("waiting on new event\n");
@@ -98,7 +99,7 @@ struct crtx_event *read_event_as_dict(read_fct read, void *conn_id) {
 		return 0;
 	}
 	
-	event = crtx_create_event(0, 0, 0);
+	event = crtx_create_event(0);
 	event->original_event_id = sev.id;
 	
 	if ((sev.flags & CRTX_SEREV_FLAG_EXPECT_RESPONSE) != 0)
@@ -114,11 +115,14 @@ struct crtx_event *read_event_as_dict(read_fct read, void *conn_id) {
 	
 	printf("deserializing event %s %d %" PRIu64 "\n", event->type, sev.flags, sev.id);
 	
-	event->data.dict = crtx_read_dict(read, conn_id);
-	if (!event->data.dict) {
+// 	event->data.dict
+	dict = crtx_read_dict(read, conn_id);
+	if (!dict) {
 		FREE_EVENT(event);
 		return 0;
 	}
+	
+	crtx_event_set_dict_data(event, dict, 0);
 	
 	crtx_print_dict(event->data.dict);
 	

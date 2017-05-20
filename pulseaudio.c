@@ -60,6 +60,7 @@ static void generic_pa_get_info_callback(pa_context *c, void *info, int eol, voi
 	struct generic_pa_callback_helper *helper;
 	struct crtx_event *nevent;
 	struct crtx_dict_item *di;
+	struct crtx_dict *dict;
 	pa_subscription_event_type_t ev_op;
 	
 	
@@ -84,16 +85,17 @@ static void generic_pa_get_info_callback(pa_context *c, void *info, int eol, voi
 	}
 	
 	
-	nevent = crtx_create_event(crtx_pa_subscription_etypes[helper->type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK], 0, 0);
-	nevent->data.dict = crtx_init_dict(0, 0, 0);
+	nevent = crtx_create_event(crtx_pa_subscription_etypes[helper->type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK]);
+	dict = crtx_init_dict(0, 0, 0);
+	crtx_event_set_dict_data(nevent, dict, 0);
 	
-	di = crtx_alloc_item(nevent->data.dict);
+	di = crtx_alloc_item(dict);
 	
 	ev_op = helper->type & PA_SUBSCRIPTION_EVENT_TYPE_MASK;
 	if (ev_op == PA_SUBSCRIPTION_EVENT_REMOVE) {
 		crtx_fill_data_item(di, 's', "operation", "remove", strlen("remove"), CRTX_DIF_DONT_FREE_DATA);
 		
-		di = crtx_alloc_item(nevent->data.dict);
+		di = crtx_alloc_item(dict);
 		crtx_fill_data_item(di, 'u', "index", helper->index, sizeof(helper->index), 0);
 	} else {
 		if (ev_op == PA_SUBSCRIPTION_EVENT_CHANGE)
@@ -103,10 +105,10 @@ static void generic_pa_get_info_callback(pa_context *c, void *info, int eol, voi
 		
 		switch ((helper->type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK)) {
 			case PA_SUBSCRIPTION_EVENT_SINK_INPUT:
-				crtx_pa_sink_input_info2dict(info, &nevent->data.dict);
+				crtx_pa_sink_input_info2dict(info, &dict);
 				break;
 			case PA_SUBSCRIPTION_EVENT_CARD:
-				crtx_pa_card_info2dict(info, &nevent->data.dict);
+				crtx_pa_card_info2dict(info, &dict);
 				break;
 			default:
 				ERROR("TODO no handler yet for type %d\n", helper->type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK);

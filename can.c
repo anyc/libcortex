@@ -49,7 +49,8 @@ static char can_fd_event_handler(struct crtx_event *event, void *userdata, void 
 	
 // 	printf("0x%04x ", frame->can_id);
 	
-	nevent = crtx_create_event("can", frame, sizeof(frame));
+	nevent = crtx_create_event("can"); //, frame, sizeof(frame));
+	crtx_event_set_raw_data(nevent, 'p', frame, sizeof(frame), 0);
 // 	nevent->cb_before_release = &can_event_before_release_cb;
 	
 // 	memcpy(&nevent->data.uint64, &frame.data, sizeof(uint64_t));
