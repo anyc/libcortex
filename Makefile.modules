@@ -1,0 +1,35 @@
+
+CFLAGS_avahi+=
+LDLIBS_avahi+=
+DEPS_avahi+=sd_bus
+
+CFLAGS_core+=$(patsubst %,-DSTATIC_%,$(STATIC_MODULES))
+
+CFLAGS_can+=$(shell $(PKG_CONFIG) --cflags libnl-3.0 libnl-route-3.0 libcap-ng)
+LDLIBS_can+=$(shell $(PKG_CONFIG) --libs libnl-3.0 libnl-route-3.0 libcap-ng)
+
+CFLAGS_dict_inout_json+=$(shell $(PKG_CONFIG) --cflags json-c)
+LDLIBS_dict_inout_json+=$(shell $(PKG_CONFIG) --libs json-c)
+
+CFLAGS_evdev+=$(shell $(PKG_CONFIG) --cflags libevdev)
+LDLIBS_evdev+=$(shell $(PKG_CONFIG) --libs libevdev)
+
+CFLAGS_libvirt+=$(shell $(PKG_CONFIG) --cflags libvirt)
+LDLIBS_libvirt+=$(shell $(PKG_CONFIG) --libs libvirt)
+
+CFLAGS_netlink_ge+=$(shell $(PKG_CONFIG) --cflags libnl-genl-3.0)
+LDLIBS_netlink_ge+=$(shell $(PKG_CONFIG) --libs libnl-genl-3.0)
+
+CFLAGS_pulseaudio+=$(shell $(PKG_CONFIG) --cflags libpulse)
+LDLIBS_pulseaudio+=$(shell $(PKG_CONFIG) --libs libpulse)
+
+CFLAGS_sd_bus+=$(shell $(PKG_CONFIG) --cflags libsystemd)
+LDLIBS_sd_bus+=$(shell $(PKG_CONFIG) --libs libsystemd)
+
+LDLIBS_sip+=-leXosip2 -losipparser2
+
+CFLAGS_udev+=$(shell $(PKG_CONFIG) --cflags libudev)
+LDLIBS_udev+=$(shell $(PKG_CONFIG) --libs libudev)
+
+CFLAGS_xcb_randr+=$(shell $(PKG_CONFIG) --cflags xcb xcb-randr)
+LDLIBS_xcb_randr+=$(shell $(PKG_CONFIG) --libs xcb xcb-randr)
