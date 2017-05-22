@@ -13,6 +13,10 @@
 
 // See https://github.com/libvirt/libvirt/blob/master/examples/object-events/event-test.c
 
+// LIBVIRT_DEBUG=1 
+
+static int elw_virEventRemoveHandleFunc(int watch);
+
 struct libvirt_eventloop_wrapper {
 	int id;
 	
@@ -35,7 +39,7 @@ struct libvirt_eventloop_wrapper {
 static struct crtx_ll * event_list = 0;
 static struct crtx_ll * timeout_list = 0;
 
-
+/* poll conversion
 static int elw_virEventPollToNativeEvents(int events) {
 	int ret = 0;
 	if (events & VIR_EVENT_HANDLE_READABLE)
@@ -57,9 +61,39 @@ static int elw_virEventPollFromNativeEvents(int events) {
 		ret |= VIR_EVENT_HANDLE_WRITABLE;
 	if (events & POLLERR)
 		ret |= VIR_EVENT_HANDLE_ERROR;
-	if (events & POLLNVAL) /* Treat NVAL as error, since libvirt doesn't distinguish */
+	if (events & POLLNVAL) // Treat NVAL as error, since libvirt doesn't distinguish
 		ret |= VIR_EVENT_HANDLE_ERROR;
 	if (events & POLLHUP)
+		ret |= VIR_EVENT_HANDLE_HANGUP;
+	return ret;
+}
+*/
+
+// epoll conversion
+static int elw_virEventPollToNativeEvents(int events) {
+	int ret = 0;
+	if (events & VIR_EVENT_HANDLE_READABLE)
+		ret |= EPOLLIN;
+	if (events & VIR_EVENT_HANDLE_WRITABLE)
+		ret |= EPOLLOUT;
+	if (events & VIR_EVENT_HANDLE_ERROR)
+		ret |= EPOLLERR;
+	if (events & VIR_EVENT_HANDLE_HANGUP)
+		ret |= EPOLLHUP;
+	return ret;
+}
+
+static int elw_virEventPollFromNativeEvents(int events) {
+	int ret = 0;
+	if (events & EPOLLIN)
+		ret |= VIR_EVENT_HANDLE_READABLE;
+	if (events & EPOLLOUT)
+		ret |= VIR_EVENT_HANDLE_WRITABLE;
+	if (events & EPOLLERR)
+		ret |= VIR_EVENT_HANDLE_ERROR;
+	if (events & EPOLLHUP)
+		ret |= VIR_EVENT_HANDLE_HANGUP;
+	if (events & EPOLLRDHUP)
 		ret |= VIR_EVENT_HANDLE_HANGUP;
 	return ret;
 }
@@ -68,7 +102,7 @@ static void elw_fd_cleanup(struct libvirt_eventloop_wrapper* wrap) {
 	if (wrap->ff)
 		wrap->ff(wrap->opaque);
 	
-// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
+	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
 	
 	crtx_ll_unlink(&event_list, wrap->llentry);
 	
@@ -83,7 +117,14 @@ static void elw_fd_callback(struct crtx_event_loop_payload *el_payload) {
 	wrap = (struct libvirt_eventloop_wrapper*) el_payload->data;
 	epoll_event = (struct epoll_event *) el_payload->el_data;
 	
-	printf("lv fd cb %d\n", wrap->id);
+// 	printf("lv fd cb %d %p %d\n", wrap->id, wrap->event_cb, epoll_event->events);
+// 	if (epoll_event->events & EPOLLHUP) {
+// 		DBG("libvirt received EPOLLHUP for %d, closing...\n", wrap->id);
+// 		elw_virEventRemoveHandleFunc(wrap->id);
+// 		
+// 		return;
+// 	}
+	
 	wrap->event_cb(wrap->id, wrap->el_payload.fd, elw_virEventPollFromNativeEvents(epoll_event->events), wrap->opaque);
 	
 	if (wrap->delete)
@@ -100,10 +141,12 @@ static void elw_fd_error_cb(struct crtx_event_loop_payload *el_payload, void *da
 	
 	DBG("libvirt event loop error callback for fd %d\n", el_payload->fd);
 	
-	wrap->event_cb(wrap->id, wrap->el_payload.fd, elw_virEventPollFromNativeEvents(epoll_event->events), wrap->opaque);
-	
 	if (wrap->delete)
 		elw_fd_cleanup(wrap);
+	
+	wrap->event_cb(wrap->id, wrap->el_payload.fd, elw_virEventPollFromNativeEvents(epoll_event->events), wrap->opaque);
+	
+	wrap->delete = 1;
 }
 
 static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback cb, void * opaque, virFreeCallback ff) {
@@ -160,7 +203,7 @@ static void elw_virEventUpdateHandleFunc(int watch, int event) {
 	wrap = ((struct libvirt_eventloop_wrapper*) it->data);
 	wrap->el_payload.event_flags = elw_virEventPollToNativeEvents(event);
 	
-// 	DBG("libvirt: update %d flags %d\n", wrap->id, wrap->el_payload.event_flags);
+	DBG("libvirt: update %d flags %d\n", wrap->id, wrap->el_payload.event_flags);
 	
 	crtx_root->event_loop.mod_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
 }
@@ -189,7 +232,7 @@ static int elw_virEventRemoveHandleFunc(int watch) {
 	// 	printf("rem id %d\n", wrap->id);
 	DBG("libvirt: remove fd %d (id %d)\n", wrap->el_payload.fd, wrap->id);
 	
-	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
+// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
 	
 // 	crtx_ll_unlink(&event_list, it);
 // 	
@@ -610,6 +653,8 @@ static int domain_evt_cb(virConnectPtr conn,
 // 	crtx_event->data.dict = dict;
 	crtx_event_set_dict_data(crtx_event, dict, 0);
 	
+	crtx_print_dict(dict);
+	
 	crtx_add_event(lvlist->parent.graph, crtx_event);
 	
 	return 0;
@@ -659,12 +704,13 @@ static void conn_evt_cb(virConnectPtr conn, int reason, void *opaque) {
 	
 	lvlist = (struct crtx_libvirt_listener *) opaque;
 	
-	// we close the connection here as unregistering the callback in stop_listener will deadlock
+	// we close the connection here as unregistering the callback in stop_listener will deadlock.
 	// although we close the connection, we still leak memory allocated by virConnectOpen->virNetSocketNewConnectUNIX->...
 	virConnectClose(lvlist->conn);
 	
 	lvlist->conn = 0;
 	
+	// signal crtx that we stopped
 	crtx_stop_listener(&lvlist->parent);
 }
 
@@ -672,7 +718,7 @@ static char stop_listener(struct crtx_listener_base *base) {
 	struct crtx_libvirt_listener *lvlist;
 	
 	lvlist = (struct crtx_libvirt_listener *) base;
-// 	printf("stop listener\n");
+	
 	if (lvlist->conn) {
 		virConnectDomainEventDeregisterAny(lvlist->conn, lvlist->domain_event_id);
 		

@@ -129,7 +129,7 @@ static char udev_event_handler(struct crtx_event *event, void *userdata, void **
 	dict = crtx_udev_raw2dict(event, r2ds, 1);
 	
 	// upgrade event payload
-	crtx_event_set_data(event, 0, dict, 0);
+	crtx_event_set_dict_data(event, dict, 0);
 	
 	usb_dict = crtx_get_dict(dict, "usb-usb_device");
 	
@@ -244,19 +244,21 @@ static char libvirt_event_handler(struct crtx_event *event, void *userdata, void
 		char *type;
 		virDomainPtr dom;
 		struct crtx_dict_item *id_item;
+		struct crtx_dict *dict;
 		
+		crtx_event_get_payload(event, 0, 0, &dict);
 		
-		if (event->data.type != 'D') {
+		if (!dict) {
 			DBG("unknown event data\n");
 			return 0;
 		}
 		
-		vm_name = crtx_get_string(event->data.dict, "name");
-		id_item = crtx_get_item(event->data.dict, "id");
-		type = crtx_get_string(event->data.dict, "type");
+		vm_name = crtx_get_string(dict, "name");
+		id_item = crtx_get_item(dict, "id");
+		type = crtx_get_string(dict, "type");
 		
 		if (!type) {
-			DBG("unknown event data\n");
+			DBG("unknown event data for %s\n", vm_name);
 			return 0;
 		}
 		

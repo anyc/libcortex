@@ -159,7 +159,23 @@ void *crtx_epoll_main(void *data) {
 		VDBG("epoll returned with %d events\n", n_rdy_events);
 		
 		for (i=0; i < n_rdy_events; i++) {
-			if (rec_events[i].events & EPOLLERR) {
+			#ifdef DEBUG
+			if (rec_events[i].data.ptr) {
+				el_payload = (struct crtx_event_loop_payload* ) rec_events[i].data.ptr;
+				VDBG("epoll #%d %d ", i, el_payload->fd);
+				#define PRINTFLAG(flag) if (rec_events[i].events & flag) VDBG(#flag " ");
+				
+				PRINTFLAG(EPOLLIN);
+				PRINTFLAG(EPOLLOUT);
+				PRINTFLAG(EPOLLRDHUP);
+				PRINTFLAG(EPOLLPRI);
+				PRINTFLAG(EPOLLERR);
+				PRINTFLAG(EPOLLHUP);
+				VDBG("\n");
+			}
+			#endif
+			
+			if (rec_events[i].events & EPOLLERR || rec_events[i].events & EPOLLRDHUP || rec_events[i].events & EPOLLHUP) {
 				el_payload = (struct crtx_event_loop_payload* ) rec_events[i].data.ptr;
 				
 				ERROR("epoll returned EPOLLERR for fd %d\n", el_payload->fd);
