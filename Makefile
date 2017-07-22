@@ -51,7 +51,7 @@ endif
 
 .PHONY: clean
 
-all: $(local_mk) $(CONTROLS) plugins shared
+all: $(local_mk) $(CONTROLS) plugins shared crtx_layer2
 
 $(APP): $(OBJS)
 
@@ -61,6 +61,7 @@ $(local_mk):
 	cp $(local_mk).skel $(local_mk)
 
 clean:
+	$(MAKE) -C layer2 clean
 	rm -rf *.o $(APP) $(CONTROLS) $(TESTS) $(SHAREDLIB) libcrtx_*.so
 
 debug:
@@ -88,7 +89,7 @@ plugins: $(SHAREDLIB) $(DYN_MODULES_LIST)
 
 
 
-tests: $(SHAREDLIB) $(TESTS)
+tests: $(SHAREDLIB) $(TESTS) crtx_layer2_tests
 
 %.test: CFLAGS+=-DCRTX_TEST -g -g3 -gdwarf-2 -DDEBUG -Wall $(CFLAGS_${@:.test=})
 %.test: LDLIBS+=$(LDLIBS_${@:.test=}) $(foreach d,${@:.test=} $(DEPS_${@:.test=}),$(if $(findstring $(d),$(DYN_MODULES)),-lcrtx_$(d)))
@@ -101,7 +102,10 @@ examples/libcrtx_%.so: examples/control_%.c
 crtx_examples:
 	$(MAKE) -C examples
 
-crtx_layer2:
+crtx_layer2: $(SHAREDLIB)
 	$(MAKE) -C layer2
+
+crtx_layer2_tests: $(SHAREDLIB)
+	$(MAKE) -C layer2 tests
 	
 -include $(local_mk_rules)

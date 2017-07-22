@@ -5,7 +5,7 @@
 #include <regex.h>
 #include <stddef.h>
 #include <inttypes.h>
-
+ 
 // for get_username()
 #include <unistd.h>
 #include <pwd.h>
@@ -283,6 +283,15 @@ enum crtx_processing_mode crtx_get_mode(enum crtx_processing_mode local_mode) {
 	return mode;
 }
 
+static void crtx_default_el_error_cb(struct crtx_event_loop_payload *el_payload, void *data) {
+	struct crtx_listener_base *listener;
+	
+	listener = (struct crtx_listener_base *) data;
+	
+// 	crtx_stop_listener(listener);
+	crtx_free_listener(listener);
+}
+
 char crtx_start_listener(struct crtx_listener_base *listener) {
 	enum crtx_processing_mode mode;
 	struct crtx_event *event;
@@ -361,6 +370,11 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 			if (!crtx_root->event_loop.listener)
 				crtx_get_event_loop();
 			
+			if (listener->el_payload.error_cb == 0) {
+				listener->el_payload.error_cb = crtx_default_el_error_cb;
+				listener->el_payload.error_cb_data = listener;
+			}
+			
 			crtx_root->event_loop.add_fd(
 				&crtx_root->event_loop.listener->parent,
 				&listener->el_payload);
@@ -405,7 +419,7 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 	static_lstnr = 1;
 	lbase = 0;
 	l = static_listener_repository;
-	while (l) {
+	while (l && l->id) {
 		while (l->id) {
 			if (!strcmp(l->id, id)) {
 				lbase = l->create(options);
@@ -1256,6 +1270,13 @@ static char handle_shutdown(struct crtx_event *event, void *userdata, void **ses
 	return 1;
 }
 
+struct crtx_listener_repository* crtx_get_new_listener_repo_entry() {
+	crtx_root->listener_repository_length++;
+	crtx_root->listener_repository = (struct crtx_listener_repository*) realloc(crtx_root->listener_repository, sizeof(struct crtx_listener_repository)*(crtx_root->listener_repository_length+1));
+	memset(&crtx_root->listener_repository[crtx_root->listener_repository_length], 0, sizeof(struct crtx_listener_repository));
+	
+	return &crtx_root->listener_repository[crtx_root->listener_repository_length-1];
+}
 
 #include <dlfcn.h>
 #include <dirent.h>
@@ -1308,9 +1329,7 @@ static void load_plugin(char *path, char *basename) {
 		create = dlsym(p->handle, buf);
 		
 		if (create) {
-			crtx_root->listener_repository_length++;
-			crtx_root->listener_repository = (struct crtx_listener_repository*) realloc(crtx_root->listener_repository, sizeof(struct crtx_listener_repository)*crtx_root->listener_repository_length);
-			lrepo = &crtx_root->listener_repository[crtx_root->listener_repository_length-1];
+			lrepo = crtx_get_new_listener_repo_entry();
 			
 			lrepo->id = crtx_stracpy(plugin_name, 0);
 			lrepo->create = create;
@@ -1327,9 +1346,11 @@ static void load_plugin(char *path, char *basename) {
 				create = dlsym(p->handle, buf);
 				
 				if (create) {
-					crtx_root->listener_repository_length++;
-					crtx_root->listener_repository = (struct crtx_listener_repository*) realloc(crtx_root->listener_repository, sizeof(struct crtx_listener_repository)*crtx_root->listener_repository_length);
-					lrepo = &crtx_root->listener_repository[crtx_root->listener_repository_length-1];
+// 					crtx_root->listener_repository_length++;
+// 					crtx_root->listener_repository = (struct crtx_listener_repository*) realloc(crtx_root->listener_repository, sizeof(struct crtx_listener_repository)*(crtx_root->listener_repository_length+1));
+// 					lrepo = &crtx_root->listener_repository[crtx_root->listener_repository_length-1];
+// 					memset(&crtx_root->listener_repository[crtx_root->listener_repository_length], 0, sizeof(struct crtx_listener_repository));
+					lrepo = crtx_get_new_listener_repo_entry();
 					
 					lrepo->id = *s;
 					lrepo->create = create;

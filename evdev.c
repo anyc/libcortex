@@ -122,7 +122,7 @@ struct crtx_listener_base *crtx_new_evdev_listener(void *options) {
 	
 	evdev->fd = open(evdev->device_path, O_RDONLY | O_NONBLOCK);
 	if (evdev->fd < 0) {
-		fprintf(stderr, "failed to open device \"%s\": %s", evdev->device_path, strerror(errno));
+		fprintf(stderr, "failed to open device \"%s\": %s\n", evdev->device_path, strerror(errno));
 		return 0;
 	}
 	

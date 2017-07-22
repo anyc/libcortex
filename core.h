@@ -394,4 +394,6 @@ enum crtx_processing_mode crtx_get_mode(enum crtx_processing_mode local_mode);
 void crtx_wait_on_graph_empty(struct crtx_graph *graph);
 // struct crtx_thread * crtx_start_detached_event_loop();
 
+struct crtx_listener_repository* crtx_get_new_listener_repo_entry();
+
 #endif

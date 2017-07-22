@@ -180,7 +180,10 @@ void *crtx_epoll_main(void *data) {
 				
 				ERROR("epoll returned EPOLLERR for fd %d\n", el_payload->fd);
 				
-				el_payload->error_cb(el_payload, el_payload->error_cb_data);
+				if (el_payload->error_cb)
+					el_payload->error_cb(el_payload, el_payload->error_cb_data);
+				else
+					DBG("no error_cb for fd %d\n", el_payload->fd);
 				
 // 				crtx_epoll_del_fd((struct crtx_listener_base *) epl, el_payload);
 				
