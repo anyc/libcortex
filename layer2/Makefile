@@ -3,8 +3,8 @@ libcrtx_dir=../
 
 PKG_CONFIG=pkg-config
 
-CFLAGS=-I$(libcrtx_dir) -fPIC
-LDFLAGS=-L$(libcrtx_dir)
+CFLAGS+=-I$(libcrtx_dir) -fPIC
+LDFLAGS+=-L$(libcrtx_dir)
 
 LAYER2_LISTENER=dynamic_evdev
 
@@ -14,6 +14,8 @@ TESTS+=$(foreach t,$(LAYER2_LISTENER), $(t).test)
 
 include $(libcrtx_dir)/Makefile.modules
 
+CFLAGS_dynamic_evdev=$(shell pkg-config --cflags ncurses)
+LDLIBS_dynamic_evdev=$(shell pkg-config --libs ncurses)
 DEPS_dynamic_evdev=evdev udev
 
 .PHONY: clean

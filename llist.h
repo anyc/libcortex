@@ -34,6 +34,8 @@ CRTX_DLL_TYPE {
 		struct crtx_handler_category *handler_category;
 		struct crtx_handler_category_entry *handler_category_entry;
 	};
+	
+	int payload[0];
 };
 
 char CRTX_DLL_FCT(append)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item);

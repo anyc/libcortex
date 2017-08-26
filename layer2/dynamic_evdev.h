@@ -10,6 +10,8 @@ struct crtx_dynamic_evdev_listener {
 	
 	struct crtx_dll *evdev_listeners;
 	struct crtx_udev_listener udev_lstnr;
+	struct crtx_dll *(*alloc_new)();
+	void (*on_free)(struct crtx_dll *dll);
 	
 	crtx_handle_task_t handler;
 };

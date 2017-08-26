@@ -128,7 +128,7 @@ struct crtx_listener_base *crtx_new_evdev_listener(void *options) {
 	
 	ret = libevdev_new_from_fd(evdev->fd, &evdev->device);
 	if (ret < 0) {
-		fprintf(stderr, "initialization failed: %s\n", strerror(-ret));
+		fprintf(stderr, "initialization failed (%s fd %d): %s\n", evdev->device_path, evdev->fd, strerror(-ret));
 		close(evdev->fd);
 		return 0;
 	}

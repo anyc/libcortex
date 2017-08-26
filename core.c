@@ -842,6 +842,8 @@ void crtx_add_event(struct crtx_graph *graph, struct crtx_event *event) {
 // 		UNLOCK(crtx_root->graph_queue_mutex);
 // 	}
 	
+	event->origin = graph->listener;
+	
 // 	event_ll_add(&graph->equeue, event);
 	crtx_dll_append_new(&graph->equeue, event);
 	

@@ -115,7 +115,7 @@ struct crtx_event {
 	pthread_cond_t response_cond;
 	pthread_cond_t release_cond;
 	
-// 	struct crtx_listener_base *origin;
+	struct crtx_listener_base *origin;
 	
 // 	void (*event_to_str)(struct crtx_event *event);
 	

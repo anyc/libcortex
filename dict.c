@@ -357,7 +357,11 @@ int crtx_append_to_dict(struct crtx_dict **dictionary, char *signature, ...) {
 	return 0;
 }
 
-
+/**
+ * (signature,
+ * key, value, value_size, flags
+ * ...)
+ */
 struct crtx_dict * crtx_create_dict(char *signature, ...) {
 	struct crtx_dict *ds;
 	struct crtx_dict_item *di;
