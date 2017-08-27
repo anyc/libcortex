@@ -229,7 +229,19 @@ void crtx_dynamic_evdev_finish() {
 
 #include "timer.h"
 
-#define N_SLOTS 5
+struct interval {
+	unsigned int n_buckets;
+	unsigned int n_ticks;
+	
+	unsigned int remaining_ticks;
+	unsigned char n_valid_buckets;
+	unsigned char bucket;
+	
+	unsigned long *n_events;
+	struct timespec *start;
+};
+
+// #define N_SLOTS 5
 #define SLOT_TIME 200
 struct counter {
 	struct crtx_dll dll;
@@ -237,10 +249,9 @@ struct counter {
 	
 	char *id_path;
 	char *name;
-	unsigned char bucket;
-	unsigned char n_valid_buckets;
-	unsigned long n_events[N_SLOTS+1];
-	struct timespec start[N_SLOTS+1];
+	
+	unsigned n_ivs;
+	struct interval *ivs;
 };
 
 #define TDIFF(start, end) ((end.tv_sec - start.tv_sec) * 1000 + (end.tv_nsec - start.tv_nsec)/1000000)
@@ -265,58 +276,56 @@ static char dyn_evdev_test_handler(struct crtx_event *event, void *userdata, voi
 	}
 	
 	dyn_evdev = (struct crtx_dynamic_evdev_listener*) userdata;
-	i=0;
 	for (dll = dyn_evdev->evdev_listeners; dll; dll=dll->next) {
+		struct timespec now;
+		struct interval *iv;
+		
 		counter = (struct counter*) dll;
 		
 		printw("%s (%s %s): ", counter->name, counter->id_path, counter->lstnr.device_path);
 		
-		struct timespec now;
 		clock_gettime(CLOCK_MONOTONIC, &now);
-		diff = TDIFF(counter->start[counter->bucket], now);
 		
-		// only timer events trigger a bucket switch
-		if (!event) {
-			counter->bucket++;
-			if (counter->bucket == N_SLOTS)
-				counter->bucket = 0;
+		for (i=0; i < counter->n_ivs; i++) {
+			iv = &counter->ivs[i];
 			
-			if (counter->n_valid_buckets < N_SLOTS)
-				counter->n_valid_buckets++;
+			if (event && event->origin == &counter->lstnr.parent) {
+				iv->n_events[iv->bucket]++;
+			}
+		
+			n_events = 0;
+			for (j=0;j<iv->n_buckets;j++) {
+				n_events += iv->n_events[j];
+			}
 			
-			counter->n_events[counter->bucket] = 0;
-			clock_gettime(CLOCK_MONOTONIC, &counter->start[counter->bucket]);
-		}
-		
-		if (event && event->origin == &counter->lstnr.parent) {
-			counter->n_events[counter->bucket]++;
-			counter->n_events[N_SLOTS]++;
-		}
-		
-		n_events = 0;
-		for (j=0;j<N_SLOTS;j++) {
-			n_events += counter->n_events[j];
+			diff = TDIFF(iv->start[iv->bucket], now);
+			timespan = (iv->n_valid_buckets-1)*iv->n_ticks*SLOT_TIME + diff;
 			
-// 			if (j == counter->bucket)
-// 				printw(".", counter->n_events[j]);
-// 			else
-// 				printw(" ");
-// 			printw("%d ", counter->n_events[j]);
+			printw("%d %.2f ", n_events, n_events/timespan*1000);
+			
+// 			diff = TDIFF(counter->start[N_SLOTS], now);
+// 			printw("%d %.2f ", counter->n_events[N_SLOTS], counter->n_events[N_SLOTS]/(float)diff*1000);
+// 			printw("\n");
+			
+			// only timer events trigger a bucket switch
+			if (!event && iv->n_buckets > 1) {
+				iv->remaining_ticks--;
+				if (iv->remaining_ticks == 0) {
+					iv->remaining_ticks = iv->n_ticks;
+					
+					iv->bucket++;
+					if (iv->bucket == iv->n_buckets)
+						iv->bucket = 0;
+					
+					if (iv->n_valid_buckets < iv->n_buckets)
+						iv->n_valid_buckets++;
+					
+					iv->n_events[iv->bucket] = 0;
+					clock_gettime(CLOCK_MONOTONIC, &iv->start[iv->bucket]);
+				}
+			}
 		}
-		
-		diff = TDIFF(counter->start[counter->bucket], now);
-		if (counter->n_valid_buckets > 0)
-			timespan = (counter->n_valid_buckets-1)*SLOT_TIME + diff;
-		else
-			timespan = diff;
-		
-		printw("%d %.2f ", n_events, n_events/timespan*1000);
-		
-		diff = TDIFF(counter->start[N_SLOTS], now);
-		printw("%d %.2f ", counter->n_events[N_SLOTS], counter->n_events[N_SLOTS]/(float)diff*1000);
 		printw("\n");
-		
-		i++;
 	}
 	
 	refresh();
@@ -325,20 +334,55 @@ static char dyn_evdev_test_handler(struct crtx_event *event, void *userdata, voi
 	return 0;
 }
 
+struct interval ivs[] = {
+	{ 5, 1 },
+	{ 5, 5 },
+	{ 1, 0 },
+	{ 0 },
+};
+
 struct crtx_dll *alloc_new_device_memory(struct udev_device *dev) {
-// 	void *ptr;
 	struct counter *counter;
 	const char *id_path, *name;
+	struct interval *iv;
+	int i, j;
 	
 	counter = (struct counter*) calloc(1, sizeof(struct counter));
 	
-	int i;
-	for (i=0;i<=N_SLOTS;i++) {
-// 		counter->start[i] = (unsigned long)time(NULL);
-		clock_gettime(CLOCK_MONOTONIC, &counter->start[i]);
-	}
+// 	counter->n_ivs = 3;
+	counter->ivs = (struct interval*) malloc(sizeof(ivs));
+	memcpy(counter->ivs, ivs, sizeof(ivs));
+// 	counter->ivs = ivs;
 	
-	counter->bucket = 0;
+// 	for (i=0;i<counter->n_ivs;i++) {
+	i=0;
+	while (1) {
+		iv = &counter->ivs[i];
+		if (iv->n_buckets == 0)
+			break;
+		
+// 		if (i < counter->n_ivs-1)
+// 			iv->n_buckets = 5;
+// 		else
+// 			iv->n_buckets = 1;
+// 		
+// 		if (i == 
+// 		iv->slot_time = 200;
+		
+		iv->start = (struct timespec*) malloc(sizeof(struct timespec)*iv->n_buckets);
+		iv->n_events = (unsigned long*) calloc(1, sizeof(unsigned long)*iv->n_buckets);
+		
+		for (j=0;j<iv->n_buckets;j++) {
+			clock_gettime(CLOCK_MONOTONIC, &iv->start[j]);
+		}
+		
+		iv->remaining_ticks = iv->n_ticks;
+		iv->bucket = 0;
+		iv->n_valid_buckets = 1;
+		
+		i++;
+	}
+	counter->n_ivs = i;
 	
 	// we cannot use raw2dict as we cannot easily determine the parent device
 	// with the required attributes
@@ -364,9 +408,15 @@ struct crtx_dll *alloc_new_device_memory(struct udev_device *dev) {
 
 void on_free_device(struct crtx_dll *dll) {
 	struct counter *counter;
+	int i;
 	
 	counter = (struct counter *)dll;
 	
+	for (i=0;i<counter->n_ivs;i++) {
+		free(counter->ivs[i].start);
+		free(counter->ivs[i].n_events);
+	}
+	free(counter->ivs);
 	free(counter->id_path);
 	free(counter->name);
 // 	crtx_dict_unref(counter->device);
