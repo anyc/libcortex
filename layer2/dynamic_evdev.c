@@ -25,12 +25,14 @@ static void on_free_evdev_listener_data(struct crtx_listener_base *data, void *u
 		return;
 	}
 	
-	dyn_evdev->on_free(dll);
+	if (dyn_evdev->on_free)
+		dyn_evdev->on_free(dll);
 	
 	crtx_dll_unlink(&dyn_evdev->evdev_listeners, dll);
 	
 	el = (struct crtx_evdev_listener *) data;
 	
+// 	printf("free %s\n", el->device_path);
 	free(el->device_path);
 // 	free_listener(&el->parent);
 // 	free(el);
@@ -50,9 +52,16 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 // 	el = (struct crtx_evdev_listener *) calloc(1, sizeof(struct crtx_evdev_listener));
 // 	dll = crtx_dll_append_new(&dyn_evdev->evdev_listeners, el);
 	
+	// only accept devices with this flag in order to avoid legacy interfaces
+	// that are incompatible with evdev (e.g., /dev/input/mouseX)
+	if (!udev_device_get_property_value(dev, "LIBINPUT_DEVICE_GROUP"))
+		return -1;
+	
 	devpath = udev_device_get_property_value(dev, "DEVNAME");
 	if (!devpath)
 		return -1;
+	
+	
 	
 	if (dyn_evdev->alloc_new) {
 		dll = dyn_evdev->alloc_new(dev);
@@ -74,7 +83,8 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 	if (!lbase) {
 		ERROR("create_listener(evdev) failed\n");
 		
-		dyn_evdev->on_free(dll);
+		if (dyn_evdev->on_free)
+			dyn_evdev->on_free(dll);
 		
 		free(el->device_path);
 // 		free(el);
@@ -215,38 +225,138 @@ void crtx_dynamic_evdev_finish() {
 
 #ifdef WITH_NCURSES
 #include <ncurses.h>
+#include <sys/time.h>
 
+#include "timer.h"
+
+#define N_SLOTS 5
+#define SLOT_TIME 200
 struct counter {
 	struct crtx_dll dll;
 	struct crtx_evdev_listener lstnr;
 	
 	char *id_path;
-	unsigned long n_events;
+	char *name;
+// 	struct crtx_dict *device;
+	unsigned char bucket;
+	unsigned char n_valid_buckets;
+	unsigned long n_events[N_SLOTS+1];
+	struct timespec start[N_SLOTS+1];
 };
+
+#define TDIFF(start, end) ((end.tv_sec - start.tv_sec) * 1000 + (end.tv_nsec - start.tv_nsec)/1000000)
+
+// char * input_attrs[] = {
+// 	"name",
+// 	"phys",
+// 	0,
+// };
+// 
+// struct crtx_udev_raw2dict_attr_req r2ds[] = {
+// 	{ "input", 0, input_attrs },
+// 	{ 0 },
+// };
 
 static char dyn_evdev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct counter *counter;
 	struct crtx_dll *dll;
 	struct crtx_dynamic_evdev_listener *dyn_evdev;
-	int i;
+	int i, j;
+// 	char *id_path, *name;
+	unsigned long diff;
+	struct input_event *ev;
 	
 // 	counter = (struct counter*) userdata + sizeof(struct crtx_evdev_listener *);
+	
+	if (event) {
+		ev = (struct input_event *) event->data.pointer;
+		
+		// skip syn and misc events
+		if (ev->type == EV_SYN || ev->type == EV_MSC) {
+			return 0;
+		}
+	}
 	
 	dyn_evdev = (struct crtx_dynamic_evdev_listener*) userdata;
 	i=0;
 	for (dll = dyn_evdev->evdev_listeners; dll; dll=dll->next) {
 // 		counter = (struct counter*) (dll->data + sizeof(struct crtx_evdev_listener *));
 		counter = (struct counter*) dll;
-		mvprintw (i, 0, "%s: %d\n", counter->id_path, counter->n_events);
+		
+// 		id_path = crtx_get_string(counter->device, "ID_PATH");
+// 		name = crtx_get_string(counter->device, "name");
+// 		name = crtx_dict_locate_string(counter->device, "input-/name"); // subsystem-device_type
+		
+// 		mvprintw(i, 0, "%s (%s %s): %d %.2f\n", counter->name, counter->id_path, counter->lstnr.device_path, counter->n_events, counter->n_events/(float)diff);
+		printw("%s (%s %s): ", counter->name, counter->id_path, counter->lstnr.device_path);
+		
+		struct timespec now;
+		clock_gettime(CLOCK_MONOTONIC, &now);
+		diff = TDIFF(counter->start[counter->bucket], now);
+		
+		// only timer events trigger a bucket switch
+		if (!event) {
+			counter->bucket++;
+			if (counter->bucket == N_SLOTS)
+				counter->bucket = 0;
+			
+			if (counter->n_valid_buckets < N_SLOTS)
+				counter->n_valid_buckets++;
+			
+			counter->n_events[counter->bucket] = 0;
+// 			counter->start[counter->bucket] = (unsigned long) time(NULL);
+			clock_gettime(CLOCK_MONOTONIC, &counter->start[counter->bucket]);
+		}
+		
+// 		for (j=
+		
+		if (event && event->origin == &counter->lstnr.parent) {
+			counter->n_events[counter->bucket]++;
+			counter->n_events[N_SLOTS]++;
+		}
+		
+		unsigned long n_events;
+		float timespan;
+		n_events = 0;
+// 		length = 0;
+		for (j=0;j<N_SLOTS;j++) {
+			
+// 			diff = (unsigned long) time(NULL) - counter->start[j];
+// 			n_events += counter->n_events[j]/(float)diff;
+			n_events += counter->n_events[j];
+// 			length += diff;
+			if (j == counter->bucket)
+				printw(".", counter->n_events[j]);
+			else
+				printw(" ");
+			printw("%d ", counter->n_events[j]);
+			
+// 			printw("%d %.2f ", counter->n_events[j], counter->n_events[j]/(float)diff);
+		}
+// 		n_events = n_events / 2;
+		
+// 		diff = (unsigned long) time(NULL) - counter->start[counter->bucket];
+// 		clock_gettime(CLOCK_MONOTONIC_RAW, &now);
+		diff = TDIFF(counter->start[counter->bucket], now);
+		
+		if (counter->n_valid_buckets > 0)
+			timespan = (counter->n_valid_buckets-1)*SLOT_TIME + diff;
+		else
+			timespan = diff;
+		printw("%d %.2f ", n_events, n_events/timespan*1000);
+		
+// 		diff = (unsigned long) time(NULL) - counter->start[N_SLOTS];
+		diff = TDIFF(counter->start[N_SLOTS], now);
+		printw("%d %.2f ", counter->n_events[N_SLOTS], counter->n_events[N_SLOTS]/(float)diff*1000);
+		printw("\n");
 		
 // 		printf("%p %p\n", event->origin, &counter->lstnr);
-		if (event->origin == &counter->lstnr.parent)
-			counter->n_events++;
 		
 		i++;
 	}
 	
-	refresh ();
+	refresh();
+	move(0,0);
 	
 	return 0;
 }
@@ -254,14 +364,35 @@ static char dyn_evdev_test_handler(struct crtx_event *event, void *userdata, voi
 struct crtx_dll *alloc_new_device_memory(struct udev_device *dev) {
 // 	void *ptr;
 	struct counter *counter;
-	const char *id_path;
+	const char *id_path, *name;
 	
 	counter = (struct counter*) calloc(1, sizeof(struct counter));
+	
+	int i;
+	for (i=0;i<=N_SLOTS;i++) {
+// 		counter->start[i] = (unsigned long)time(NULL);
+		clock_gettime(CLOCK_MONOTONIC, &counter->start[i]);
+	}
+	
+	counter->bucket = 0;
+	
+	// we cannot use raw2dict as we cannot easily determine the parent device
+	// with the required attributes
+// 	counter->device = crtx_udev_raw2dict(dev, r2ds, 1);
 	
 	id_path = udev_device_get_property_value(dev, "ID_PATH");
 	if (id_path) {
 		counter->id_path = malloc(strlen(id_path)+1);
 		strcpy(counter->id_path, id_path);
+	}
+	
+	// From udev, we receive the evdev interface device for the input device.
+	// The common name attribute is, however, stored in the input device.
+	dev = udev_device_get_parent(dev);
+	name = udev_device_get_sysattr_value(dev, "name");
+	if (name) {
+		counter->name = malloc(strlen(name)+1);
+		strcpy(counter->name, name);
 	}
 	
 	return &counter->dll;
@@ -273,6 +404,12 @@ void on_free_device(struct crtx_dll *dll) {
 	counter = (struct counter *)dll;
 	
 	free(counter->id_path);
+	free(counter->name);
+// 	crtx_dict_unref(counter->device);
+}
+
+char timer_tick(struct crtx_event *event, void *userdata, void **sessiondata) {
+	return dyn_evdev_test_handler(0, userdata, 0);
 }
 
 #else
@@ -329,11 +466,19 @@ int dynamic_evdev_main(int argc, char **argv) {
 	dyn_evdev.alloc_new = alloc_new_device_memory;
 	dyn_evdev.on_free = on_free_device;
 	
+	struct crtx_timer_listener timer_lstnr;
+	
+	if (crtx_timer_get_listener(&timer_lstnr, 0, SLOT_TIME * 1000000, 0, SLOT_TIME * 1000000)) {
+		crtx_create_task(timer_lstnr.parent.graph, 0, "timer_tick", timer_tick, &dyn_evdev);
+	}
+	
+	crtx_start_listener(&timer_lstnr.parent);
+	
 	initscr ();
 	curs_set (0);
 	#endif
 	
-	crtx_create_task(lbase->graph, 0, "dyn_evdev_test", dyn_evdev_test_handler, 0);
+// 	crtx_create_task(lbase->graph, 0, "dyn_evdev_test", dyn_evdev_test_handler, 0);
 	
 // 	crtx_create_task(dyn_evdev.udev_lstnr.parent.graph, 0, "on_new_device", on_new_device, 0);
 	

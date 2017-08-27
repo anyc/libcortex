@@ -1356,6 +1356,21 @@ char crtx_dict_locate_value(struct crtx_dict *dict, char *path, char type, void 
 	return !r;
 }
 
+char *crtx_dict_locate_string(struct crtx_dict *dict, char *path) {
+	struct crtx_dict_item * di;
+	
+	di = crtx_dict_locate(dict, path);
+	if (!di) {
+		DBG("could not find \"%s\" in dict\n", path);
+		return 0;
+	}
+	
+	if (di->type != 's')
+		return 0;
+	
+	return di->string;
+}
+
 void crtx_dict_remove_item(struct crtx_dict *dict, char *key) {
 	struct crtx_dict_item *di;
 	

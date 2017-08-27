@@ -29,4 +29,5 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options);
 
 struct crtx_timer_retry_listener *crtx_timer_retry_listener(struct crtx_listener_base *lstnr, unsigned int seconds);
 void crtx_timer_retry_listener_free(struct crtx_timer_retry_listener *retry_lstnr);
+struct crtx_listener_base *crtx_timer_get_listener(struct crtx_timer_listener *tlist, time_t offset_sec, long offset_nsec, time_t int_sec, long int_nsec);
 #endif

@@ -159,6 +159,12 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 	return &tlist->parent;
 }
 
+
+
+/*
+ * retry listener that tries to restart stopped listeners after a given time
+ */
+
 static char retry_listener_task(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_timer_retry_listener *retry_lstnr;
 	
@@ -206,6 +212,29 @@ void crtx_timer_retry_listener_free(struct crtx_timer_retry_listener *retry_lstn
 	crtx_stop_listener(&retry_lstnr->timer_lstnr.parent);
 	
 	free(retry_lstnr);
+}
+
+struct crtx_listener_base *crtx_timer_get_listener(struct crtx_timer_listener *tlist, time_t offset_sec, long offset_nsec, time_t int_sec, long int_nsec) {
+	struct crtx_listener_base *lbase;
+	
+	memset(tlist, 0, sizeof(struct crtx_timer_listener));
+	
+	tlist->newtimer.it_value.tv_sec = offset_sec;
+	tlist->newtimer.it_value.tv_nsec = offset_nsec;
+	
+	tlist->newtimer.it_interval.tv_sec = int_sec;
+	tlist->newtimer.it_interval.tv_nsec = int_nsec;
+	
+	tlist->clockid = CLOCK_REALTIME;
+	tlist->settime_flags = 0;
+	
+	lbase = create_listener("timer", tlist);
+	if (!lbase) {
+		ERROR("create_listener(timer) failed\n");
+		return 0;
+	}
+	
+	return lbase;
 }
 
 void crtx_timer_init() {
