@@ -237,7 +237,6 @@ struct counter {
 	
 	char *id_path;
 	char *name;
-// 	struct crtx_dict *device;
 	unsigned char bucket;
 	unsigned char n_valid_buckets;
 	unsigned long n_events[N_SLOTS+1];
@@ -246,27 +245,15 @@ struct counter {
 
 #define TDIFF(start, end) ((end.tv_sec - start.tv_sec) * 1000 + (end.tv_nsec - start.tv_nsec)/1000000)
 
-// char * input_attrs[] = {
-// 	"name",
-// 	"phys",
-// 	0,
-// };
-// 
-// struct crtx_udev_raw2dict_attr_req r2ds[] = {
-// 	{ "input", 0, input_attrs },
-// 	{ 0 },
-// };
-
 static char dyn_evdev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct counter *counter;
 	struct crtx_dll *dll;
 	struct crtx_dynamic_evdev_listener *dyn_evdev;
 	int i, j;
-// 	char *id_path, *name;
 	unsigned long diff;
 	struct input_event *ev;
-	
-// 	counter = (struct counter*) userdata + sizeof(struct crtx_evdev_listener *);
+	unsigned long n_events;
+	float timespan;
 	
 	if (event) {
 		ev = (struct input_event *) event->data.pointer;
@@ -280,14 +267,8 @@ static char dyn_evdev_test_handler(struct crtx_event *event, void *userdata, voi
 	dyn_evdev = (struct crtx_dynamic_evdev_listener*) userdata;
 	i=0;
 	for (dll = dyn_evdev->evdev_listeners; dll; dll=dll->next) {
-// 		counter = (struct counter*) (dll->data + sizeof(struct crtx_evdev_listener *));
 		counter = (struct counter*) dll;
 		
-// 		id_path = crtx_get_string(counter->device, "ID_PATH");
-// 		name = crtx_get_string(counter->device, "name");
-// 		name = crtx_dict_locate_string(counter->device, "input-/name"); // subsystem-device_type
-		
-// 		mvprintw(i, 0, "%s (%s %s): %d %.2f\n", counter->name, counter->id_path, counter->lstnr.device_path, counter->n_events, counter->n_events/(float)diff);
 		printw("%s (%s %s): ", counter->name, counter->id_path, counter->lstnr.device_path);
 		
 		struct timespec now;
@@ -304,53 +285,36 @@ static char dyn_evdev_test_handler(struct crtx_event *event, void *userdata, voi
 				counter->n_valid_buckets++;
 			
 			counter->n_events[counter->bucket] = 0;
-// 			counter->start[counter->bucket] = (unsigned long) time(NULL);
 			clock_gettime(CLOCK_MONOTONIC, &counter->start[counter->bucket]);
 		}
-		
-// 		for (j=
 		
 		if (event && event->origin == &counter->lstnr.parent) {
 			counter->n_events[counter->bucket]++;
 			counter->n_events[N_SLOTS]++;
 		}
 		
-		unsigned long n_events;
-		float timespan;
 		n_events = 0;
-// 		length = 0;
 		for (j=0;j<N_SLOTS;j++) {
-			
-// 			diff = (unsigned long) time(NULL) - counter->start[j];
-// 			n_events += counter->n_events[j]/(float)diff;
 			n_events += counter->n_events[j];
-// 			length += diff;
-			if (j == counter->bucket)
-				printw(".", counter->n_events[j]);
-			else
-				printw(" ");
-			printw("%d ", counter->n_events[j]);
 			
-// 			printw("%d %.2f ", counter->n_events[j], counter->n_events[j]/(float)diff);
+// 			if (j == counter->bucket)
+// 				printw(".", counter->n_events[j]);
+// 			else
+// 				printw(" ");
+// 			printw("%d ", counter->n_events[j]);
 		}
-// 		n_events = n_events / 2;
 		
-// 		diff = (unsigned long) time(NULL) - counter->start[counter->bucket];
-// 		clock_gettime(CLOCK_MONOTONIC_RAW, &now);
 		diff = TDIFF(counter->start[counter->bucket], now);
-		
 		if (counter->n_valid_buckets > 0)
 			timespan = (counter->n_valid_buckets-1)*SLOT_TIME + diff;
 		else
 			timespan = diff;
+		
 		printw("%d %.2f ", n_events, n_events/timespan*1000);
 		
-// 		diff = (unsigned long) time(NULL) - counter->start[N_SLOTS];
 		diff = TDIFF(counter->start[N_SLOTS], now);
 		printw("%d %.2f ", counter->n_events[N_SLOTS], counter->n_events[N_SLOTS]/(float)diff*1000);
 		printw("\n");
-		
-// 		printf("%p %p\n", event->origin, &counter->lstnr);
 		
 		i++;
 	}
