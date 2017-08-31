@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <rrd.h>
+
 #include "core.h"
 #include "dynamic_evdev.h"
 
@@ -275,6 +277,9 @@ static char dyn_evdev_test_handler(struct crtx_event *event, void *userdata, voi
 		}
 	}
 	
+	clear();
+// 	getmaxyx(stdscr, mrow, mcol);
+	
 	dyn_evdev = (struct crtx_dynamic_evdev_listener*) userdata;
 	for (dll = dyn_evdev->evdev_listeners; dll; dll=dll->next) {
 		struct timespec now;
@@ -282,7 +287,7 @@ static char dyn_evdev_test_handler(struct crtx_event *event, void *userdata, voi
 		
 		counter = (struct counter*) dll;
 		
-		printw("%s (%s %s): ", counter->name, counter->id_path, counter->lstnr.device_path);
+		printw("%s (%s %s): \t", counter->name, counter->id_path, counter->lstnr.device_path);
 		
 		clock_gettime(CLOCK_MONOTONIC, &now);
 		
@@ -312,6 +317,23 @@ static char dyn_evdev_test_handler(struct crtx_event *event, void *userdata, voi
 				iv->remaining_ticks--;
 				if (iv->remaining_ticks == 0) {
 					iv->remaining_ticks = iv->n_ticks;
+					
+					if (i==1 && !strcmp("/dev/input/event11", counter->lstnr.device_path)) {
+						char ustr[16];
+						snprintf(ustr, 15, "N:%lu", iv->n_events[iv->bucket]);
+						
+						char *updateparams[] = {
+							"rrdupdate",
+							"evdev.rrd",
+							ustr,
+							NULL
+						};
+						printf("ustr %s\n", ustr);
+						
+						optind = opterr = 0;
+						rrd_clear_error();
+						rrd_update(3, updateparams);
+					}
 					
 					iv->bucket++;
 					if (iv->bucket == iv->n_buckets)
@@ -487,6 +509,23 @@ int dynamic_evdev_main(int argc, char **argv) {
 	}
 	
 	crtx_start_listener(&timer_lstnr.parent);
+	
+	char *createparams[] = {
+		"rrdcreate",
+		"evdev.rrd",
+		"DS:evdev:COUNTER:2:0:U",
+// 		"DS:myval:GAUGE:600:0:U",
+		"RRA:AVERAGE:0.5:1:576",
+		NULL
+	};
+	int err;
+	
+	optind = opterr = 0; /* Because rrdtool uses getopt() */
+	rrd_clear_error();
+	err = rrd_create(4, createparams);
+	
+	
+	printf("%s\n", rrd_strerror(err));
 	
 	initscr ();
 	curs_set (0);
