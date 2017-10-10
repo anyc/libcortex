@@ -9,7 +9,7 @@
 #include <netinet/in.h>
 
 #include "intern.h"
-#include "nl_route.h"
+#include "nl_route_raw.h"
 
 char crtx_nl_route_send_req(struct crtx_nl_route_listener *nlr_list, struct nlmsghdr *n) {
 	int ret;
@@ -25,7 +25,7 @@ char crtx_nl_route_send_req(struct crtx_nl_route_listener *nlr_list, struct nlms
 	return 1;
 }
 
-static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct crtx_nl_route_listener *nlr_list, struct nlmsghdr *nlh) {
+static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char all_fields) {
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di, *cdi;
 	const char *s;
@@ -60,7 +60,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct crtx_nl_route_listen
 				crtx_fill_data_item(di, 's', "type", "del", 0, CRTX_DIF_DONT_FREE_DATA);
 	}
 	
-	if (nlr_list->all_fields) {
+	if (all_fields) {
 		di = crtx_alloc_item(dict);
 		
 		switch (ifa->ifa_scope) {
@@ -181,7 +181,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct crtx_nl_route_listen
 				break;
 			
 			case IFA_CACHEINFO:
-				if (nlr_list->all_fields) {
+				if (all_fields) {
 					di = crtx_alloc_item(dict);
 					di->type = 'D';
 					di->key = "cache";
@@ -265,7 +265,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct crtx_nl_route_listen
 	return dict;
 }
 
-struct crtx_dict *crtx_nl_route_raw2dict_if(struct crtx_nl_route_listener *nlr_list, struct nlmsghdr *nlh) {
+struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char all_fields) {
 	struct ifinfomsg *ifi;
 	struct rtattr *rth;
 	int32_t len;
@@ -387,7 +387,7 @@ struct crtx_dict *crtx_nl_route_raw2dict_if(struct crtx_nl_route_listener *nlr_l
 				break;
 				
 			case IFLA_STATS:
-				if (nlr_list->all_fields) {
+				if (all_fields) {
 					di = crtx_alloc_item(dict);
 					di->type = 'D';
 					di->key = "stats";
@@ -449,11 +449,11 @@ struct crtx_dict *crtx_nl_route_raw2dict_ifaddr(struct crtx_nl_route_listener *n
 	switch (nlh->nlmsg_type) {
 		case RTM_NEWADDR:
 		case RTM_DELADDR:
-			return crtx_nl_route_raw2dict_addr(nlr_list, nlh);
+			return crtx_nl_route_raw2dict_addr(nlh, nlr_list->all_fields);
 			break;
 		case RTM_NEWLINK:
 		case RTM_DELLINK:
-			return crtx_nl_route_raw2dict_if(nlr_list, nlh);
+			return crtx_nl_route_raw2dict_interface(nlh, nlr_list->all_fields);
 			break;
 	}
 	

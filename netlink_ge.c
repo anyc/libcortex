@@ -240,7 +240,7 @@ int netlink_main(int argc, char **argv) {
 	g->n_attrs = 2;
 	g->attrs = (struct nlattr**) calloc(1, sizeof(struct nlattr*)*g->n_attrs);
 	g->attrs_template = crtx_create_dict("p", 
-										   "struct", 0, sizeof(struct acpi_genl_event), CRTX_DIF_DONT_FREE_DATA
+							"struct", 0, sizeof(struct acpi_genl_event), CRTX_DIF_DONT_FREE_DATA
 						  );
 	
 	lbase = create_listener("genl", &genl);

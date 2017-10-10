@@ -65,8 +65,11 @@
 #ifdef STATIC_uevents
 #include "uevents.h"
 #endif
-#ifdef STATIC_nl_route
-#include "nl_route.h"
+#ifdef STATIC_nl_libnl
+#include "nl_libnl.h"
+#endif
+#ifdef STATIC_nl_route_raw
+#include "nl_route_raw.h"
 #endif
 #ifdef STATIC_libvirt
 #include "libvirt.h"
@@ -130,6 +133,9 @@ struct crtx_module static_modules[] = {
 #ifdef STATIC_uevents
 	{"uevents", &crtx_uevents_init, &crtx_uevents_finish},
 #endif
+#ifdef STATIC_nl_libnl
+	{"nl_libnl", &crtx_nl_libnl_init, &crtx_nl_libnl_finish},
+#endif
 #ifdef STATIC_nl_route
 	{"nl_route", &crtx_nl_route_init, &crtx_nl_route_finish},
 #endif
@@ -187,6 +193,9 @@ struct crtx_listener_repository static_listener_repository[] = {
 #endif
 #ifdef STATIC_uevents
 	{"uevents", &crtx_new_uevents_listener},
+#endif
+#ifdef STATIC_nl_libnl
+	{"nl_libnl", &crtx_new_nl_libnl_listener},
 #endif
 #ifdef STATIC_nl_route
 	{"nl_route", &crtx_new_nl_route_listener},
@@ -327,8 +336,7 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 // 	printf("send started1 %p\n", listener);
 	if (listener->start_listener) {
 		ret = listener->start_listener(listener);
-		if (ret == 0 && listener->state_graph) {
-// 		if (ret == 0) {
+		if (ret && listener->state_graph) {
 			listener->state = CRTX_LSTNR_STOPPED;
 			
 			event = crtx_create_event("listener_state");
@@ -354,12 +362,15 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 		mode = crtx_get_mode(listener->mode);
 		
 		if (mode == CRTX_PREFER_ELOOP && listener->el_payload.fd <= 0) {
-			ERROR("listener mode set to \"event loop\" but no event loop data available\n");
+			ERROR("listener mode set to \"event loop\" but no event loop data available (fd = %d)\n", listener->el_payload.fd);
 			mode = CRTX_PREFER_THREAD;
 		}
 		if (mode == CRTX_PREFER_THREAD && !listener->thread_job.fct) {
 			ERROR("listener mode set to \"thread\" but no thread data available\n");
-			mode = CRTX_PREFER_ELOOP;
+			if (listener->el_payload.fd > 0)
+				mode = CRTX_PREFER_ELOOP;
+			else
+				mode = 0;
 		}
 		
 		if (mode == CRTX_PREFER_THREAD) {
@@ -383,6 +394,7 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 				&listener->el_payload);
 		} else {
 			ERROR("invalid start listener mode: %d\n", mode);
+			return 0;
 		}
 	}
 	

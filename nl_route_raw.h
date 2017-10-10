@@ -27,5 +27,5 @@ char crtx_nl_route_send_req(struct crtx_nl_route_listener *nl_listener, struct n
 void crtx_nl_route_init();
 void crtx_nl_route_finish();
 struct crtx_dict *crtx_nl_route_raw2dict_ifaddr(struct crtx_nl_route_listener *nlr_list, struct nlmsghdr *nlh);
-
+struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char all_fields);
 #endif
