@@ -106,9 +106,9 @@ crtx_examples:
 	$(MAKE) -C examples
 
 crtx_layer2: $(SHAREDLIB)
-	$(MAKE) -C layer2
+	$(MAKE) -C layer2 LAYER2_LISTENERS=$(LAYER2_LISTENERS)
 
 crtx_layer2_tests: $(SHAREDLIB)
-	$(MAKE) -C layer2 tests
+	$(MAKE) -C layer2 tests LAYER2_LISTENERS=$(LAYER2_LISTENERS)
 	
 -include $(local_mk_rules)

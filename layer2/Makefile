@@ -6,17 +6,21 @@ PKG_CONFIG=pkg-config
 CFLAGS+=-I$(libcrtx_dir) -fPIC
 LDFLAGS+=-L$(libcrtx_dir)
 
-LAYER2_LISTENER=dynamic_evdev
+LAYER2_LISTENERS?=dynamic_evdev netif
 
-LAYER2_LISTENER_LIST=$(patsubst %,libcrtx_%.so, $(LAYER2_LISTENER))
+LAYER2_LISTENER_LIST=$(patsubst %,libcrtx_%.so, $(LAYER2_LISTENERS))
 
-TESTS+=$(foreach t,$(LAYER2_LISTENER), $(t).test)
+TESTS+=$(foreach t,$(LAYER2_LISTENERS), $(t).test)
 
 include $(libcrtx_dir)/Makefile.modules
 
 CFLAGS_dynamic_evdev=$(shell pkg-config --cflags ncurses librrd)
 LDLIBS_dynamic_evdev=$(shell pkg-config --libs ncurses librrd)
 DEPS_dynamic_evdev=evdev udev
+
+CFLAGS_netif=
+LDLIBS_netif=
+DEPS_netif=nl_libnl
 
 .PHONY: clean
 

@@ -3,6 +3,7 @@
 # DYN_MODULES=avahi can evdev libvirt netlink_ge nf_queue pulseaudio readline sd_bus sd_bus_notifications sip udev xcb_randr
 
 # LAYER2=crtx_layer2
+# LAYER2_TESTS=crtx_layer2_tests
 
 # CFLAGS+=-DCRTX_PLUGIN_DIR=\"/usr/lib/cortexd/plugins/\"
 
