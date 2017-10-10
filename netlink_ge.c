@@ -5,6 +5,7 @@
 #include <errno.h>
 
 
+#include "intern.h"
 #include "core.h"
 #include "netlink_ge.h"
 

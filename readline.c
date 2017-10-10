@@ -6,6 +6,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#include "intern.h"
 #include "core.h"
 #include "readline.h"
 #include "threads.h"

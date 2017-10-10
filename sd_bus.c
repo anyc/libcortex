@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "intern.h"
 #include "core.h"
 #include "sd_bus.h"
 #include "threads.h"

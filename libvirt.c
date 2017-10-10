@@ -6,6 +6,7 @@
 #include <poll.h>
 #include <libvirt/virterror.h>
 
+#include "intern.h"
 #include "core.h"
 #include "libvirt.h"
 #include "timer.h"

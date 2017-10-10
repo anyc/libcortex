@@ -10,6 +10,7 @@
 // #include <avahi-common/error.h>
 // #include <avahi-common/malloc.h>
 
+#include "intern.h"
 #include "avahi.h"
 #include "sd_bus.h"
 

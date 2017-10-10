@@ -7,6 +7,7 @@
 #include <time.h>
 #include <linux/limits.h>
 
+#include "intern.h"
 #include "core.h"
 #include "cache.h"
 #include "threads.h"

@@ -29,6 +29,7 @@
 #include <sys/un.h>
 #include <netdb.h>
 
+#include "intern.h"
 #include "core.h"
 #include "socket.h"
 #include "event_comm.h"

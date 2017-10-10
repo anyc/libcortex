@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include "intern.h"
 #include "core.h"
 #include "signals.h"
 

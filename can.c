@@ -16,6 +16,7 @@
 #include <netlink/route/link.h>
 #include <netlink/route/link/can.h>
 
+#include "intern.h"
 #include "core.h"
 #include "can.h"
 
@@ -146,6 +147,9 @@ static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 	flags = rtnl_link_get_flags(clist->link);
 	rtnl_link_can_get_bitrate(clist->link, &bitrate);
 	
+	if (clist->ignore_if_state) {
+		clist->bitrate = bitrate;
+	} else
 	if ( !(flags & IFF_UP) || (bitrate != clist->bitrate) ) {
 // 		if (getuid() != 0 && geteuid() != 0) {
 // 			printf("warning, interface \"%s\" need to be reconfigured, you might not have the required privileges.\n", if_name);
@@ -280,7 +284,7 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 // 		}
 		
 		uint32_t can_state;
-		r = rtnl_link_can_state (clist->link, &can_state);
+		r = rtnl_link_can_state(clist->link, &can_state);
 		if (r < 0) {
 			printf("link change failed: %s\n", nl_geterror(r));
 		}
@@ -298,6 +302,7 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 	
 	clist->parent.el_payload.fd = clist->sockfd;
 	clist->parent.el_payload.data = clist;
+	clist->parent.el_payload.event_flags = EPOLLIN;
 	clist->parent.el_payload.event_handler = &can_fd_event_handler;
 	clist->parent.el_payload.event_handler_name = "can fd handler";
 	clist->parent.el_payload.error_cb = &on_error_cb;

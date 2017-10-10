@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "intern.h"
 #include "core.h"
 
 #include <libetpan/libetpan.h>

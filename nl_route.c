@@ -8,14 +8,13 @@
 #include <net/if.h>
 #include <netinet/in.h>
 
-#include <linux/rtnetlink.h>
-
+#include "intern.h"
 #include "nl_route.h"
 
 char crtx_nl_route_send_req(struct crtx_nl_route_listener *nlr_list, struct nlmsghdr *n) {
 	int ret;
 	
-	printf("send %d\n", nlr_list->nl_listener.sockfd);
+// 	printf("send %d\n", nlr_list->nl_listener.sockfd);
 	
 	ret = send(nlr_list->nl_listener.sockfd, n, n->nlmsg_len, 0);
 	if (ret < 0) {
@@ -478,7 +477,7 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 			uint16_t *it;
 			
 			it = nlr_list->nlmsg_types;
-			while (*it && *it != nlh->nlmsg_type) { it++; }
+			while (*it && *it != nlh->nlmsg_type) { it++;}
 			
 			if (nlh->nlmsg_type == *it) {
 				char *ptr;
@@ -519,7 +518,13 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 		}
 		
 		if (nlh->nlmsg_type == NLMSG_DONE) {
-			nlr_list->msg_done_cb(nlr_list->msg_done_cb_data);
+			if (nlr_list->msg_done_cb) {
+				nlr_list->msg_done_cb(nlr_list->msg_done_cb_data);
+			} else {
+				event = crtx_create_event(0);
+				event->type = "done";
+				crtx_add_event(nlr_list->parent.graph, event);
+			}
 // 			send_signal(&nlr_list->msg_done, 0);
 // 			printf("DOOONEEEE\n");
 		}

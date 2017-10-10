@@ -4,6 +4,7 @@
 #include <string.h>
 #include <signal.h>
 
+#include "intern.h"
 #include "core.h"
 #include "threads.h"
 

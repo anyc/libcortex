@@ -23,6 +23,7 @@
 #include <netinet/ip.h>
 #include <sys/socket.h>
 
+#include "intern.h"
 #include "core.h"
 #include "nf_queue.h"
 #include "threads.h"

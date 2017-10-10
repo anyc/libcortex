@@ -6,6 +6,7 @@
 #include <dirent.h>
 #include <dlfcn.h>
 
+#include "intern.h"
 #include "core.h"
 #include "controls.h"
 

@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "intern.h"
 #include "core.h"
 #include "evdev.h"
 

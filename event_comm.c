@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <unistd.h>
 
+#include "intern.h"
 #include "core.h"
 #include "cache.h"
 #include "event_comm.h"

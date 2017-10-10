@@ -7,6 +7,7 @@
 
 #include <linux/netlink.h>
 
+#include "intern.h"
 #include "core.h"
 #include "netlink_raw.h"
 

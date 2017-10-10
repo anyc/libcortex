@@ -10,9 +10,12 @@
 #include <unistd.h>
 #include <pwd.h>
 
+#include "intern.h"
 #include "core.h"
 #include "dict.h"
 
+#include "intern.h"
+#include "intern.h"
 #include "core.h"
 #include "socket.h"
 #include "socket_raw.h"

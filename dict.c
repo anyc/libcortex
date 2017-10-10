@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 
+#include "intern.h"
 #include "core.h"
 #include "dict.h"
 
@@ -1369,6 +1370,18 @@ char *crtx_dict_locate_string(struct crtx_dict *dict, char *path) {
 		return 0;
 	
 	return di->string;
+}
+
+char crtx_is_string_in_dict(struct crtx_dict *dict, char *str) {
+	struct crtx_dict_item *di;
+	
+	di = crtx_get_first_item(dict);
+	
+	while (di && (di->type != 's' || strcmp(di->string, str)) ) {
+		di = crtx_get_next_item(dict, di);
+	}
+	
+	return (di != 0);
 }
 
 void crtx_dict_remove_item(struct crtx_dict *dict, char *key) {

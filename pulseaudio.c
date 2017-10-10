@@ -5,6 +5,7 @@
 #include <math.h>
 #include <pulse/introspect.h>
 
+#include "intern.h"
 #include "pulseaudio.h"
 
 

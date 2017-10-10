@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <string.h>
 
+#include "intern.h"
 #include "signals.h"
 
 #define SIGNAL(id) { id, #id, "cortex.signals." #id }

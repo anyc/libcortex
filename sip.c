@@ -5,6 +5,7 @@
 
 #include <eXosip2/eXosip.h>
 
+#include "intern.h"
 #include "core.h"
 #include "sip.h"
 

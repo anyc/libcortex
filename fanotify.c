@@ -6,6 +6,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include "intern.h"
 #include "core.h"
 #include "fanotify.h"
 #include "threads.h"

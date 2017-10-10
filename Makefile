@@ -29,6 +29,8 @@ include Makefile.modules
 STATIC_MODULES+=netlink_raw nl_route uevents dict_inout_json
 DYN_MODULES+=avahi can evdev libvirt netlink_ge nf_queue pulseaudio readline sd_bus sd_bus_notifications sip udev xcb_randr
 
+# LAYER2=crtx_layer2
+
 -include $(local_mk)
 
 # build tests for enabled modules
@@ -51,7 +53,7 @@ endif
 
 .PHONY: clean
 
-all: $(local_mk) $(CONTROLS) plugins shared crtx_layer2
+all: $(local_mk) $(CONTROLS) plugins shared $(LAYER2)
 
 $(APP): $(OBJS)
 

@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <limits.h>
 
+#include "intern.h"
 #include "core.h"
 #include "dict.h"
 #include "inotify.h"
