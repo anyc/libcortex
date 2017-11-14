@@ -194,6 +194,21 @@ char crtx_fill_data_item(struct crtx_dict_item *di, unsigned char type, char *ke
 	return ret;
 }
 
+char crtx_dict_new_item(struct crtx_dict *dict, unsigned char type, char *key, ...) {
+	va_list va;
+	char ret;
+	struct crtx_dict_item *di;
+	
+	va_start(va, key);
+	
+	di = crtx_alloc_item(dict);
+	ret = crtx_fill_data_item_va2(di, type, key, va);
+	
+	va_end(va);
+	
+	return ret;
+}
+
 char crtx_resize_dict(struct crtx_dict *dict, size_t n_items) {
 	if (n_items < dict->signature_length) {
 		ERROR("shrinking dicts not yet supported\n");

@@ -118,6 +118,7 @@ struct crtx_dict_item * crtx_dict_locate(struct crtx_dict *dict, char *path);
 char crtx_dict_locate_value(struct crtx_dict *dict, char *path, char type, void *buffer, size_t buffer_size);
 char *crtx_dict_locate_string(struct crtx_dict *dict, char *path);
 void crtx_dict_remove_item(struct crtx_dict *dict, char *key);
+char crtx_dict_new_item(struct crtx_dict *dict, unsigned char type, char *key, ...);
 
 char crtx_is_string_in_dict(struct crtx_dict *dict, char *str);
 

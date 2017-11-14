@@ -11,7 +11,7 @@ OBJS+=cortexd.o core.o socket.o socket_raw.o controls.o fanotify.o inotify.o \
 	event_comm.o cache.o threads.o signals.o dict.o dict_inout.o \
 	llist.o dllist.o timer.o epoll.o
 
-AVAILABLE_TESTS=avahi can epoll evdev libvirt nl_libnl netlink_ge nl_route_raw pulseaudio sd_bus sip timer udev uevents xcb_randr
+AVAILABLE_TESTS=avahi can epoll evdev libvirt nl_libnl netlink_ge nl_route_raw pulseaudio sd_bus sip timer udev uevents v4l xcb_randr
 
 # LDFLAGS=-rdynamic
 # CONTROLS+=$(patsubst examples/control_%.c,examples/libcrtx_%.so,$(wildcard examples/*.c))
@@ -27,7 +27,7 @@ include Makefile.modules
 
 # default module sets
 STATIC_MODULES+=netlink_raw nl_route_raw uevents dict_inout_json
-DYN_MODULES+=avahi can evdev libvirt netlink_ge nl_libnl nf_queue pulseaudio readline sd_bus sd_bus_notifications sip udev xcb_randr
+DYN_MODULES+=avahi can evdev libvirt netlink_ge nl_libnl nf_queue pulseaudio readline sd_bus sd_bus_notifications sip udev v4l xcb_randr
 
 # LAYER2=crtx_layer2
 # LAYER2_TESTS=crtx_layer2_tests

@@ -77,6 +77,9 @@
 #ifdef STATIC_sip
 #include "sip.h"
 #endif
+#ifdef STATIC_v4l
+#include "v4l.h"
+#endif
 
 #ifndef CRTX_PLUGIN_DIR
 #define CRTX_PLUGIN_DIR "/usr/lib/cortexd/plugins/"
@@ -142,6 +145,9 @@ struct crtx_module static_modules[] = {
 #ifdef STATIC_sip
 	{"sip", &crtx_sip_init, &crtx_sip_finish},
 #endif
+#ifdef STATIC_v4l
+	{"v4l", &crtx_v4l_init, &crtx_v4l_finish},
+#endif
 	{0, 0}
 };
 
@@ -205,6 +211,9 @@ struct crtx_listener_repository static_listener_repository[] = {
 #endif
 #ifdef STATIC_sip
 	{"sip", &crtx_new_sip_listener},
+#endif
+#ifdef STATIC_v4l
+	{"v4l", &crtx_new_v4l_listener},
 #endif
 	{0, 0}
 };
