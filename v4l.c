@@ -12,17 +12,159 @@
 #include "core.h"
 #include "v4l.h"
 
-// static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	struct crtx_event_loop_payload *payload;
-// 	struct can_frame *frame;
-// 	struct crtx_event *nevent;
-// 	struct crtx_can_listener *clist;
-// 	int r;
+char crtx_v4l2_event_ctrl2dict(struct v4l2_event_ctrl *ptr, struct crtx_dict **dict_ptr) {
+        struct crtx_dict *dict;
+        struct crtx_dict_item *di;
+
+        if (! *dict_ptr)
+                *dict_ptr = crtx_init_dict(0, 0, 0);
+        dict = *dict_ptr;
+
+        crtx_dict_new_item(dict, 'u', "changes", ptr->changes, sizeof(ptr->changes), 0);
+
+        crtx_dict_new_item(dict, 'u', "type", ptr->type, sizeof(ptr->type), 0);
+
+        /* TODO union: 
+        if (ptr) {
+                di->dict = crtx_init_dict(0, 0, 0);
+                struct crtx_dict *dict = di->dict;
+                struct crtx_dict_item *di2;
+
+                crtx_dict_new_item(dict, 'i', "value", ptr->value, sizeof(ptr->value), 0);
+
+                crtx_dict_new_item(dict, 'I', "value64", ptr->value64, sizeof(ptr->value64), 0);
+        }
+        */
+
+        crtx_dict_new_item(dict, 'u', "flags", ptr->flags, sizeof(ptr->flags), 0);
+
+        crtx_dict_new_item(dict, 'i', "minimum", ptr->minimum, sizeof(ptr->minimum), 0);
+
+        crtx_dict_new_item(dict, 'i', "maximum", ptr->maximum, sizeof(ptr->maximum), 0);
+
+        crtx_dict_new_item(dict, 'i', "step", ptr->step, sizeof(ptr->step), 0);
+
+        crtx_dict_new_item(dict, 'i', "default_value", ptr->default_value, sizeof(ptr->default_value), 0);
+
+        return 0;
+}
+
+char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr)
+{
+	struct crtx_dict *dict;
+	struct crtx_dict_item *di;
+	
+	if (! *dict_ptr)
+		*dict_ptr = crtx_init_dict(0, 0, 0);
+	dict = *dict_ptr;
+	
+	crtx_dict_new_item(dict, 'u', "etype_id", ptr->type, sizeof(ptr->type), 0);
+	
+	switch(ptr->type) {
+		case V4L2_EVENT_ALL:
+			crtx_dict_new_item(dict, 'u', "etype", "all", 0, CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case V4L2_EVENT_VSYNC:
+			crtx_dict_new_item(dict, 'u', "etype", "vsync", 0, CRTX_DIF_DONT_FREE_DATA);
+			
+// 			di2 = crtx_alloc_item(dict);
+// 			crtx_fill_data_item(di2, 'D', "vsync", 0, 0, 0);
+			// crtx_v4l2_event_vsync2dict(&ptr->vsync, di2->dict);
+			break;
+		case V4L2_EVENT_EOS:
+			crtx_dict_new_item(dict, 'u', "etype", "eos", 0, CRTX_DIF_DONT_FREE_DATA);
+			break;
+		case V4L2_EVENT_CTRL:
+			crtx_dict_new_item(dict, 'u', "etype", "ctrl", 0, CRTX_DIF_DONT_FREE_DATA);
+			
+			di2 = crtx_alloc_item(dict);
+			crtx_fill_data_item(di2, 'D', "ctrl", 0, 0, 0);
+			crtx_v4l2_event_ctrl2dict(&ptr->ctrl, di2->dict);
+			break;
+		case V4L2_EVENT_FRAME_SYNC:
+			crtx_dict_new_item(dict, 'u', "etype", "frame sync", 0, CRTX_DIF_DONT_FREE_DATA);
+			
+// 			di2 = crtx_alloc_item(dict);
+// 			crtx_fill_data_item(di2, 'D', "frame_sync", 0, 0, 0);
+			// crtx_v4l2_event_frame_sync2dict(&ptr->frame_sync, di2->dict);
+			break;
+		case V4L2_EVENT_SOURCE_CHANGE:
+			crtx_dict_new_item(dict, 'u', "etype", "source change", 0, CRTX_DIF_DONT_FREE_DATA);
+			
+// 			di2 = crtx_alloc_item(dict);
+// 			crtx_fill_data_item(di2, 'D', "src_change", 0, 0, 0);
+			// crtx_v4l2_event_src_change2dict(&ptr->src_change, di2->dict);
+			break;
+		case V4L2_EVENT_MOTION_DET:
+			crtx_dict_new_item(dict, 'u', "etype", "motion det", 0, CRTX_DIF_DONT_FREE_DATA);
+			
+// 			di2 = crtx_alloc_item(dict);
+// 			crtx_fill_data_item(di2, 'D', "motion_det", 0, 0, 0);
+			// crtx_v4l2_event_motion_det2dict(&ptr->motion_det, di2->dict);
+			break;
+		case V4L2_EVENT_PRIVATE_START:
+			crtx_dict_new_item(dict, 'u', "etype", "private start", 0, CRTX_DIF_DONT_FREE_DATA);
+			
+			crtx_dict_new_item(dict, 'p', "data", ptr->data, sizeof(ptr->data[0])*64, CRTX_DIF_DONT_FREE_DATA);
+			break;
+	}
+	
+// 	di = crtx_alloc_item(dict);
+// 	crtx_fill_data_item(di, 'D', "u", 0, 0, 0);
+	// crtx_union v4l2_event::(anonymous at /usr/include/linux/videodev2.h:2089:2)2dict(&ptr->u, di->dict);
+	
+	crtx_dict_new_item(dict, 'u', "pending", ptr->pending, sizeof(ptr->pending), 0);
+	
+	crtx_dict_new_item(dict, 'u', "sequence", ptr->sequence, sizeof(ptr->sequence), 0);
+	
+// 	di = crtx_alloc_item(dict);
+// 	crtx_fill_data_item(di, 'D', "timestamp", 0, 0, 0);
+	// crtx_timespec2dict(&ptr->timestamp, di->dict);
+	
+	crtx_dict_new_item(dict, 'u', "id", ptr->id, sizeof(ptr->id), 0);
+	
+// 	di = crtx_alloc_item(dict);
+// 	crtx_fill_data_item(di, 'D', "reserved", 0, 0, 0);
 // 	
-// 	payload = (struct crtx_event_loop_payload*) event->data.pointer;
-// 	
-// 	clist = (struct crtx_can_listener *) payload->data;
-// 	
+// 	// TypeKind.UINT
+// 	di->dict = crtx_init_dict("uuuuuuuu", 8, 0);
+// 	{
+// 		crtx_fill_data_item(&di->dict->items[0], 'u', 0, ptr->reserved[0], sizeof(ptr->reserved[0]), 0);
+// 		crtx_fill_data_item(&di->dict->items[1], 'u', 0, ptr->reserved[1], sizeof(ptr->reserved[1]), 0);
+// 		crtx_fill_data_item(&di->dict->items[2], 'u', 0, ptr->reserved[2], sizeof(ptr->reserved[2]), 0);
+// 		crtx_fill_data_item(&di->dict->items[3], 'u', 0, ptr->reserved[3], sizeof(ptr->reserved[3]), 0);
+// 		crtx_fill_data_item(&di->dict->items[4], 'u', 0, ptr->reserved[4], sizeof(ptr->reserved[4]), 0);
+// 		crtx_fill_data_item(&di->dict->items[5], 'u', 0, ptr->reserved[5], sizeof(ptr->reserved[5]), 0);
+// 		crtx_fill_data_item(&di->dict->items[6], 'u', 0, ptr->reserved[6], sizeof(ptr->reserved[6]), 0);
+// 		crtx_fill_data_item(&di->dict->items[7], 'u', 0, ptr->reserved[7], sizeof(ptr->reserved[7]), 0);
+// 	}
+	
+	return 0;
+}
+
+static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_event_loop_payload *payload;
+	struct crtx_event *nevent;
+	struct crtx_v4l_listener *clist;
+	struct v4l2_event *v4l_event;
+	struct crtx_dict *dict;
+	int r;
+	
+	payload = (struct crtx_event_loop_payload*) event->data.pointer;
+	
+	clist = (struct crtx_v4l_listener *) payload->data;
+	
+	r = ioctl(clist->fd, VIDIOC_DQEVENT, &v4l_event);
+	if (r < 0) {
+		ERROR("VIDIOC_DQEVENT failed\n");
+		return -1;
+	}
+	
+	dict = 0;
+	crtx_v4l2_event2dict(&v4l_event, &dict);
+	
+	crtx_print_dict(dict);
+	
 // 	frame = (struct can_frame *) malloc(sizeof(struct can_frame));
 // 	r = read(clist->sockfd, frame, sizeof(struct can_frame));
 // 	if (r != sizeof(struct can_frame)) {
@@ -43,10 +185,12 @@
 // 	// 	exit(1);
 // 	
 // 	return 0;
-// }
+}
 
 static char start_listener(struct crtx_listener_base *listener) {
 	struct crtx_v4l_listener *lstnr;
+	unsigned int i;
+	int r;
 	
 	lstnr = (struct crtx_v4l_listener *) listener;
 	
@@ -59,8 +203,16 @@ static char start_listener(struct crtx_listener_base *listener) {
 		lstnr->format.fmt.pix.width, lstnr->format.fmt.pix.height);
 	
 	if(ioctl(lstnr->fd, VIDIOC_S_FMT, &lstnr->format) < 0){
-		printf("VIDIOC_S_FMT failed\n");
+		ERROR("VIDIOC_S_FMT failed\n");
 		return -1;
+	}
+	
+	for (i=0; i < clist->subscription_length; i++) {
+		r = ioctl(lstnr->fd, VIDIOC_SUBSCRIBE_EVENT, &clist->subscriptions);
+		if (r < 0) {
+			ERROR("VIDIOC_SUBSCRIBE_EVENT failed\n");
+			return -1;
+		}
 	}
 	
 	return 1;
@@ -246,6 +398,11 @@ int v4l_main(int argc, char **argv) {
 	fsize = di->dict;
 	crtx_get_value(fsize, "width", 'u', &clist.format.fmt.pix.width, sizeof(clist.format.fmt.pix.width));
 	crtx_get_value(fsize, "height", 'u', &clist.format.fmt.pix.height, sizeof(clist.format.fmt.pix.height));
+	
+	clist.subscription_length = 1;
+	clist.subscriptions = (struct v4l2_event_subscription*) calloc(1, sizeof(struct v4l2_event_subscription)*clist.subscription_length);
+	clist.subscriptions[0].type = V4L2_EVENT_FRAME_SYNC;
+	clist.subscriptions[0].flags = V4L2_EVENT_SUB_FL_SEND_INITIAL;
 	
 	ret = crtx_start_listener(lbase);
 	if (!ret) {

@@ -10,6 +10,9 @@ struct crtx_v4l_listener {
 	
 	struct crtx_dict *formats;
 	struct v4l2_format format;
+	
+	struct v4l2_event_subscription *subscriptions;
+	unsigned int subscription_length;
 };
 
 struct crtx_listener_base *crtx_new_v4l_listener(void *options);
