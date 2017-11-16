@@ -68,7 +68,13 @@ void crtx_shutdown_can_listener(struct crtx_listener_base *data) {
 	
 	clist = (struct crtx_can_listener*) data;
 	
+	rtnl_link_put(clist->link);
+	nl_close(clist->socket);
+	nl_socket_free(clist->socket);
+	clist->socket = 0;
+	
 	close(clist->sockfd);
+	
 // 	shutdown(inlist->server_sockfd, SHUT_RDWR);
 }
 

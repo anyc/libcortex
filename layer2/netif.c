@@ -11,25 +11,34 @@
 #include "netif.h"
 #include "nl_route_raw.h" // for crtx_nl_route_raw2dict_interface
 
+int crtx_netif_query_interfaces(struct crtx_netif_listener *netif_lstnr) {
+	int r;
+	struct rtgenmsg rt_hdr = { .rtgen_family = AF_PACKET, };
+	
+	r = nl_send_simple(netif_lstnr->libnl_lstnr.sock, RTM_GETLINK, NLM_F_REQUEST | NLM_F_DUMP, &rt_hdr, sizeof(rt_hdr));
+	if (r < 0) {
+		ERROR("nl_send_simple failed: %d\n", r);
+		return 1;
+	}
+	
+	return 0;
+}
+
 static char netif_state_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_netif_listener *netif_lstnr;
-	struct crtx_libnl_listener *libnl;
+// 	struct crtx_libnl_listener *libnl;
 	int r;
 	
 	netif_lstnr = (struct crtx_netif_listener *) userdata;
-	libnl = (struct crtx_libnl_listener *) event->origin;
+// 	libnl = (struct crtx_libnl_listener *) event->origin;
 	
 	if (event->data.type == 'u' && event->data.uint32 == CRTX_LSTNR_STARTED) {
 		nl_socket_add_memberships(netif_lstnr->libnl_lstnr.sock, RTNLGRP_LINK, 0);
 		
 		if (netif_lstnr->query_existing > 0) {
-			struct rtgenmsg rt_hdr = { .rtgen_family = AF_PACKET, };
-			
-			r = nl_send_simple(libnl->sock, RTM_GETLINK, NLM_F_REQUEST | NLM_F_DUMP, &rt_hdr, sizeof(rt_hdr));
-			if (r < 0) {
-				ERROR("nl_send_simple failed: %d\n", r);
-				return 1;
-			}
+			r = crtx_netif_query_interfaces(netif_lstnr);
+			if (r)
+				return r;
 		}
 	}
 	
@@ -105,7 +114,6 @@ static void netif_shutdown_listener(struct crtx_listener_base *listener) {
 	
 	crtx_free_listener(&netif_lstnr->libnl_lstnr.parent);
 	netif_lstnr->libnl_lstnr.parent.graph = 0;
-	printf("SHUTDOWN\n");
 }
 
 struct crtx_listener_base *crtx_new_netif_listener(void *options) {

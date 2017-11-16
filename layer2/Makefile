@@ -1,7 +1,7 @@
 
 libcrtx_dir=../
 
-PKG_CONFIG=pkg-config
+PKG_CONFIG?=pkg-config
 
 CFLAGS+=-I$(libcrtx_dir) -fPIC
 LDFLAGS+=-L$(libcrtx_dir)

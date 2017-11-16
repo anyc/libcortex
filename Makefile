@@ -2,7 +2,7 @@
 local_mk ?= Makefile.local
 local_mk_rules ?= Makefile.local_rules
 
-PKG_CONFIG=pkg-config
+PKG_CONFIG?=pkg-config
 
 APP=cortexd
 SHAREDLIB=libcrtx.so

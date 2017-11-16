@@ -304,6 +304,14 @@ struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char al
 	
 	{
 		di = crtx_alloc_item(dict);
+		di->type = 'i';
+		di->key = "index";
+		
+		crtx_fill_data_item(di, 'i', "index", ifi->ifi_index, sizeof(ifi->ifi_index), 0);
+	}
+	
+	{
+		di = crtx_alloc_item(dict);
 		di->type = 'D';
 		di->key = "flags";
 		di->dict = crtx_init_dict(0, 0, 0);

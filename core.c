@@ -346,6 +346,8 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 	if (listener->start_listener) {
 		ret = listener->start_listener(listener);
 		if (ret && listener->state_graph) {
+			ERROR("start_listener failed\n");
+			
 			listener->state = CRTX_LSTNR_STOPPED;
 			
 			event = crtx_create_event("listener_state");
@@ -403,6 +405,7 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 				&listener->el_payload);
 		} else {
 			ERROR("invalid start listener mode: %d\n", mode);
+			UNLOCK(listener->state_mutex);
 			return 0;
 		}
 	}
@@ -841,6 +844,7 @@ void crtx_add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	// we do not accept new events if shutdown has begun
 	if (crtx_root->shutdown) {
 		DBG("ignoring new events (%s) after shutdown signal\n", event->type);
+		free_event(event);
 		return;
 	}
 	
