@@ -10,6 +10,7 @@
 #include <linux/videodev2.h>
 
 #include "core.h"
+#include "intern.h"
 #include "v4l.h"
 
 char crtx_v4l2_event_ctrl2dict(struct v4l2_event_ctrl *ptr, struct crtx_dict **dict_ptr) {
@@ -52,7 +53,7 @@ char crtx_v4l2_event_ctrl2dict(struct v4l2_event_ctrl *ptr, struct crtx_dict **d
 char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr)
 {
 	struct crtx_dict *dict;
-	struct crtx_dict_item *di;
+	struct crtx_dict_item *di, *di2;
 	
 	if (! *dict_ptr)
 		*dict_ptr = crtx_init_dict(0, 0, 0);
@@ -79,7 +80,7 @@ char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr)
 			
 			di2 = crtx_alloc_item(dict);
 			crtx_fill_data_item(di2, 'D', "ctrl", 0, 0, 0);
-			crtx_v4l2_event_ctrl2dict(&ptr->ctrl, di2->dict);
+			crtx_v4l2_event_ctrl2dict(&ptr->u.ctrl, &di2->dict);
 			break;
 		case V4L2_EVENT_FRAME_SYNC:
 			crtx_dict_new_item(dict, 'u', "etype", "frame sync", 0, CRTX_DIF_DONT_FREE_DATA);
@@ -105,7 +106,7 @@ char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr)
 		case V4L2_EVENT_PRIVATE_START:
 			crtx_dict_new_item(dict, 'u', "etype", "private start", 0, CRTX_DIF_DONT_FREE_DATA);
 			
-			crtx_dict_new_item(dict, 'p', "data", ptr->data, sizeof(ptr->data[0])*64, CRTX_DIF_DONT_FREE_DATA);
+			crtx_dict_new_item(dict, 'p', "data", ptr->u.data, sizeof(ptr->u.data[0])*64, CRTX_DIF_DONT_FREE_DATA);
 			break;
 	}
 	
@@ -161,7 +162,7 @@ static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void 
 	}
 	
 	dict = 0;
-	crtx_v4l2_event2dict(&v4l_event, &dict);
+	crtx_v4l2_event2dict(v4l_event, &dict);
 	
 	crtx_print_dict(dict);
 	
@@ -183,8 +184,8 @@ static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void 
 // 	crtx_add_event(clist->parent.graph, nevent);
 // 	
 // 	// 	exit(1);
-// 	
-// 	return 0;
+	
+	return 0;
 }
 
 static char start_listener(struct crtx_listener_base *listener) {
@@ -207,8 +208,8 @@ static char start_listener(struct crtx_listener_base *listener) {
 		return -1;
 	}
 	
-	for (i=0; i < clist->subscription_length; i++) {
-		r = ioctl(lstnr->fd, VIDIOC_SUBSCRIBE_EVENT, &clist->subscriptions);
+	for (i=0; i < lstnr->subscription_length; i++) {
+		r = ioctl(lstnr->fd, VIDIOC_SUBSCRIBE_EVENT, &lstnr->subscriptions);
 		if (r < 0) {
 			ERROR("VIDIOC_SUBSCRIBE_EVENT failed\n");
 			return -1;
@@ -329,7 +330,7 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 	
 	lstnr->parent.el_payload.fd = lstnr->fd;
 	lstnr->parent.el_payload.data = lstnr;
-// 	lstnr->parent.el_payload.event_handler = &v4l_fd_event_handler;
+	lstnr->parent.el_payload.event_handler = &v4l_fd_event_handler;
 	lstnr->parent.el_payload.event_handler_name = "v4l fd handler";
 // 	lstnr->parent.el_payload.error_cb = &on_error_cb;
 // 	lstnr->parent.el_payload.error_cb_data = lstnr;
