@@ -99,6 +99,13 @@ char crtx_fill_data_item_va2(struct crtx_dict_item *di, unsigned char type, char
 		di->flags = (di->flags & (~CRTX_DIF_CREATE_DATA_COPY));
 	}
 	
+	if (di->flags & CRTX_DIF_CREATE_KEY_COPY) {
+// 		printf("%s\n", di->key);
+		di->key = crtx_stracpy(di->key, 0);
+// 		printf("%s\n", di->key);
+		di->flags |= CRTX_DIF_ALLOCATED_KEY;
+	}
+	
 	return 0;
 }
 

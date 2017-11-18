@@ -14,6 +14,7 @@
 #define CRTX_DIF_ALLOCATED_KEY 1<<0 // key was allocated for this dict_item
 #define CRTX_DIF_DONT_FREE_DATA 1<<1 // data was not allocated for the dict_item
 #define CRTX_DIF_CREATE_DATA_COPY 1<<2 // only used while creating a dict_item
+#define CRTX_DIF_CREATE_KEY_COPY 1<<3
 #define CRTX_DIF_LAST_ITEM 1<<7
 
 #define CRTX_DIF_IS_LAST(di) ( ((di)->flags & CRTX_DIF_LAST_ITEM) != 0 )

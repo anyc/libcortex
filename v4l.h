@@ -11,6 +11,8 @@ struct crtx_v4l_listener {
 	struct crtx_dict *formats;
 	struct v4l2_format format;
 	
+	struct crtx_dict *controls;
+	
 	struct v4l2_event_subscription *subscriptions;
 	unsigned int subscription_length;
 };

@@ -209,14 +209,98 @@ static char start_listener(struct crtx_listener_base *listener) {
 	}
 	
 	for (i=0; i < lstnr->subscription_length; i++) {
-		r = ioctl(lstnr->fd, VIDIOC_SUBSCRIBE_EVENT, &lstnr->subscriptions);
+		r = ioctl(lstnr->fd, VIDIOC_SUBSCRIBE_EVENT, &lstnr->subscriptions[i]);
 		if (r < 0) {
-			ERROR("VIDIOC_SUBSCRIBE_EVENT failed\n");
-			return -1;
+			INFO("VIDIOC_SUBSCRIBE_EVENT (type=%d id=%d flags=%d) failed: %s\n",
+				lstnr->subscriptions[i].type, lstnr->subscriptions[i].id, lstnr->subscriptions[i].flags,
+				strerror(errno));
+			/*
+			 * there seems to be no way to query the list of supported event types by the
+			 * underlying device driver
+			 * 
+			 * UVC seems to support only V4L2_EVENT_CTRL
+			 */
+			if (errno != EINVAL) {
+				return -1;
+			}
 		}
 	}
 	
 	return 1;
+}
+
+static void enumerate_menu(struct crtx_v4l_listener *lstnr, struct v4l2_queryctrl *qctrl) {
+	struct v4l2_querymenu querymenu;
+	struct crtx_dict_item *di;
+	int r;
+	
+	di = crtx_alloc_item(lstnr->controls);
+	di->type = 'D';
+	di->dict = crtx_init_dict(0, 0, 0);
+	di->key = crtx_stracpy(qctrl->name, 0);
+	di->flags = di->flags | CRTX_DIF_CREATE_KEY_COPY;
+	
+	crtx_dict_new_item(di->dict, 'u', "id", querymenu.id, 0, 0);
+	
+	memset (&querymenu, 0, sizeof (querymenu));
+	querymenu.id = qctrl->id;
+	
+	for (querymenu.index = qctrl->minimum; querymenu.index <= qctrl->maximum; querymenu.index++) {
+		r = ioctl (lstnr->fd, VIDIOC_QUERYMENU, &querymenu);
+		if (r == 0) {
+			crtx_dict_new_item(di->dict, 'u', querymenu.name, querymenu.id, 0, CRTX_DIF_CREATE_KEY_COPY);
+		} else {
+			ERROR("VIDIOC_QUERYMENU failed: %s", strerror(errno));
+			break;
+		}
+	}
+}
+
+static void query_ctrls(struct crtx_v4l_listener *lstnr) {
+	struct v4l2_queryctrl qctrl;
+	int r;
+	unsigned int last_id;
+	
+	memset (&qctrl, 0, sizeof (qctrl));
+	
+	lstnr->controls = crtx_init_dict(0, 0, 0);
+	
+	for (qctrl.id = V4L2_CID_BASE; qctrl.id < V4L2_CID_LASTP1; qctrl.id++) {
+		r = ioctl(lstnr->fd, VIDIOC_QUERYCTRL, &qctrl);
+		if (r == 0) {
+			if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
+				continue;
+			
+			if (qctrl.type == V4L2_CTRL_TYPE_MENU)
+				enumerate_menu(lstnr, &qctrl);
+			else
+				crtx_dict_new_item(lstnr->controls, 'u', qctrl.name, qctrl.id, 0, CRTX_DIF_CREATE_KEY_COPY);
+		} else {
+			if (errno == EINVAL)
+				continue;
+			
+			ERROR("VIDIOC_QUERYCTRL failed: %s", strerror(errno));
+			break;
+		}
+	}
+	
+	for (qctrl.id = V4L2_CID_PRIVATE_BASE;; qctrl.id++) {
+		if (0 == ioctl (lstnr->fd, VIDIOC_QUERYCTRL, &qctrl)) {
+			if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
+				continue;
+			
+			if (qctrl.type == V4L2_CTRL_TYPE_MENU)
+				enumerate_menu (lstnr, &qctrl);
+			else
+				crtx_dict_new_item(lstnr->controls, 'u', qctrl.name, qctrl.id, 0, CRTX_DIF_CREATE_KEY_COPY);
+		} else {
+			if (errno == EINVAL)
+				break;
+			
+			ERROR("VIDIOC_QUERYCTRL failed: %s", strerror(errno));
+			break;
+		}
+	}
 }
 
 struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
@@ -260,7 +344,7 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 		di->dict = crtx_init_dict(0, 0, 0);
 		desc_dict = di->dict;
 		
-		crtx_dict_new_item(desc_dict, 'u', "type_id", fmtdesc.type, 0, CRTX_DIF_DONT_FREE_DATA); \
+		crtx_dict_new_item(desc_dict, 'u', "type_id", fmtdesc.type, 0, CRTX_DIF_DONT_FREE_DATA);
 		switch (fmtdesc.type) {
 		#define SWITCHTYPE(dict, type, id, s) \
 			case id: \
@@ -289,7 +373,7 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 		crtx_dict_new_item(desc_dict, 's', "fourcc", fourcc, 0, CRTX_DIF_CREATE_DATA_COPY);
 		
 		
-		
+		memset(&frmsize, 0, sizeof(struct v4l2_frmsizeenum));
 		frmsize.pixel_format = fmtdesc.pixelformat;
 		frmsize.index = 0;
 		while (ioctl(lstnr->fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) >= 0) {
@@ -327,6 +411,8 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 		
 		fmtdesc.index++;
 	}
+	
+	query_ctrls(lstnr);
 	
 	lstnr->parent.el_payload.fd = lstnr->fd;
 	lstnr->parent.el_payload.data = lstnr;
@@ -380,6 +466,7 @@ int v4l_main(int argc, char **argv) {
 	}
 	
 	crtx_print_dict(clist.formats);
+	crtx_print_dict(clist.controls);
 	
 	if (clist.formats->signature_length == 0) {
 		ERROR("no video formats found\n");
@@ -392,7 +479,6 @@ int v4l_main(int argc, char **argv) {
 	crtx_get_value(pix_format, "type_id", 'u', &clist.format.type, sizeof(clist.format.type));
 	
 	fourcc = crtx_get_string(pix_format, "fourcc");
-// 	crtx_get_value(pix_format, "fourcc", 'u', &clist.format.fmt.pix.pixelformat, sizeof(clist.format.fmt.pix.pixelformat));
 	memcpy(&clist.format.fmt.pix.pixelformat, fourcc, 4);
 	
 	di = crtx_get_item_by_idx(pix_format, 3);
@@ -402,8 +488,11 @@ int v4l_main(int argc, char **argv) {
 	
 	clist.subscription_length = 1;
 	clist.subscriptions = (struct v4l2_event_subscription*) calloc(1, sizeof(struct v4l2_event_subscription)*clist.subscription_length);
-	clist.subscriptions[0].type = V4L2_EVENT_FRAME_SYNC;
-	clist.subscriptions[0].flags = V4L2_EVENT_SUB_FL_SEND_INITIAL;
+	
+// 	clist.subscriptions[0].type = V4L2_EVENT_FRAME_SYNC;
+	clist.subscriptions[0].type = V4L2_EVENT_EOS;
+// 	clist.subscriptions[0].id = 0;
+// 	clist.subscriptions[0].flags = V4L2_EVENT_SUB_FL_SEND_INITIAL;
 	
 	ret = crtx_start_listener(lbase);
 	if (!ret) {

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "intern.h"
 #include "xcb_randr.h"
 
 #define QRY(cmd, conn, error, ...) cmd ## _reply(conn, cmd(conn, __VA_ARGS__), & (error))
