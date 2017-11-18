@@ -15,7 +15,6 @@
 
 char crtx_v4l2_event_ctrl2dict(struct v4l2_event_ctrl *ptr, struct crtx_dict **dict_ptr) {
         struct crtx_dict *dict;
-        struct crtx_dict_item *di;
 
         if (! *dict_ptr)
                 *dict_ptr = crtx_init_dict(0, 0, 0);
@@ -25,17 +24,11 @@ char crtx_v4l2_event_ctrl2dict(struct v4l2_event_ctrl *ptr, struct crtx_dict **d
 
         crtx_dict_new_item(dict, 'u', "type", ptr->type, sizeof(ptr->type), 0);
 
-        /* TODO union: 
         if (ptr) {
-                di->dict = crtx_init_dict(0, 0, 0);
-                struct crtx_dict *dict = di->dict;
-                struct crtx_dict_item *di2;
-
                 crtx_dict_new_item(dict, 'i', "value", ptr->value, sizeof(ptr->value), 0);
 
                 crtx_dict_new_item(dict, 'I', "value64", ptr->value64, sizeof(ptr->value64), 0);
         }
-        */
 
         crtx_dict_new_item(dict, 'u', "flags", ptr->flags, sizeof(ptr->flags), 0);
 
@@ -50,7 +43,7 @@ char crtx_v4l2_event_ctrl2dict(struct v4l2_event_ctrl *ptr, struct crtx_dict **d
         return 0;
 }
 
-char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr)
+char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr, struct crtx_dict *controls)
 {
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di, *di2;
@@ -63,48 +56,48 @@ char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr)
 	
 	switch(ptr->type) {
 		case V4L2_EVENT_ALL:
-			crtx_dict_new_item(dict, 'u', "etype", "all", 0, CRTX_DIF_DONT_FREE_DATA);
+			crtx_dict_new_item(dict, 's', "etype", "all", 0, CRTX_DIF_DONT_FREE_DATA);
 			break;
 		case V4L2_EVENT_VSYNC:
-			crtx_dict_new_item(dict, 'u', "etype", "vsync", 0, CRTX_DIF_DONT_FREE_DATA);
+			crtx_dict_new_item(dict, 's', "etype", "vsync", 0, CRTX_DIF_DONT_FREE_DATA);
 			
 // 			di2 = crtx_alloc_item(dict);
 // 			crtx_fill_data_item(di2, 'D', "vsync", 0, 0, 0);
 			// crtx_v4l2_event_vsync2dict(&ptr->vsync, di2->dict);
 			break;
 		case V4L2_EVENT_EOS:
-			crtx_dict_new_item(dict, 'u', "etype", "eos", 0, CRTX_DIF_DONT_FREE_DATA);
+			crtx_dict_new_item(dict, 's', "etype", "eos", 0, CRTX_DIF_DONT_FREE_DATA);
 			break;
 		case V4L2_EVENT_CTRL:
-			crtx_dict_new_item(dict, 'u', "etype", "ctrl", 0, CRTX_DIF_DONT_FREE_DATA);
+			crtx_dict_new_item(dict, 's', "etype", "ctrl", 0, CRTX_DIF_DONT_FREE_DATA);
 			
 			di2 = crtx_alloc_item(dict);
 			crtx_fill_data_item(di2, 'D', "ctrl", 0, 0, 0);
 			crtx_v4l2_event_ctrl2dict(&ptr->u.ctrl, &di2->dict);
 			break;
 		case V4L2_EVENT_FRAME_SYNC:
-			crtx_dict_new_item(dict, 'u', "etype", "frame sync", 0, CRTX_DIF_DONT_FREE_DATA);
+			crtx_dict_new_item(dict, 's', "etype", "frame sync", 0, CRTX_DIF_DONT_FREE_DATA);
 			
 // 			di2 = crtx_alloc_item(dict);
 // 			crtx_fill_data_item(di2, 'D', "frame_sync", 0, 0, 0);
 			// crtx_v4l2_event_frame_sync2dict(&ptr->frame_sync, di2->dict);
 			break;
 		case V4L2_EVENT_SOURCE_CHANGE:
-			crtx_dict_new_item(dict, 'u', "etype", "source change", 0, CRTX_DIF_DONT_FREE_DATA);
+			crtx_dict_new_item(dict, 's', "etype", "source change", 0, CRTX_DIF_DONT_FREE_DATA);
 			
 // 			di2 = crtx_alloc_item(dict);
 // 			crtx_fill_data_item(di2, 'D', "src_change", 0, 0, 0);
 			// crtx_v4l2_event_src_change2dict(&ptr->src_change, di2->dict);
 			break;
 		case V4L2_EVENT_MOTION_DET:
-			crtx_dict_new_item(dict, 'u', "etype", "motion det", 0, CRTX_DIF_DONT_FREE_DATA);
+			crtx_dict_new_item(dict, 's', "etype", "motion det", 0, CRTX_DIF_DONT_FREE_DATA);
 			
 // 			di2 = crtx_alloc_item(dict);
 // 			crtx_fill_data_item(di2, 'D', "motion_det", 0, 0, 0);
 			// crtx_v4l2_event_motion_det2dict(&ptr->motion_det, di2->dict);
 			break;
 		case V4L2_EVENT_PRIVATE_START:
-			crtx_dict_new_item(dict, 'u', "etype", "private start", 0, CRTX_DIF_DONT_FREE_DATA);
+			crtx_dict_new_item(dict, 's', "etype", "private start", 0, CRTX_DIF_DONT_FREE_DATA);
 			
 			crtx_dict_new_item(dict, 'p', "data", ptr->u.data, sizeof(ptr->u.data[0])*64, CRTX_DIF_DONT_FREE_DATA);
 			break;
@@ -123,6 +116,25 @@ char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr)
 	// crtx_timespec2dict(&ptr->timestamp, di->dict);
 	
 	crtx_dict_new_item(dict, 'u', "id", ptr->id, sizeof(ptr->id), 0);
+	
+	if (controls) {
+		int r;
+		unsigned int ctrl_id;
+		
+		di = crtx_get_first_item(controls);
+		while (di) {
+			if (di->type == 'u') {
+				r = crtx_get_item_value(di, 'u', &ctrl_id, sizeof(ctrl_id));
+				if (r != 0) {
+					if (ctrl_id == ptr->id) {
+						crtx_dict_new_item(dict, 's', "name", di->key, 0, CRTX_DIF_DONT_FREE_DATA);
+					}
+				}
+			}
+			
+			di = crtx_get_next_item(controls, di);
+		}
+	}
 	
 // 	di = crtx_alloc_item(dict);
 // 	crtx_fill_data_item(di, 'D', "reserved", 0, 0, 0);
@@ -148,42 +160,23 @@ static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void 
 	struct crtx_event *nevent;
 	struct crtx_v4l_listener *clist;
 	struct v4l2_event *v4l_event;
-	struct crtx_dict *dict;
 	int r;
 	
 	payload = (struct crtx_event_loop_payload*) event->data.pointer;
 	
 	clist = (struct crtx_v4l_listener *) payload->data;
 	
-	r = ioctl(clist->fd, VIDIOC_DQEVENT, &v4l_event);
+	v4l_event = (struct v4l2_event *) malloc(sizeof(struct v4l2_event));
+	r = ioctl(clist->fd, VIDIOC_DQEVENT, v4l_event);
 	if (r < 0) {
 		ERROR("VIDIOC_DQEVENT failed\n");
 		return -1;
 	}
 	
-	dict = 0;
-	crtx_v4l2_event2dict(v4l_event, &dict);
+	nevent = crtx_create_event("v4l");
+	crtx_event_set_raw_data(nevent, 'p', v4l_event, sizeof(v4l_event), 0);
 	
-	crtx_print_dict(dict);
-	
-// 	frame = (struct can_frame *) malloc(sizeof(struct can_frame));
-// 	r = read(clist->sockfd, frame, sizeof(struct can_frame));
-// 	if (r != sizeof(struct can_frame)) {
-// 		fprintf(stderr, "wrong can frame size: %d\n", r);
-// 		return 1;
-// 	}
-// 	
-// 	// 	printf("0x%04x ", frame->can_id);
-// 	
-// 	nevent = crtx_create_event("can"); //, frame, sizeof(frame));
-// 	crtx_event_set_raw_data(nevent, 'p', frame, sizeof(frame), 0);
-// 	// 	nevent->cb_before_release = &can_event_before_release_cb;
-// 	
-// 	// 	memcpy(&nevent->data.uint64, &frame.data, sizeof(uint64_t));
-// 	
-// 	crtx_add_event(clist->parent.graph, nevent);
-// 	
-// 	// 	exit(1);
+	crtx_add_event(clist->parent.graph, nevent);
 	
 	return 0;
 }
@@ -237,10 +230,10 @@ static void enumerate_menu(struct crtx_v4l_listener *lstnr, struct v4l2_queryctr
 	di = crtx_alloc_item(lstnr->controls);
 	di->type = 'D';
 	di->dict = crtx_init_dict(0, 0, 0);
-	di->key = crtx_stracpy(qctrl->name, 0);
+	di->key = crtx_stracpy((char*) qctrl->name, 0);
 	di->flags = di->flags | CRTX_DIF_CREATE_KEY_COPY;
 	
-	crtx_dict_new_item(di->dict, 'u', "id", querymenu.id, 0, 0);
+	crtx_dict_new_item(di->dict, 'u', "id", qctrl->id, 0, 0);
 	
 	memset (&querymenu, 0, sizeof (querymenu));
 	querymenu.id = qctrl->id;
@@ -248,7 +241,7 @@ static void enumerate_menu(struct crtx_v4l_listener *lstnr, struct v4l2_queryctr
 	for (querymenu.index = qctrl->minimum; querymenu.index <= qctrl->maximum; querymenu.index++) {
 		r = ioctl (lstnr->fd, VIDIOC_QUERYMENU, &querymenu);
 		if (r == 0) {
-			crtx_dict_new_item(di->dict, 'u', querymenu.name, querymenu.id, 0, CRTX_DIF_CREATE_KEY_COPY);
+			crtx_dict_new_item(di->dict, 'u', (char*) querymenu.name, querymenu.id, 0, CRTX_DIF_CREATE_KEY_COPY);
 		} else {
 			ERROR("VIDIOC_QUERYMENU failed: %s", strerror(errno));
 			break;
@@ -259,7 +252,6 @@ static void enumerate_menu(struct crtx_v4l_listener *lstnr, struct v4l2_queryctr
 static void query_ctrls(struct crtx_v4l_listener *lstnr) {
 	struct v4l2_queryctrl qctrl;
 	int r;
-	unsigned int last_id;
 	
 	memset (&qctrl, 0, sizeof (qctrl));
 	
@@ -274,7 +266,7 @@ static void query_ctrls(struct crtx_v4l_listener *lstnr) {
 			if (qctrl.type == V4L2_CTRL_TYPE_MENU)
 				enumerate_menu(lstnr, &qctrl);
 			else
-				crtx_dict_new_item(lstnr->controls, 'u', qctrl.name, qctrl.id, 0, CRTX_DIF_CREATE_KEY_COPY);
+				crtx_dict_new_item(lstnr->controls, 'u', (char*) qctrl.name, qctrl.id, 0, CRTX_DIF_CREATE_KEY_COPY);
 		} else {
 			if (errno == EINVAL)
 				continue;
@@ -292,7 +284,7 @@ static void query_ctrls(struct crtx_v4l_listener *lstnr) {
 			if (qctrl.type == V4L2_CTRL_TYPE_MENU)
 				enumerate_menu (lstnr, &qctrl);
 			else
-				crtx_dict_new_item(lstnr->controls, 'u', qctrl.name, qctrl.id, 0, CRTX_DIF_CREATE_KEY_COPY);
+				crtx_dict_new_item(lstnr->controls, 'u', (char*) qctrl.name, qctrl.id, 0, CRTX_DIF_CREATE_KEY_COPY);
 		} else {
 			if (errno == EINVAL)
 				break;
@@ -303,23 +295,10 @@ static void query_ctrls(struct crtx_v4l_listener *lstnr) {
 	}
 }
 
-struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
-	struct crtx_v4l_listener *lstnr;
-	int r;
+void query_formats(struct crtx_v4l_listener *lstnr) {
 	struct v4l2_fmtdesc fmtdesc;
 	struct v4l2_frmsizeenum frmsize;
 	
-	
-	lstnr = (struct crtx_v4l_listener *) options;
-	
-	lstnr->fd = open(lstnr->device_path, O_RDWR);
-	if (lstnr->fd < 0) {
-		ERROR("opening v4l device failed: %s\n", strerror(errno));
-		return 0;
-	}
-	
-	
-	lstnr->formats = crtx_init_dict(0, 0, 0);
 	
 	memset(&fmtdesc,0,sizeof(fmtdesc));
 	fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -329,10 +308,6 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 		struct crtx_dict_item *di;
 		char fourcc[5];
 		
-// 		printf("%s\n", fmtdesc.description);
-		
-// 		di = crtx_alloc_item(dict);
-// 		crtx_fill_data_item(di, 's', "description", fmtdesc.description, 0, CRTX_DIF_CREATE_DATA_COPY);
 		
 		di = crtx_alloc_item(lstnr->formats);
 		di->type = 'D';
@@ -346,7 +321,7 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 		
 		crtx_dict_new_item(desc_dict, 'u', "type_id", fmtdesc.type, 0, CRTX_DIF_DONT_FREE_DATA);
 		switch (fmtdesc.type) {
-		#define SWITCHTYPE(dict, type, id, s) \
+			#define SWITCHTYPE(dict, type, id, s) \
 			case id: \
 				crtx_dict_new_item(dict, 's', type, s, 0, CRTX_DIF_DONT_FREE_DATA); \
 				break;
@@ -391,33 +366,57 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 			if (frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
 				crtx_dict_new_item(size_dict, 'u', "width", frmsize.discrete.width, 0, CRTX_DIF_CREATE_DATA_COPY);
 				crtx_dict_new_item(size_dict, 'u', "height", frmsize.discrete.height, 0, CRTX_DIF_CREATE_DATA_COPY);
-// 				printf("%dx%d\n", frmsize.discrete.width, frmsize.discrete.height);
+				// 				printf("%dx%d\n", frmsize.discrete.width, frmsize.discrete.height);
 				
 			} else if (frmsize.type == V4L2_FRMSIZE_TYPE_STEPWISE) {
 				/* TODO:
-				__u32 min_width
-				__u32	max_width
-				__u32	step_width
-				__u32	min_height
-				__u32	max_height
-				__u32	step_height */
+				 *		__u32 min_width
+				 *		__u32	max_width
+				 *		__u32	step_width
+				 *		__u32	min_height
+				 *		__u32	max_height
+				 *		__u32	step_height */
 				
 				crtx_dict_new_item(size_dict, 'u', "max_width", frmsize.stepwise.max_width, 0, CRTX_DIF_CREATE_DATA_COPY);
 				crtx_dict_new_item(size_dict, 'u', "max_height", frmsize.stepwise.max_height, 0, CRTX_DIF_CREATE_DATA_COPY);
-// 				printf("%dx%d\n", frmsize.stepwise.max_width, frmsize.stepwise.max_height);
+				// 				printf("%dx%d\n", frmsize.stepwise.max_width, frmsize.stepwise.max_height);
 			}
 			frmsize.index++;
 		}
 		
 		fmtdesc.index++;
 	}
+}
+
+struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
+	struct crtx_v4l_listener *lstnr;
 	
+	
+	lstnr = (struct crtx_v4l_listener *) options;
+	
+	lstnr->fd = open(lstnr->device_path, O_RDWR);
+	if (lstnr->fd < 0) {
+		ERROR("opening v4l device failed: %s\n", strerror(errno));
+		return 0;
+	}
+	
+	lstnr->formats = crtx_init_dict(0, 0, 0);
+	
+	/*
+	 * query list of supported video formats
+	 */
+	query_formats(lstnr);
+	
+	/*
+	 * query list of available controls
+	 */
 	query_ctrls(lstnr);
 	
 	lstnr->parent.el_payload.fd = lstnr->fd;
 	lstnr->parent.el_payload.data = lstnr;
 	lstnr->parent.el_payload.event_handler = &v4l_fd_event_handler;
 	lstnr->parent.el_payload.event_handler_name = "v4l fd handler";
+	lstnr->parent.el_payload.event_flags = EPOLLPRI;
 // 	lstnr->parent.el_payload.error_cb = &on_error_cb;
 // 	lstnr->parent.el_payload.error_cb_data = lstnr;
 	
@@ -435,12 +434,19 @@ void crtx_v4l_finish() {
 }
 
 #ifdef CRTX_TEST
-static char can_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct can_frame *frame;
+static char v4l_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct v4l2_event *v4l_event;
+	struct crtx_dict *dict;
+	struct crtx_v4l_listener *lstnr;
 	
-	frame = (struct can_frame*) event->data.pointer;
+	v4l_event = (struct v4l2_event*) crtx_event_get_ptr(event);
 	
-// 	printf("CAN: %d\n", frame->can_id);
+	lstnr = (struct crtx_v4l_listener*) userdata;
+	
+	dict = 0;
+	crtx_v4l2_event2dict(v4l_event, &dict, lstnr->controls);
+
+	crtx_print_dict(dict);
 	
 	return 0;
 }
@@ -453,11 +459,13 @@ int v4l_main(int argc, char **argv) {
 	struct crtx_dict *pix_format, *fsize;
 	char *fourcc;
 	
+	if (argc < 2) {
+		printf("usage: %s <device>\n", argv[0]);
+		return 1;
+	}
 	
 	memset(&clist, 0, sizeof(struct crtx_v4l_listener));
-// 	clist.protocol = CAN_RAW;
-// 	clist.bitrate = 250000;
-	clist.device_path = "/dev/video1";
+	clist.device_path = argv[1];
 	
 	lbase = create_listener("v4l", &clist);
 	if (!lbase) {
@@ -467,6 +475,10 @@ int v4l_main(int argc, char **argv) {
 	
 	crtx_print_dict(clist.formats);
 	crtx_print_dict(clist.controls);
+	
+	/*
+	 * select video format
+	 */
 	
 	if (clist.formats->signature_length == 0) {
 		ERROR("no video formats found\n");
@@ -481,17 +493,25 @@ int v4l_main(int argc, char **argv) {
 	fourcc = crtx_get_string(pix_format, "fourcc");
 	memcpy(&clist.format.fmt.pix.pixelformat, fourcc, 4);
 	
+	// choose the first resolution that has always index 3
 	di = crtx_get_item_by_idx(pix_format, 3);
 	fsize = di->dict;
 	crtx_get_value(fsize, "width", 'u', &clist.format.fmt.pix.width, sizeof(clist.format.fmt.pix.width));
 	crtx_get_value(fsize, "height", 'u', &clist.format.fmt.pix.height, sizeof(clist.format.fmt.pix.height));
 	
+	
+	/*
+	 * subscribe to brightness control events
+	 */
+	
 	clist.subscription_length = 1;
 	clist.subscriptions = (struct v4l2_event_subscription*) calloc(1, sizeof(struct v4l2_event_subscription)*clist.subscription_length);
 	
-// 	clist.subscriptions[0].type = V4L2_EVENT_FRAME_SYNC;
-	clist.subscriptions[0].type = V4L2_EVENT_EOS;
-// 	clist.subscriptions[0].id = 0;
+	clist.subscriptions[0].type = V4L2_EVENT_CTRL;
+	
+	crtx_get_value(clist.controls, "Brightness", 'u', &clist.subscriptions[0].id, sizeof(clist.subscriptions[0].id));
+	
+	// with V4L2_EVENT_SUB_FL_SEND_INITIAL we _only_ get the initial value
 // 	clist.subscriptions[0].flags = V4L2_EVENT_SUB_FL_SEND_INITIAL;
 	
 	ret = crtx_start_listener(lbase);
@@ -501,9 +521,9 @@ int v4l_main(int argc, char **argv) {
 	}
 	
 	
-// 	crtx_create_task(lbase->graph, 0, "can_test", &can_event_handler, 0);
+	crtx_create_task(lbase->graph, 0, "v4l_test", &v4l_event_handler, &clist);
 	
-// 	crtx_loop();
+	crtx_loop();
 	
 	return 0;
 }
