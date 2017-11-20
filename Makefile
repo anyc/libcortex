@@ -54,7 +54,7 @@ endif
 
 .PHONY: clean
 
-all: $(local_mk) $(CONTROLS) plugins shared $(LAYER2)
+all: $(local_mk) $(CONTROLS) plugins shared $(LAYER2) crtx_include_dir
 
 $(APP): $(OBJS)
 
@@ -71,6 +71,10 @@ debug:
 	$(MAKE) $(MAKEFILE) DEBUG_CFLAGS="-g -g3 -gdwarf-2 -DDEBUG -Wall" #-Werror 
 
 
+crtx_include_dir:
+	mkdir -p crtx crtx/layer2/
+	for h in *.h; do [ -e crtx/$$h ] || ln -s ../$$h crtx/; done
+	for h in layer2/*.h; do [ -e crtx/$$h ] || ln -s ../../$$h crtx/layer2/; done
 
 dllist.o: CFLAGS+=-DCRTX_DLL
 dllist.o: llist.c
