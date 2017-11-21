@@ -168,6 +168,7 @@ struct crtx_event_loop_payload {
 	
 	crtx_handle_task_t event_handler;
 	char *event_handler_name;
+	int trigger_flags;
 	
 	void (*simple_callback)(struct crtx_event_loop_payload *el_payload);
 	void (*error_cb)(struct crtx_event_loop_payload *el_payload, void *data);

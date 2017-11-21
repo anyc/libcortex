@@ -22,4 +22,6 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options);
 void crtx_v4l_init();
 void crtx_v4l_finish();
 
+char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr, struct crtx_dict *controls);
+
 #endif

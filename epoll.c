@@ -123,6 +123,17 @@ struct epoll_control_pipe {
 	struct crtx_graph *graph;
 };
 
+char *epoll_flags2str(int *flags) {
+	#define RETFLAG(flag) if (*flags & flag) { *flags = (*flags) & (~flag); return #flag; }
+	
+	RETFLAG(EPOLLIN);
+	RETFLAG(EPOLLOUT);
+	RETFLAG(EPOLLRDHUP);
+	RETFLAG(EPOLLPRI);
+	RETFLAG(EPOLLERR);
+	RETFLAG(EPOLLHUP);
+}
+
 void *crtx_epoll_main(void *data) {
 	struct crtx_epoll_listener *epl;
 	size_t i;
@@ -148,6 +159,7 @@ void *crtx_epoll_main(void *data) {
 	rec_events = (struct epoll_event*) malloc(sizeof(struct epoll_event)*epl->max_n_events);
 	
 	while (!epl->stop) {
+		VDBG("epoll waiting...\n");
 		n_rdy_events = epoll_wait(epl->epoll_fd, rec_events, epl->max_n_events, epl->timeout);
 		if (n_rdy_events < 0 && errno == EINTR)
 			continue;
@@ -199,6 +211,8 @@ void *crtx_epoll_main(void *data) {
 					crtx_process_graph_tmain(ecp.graph);
 			} else {
 				el_payload = (struct crtx_event_loop_payload* ) rec_events[i].data.ptr;
+				
+				el_payload->trigger_flags = rec_events[i].events;
 				
 				memcpy(el_payload->el_data, &rec_events[i], sizeof(struct epoll_event));
 				

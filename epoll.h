@@ -22,6 +22,8 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options);
 void crtx_epoll_init();
 void crtx_epoll_finish();
 
+
+char *epoll_flags2str(int *flags);
 // struct crtx_event_loop_payload * crtx_epoll_add_fd(struct crtx_listener_base *lbase, int fd, void *data, char *event_handler_name, crtx_handle_task_t event_handler);
 void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
 void crtx_epoll_mod_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);

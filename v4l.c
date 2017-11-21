@@ -12,6 +12,7 @@
 #include "core.h"
 #include "intern.h"
 #include "v4l.h"
+#include "epoll.h"
 
 char crtx_v4l2_event_ctrl2dict(struct v4l2_event_ctrl *ptr, struct crtx_dict **dict_ptr) {
         struct crtx_dict *dict;
@@ -43,8 +44,7 @@ char crtx_v4l2_event_ctrl2dict(struct v4l2_event_ctrl *ptr, struct crtx_dict **d
         return 0;
 }
 
-char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr, struct crtx_dict *controls)
-{
+char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr, struct crtx_dict *controls) {
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di, *di2;
 	
@@ -166,19 +166,41 @@ static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void 
 	
 	clist = (struct crtx_v4l_listener *) payload->data;
 	
-	v4l_event = (struct v4l2_event *) malloc(sizeof(struct v4l2_event));
-	r = ioctl(clist->fd, VIDIOC_DQEVENT, v4l_event);
-	if (r < 0) {
-		ERROR("VIDIOC_DQEVENT failed\n");
-		return -1;
+// 	int flags = payload->trigger_flags;
+// 	while (flags) {
+// 		printf("%s\n", epoll_flags2str(&flags));
+// 	}
+	
+	// events are signaled through EPOLLPRI
+	if (payload->trigger_flags & EPOLLPRI) {
+		v4l_event = (struct v4l2_event *) malloc(sizeof(struct v4l2_event));
+		r = ioctl(clist->fd, VIDIOC_DQEVENT, v4l_event);
+		if (r < 0) {
+			ERROR("VIDIOC_DQEVENT failed\n");
+			return -1;
+		}
+		
+		nevent = crtx_create_event("event");
+		crtx_event_set_raw_data(nevent, 'p', v4l_event, sizeof(v4l_event), 0);
+		
+		crtx_add_event(clist->parent.graph, nevent);
+	} else
+	if (payload->trigger_flags & EPOLLIN) {
+		nevent = crtx_create_event("frame");
+// 		crtx_event_set_raw_data(nevent, 'p', v4l_event, sizeof(v4l_event), 0);
+		
+		crtx_add_event(clist->parent.graph, nevent);
 	}
 	
-	nevent = crtx_create_event("v4l");
-	crtx_event_set_raw_data(nevent, 'p', v4l_event, sizeof(v4l_event), 0);
-	
-	crtx_add_event(clist->parent.graph, nevent);
-	
 	return 0;
+}
+
+static void shutdown_listener(struct crtx_listener_base *data) {
+	struct crtx_v4l_listener *clist;
+	
+	clist = (struct crtx_v4l_listener*) data;
+	
+	close(clist->fd);
 }
 
 static char start_listener(struct crtx_listener_base *listener) {
@@ -196,10 +218,10 @@ static char start_listener(struct crtx_listener_base *listener) {
 		((char *)&lstnr->format.fmt.pix.pixelformat)[3],
 		lstnr->format.fmt.pix.width, lstnr->format.fmt.pix.height);
 	
-	if(ioctl(lstnr->fd, VIDIOC_S_FMT, &lstnr->format) < 0){
-		ERROR("VIDIOC_S_FMT failed\n");
-		return -1;
-	}
+// 	if (ioctl(lstnr->fd, VIDIOC_S_FMT, &lstnr->format) < 0) {
+// 		ERROR("VIDIOC_S_FMT failed: %s\n", strerror(errno));
+// 		return -1;
+// 	}
 	
 	for (i=0; i < lstnr->subscription_length; i++) {
 		r = ioctl(lstnr->fd, VIDIOC_SUBSCRIBE_EVENT, &lstnr->subscriptions[i]);
@@ -400,6 +422,12 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 		return 0;
 	}
 	
+	
+	// get default
+	if(ioctl(lstnr->fd, VIDIOC_G_FMT, &lstnr->format) < 0){
+		printf("VIDIOC_G_FMT failed %s\n", strerror(errno));
+	}
+	
 	lstnr->formats = crtx_init_dict(0, 0, 0);
 	
 	/*
@@ -416,11 +444,11 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 	lstnr->parent.el_payload.data = lstnr;
 	lstnr->parent.el_payload.event_handler = &v4l_fd_event_handler;
 	lstnr->parent.el_payload.event_handler_name = "v4l fd handler";
-	lstnr->parent.el_payload.event_flags = EPOLLPRI;
+	lstnr->parent.el_payload.event_flags = EPOLLPRI | EPOLLIN;
 // 	lstnr->parent.el_payload.error_cb = &on_error_cb;
 // 	lstnr->parent.el_payload.error_cb_data = lstnr;
 	
-// 	lstnr->parent.shutdown = &crtx_shutdown_can_listener;
+	lstnr->parent.shutdown = &shutdown_listener;
 	
 	lstnr->parent.start_listener = &start_listener;
 	
@@ -514,14 +542,14 @@ int v4l_main(int argc, char **argv) {
 	// with V4L2_EVENT_SUB_FL_SEND_INITIAL we _only_ get the initial value
 // 	clist.subscriptions[0].flags = V4L2_EVENT_SUB_FL_SEND_INITIAL;
 	
+	crtx_create_task(lbase->graph, 0, "v4l_test", &v4l_event_handler, &clist);
+	
 	ret = crtx_start_listener(lbase);
 	if (!ret) {
 		ERROR("starting v4l listener failed\n");
 		return 0;
 	}
 	
-	
-	crtx_create_task(lbase->graph, 0, "v4l_test", &v4l_event_handler, &clist);
 	
 	crtx_loop();
 	

@@ -5,6 +5,7 @@
 
 #include <rrd.h>
 
+#include "intern.h"
 #include "core.h"
 #include "dynamic_evdev.h"
 
@@ -459,13 +460,13 @@ static int print_event(struct input_event *ev)
 		 libevdev_event_type_get_name(ev->type));
 	} else {
 		printf("Event: time %ld.%06ld, type %d (%s), code %d (%s), value %d\n",
-			   ev->time.tv_sec,
-		 ev->time.tv_usec,
-		 ev->type,
-		 libevdev_event_type_get_name(ev->type),
-			   ev->code,
-		 libevdev_event_code_get_name(ev->type, ev->code),
-			   ev->value
+			ev->time.tv_sec,
+			ev->time.tv_usec,
+			ev->type,
+			libevdev_event_type_get_name(ev->type),
+			ev->code,
+			libevdev_event_code_get_name(ev->type, ev->code),
+			ev->value
 		);
 	}
 	return 0;

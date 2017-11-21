@@ -13,6 +13,7 @@ struct crtx_dynamic_evdev_listener {
 	struct crtx_dll *(*alloc_new)();
 	void (*on_free)(struct crtx_dll *dll);
 	
+	// this task will be added to each device-specific evdev listener
 	crtx_handle_task_t handler;
 };
 
