@@ -2,8 +2,8 @@
 #ifndef _CRTX_DYNAMIC_EVDEV_H
 #define _CRTX_DYNAMIC_EVDEV_H
 
-#include "udev.h"
-#include "evdev.h"
+#include <crtx/udev.h>
+#include <crtx/evdev.h>
 
 struct crtx_dynamic_evdev_listener {
 	struct crtx_listener_base parent;
@@ -15,6 +15,7 @@ struct crtx_dynamic_evdev_listener {
 	
 	// this task will be added to each device-specific evdev listener
 	crtx_handle_task_t handler;
+	void *handler_userdata;
 };
 
 struct crtx_listener_base *crtx_new_dynamic_evdev_listener(void *options);

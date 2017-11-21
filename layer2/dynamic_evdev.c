@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef WITH_NCURSES
 #include <rrd.h>
+#endif
 
 #include "intern.h"
 #include "core.h"
@@ -17,7 +19,7 @@ static char *udev_input_filters[] = {
 
 static void on_free_evdev_listener_data(struct crtx_listener_base *data, void *userdata) {
 	struct crtx_evdev_listener *el;
-	struct crtx_dll *dll; // = (struct crtx_dll*) userdata;
+	struct crtx_dll *dll;
 	struct crtx_dynamic_evdev_listener *dyn_evdev;
 	
 	dyn_evdev = (struct crtx_dynamic_evdev_listener *) userdata;
@@ -35,10 +37,7 @@ static void on_free_evdev_listener_data(struct crtx_listener_base *data, void *u
 	
 	el = (struct crtx_evdev_listener *) data;
 	
-// 	printf("free %s\n", el->device_path);
 	free(el->device_path);
-// 	free_listener(&el->parent);
-// 	free(el);
 	free(dll);
 }
 
@@ -48,23 +47,20 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 	char ret;
 	struct crtx_dll *dll;
 	const char *devpath;
-// 	struct crtx_event *event;
-// 	struct crtx_dict *dict;
 	
 	
-// 	el = (struct crtx_evdev_listener *) calloc(1, sizeof(struct crtx_evdev_listener));
-// 	dll = crtx_dll_append_new(&dyn_evdev->evdev_listeners, el);
+	devpath = udev_device_get_property_value(dev, "DEVNAME");
+	if (!devpath) {
+		INFO("ignoring device due to missing device path\n");
+		return -1;
+	}
 	
 	// only accept devices with this flag in order to avoid legacy interfaces
 	// that are incompatible with evdev (e.g., /dev/input/mouseX)
-	if (!udev_device_get_property_value(dev, "LIBINPUT_DEVICE_GROUP"))
+	if (!udev_device_get_property_value(dev, "LIBINPUT_DEVICE_GROUP")) {
+		INFO("ignoring %s due to missing libinput flags\n", devpath);
 		return -1;
-	
-	devpath = udev_device_get_property_value(dev, "DEVNAME");
-	if (!devpath)
-		return -1;
-	
-	
+	}
 	
 	if (dyn_evdev->alloc_new) {
 		dll = dyn_evdev->alloc_new(dev);
@@ -97,53 +93,37 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 		return 1;
 	}
 	
-	crtx_create_task(lbase->graph, 0, "dyn_evdev_handler", dyn_evdev->handler, dyn_evdev);
-	
-// 		printf("dll %p %p %p\n", dll, el, lbase->graph->listener);
-	
-// 	event = crtx_create_event("NEW_DEVICE");
-// 	dict = crtx_create_dict("",
-// 			"
-// 			);
-// 	crtx_event_set_dict_data(event, dict, 0);
-	
-	// 	reference_event_release(event);
-	
-// 	crtx_add_event(el->parent.graph, event);
+	crtx_create_task(lbase->graph, 0, "dyn_evdev_handler", dyn_evdev->handler, dyn_evdev->handler_userdata);
 	
 	ret = crtx_start_listener(lbase);
 	if (!ret) {
 		ERROR("starting evdev listener failed\n");
 		
 		crtx_free_listener(lbase);
-// 		free(el->device_path);
-// 		free(el);
-// 		crtx_dll_unlink(&dyn_evdev->evdev_listeners, dll);
-// 		free(dll);
 		
 		return 1;
 	}
+	
+	DBG("new evdev device: %s\n", devpath);
 	
 	return 0;
 }
 
 static char udev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct udev_device *dev;
-// 	const char *devpath;
+ 	const char *devpath;
 	struct crtx_dynamic_evdev_listener *dyn_evdev;
 	const char *action;
 	
 	dyn_evdev = (struct crtx_dynamic_evdev_listener *) userdata;
 	
-// 	dev = (struct udev_device *) event->data.pointer;
 	dev = (struct udev_device *) crtx_event_get_ptr(event);
 	
 	action = udev_device_get_action(dev);
 	
 	if (!action || !strcmp(action, "add")) {
-// 		devpath = udev_device_get_property_value(dev, "DEVNAME");
-// 		if (devpath)
-// 			add_evdev_listener(dyn_evdev, devpath);
+ 		devpath = udev_device_get_property_value(dev, "DEVNAME");
+		
 		add_evdev_listener(dyn_evdev, dev);
 	}
 	
@@ -178,17 +158,14 @@ static void shutdown_listener(struct crtx_listener_base *data) {
 		eitn = eit->next;
 		el = eit->data;
 		
-// 		free(el->device_path);
 		crtx_free_listener(&el->parent);
-// 		free(el);
-// 		free(eit);
 	}
 }
 
 struct crtx_listener_base *crtx_new_dynamic_evdev_listener(void *options) {
 	struct crtx_listener_base *udev_lbase;
 	struct crtx_dynamic_evdev_listener *dyn_evdev;
-// 	char ret;
+	
 	
 	dyn_evdev = (struct crtx_dynamic_evdev_listener *) options;
 	
@@ -244,7 +221,6 @@ struct interval {
 	struct timespec *start;
 };
 
-// #define N_SLOTS 5
 #define SLOT_TIME 200
 struct counter {
 	struct crtx_dll dll;
@@ -489,9 +465,11 @@ int dynamic_evdev_main(int argc, char **argv) {
 	struct crtx_dynamic_evdev_listener dyn_evdev;
 	char ret;
 	
+	
 	memset(&dyn_evdev, 0, sizeof(struct crtx_dynamic_evdev_listener));
 	
 	dyn_evdev.handler = &dyn_evdev_test_handler;
+	dyn_evdev.handler_userdata = &dyn_evdev;
 	
 	lbase = create_listener("dynamic_evdev", &dyn_evdev);
 	if (!lbase) {
@@ -500,6 +478,8 @@ int dynamic_evdev_main(int argc, char **argv) {
 	}
 	
 	#ifdef WITH_NCURSES
+	int err;
+	
 	dyn_evdev.alloc_new = alloc_new_device_memory;
 	dyn_evdev.on_free = on_free_device;
 	
@@ -519,9 +499,9 @@ int dynamic_evdev_main(int argc, char **argv) {
 		"RRA:AVERAGE:0.5:1:576",
 		NULL
 	};
-	int err;
 	
-	optind = opterr = 0; /* Because rrdtool uses getopt() */
+	optind = 0;
+	opterr = 0;
 	rrd_clear_error();
 	err = rrd_create(4, createparams);
 	
@@ -531,10 +511,6 @@ int dynamic_evdev_main(int argc, char **argv) {
 	initscr ();
 	curs_set (0);
 	#endif
-	
-// 	crtx_create_task(lbase->graph, 0, "dyn_evdev_test", dyn_evdev_test_handler, 0);
-	
-// 	crtx_create_task(dyn_evdev.udev_lstnr.parent.graph, 0, "on_new_device", on_new_device, 0);
 	
 	ret = crtx_start_listener(lbase);
 	if (!ret) {

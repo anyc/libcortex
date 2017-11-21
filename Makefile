@@ -72,9 +72,9 @@ debug:
 
 
 crtx_include_dir:
-	mkdir -p crtx crtx/layer2/
-	for h in *.h; do [ -e crtx/$$h ] || ln -s ../$$h crtx/; done
-	for h in layer2/*.h; do [ -e crtx/$$h ] || ln -s ../../$$h crtx/layer2/; done
+	mkdir -p include/crtx include/crtx/layer2/
+	for h in *.h; do [ -e include/crtx/$$h ] || ln -s ../../$$h include/crtx/; done
+	for h in layer2/*.h; do [ -e include/crtx/$$h ] || ln -s ../../../$$h include/crtx/layer2/; done
 
 dllist.o: CFLAGS+=-DCRTX_DLL
 dllist.o: llist.c
