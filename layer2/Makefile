@@ -14,8 +14,8 @@ TESTS+=$(foreach t,$(LAYER2_LISTENERS), $(t).test)
 
 include $(libcrtx_dir)/Makefile.modules
 
-CFLAGS_dynamic_evdev=$(shell pkg-config --cflags ncurses librrd)
-LDLIBS_dynamic_evdev=$(shell pkg-config --libs ncurses librrd)
+# CFLAGS_dynamic_evdev=$(shell pkg-config --cflags ncurses librrd)
+# LDLIBS_dynamic_evdev=$(shell pkg-config --libs ncurses librrd)
 DEPS_dynamic_evdev=evdev udev
 
 CFLAGS_netif=

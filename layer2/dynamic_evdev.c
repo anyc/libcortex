@@ -95,6 +95,18 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 	
 	crtx_create_task(lbase->graph, 0, "dyn_evdev_handler", dyn_evdev->handler, dyn_evdev->handler_userdata);
 	
+// 		printf("dll %p %p %p\n", dll, el, lbase->graph->listener);
+	
+// 	event = crtx_create_event("NEW_DEVICE");
+// 	dict = crtx_create_dict("",
+// 			"
+// 			);
+// 	crtx_event_set_dict_data(event, dict, 0);
+	
+	// 	reference_event_release(event);
+	
+// 	crtx_add_event(el->parent.graph, event);
+	
 	ret = crtx_start_listener(lbase);
 	if (!ret) {
 		ERROR("starting evdev listener failed\n");
