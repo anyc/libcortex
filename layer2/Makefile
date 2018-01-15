@@ -3,7 +3,7 @@ libcrtx_dir=../
 
 PKG_CONFIG?=pkg-config
 
-CFLAGS+=-I$(libcrtx_dir) -fPIC
+CFLAGS+=-I$(libcrtx_dir) -I$(libcrtx_dir)include -fPIC
 LDFLAGS+=-L$(libcrtx_dir)
 
 LAYER2_LISTENERS?=dynamic_evdev netif

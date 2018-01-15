@@ -3,6 +3,12 @@ local_mk ?= Makefile.local
 local_mk_rules ?= Makefile.local_rules
 
 PKG_CONFIG?=pkg-config
+INSTALL?=install
+
+prefix?=/usr
+libdir?=$(prefix)/lib
+plugindir?=$(libdir)
+includedir?=$(prefix)/include
 
 APP=cortexd
 SHAREDLIB=libcrtx.so
@@ -114,5 +120,15 @@ crtx_layer2: $(SHAREDLIB)
 
 crtx_layer2_tests: $(SHAREDLIB)
 	$(MAKE) -C layer2 tests LAYER2_LISTENERS="$(LAYER2_LISTENERS)"
+
+install:
+	$(INSTALL) -m 755 -d $(DESTDIR)$(libdir)
+	$(INSTALL) -m 755 -d $(DESTDIR)$(includedir)/crtx/
+	$(INSTALL) -m 755 -d $(DESTDIR)$(plugindir)
 	
+	$(INSTALL) -m 755 libcrtx.so $(DESTDIR)$(libdir)
+	$(INSTALL) -m 755 libcrtx_*.so $(DESTDIR)$(plugindir)
+	
+	$(INSTALL) -m 755 *.h $(DESTDIR)$(includedir)/crtx/
+
 -include $(local_mk_rules)
