@@ -22,7 +22,7 @@ AVAILABLE_TESTS=avahi can epoll evdev libvirt nl_libnl netlink_ge nl_route_raw p
 # LDFLAGS=-rdynamic
 # CONTROLS+=$(patsubst examples/control_%.c,examples/libcrtx_%.so,$(wildcard examples/*.c))
 
-CFLAGS+=$(DEBUG_CFLAGS) -D_FILE_OFFSET_BITS=64 -fPIC
+CFLAGS+=$(DEBUG_CFLAGS) -D_FILE_OFFSET_BITS=64 -fPIC -DCRTX_PLUGIN_DIR=\"$(plugindir)\"
 LDLIBS+=-lpthread -ldl
 
 #
@@ -124,11 +124,13 @@ crtx_layer2_tests: $(SHAREDLIB)
 install:
 	$(INSTALL) -m 755 -d $(DESTDIR)$(libdir)
 	$(INSTALL) -m 755 -d $(DESTDIR)$(includedir)/crtx/
+	$(INSTALL) -m 755 -d $(DESTDIR)$(includedir)/crtx/layer2/
 	$(INSTALL) -m 755 -d $(DESTDIR)$(plugindir)
 	
 	$(INSTALL) -m 755 libcrtx.so $(DESTDIR)$(libdir)
 	$(INSTALL) -m 755 libcrtx_*.so $(DESTDIR)$(plugindir)
 	
 	$(INSTALL) -m 755 *.h $(DESTDIR)$(includedir)/crtx/
+	$(INSTALL) -m 755 layer2/*.h $(DESTDIR)$(includedir)/crtx/layer2/
 
 -include $(local_mk_rules)
