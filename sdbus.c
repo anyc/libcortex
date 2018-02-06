@@ -342,20 +342,28 @@ static int sdbus_match_listener_cb(sd_bus_message *m, void *userdata, sd_bus_err
 	return 0;
 }
 
-// #include <poll.h>
-// int crtx_sd_bus_get_events(sd_bus *bus) {
-// 	int f, result;
-// 	
-// 	result = 0;
-// 	
-// 	f = sd_bus_get_events(bus);
-// 	if (f & POLLIN)
-// 		result |= EPOLLIN;
-// 	if (f & POLLOUT)
-// 		result |= EPOLLOUT;
-// 	
-// 	return result;
-// }
+#include <poll.h>
+int crtx_sd_bus_get_events(sd_bus *bus) {
+	int f, result;
+	
+	result = 0;
+	
+	f = sd_bus_get_events(bus);
+	if (f & POLLIN) {
+		result |= EPOLLIN;
+		f = f & (~POLLIN);
+	}
+	if (f & POLLOUT) {
+		result |= EPOLLOUT;
+		f = f & (~POLLOUT);
+	}
+	
+	if (f) {
+		INFO("sdbus poll2epoll: untranslated flag %d\n", f);
+	}
+	
+	return result;
+}
 
 static char sdbus_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event_loop_payload *payload;
@@ -465,8 +473,9 @@ struct crtx_listener_base *crtx_new_sdbus_listener(void *options) {
 // 		eflags |= EPOLLOUT;
 	
 	sdlist->parent.el_payload.fd = sd_bus_get_fd(sdlist->bus);
-// 	sdlist->parent.el_payload.event_flags = EPOLLIN | crtx_sd_bus_get_events(sdlist->bus);
+	sdlist->parent.el_payload.event_flags = crtx_sd_bus_get_events(sdlist->bus);
 // 	sdlist->parent.el_payload.event_flags = EPOLLIN | EPOLLOUT;
+// 	sdlist->parent.el_payload.event_flags = EPOLLIN;
 	sdlist->parent.el_payload.data = sdlist;
 	sdlist->parent.el_payload.event_handler = &sdbus_fd_event_handler;
 	sdlist->parent.el_payload.event_handler_name = "sdbus event handler";
