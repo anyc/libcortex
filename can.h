@@ -12,6 +12,7 @@ struct crtx_can_listener {
 	
 	char *interface_name;
 	char ignore_if_state;
+	char setup_if_only;
 	unsigned int bitrate;
 	int protocol;
 	

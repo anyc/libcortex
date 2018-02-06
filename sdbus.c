@@ -3,7 +3,7 @@
 
 #include "intern.h"
 #include "core.h"
-#include "sd_bus.h"
+#include "sdbus.h"
 #include "threads.h"
 
 // busctl --user tree org.cortexd.main

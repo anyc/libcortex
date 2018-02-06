@@ -29,8 +29,8 @@ LDLIBS_nl_libnl+=$(shell $(PKG_CONFIG) --libs libnl-3.0)
 CFLAGS_pulseaudio+=$(shell $(PKG_CONFIG) --cflags libpulse)
 LDLIBS_pulseaudio+=$(shell $(PKG_CONFIG) --libs libpulse)
 
-CFLAGS_sd_bus+=$(shell $(PKG_CONFIG) --cflags libsystemd)
-LDLIBS_sd_bus+=$(shell $(PKG_CONFIG) --libs libsystemd)
+CFLAGS_sdbus+=$(shell $(PKG_CONFIG) --cflags libsystemd)
+LDLIBS_sdbus+=$(shell $(PKG_CONFIG) --libs libsystemd)
 
 LDLIBS_sip+=-leXosip2 -losipparser2
 

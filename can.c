@@ -41,24 +41,24 @@ static char can_fd_event_handler(struct crtx_event *event, void *userdata, void 
 	
 	clist = (struct crtx_can_listener *) payload->data;
 	
-	frame = (struct can_frame *) malloc(sizeof(struct can_frame));
-	r = read(clist->sockfd, frame, sizeof(struct can_frame));
-	if (r != sizeof(struct can_frame)) {
-		fprintf(stderr, "wrong can frame size: %d\n", r);
-		return 1;
+	// only create event if there are tasks in the queue
+	if (clist->parent.graph->tasks) {
+		frame = (struct can_frame *) malloc(sizeof(struct can_frame));
+		r = read(clist->sockfd, frame, sizeof(struct can_frame));
+		if (r != sizeof(struct can_frame)) {
+			fprintf(stderr, "wrong can frame size: %d\n", r);
+			return 1;
+		}
+		
+		nevent = crtx_create_event("can");
+		crtx_event_set_raw_data(nevent, 'p', frame, sizeof(frame), 0);
+		
+		crtx_add_event(clist->parent.graph, nevent);
+	} else {
+		// consume and discard the data
+		struct can_frame static_frame;
+		read(clist->sockfd, &static_frame, sizeof(struct can_frame));
 	}
-	
-// 	printf("0x%04x ", frame->can_id);
-	
-	nevent = crtx_create_event("can"); //, frame, sizeof(frame));
-	crtx_event_set_raw_data(nevent, 'p', frame, sizeof(frame), 0);
-// 	nevent->cb_before_release = &can_event_before_release_cb;
-	
-// 	memcpy(&nevent->data.uint64, &frame.data, sizeof(uint64_t));
-	
-	crtx_add_event(clist->parent.graph, nevent);
-	
-// 	exit(1);
 	
 	return 0;
 }
@@ -81,6 +81,14 @@ void crtx_shutdown_can_listener(struct crtx_listener_base *data) {
 static char *print_can_state (uint32_t state)
 {
 	char *text;
+	
+	
+// 	CAN_STATE_ERROR_ACTIVE = 0,	/* RX/TX error count < 96 */
+// 	CAN_STATE_ERROR_WARNING,	/* RX/TX error count < 128 */
+// 	CAN_STATE_ERROR_PASSIVE,	/* RX/TX error count < 256 */
+// 	CAN_STATE_BUS_OFF,		/* RX/TX error count >= 256 */
+// 	CAN_STATE_STOPPED,		/* Device is stopped */
+// 	CAN_STATE_SLEEPING,		/* Device is sleeping */
 	
 	switch (state)
 	{
@@ -298,23 +306,24 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 		print_can_state(can_state);
 	}
 	
-	
-	r = bind(clist->sockfd, (struct sockaddr *)&clist->addr, sizeof(clist->addr));
-	if (r != 0) {
-		fprintf(stderr, "bind failed: %s\n", strerror(errno));
-		close(clist->sockfd);
-		return 0;
+	if (!clist->setup_if_only) {
+		r = bind(clist->sockfd, (struct sockaddr *)&clist->addr, sizeof(clist->addr));
+		if (r != 0) {
+			fprintf(stderr, "bind failed: %s\n", strerror(errno));
+			close(clist->sockfd);
+			return 0;
+		}
+		
+		clist->parent.el_payload.fd = clist->sockfd;
+		clist->parent.el_payload.data = clist;
+		clist->parent.el_payload.event_flags = EPOLLIN;
+		clist->parent.el_payload.event_handler = &can_fd_event_handler;
+		clist->parent.el_payload.event_handler_name = "can fd handler";
+		clist->parent.el_payload.error_cb = &on_error_cb;
+		clist->parent.el_payload.error_cb_data = clist;
+		
+		clist->parent.shutdown = &crtx_shutdown_can_listener;
 	}
-	
-	clist->parent.el_payload.fd = clist->sockfd;
-	clist->parent.el_payload.data = clist;
-	clist->parent.el_payload.event_flags = EPOLLIN;
-	clist->parent.el_payload.event_handler = &can_fd_event_handler;
-	clist->parent.el_payload.event_handler_name = "can fd handler";
-	clist->parent.el_payload.error_cb = &on_error_cb;
-	clist->parent.el_payload.error_cb_data = clist;
-	
-	clist->parent.shutdown = &crtx_shutdown_can_listener;
 	
 // 	new_eventgraph(&clist->parent.graph, "can", can_msg_etype);
 	
