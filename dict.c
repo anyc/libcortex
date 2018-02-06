@@ -1023,11 +1023,11 @@ struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, 
 		if (pit->type == 's') {
 			dict_printf(dict, pit->format, &di->string, &di->size, &alloc);
 		} else
-			if (pit->type == 'D') {
-				
-			} else {
-				
-			}
+		if (pit->type == 'D') {
+			
+		} else {
+			
+		}
 			
 			di->flags = pit->flag;
 		

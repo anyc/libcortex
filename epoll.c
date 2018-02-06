@@ -132,6 +132,8 @@ char *epoll_flags2str(int *flags) {
 	RETFLAG(EPOLLPRI);
 	RETFLAG(EPOLLERR);
 	RETFLAG(EPOLLHUP);
+	
+	return "";
 }
 
 void *crtx_epoll_main(void *data) {
