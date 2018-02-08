@@ -83,7 +83,7 @@ static char timer_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	event = crtx_create_event(CRTX_EVT_TIMER);
 // 	event->data.uint32 = exp;
 // 	event->data.type = 'u';
-	crtx_event_set_raw_data(event, 'U', exp, sizeof(exp));
+	crtx_event_set_raw_data(event, 'U', exp, sizeof(exp), 0);
 // 	event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 	
 	crtx_add_event(tlist->parent.graph, event);
