@@ -151,8 +151,10 @@ static void *socket_connection_tmain(void *data) {
 	
 	memcpy(&slist, args->slistener, sizeof(struct crtx_socket_listener));
 	
-	crtx_create_graph(&slist.parent.graph, 0, slist.recv_types);
-	crtx_create_graph(&slist.outbox, 0, slist.send_types);
+// 	crtx_create_graph(&slist.parent.graph, 0, slist.recv_types);
+// 	crtx_create_graph(&slist.outbox, 0, slist.send_types);
+	crtx_create_graph(&slist.parent.graph, 0);
+	crtx_create_graph(&slist.outbox, 0);
 	
 	slist.sockfd = args->sockfd;
 	
@@ -342,8 +344,10 @@ struct crtx_listener_base *crtx_new_socket_client_listener(void *options) {
 	
 	create_in_out_box();
 	
-	crtx_create_graph(&slistener->parent.graph, 0, slistener->recv_types);
-	crtx_create_graph(&slistener->outbox, 0, slistener->send_types);
+// 	crtx_create_graph(&slistener->parent.graph, 0, slistener->recv_types);
+// 	crtx_create_graph(&slistener->outbox, 0, slistener->send_types);
+	crtx_create_graph(&slistener->parent.graph, 0);
+	crtx_create_graph(&slistener->outbox, 0);
 	
 	crtx_create_task(slistener->parent.graph, 200, "inbound_event_handler", &inbound_event_handler, slistener);
 	crtx_create_task(slistener->outbox, 200, "outbound_event_handler", &outbound_event_handler, slistener);

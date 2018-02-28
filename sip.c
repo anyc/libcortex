@@ -280,7 +280,7 @@ int sip_main(int argc, char **argv) {
 	}
 	
 	// create a new graph and add all known task handlers for the event type "user_notification"
-	crtx_create_graph(&notify_graph, "notify_graph", 0);
+	crtx_create_graph(&notify_graph, "notify_graph");
 	crtx_autofill_graph_with_tasks(notify_graph, "cortex.user_notification");
 	
 	// add the handler that will transform sip events into user notification events
