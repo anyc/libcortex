@@ -4,6 +4,8 @@
 
 #include <systemd/sd-bus.h>
 
+#include "linkedlist.h"
+
 enum crtx_sdbus_type {
 	CRTX_SDBUS_TYPE_DEFAULT = 0,
 	CRTX_SDBUS_TYPE_USER,
@@ -19,52 +21,38 @@ struct crtx_sdbus_listener;
 struct crtx_sdbus_match {
 	char *match_str;
 	char *event_type;
+	
+	sd_bus_message_handler_t callback;
+	void *callback_data;
+	
 	struct crtx_sdbus_listener *listener;
 };
 
 struct crtx_sdbus_track {
-// 	sd_bus_track *sdbus_track;
-// 	sd_bus_track_handler_t handler;
-	
-// 	int (*track_event_handler)(struct crtx_sdbus_listener *listener, struct crtx_sdbus_track *track, void *userdata);
-// 	void *handler_data;
+	struct crtx_sdbus_match match;
 	
 	const char *peer;
-	char *event_type;
-	void *event_data;
-	struct crtx_sdbus_listener *listener;
 	
+	void (*appear_cb)(struct crtx_sdbus_track *track, char *peer, char *new_name, void *userdata);
+	void (*disappear_cb)(struct crtx_sdbus_track *track, char *peer, char *new_name, void *userdata);
+	void *userdata;
 };
 
 struct crtx_sdbus_listener {
 	struct crtx_listener_base parent;
 	
 	enum crtx_sdbus_type bus_type;
-	char *name; // contains either the host name or machine name if bus_type is
+	char *name;	// contains either the host name or machine name if bus_type is
 				// either CRTX_SDBUS_TYPE_SYSTEM_REMOTE or CRTX_SDBUS_TYPE_SYSTEM_MACHINE
 	sd_bus *bus;
 	
 	struct crtx_dll *matches;
-// 	struct crtx_sdbus_match *matches;
-// 	struct crtx_sdbus_track **tracks;
-// 	unsigned int n_tracks;
 };
-
-extern sd_bus *sd_bus_main_bus;
 
 int crtx_sd_bus_message_read_string(sd_bus_message *m, char **p);
 char crtx_open_sdbus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name);
-void sd_bus_add_signal_listener(sd_bus *bus, char *path, char *event_type);
-void sd_bus_print_event_task(struct crtx_event *event, void *userdata);
-void sd_bus_print_msg(sd_bus_message *m);
+void crtx_sdbus_print_msg(sd_bus_message *m);
 int crtx_sdbus_track_add(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus_track *track);
-
-int crtx_sdbus_get_property_str(struct crtx_sdbus_listener *sdlist, 
-								char *destination,
-								char *path,
-								char *interface,
-								char *member,
-								char **s);
 
 struct crtx_sdbus_listener *crtx_sdbus_get_default_listener(enum crtx_sdbus_type sdbus_type);
 
