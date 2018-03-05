@@ -22,6 +22,20 @@ struct crtx_sdbus_match {
 	struct crtx_sdbus_listener *listener;
 };
 
+struct crtx_sdbus_track {
+// 	sd_bus_track *sdbus_track;
+// 	sd_bus_track_handler_t handler;
+	
+// 	int (*track_event_handler)(struct crtx_sdbus_listener *listener, struct crtx_sdbus_track *track, void *userdata);
+// 	void *handler_data;
+	
+	const char *peer;
+	char *event_type;
+	void *event_data;
+	struct crtx_sdbus_listener *listener;
+	
+};
+
 struct crtx_sdbus_listener {
 	struct crtx_listener_base parent;
 	
@@ -30,7 +44,10 @@ struct crtx_sdbus_listener {
 				// either CRTX_SDBUS_TYPE_SYSTEM_REMOTE or CRTX_SDBUS_TYPE_SYSTEM_MACHINE
 	sd_bus *bus;
 	
-	struct crtx_sdbus_match *matches;
+	struct crtx_dll *matches;
+// 	struct crtx_sdbus_match *matches;
+// 	struct crtx_sdbus_track **tracks;
+// 	unsigned int n_tracks;
 };
 
 extern sd_bus *sd_bus_main_bus;
@@ -40,6 +57,7 @@ char crtx_open_sdbus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name);
 void sd_bus_add_signal_listener(sd_bus *bus, char *path, char *event_type);
 void sd_bus_print_event_task(struct crtx_event *event, void *userdata);
 void sd_bus_print_msg(sd_bus_message *m);
+int crtx_sdbus_track_add(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus_track *track);
 
 int crtx_sdbus_get_property_str(struct crtx_sdbus_listener *sdlist, 
 								char *destination,

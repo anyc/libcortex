@@ -302,6 +302,73 @@ void sd_bus_add_signal_listener(sd_bus *bus, char *path, char *event_type) {
 // 	// 	sd_bus_add_match(bus, &slot, "type='signal',path='/Mixers/PulseAudio__Playback_Devices_1'" , bus_signal_cb, bus);
 // 	sd_bus_add_match(bus, &slot, "type='signal'" , bus_signal_cb, dthread);
 
+// int crtx_sdbus_track_handler_event(sd_bus_track *sdbus_track, void *userdata) {
+// int crtx_sdbus_track_handler_event(struct crtx_sdbus_listener *listener, struct crtx_sdbus_track *track, void *userdata) {
+static int track_event_handler(sd_bus_message *m,	void *userdata, sd_bus_error *ret_error) {
+	struct crtx_sdbus_track *track;
+	struct crtx_event *event;
+	
+	printf("track event\n");
+	track = (struct crtx_sdbus_track *) userdata;
+	
+	event = crtx_create_event(track->event_type);
+	
+	crtx_event_set_raw_data(event, 'p', track->event_data, 0, CRTX_DIF_DONT_FREE_DATA);
+	
+	crtx_add_event(track->listener->parent.graph, event);
+	
+	return 0;
+}
+
+int crtx_sdbus_track_add(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus_track *track) {
+	int r;
+	char *match;
+	size_t match_len;
+	
+	lstnr->n_tracks += 1;
+	lstnr->tracks = (struct crtx_sdbus_track **) realloc(lstnr->tracks, sizeof(struct crtx_sdbus_track*) * lstnr->n_tracks);
+	
+	lstnr->tracks[lstnr->n_tracks-1] = track;
+	
+// 	if (!track->handler) {
+// 		track->handler = &crtx_sdbus_track_handler_event;
+// 		track->handler_data = track;
+// 	}
+	
+	track->listener = lstnr;
+	
+// 	r = sd_bus_track_new(lstnr->bus, &track->sdbus_track, track->handler, track->handler_data);
+// 	if (r) {
+// 		ERROR("sd_bus_track_new failed: %s\n", strerror(-r));
+// 		
+// 		lstnr->n_tracks -= 1;
+// 		
+// 		return r;
+// 	}
+	
+	#define TRACK_TEMPLATE "type='signal'," \
+		"sender='org.freedesktop.DBus'," \
+		"path='/org/freedesktop/DBus'," \
+		"interface='org.freedesktop.DBus'," \
+		"member='NameOwnerChanged'," \
+		"arg0='%s'"
+	
+	match_len = strlen(TRACK_TEMPLATE) + strlen(track->peer);
+	match = (char*) malloc(match_len);
+	
+	snprintf(match, match_len, TRACK_TEMPLATE, track->peer);
+	
+	r = sd_bus_add_match(lstnr->bus, NULL, match, track_event_handler, track);
+	if (r < 0) {
+		fprintf(stderr, "sd_bus_add_match failed: %s\n", strerror(-r));
+		return 0;
+	}
+	
+	free(match);
+	
+	return 0;
+}
+
 int crtx_sd_bus_message_read_string(sd_bus_message *m, char **p) {
 	char *o = 0;
 	int r;
