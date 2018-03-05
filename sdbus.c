@@ -165,7 +165,7 @@ int crtx_sd_bus_message_read_string(sd_bus_message *m, char **p) {
 	return r;
 }
 
-int crtx_sd_bus_get_events(sd_bus *bus) {
+int crtx_sdbus_get_events(sd_bus *bus) {
 	int f, result;
 	
 	result = 0;
@@ -187,7 +187,7 @@ int crtx_sd_bus_get_events(sd_bus *bus) {
 	return result;
 }
 
-static char sdbus_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event_loop_payload *payload;
 	struct crtx_sdbus_listener *sdlist;
 	int r;
@@ -217,7 +217,7 @@ static char sdbus_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	return r;
 }
 
-void crtx_shutdown_sdbus_listener(struct crtx_listener_base *data) {
+void crtx_sdbus_shutdown_listener(struct crtx_listener_base *data) {
 	struct crtx_sdbus_listener *sdlist;
 	
 	sdlist = (struct crtx_sdbus_listener*) data;
@@ -225,7 +225,7 @@ void crtx_shutdown_sdbus_listener(struct crtx_listener_base *data) {
 	sd_bus_unref(sdlist->bus);
 }
 
-char crtx_open_sdbus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name) {
+char crtx_sdbus_open_bus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name) {
 	int r;
 	
 	switch (bus_type) {
@@ -276,39 +276,24 @@ char crtx_open_sdbus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name) {
 	return 0;
 }
 
-struct crtx_listener_base *crtx_new_sdbus_listener(void *options) {
+struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 	struct crtx_sdbus_listener *sdlist;
-// 	struct crtx_sdbus_match *m;
-// 	int r;
+	
 	
 	sdlist = (struct crtx_sdbus_listener *) options;
 	
 	if (!sdlist->bus) {
-		if (crtx_open_sdbus(&sdlist->bus, sdlist->bus_type, sdlist->name) < 0)
+		if (crtx_sdbus_open_bus(&sdlist->bus, sdlist->bus_type, sdlist->name) < 0)
 			return 0;
 	}
 	
 	sdlist->parent.el_payload.fd = sd_bus_get_fd(sdlist->bus);
-	sdlist->parent.el_payload.event_flags = crtx_sd_bus_get_events(sdlist->bus);
+	sdlist->parent.el_payload.event_flags = crtx_sdbus_get_events(sdlist->bus);
 	sdlist->parent.el_payload.data = sdlist;
-	sdlist->parent.el_payload.event_handler = &sdbus_fd_event_handler;
+	sdlist->parent.el_payload.event_handler = &fd_event_handler;
 	sdlist->parent.el_payload.event_handler_name = "sdbus event handler";
 	
-	sdlist->parent.shutdown = &crtx_shutdown_sdbus_listener;
-	
-// 	m = sdlist->matches;
-// 	while (m && m->match_str) {
-// 		printf("sd_bus will listen for \"%s\" -> %s\n", m->match_str, m->event_type);
-// 		m->listener = sdlist;
-// 		
-// 		r = sd_bus_add_match(sdlist->bus, NULL, m->match_str, sdbus_match_listener_cb, m);
-// 		if (r < 0) {
-// 			fprintf(stderr, "sd_bus_add_match failed: %s\n", strerror(-r));
-// 			return 0;
-// 		}
-// 		
-// 		m++;
-// 	}
+	sdlist->parent.shutdown = &crtx_sdbus_shutdown_listener;
 	
 	return &sdlist->parent;
 }
@@ -354,16 +339,11 @@ void crtx_sdbus_finish() {
 
 #ifdef CRTX_TEST
 static char sdbus_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	// 	struct sdbus_device *dev, *usb_dev;
-// 	struct crtx_dict *dict;
+	sd_bus_message *m;
 	
-	// 	dev = (struct sdbus_device *) event->data.pointer;
+	m = (sd_bus_message*) crtx_event_get_ptr(event);
 	
-// 	dict = sdbus_raw2dict(event, r2ds);
-	
-// 	crtx_print_dict(dict);
-	
-// 	crtx_free_dict(dict);
+	crtx_sdbus_print_msg(m);
 	
 	return 0;
 }

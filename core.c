@@ -186,7 +186,7 @@ struct crtx_listener_repository static_listener_repository[] = {
 	{"xcb_randr", &crtx_new_xcb_randr_listener},
 #endif
 #ifdef STATIC_sdbus
-	{"sdbus", &crtx_new_sdbus_listener},
+	{"sdbus", &crtx_sdbus_new_listener},
 #endif
 #ifdef STATIC_pulseaudio
 	{"pulseaudio", &crtx_new_pa_listener},
@@ -1394,6 +1394,11 @@ static void load_plugin(char *path, char *basename) {
 		
 		snprintf(buf, 1024, "crtx_new_%s_listener", plugin_name);
 		create = dlsym(p->handle, buf);
+		
+		if (!create) {
+			snprintf(buf, 1024, "crtx_%s_new_listener", plugin_name);
+			create = dlsym(p->handle, buf);
+		}
 		
 		if (create) {
 			lrepo = crtx_get_new_listener_repo_entry();

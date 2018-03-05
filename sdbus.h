@@ -56,7 +56,7 @@ int crtx_sdbus_track_add(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus_tr
 
 struct crtx_sdbus_listener *crtx_sdbus_get_default_listener(enum crtx_sdbus_type sdbus_type);
 
-struct crtx_listener_base *crtx_new_sdbus_listener(void *options);
+struct crtx_listener_base *crtx_sdbus_new_listener(void *options);
 
 void crtx_sdbus_init();
 void crtx_sdbus_finish();
