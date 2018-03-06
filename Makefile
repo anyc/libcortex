@@ -15,9 +15,9 @@ SHAREDLIB=libcrtx.so
 
 OBJS+=cortexd.o core.o socket.o socket_raw.o controls.o fanotify.o inotify.o \
 	event_comm.o cache.o threads.o signals.o dict.o dict_inout.o \
-	llist.o dllist.o timer.o epoll.o
+	llist.o dllist.o timer.o epoll.o writequeue.o
 
-AVAILABLE_TESTS=avahi can epoll evdev libvirt nl_libnl netlink_ge nl_route_raw pulseaudio sdbus sip timer udev uevents v4l xcb_randr
+AVAILABLE_TESTS=avahi can epoll evdev libvirt nl_libnl netlink_ge nl_route_raw pulseaudio sdbus sip timer udev uevents v4l xcb_randr writequeue
 
 # LDFLAGS=-rdynamic
 # CONTROLS+=$(patsubst examples/control_%.c,examples/libcrtx_%.so,$(wildcard examples/*.c))

@@ -80,6 +80,7 @@
 #ifdef STATIC_v4l
 #include "v4l.h"
 #endif
+#include "writequeue.h"
 
 #ifndef CRTX_PLUGIN_DIR
 #define CRTX_PLUGIN_DIR "/usr/lib/cortexd/plugins/"
@@ -214,7 +215,8 @@ struct crtx_listener_repository static_listener_repository[] = {
 #endif
 #ifdef STATIC_v4l
 	{"v4l", &crtx_new_v4l_listener},
-#endif
+	#endif
+	{"writequeue", &crtx_writequeue_new_listener},
 	{0, 0}
 };
 

@@ -27,6 +27,7 @@ CRTX_DLL_TYPE {
 // 	void *data;
 	union {
 		void *data;
+		size_t size;
 		struct crtx_event *event;
 		struct crtx_graph *graph;
 		struct crtx_inotify_listener *in_listener;

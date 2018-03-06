@@ -32,6 +32,8 @@ int crtx_epoll_mod_fd_intern(struct crtx_epoll_listener *epl, int fd, struct epo
 	if (epl->stop)
 		return 0;
 	
+	printf("mod fd %d flags %d\n", fd, event->events);
+	
 	ret = epoll_ctl(epl->epoll_fd, EPOLL_CTL_MOD, fd, event);
 	if (ret < 0) {
 		ERROR("epoll_ctl mod failed for fd %d: %s\n", fd, strerror(errno));
@@ -99,6 +101,10 @@ void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 }
 
 void crtx_epoll_mod_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
+	VDBG("epoll mod %d\n", el_payload->fd);
+	
+	((struct epoll_event *) el_payload->el_data)->events = el_payload->event_flags;
+	
 	crtx_epoll_mod_fd_intern((struct crtx_epoll_listener *) lbase, el_payload->fd, el_payload->el_data);
 }
 
@@ -125,6 +131,7 @@ struct epoll_control_pipe {
 
 char *epoll_flags2str(int *flags) {
 	#define RETFLAG(flag) if (*flags & flag) { *flags = (*flags) & (~flag); return #flag; }
+// 	#define RETFLAG(flag) if (eflags & flag) { eflags = (eflags) & (~flag); return #flag; }
 	
 	RETFLAG(EPOLLIN);
 	RETFLAG(EPOLLOUT);
