@@ -175,6 +175,10 @@ struct crtx_event_loop_payload {
 	void *error_cb_data;
 	
 	void *el_data;
+	
+	struct crtx_event_loop_payload *epollin;
+	struct crtx_event_loop_payload *epollout;
+	struct crtx_event_loop_payload *epollpri;
 };
 
 enum crtx_listener_state { CRTX_LSTNR_UNKNOWN=0, CRTX_LSTNR_STARTING, CRTX_LSTNR_STARTED, CRTX_LSTNR_PAUSED, CRTX_LSTNR_STOPPING, CRTX_LSTNR_STOPPED, CRTX_LSTNR_SHUTDOWN }; //CRTX_LSTNR_ABORTED, 

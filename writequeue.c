@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <string.h>
 
 #include "intern.h"
 #include "core.h"
@@ -18,7 +19,8 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 	wqueue = (struct crtx_writequeue *) payload->data;
 	
 	r = wqueue->write(wqueue, wqueue->write_userdata);
-	if (r != EAGAIN) {
+	if (r != EAGAIN && r != ENOBUFS) {
+		printf("write done %s %d\n", strerror(r), r);
 		wqueue->parent.el_payload.event_flags = 0;
 		
 		eloop = crtx_get_event_loop();
@@ -46,6 +48,30 @@ void crtx_writequeue_stop(struct crtx_writequeue *wqueue) {
 	crtx_epoll_mod_fd(&eloop->listener->parent, &wqueue->parent.el_payload);
 }
 
+int crtx_add_writequeue2listener(struct crtx_writequeue *writequeue, struct crtx_listener_base *listener, crtx_wq_write_cb write_cb, void *write_userdata) {
+	struct crtx_listener_base *lbase;
+	
+	memset(writequeue, 0, sizeof(struct crtx_writequeue));
+	
+	listener->el_payload.epollout = &writequeue->parent.el_payload;
+	writequeue->parent.el_payload.epollin = &listener->el_payload;
+	
+	writequeue->write_fd = listener->el_payload.fd;
+	writequeue->write = write_cb;
+	writequeue->write_userdata = write_userdata;
+	
+	writequeue->parent.el_payload.el_data = (struct epoll_event*) calloc(1, sizeof(struct epoll_event));
+	((struct epoll_event*) writequeue->parent.el_payload.el_data)->data.ptr = &writequeue->parent.el_payload;
+	
+	lbase = create_listener("writequeue", writequeue);
+	if (!lbase) {
+		ERROR("create_listener(writequeue) failed\n");
+		exit(1);
+	}
+	
+	return 0;
+}
+
 struct crtx_listener_base *crtx_writequeue_new_listener(void *options) {
 	struct crtx_writequeue *wqueue;
 // 	struct epoll_event ctrl_event;
@@ -66,7 +92,6 @@ struct crtx_listener_base *crtx_writequeue_new_listener(void *options) {
 
 #ifdef CRTX_TEST
 
-#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -84,7 +109,7 @@ static int wq_write(struct crtx_writequeue *wqueue, void *userdata) {
 	while (1) {
 		n_bytes = write(wqueue->write_fd, buffer, BUF_SIZE);
 		if (n_bytes < 0) {
-			if (errno == EAGAIN) {
+			if (errno == EAGAIN || errno == ENOBUFS) {
 				printf("received EAGAIN\n");
 				
 				crtx_writequeue_start(wqueue);
