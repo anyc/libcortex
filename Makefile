@@ -35,9 +35,6 @@ include Makefile.modules
 STATIC_MODULES+=netlink_raw nl_route_raw uevents dict_inout_json
 DYN_MODULES+=avahi can evdev libvirt netlink_ge nl_libnl nf_queue pulseaudio readline sd_bus sd_bus_notifications sip udev v4l xcb_randr
 
-# LAYER2=crtx_layer2
-# LAYER2_TESTS=crtx_layer2_tests
-
 -include $(local_mk)
 
 # build tests for enabled modules
@@ -60,7 +57,7 @@ endif
 
 .PHONY: clean
 
-all: $(local_mk) $(CONTROLS) plugins shared $(LAYER2) crtx_include_dir
+all: $(local_mk) $(CONTROLS) plugins shared layer2 crtx_include_dir
 
 $(APP): $(OBJS)
 
@@ -102,7 +99,7 @@ plugins: $(SHAREDLIB) $(DYN_MODULES_LIST)
 
 
 
-tests: $(SHAREDLIB) $(TESTS) $(LAYER2_TESTS)
+tests: $(SHAREDLIB) $(TESTS) layer2_tests
 
 %.test: CFLAGS+=-DCRTX_TEST -g -g3 -gdwarf-2 -DDEBUG -Wall $(CFLAGS_${@:.test=})
 %.test: LDLIBS+=$(LDLIBS_${@:.test=}) $(foreach d,${@:.test=} $(DEPS_${@:.test=}),$(if $(findstring $(d),$(DYN_MODULES)),-lcrtx_$(d)))
@@ -115,10 +112,10 @@ examples/libcrtx_%.so: examples/control_%.c
 crtx_examples:
 	$(MAKE) -C examples
 
-crtx_layer2: $(SHAREDLIB)
+layer2: $(SHAREDLIB)
 	$(MAKE) -C layer2 LAYER2_LISTENERS="$(LAYER2_LISTENERS)"
 
-crtx_layer2_tests: $(SHAREDLIB)
+layer2_tests: $(SHAREDLIB)
 	$(MAKE) -C layer2 tests LAYER2_LISTENERS="$(LAYER2_LISTENERS)"
 
 install:
