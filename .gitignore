@@ -5,3 +5,4 @@
 cortexd
 socket_client
 examples/libvirt-usb-hotplug
+core_modules.h

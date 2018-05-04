@@ -233,6 +233,10 @@ struct crtx_listener_base *crtx_new_socket_raw_client_listener(void *options) {
 	return &slistener->parent;
 }
 
+struct crtx_listener_base *crtx_new_socket_raw_listener(void *options) {
+	/* TODO use crtx_new_socket_raw_client_listener or crtx_new_socket_raw_server_listener */
+}
+
 void crtx_socket_raw_init() {
 }
 

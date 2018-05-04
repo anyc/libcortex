@@ -77,7 +77,7 @@ int crtx_add_writequeue2listener(struct crtx_writequeue *writequeue, struct crtx
 	return 0;
 }
 
-struct crtx_listener_base *crtx_writequeue_new_listener(void *options) {
+struct crtx_listener_base *crtx_new_writequeue_listener(void *options) {
 	struct crtx_writequeue *wqueue;
 // 	struct epoll_event ctrl_event;
 	
@@ -94,6 +94,11 @@ struct crtx_listener_base *crtx_writequeue_new_listener(void *options) {
 	return &wqueue->parent;
 }
 
+void crtx_writequeue_init() {
+}
+
+void crtx_writequeue_finish() {
+}
 
 #ifdef CRTX_TEST
 

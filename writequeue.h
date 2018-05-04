@@ -25,8 +25,11 @@ struct crtx_writequeue {
 
 int crtx_add_writequeue2listener(struct crtx_writequeue *writequeue, struct crtx_listener_base *listener, crtx_wq_write_cb write_cb, void *write_userdata);
 
-struct crtx_listener_base *crtx_writequeue_new_listener(void *options);
+struct crtx_listener_base *crtx_new_writequeue_listener(void *options);
 void crtx_writequeue_start(struct crtx_writequeue *wqueue);
 void crtx_writequeue_stop(struct crtx_writequeue *wqueue);
+
+void crtx_writequeue_init();
+void crtx_writequeue_finish();
 
 #endif

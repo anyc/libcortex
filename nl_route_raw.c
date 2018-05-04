@@ -588,7 +588,7 @@ static void shutdown_nl_route_listener(struct crtx_listener_base *lbase) {
 }
 
 
-struct crtx_listener_base *crtx_new_nl_route_listener(void *options) {
+struct crtx_listener_base *crtx_new_nl_route_raw_listener(void *options) {
 	struct crtx_nl_route_listener *nlr_list;
 // 	struct sockaddr_nl addr;
 	struct crtx_listener_base *lbase;
@@ -644,10 +644,10 @@ struct crtx_listener_base *crtx_new_nl_route_listener(void *options) {
 	return &nlr_list->parent;
 }
 
-void crtx_nl_route_init() {
+void crtx_nl_route_raw_init() {
 }
 
-void crtx_nl_route_finish() {
+void crtx_nl_route_raw_finish() {
 }
 
 

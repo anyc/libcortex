@@ -17,9 +17,9 @@ includedir?=$(prefix)/include
 APP=cortexd
 SHAREDLIB=libcrtx.so
 
-OBJS+=core.o fanotify.o inotify.o \
-	threads.o signals.o dict.o \
-	llist.o dllist.o timer.o epoll.o writequeue.o
+OBJS+=core.o \
+	threads.o dict.o \
+	llist.o dllist.o
 
 AVAILABLE_TESTS=avahi can epoll evdev libvirt nl_libnl netlink_ge nl_route_raw pulseaudio sdbus sip timer udev uevents v4l xcb_randr writequeue
 
@@ -33,7 +33,9 @@ LDLIBS+=-lpthread -ldl
 include Makefile.modules
 
 # default module sets
-STATIC_MODULES+=cache dict_inout dict_inout_json event_comm netlink_raw nl_route_raw uevents socket socket_raw
+BUILTIN_MODULES=fanotify inotify signals timer epoll writequeue
+STATIC_TOOLS+=cache dict_inout dict_inout_json event_comm socket
+STATIC_MODULES+=netlink_raw nl_route_raw uevents socket_raw
 DYN_MODULES+=avahi can evdev libvirt netlink_ge nl_libnl nf_queue pulseaudio readline sd_bus sd_bus_notifications sip udev v4l xcb_randr
 
 -include $(local_mk)
@@ -41,15 +43,15 @@ DYN_MODULES+=avahi can evdev libvirt netlink_ge nl_libnl nf_queue pulseaudio rea
 # build tests for enabled modules
 TESTS+=$(foreach t,$(STATIC_MODULES) $(DYN_MODULES),$(if $(findstring $(t),$(AVAILABLE_TESTS)), $(t).test))
 
-OBJS+=$(patsubst %,%.o,$(STATIC_MODULES))
+OBJS+=$(patsubst %,%.o,$(STATIC_MODULES)) $(patsubst %,%.o,$(STATIC_TOOLS))
 
 DYN_MODULES_LIST=$(patsubst %,libcrtx_%.so, $(DYN_MODULES))
 
 # determine missing module dependencies
-ACTIVE_MODULES=$(STATIC_MODULES) $(DYN_MODULES)
-MISSING_DEPS=$(strip $(foreach m,$(ACTIVE_MODULES), $(if $(DEPS_$(m)),$(if $(foreach d,$(DEPS_$(m)),$(findstring $(d),$(STATIC_MODULES) $(DYN_MODULES))),,$(m))) ))
+ACTIVE_MODULES=$(STATIC_TOOLS) $(STATIC_MODULES) $(DYN_MODULES)
+MISSING_DEPS=$(strip $(foreach m,$(ACTIVE_MODULES), $(if $(DEPS_$(m)),$(if $(foreach d,$(DEPS_$(m)),$(findstring $(d),$(STATIC_TOOLS) $(STATIC_MODULES) $(DYN_MODULES))),,$(m))) ))
 ifneq ($(MISSING_DEPS),)
-$(error error missing dep(s) for module(s) $(MISSING_DEPS): $(foreach m,$(MISSING_DEPS),$(foreach d,$(DEPS_$(m)), $(if $(findstring $(d),$(STATIC_MODULES) $(DYN_MODULES)),,$(d)) )))
+$(error error missing dep(s) for module(s) $(MISSING_DEPS): $(foreach m,$(MISSING_DEPS),$(foreach d,$(DEPS_$(m)), $(if $(findstring $(d),$(STATIC_TOOLS) $(STATIC_MODULES) $(DYN_MODULES)),,$(d)) )))
 endif
 
 #
@@ -58,7 +60,7 @@ endif
 
 .PHONY: clean
 
-all: $(local_mk) $(CONTROLS) plugins shared layer2 crtx_include_dir
+all: $(local_mk) core_modules.h plugins shared layer2 crtx_include_dir
 
 $(APP): $(OBJS)
 
@@ -69,7 +71,7 @@ $(local_mk):
 
 clean:
 	$(MAKE) -C layer2 clean
-	rm -rf *.o $(APP) $(CONTROLS) $(TESTS) $(SHAREDLIB) libcrtx_*.so
+	rm -rf *.o $(APP) core_modules.h $(TESTS) $(SHAREDLIB) libcrtx_*.so
 
 debug:
 	$(MAKE) $(MAKEFILE) DEBUG_CFLAGS="-g -g3 -gdwarf-2 -DDEBUG -Wall" #-Werror 
@@ -80,6 +82,24 @@ crtx_include_dir:
 	for h in *.h; do [ -e include/crtx/$$h ] || ln -s ../../$$h include/crtx/; done
 	for h in layer2/*.h; do [ -e include/crtx/$$h ] || ln -s ../../../$$h include/crtx/layer2/; done
 
+core_modules.h: $(local_mk)
+	echo -n "" > $@
+	for m in $(BUILTIN_MODULES); do echo -e "#include \"$${m}.h\"" >> $@; done
+	for m in $(STATIC_TOOLS); do echo -e "#ifdef STATIC_$${m}\n#include \"$${m}.h\"\n#endif" >> $@; done
+	for m in $(STATIC_MODULES); do echo -e "#ifdef STATIC_$${m}\n#include \"$${m}.h\"\n#endif" >> $@; done
+	
+	echo "" >> $@
+	echo "struct crtx_module static_modules[] = {" >> $@
+	for m in $(BUILTIN_MODULES); do echo -e "\t{\"$${m}\", &crtx_$${m}_init, &crtx_$${m}_finish}," >> $@; done
+	for m in $(STATIC_MODULES); do echo -e "#ifdef STATIC_$${m}\n\t{\"$${m}\", &crtx_$${m}_init, &crtx_$${m}_finish},\n#endif" >> $@; done
+	echo "};" >> $@
+	
+	echo "" >> $@
+	echo "struct crtx_listener_repository static_listener_repository[] = {" >> $@
+	for m in $(BUILTIN_MODULES); do echo -e "\t{\"$${m}\", &crtx_new_$${m}_listener}," >> $@; done
+	for m in $(STATIC_MODULES); do echo -e "#ifdef STATIC_$${m}\n\t{\"$${m}\", &crtx_new_$${m}_listener},\n#endif" >> $@; done
+	echo "};" >> $@
+
 dllist.o: CFLAGS+=-DCRTX_DLL
 dllist.o: llist.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
@@ -88,7 +108,7 @@ dllist.o: llist.c
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-$(SHAREDLIB): LDLIBS+=$(foreach o,$(STATIC_MODULES), $(LDLIBS_$(o)) )
+$(SHAREDLIB): LDLIBS+=$(foreach o,$(STATIC_TOOLS) $(STATIC_MODULES), $(LDLIBS_$(o)) )
 $(SHAREDLIB): $(OBJS)
 	$(CC) -shared -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS)
 

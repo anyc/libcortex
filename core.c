@@ -19,74 +19,6 @@
 #include "core.h"
 #include "dict.h"
 
-#include "intern.h"
-#include "intern.h"
-#include "core.h"
-#ifdef STATIC_socket
-#include "socket.h"
-#include "socket_raw.h"
-#endif
-#ifdef STATIC_sd_bus
-#include "sd_bus.h"
-#endif
-#ifdef STATIC_sd_bus_notifications
-#include "sd_bus_notifications.h"
-#endif
-#ifdef STATIC_nf_queue
-#include "nf_queue.h"
-#endif
-#ifdef STATIC_readline
-#include "readline.h"
-#endif
-#include "fanotify.h"
-#include "inotify.h"
-#include "threads.h"
-#include "signals.h"
-#include "timer.h"
-#ifdef STATIC_netlink_raw
-#include "netlink_raw.h"
-#endif
-#ifdef STATIC_netlink_ge
-#include "netlink_ge.h"
-#endif
-#include "epoll.h"
-#ifdef STATIC_evdev
-#include "evdev.h"
-#endif
-#ifdef STATIC_udev
-#include "udev.h"
-#endif
-#ifdef STATIC_xcb_randr
-#include "xcb_randr.h"
-#endif
-#ifdef STATIC_pulseaudio
-#include "pulseaudio.h"
-#endif
-#ifdef STATIC_can
-#include "can.h"
-#endif
-#ifdef STATIC_avahi
-#include "avahi.h"
-#endif
-#ifdef STATIC_uevents
-#include "uevents.h"
-#endif
-#ifdef STATIC_nl_libnl
-#include "nl_libnl.h"
-#endif
-#ifdef STATIC_nl_route_raw
-#include "nl_route_raw.h"
-#endif
-#ifdef STATIC_libvirt
-#include "libvirt.h"
-#endif
-#ifdef STATIC_sip
-#include "sip.h"
-#endif
-#ifdef STATIC_v4l
-#include "v4l.h"
-#endif
-#include "writequeue.h"
 
 #ifndef CRTX_PLUGIN_DIR
 #define CRTX_PLUGIN_DIR "/usr/lib/cortexd/plugins/"
@@ -95,139 +27,207 @@
 struct crtx_root crtx_global_root;
 struct crtx_root *crtx_root = &crtx_global_root;
 
-struct crtx_module static_modules[] = {
-	{"threads", &crtx_threads_init, &crtx_threads_finish},
-	{"signals", &crtx_signals_init, &crtx_signals_finish},
-#ifdef STATIC_socket
-	{"socket", &crtx_socket_init, &crtx_socket_finish},
-	{"socket_raw", &crtx_socket_raw_init, &crtx_socket_raw_finish},
-#endif
-#ifdef STATIC_sdbus
-	{"sdbus", &crtx_sdbus_init, &crtx_sdbus_finish},
-#endif
-#ifdef STATIC_sd_bus_notifications
-	{"sd_bus_notifications", &crtx_sd_bus_notifications_init, &crtx_sd_bus_notifications_finish},
-#endif
-#ifdef STATIC_nfqueue
-	{"nf-queue", &crtx_nf_queue_init, &crtx_nf_queue_finish},
-#endif
-#ifdef STATIC_readline
-	{"readline", &crtx_readline_init, &crtx_readline_finish},
-#endif
-	{"fanotify", &crtx_fanotify_init, &crtx_fanotify_finish},
-	{"inotify", &crtx_inotify_init, &crtx_inotify_finish},
-#ifdef STATIC_netlink_raw
-	{"netlink_raw", &crtx_netlink_raw_init, &crtx_netlink_raw_finish},
-#endif
-#ifdef STATIC_netlink_ge
-	{"netlink_ge", &crtx_netlink_ge_init, &crtx_netlink_ge_finish},
-#endif
-	{"epoll", &crtx_epoll_init, &crtx_epoll_finish},
-#ifdef STATIC_evdev
-	{"evdev", &crtx_evdev_init, &crtx_evdev_finish},
-#endif
-#ifdef STATIC_udev
-	{"udev", &crtx_udev_init, &crtx_udev_finish},
-#endif
-#ifdef STATIC_xcb_randr
-	{"xcb_randr", &crtx_xcb_randr_init, &crtx_xcb_randr_finish},
-#endif
-#ifdef STATIC_pulseaudio
-	{"pulseaudio", &crtx_pa_init, &crtx_pa_finish},
-#endif
-#ifdef STATIC_can
-	{"can", &crtx_can_init, &crtx_can_finish},
-#endif
-#ifdef STATIC_avahi
-	{"avahi", &crtx_avahi_init, &crtx_avahi_finish},
-#endif
-#ifdef STATIC_uevents
-	{"uevents", &crtx_uevents_init, &crtx_uevents_finish},
-#endif
-#ifdef STATIC_nl_libnl
-	{"nl_libnl", &crtx_nl_libnl_init, &crtx_nl_libnl_finish},
-#endif
-#ifdef STATIC_nl_route
-	{"nl_route", &crtx_nl_route_init, &crtx_nl_route_finish},
-#endif
-#ifdef STATIC_sip
-	{"sip", &crtx_sip_init, &crtx_sip_finish},
-#endif
-#ifdef STATIC_v4l
-	{"v4l", &crtx_v4l_init, &crtx_v4l_finish},
-#endif
-	{0, 0}
-};
+#include "core_modules.h"
 
-struct crtx_listener_repository static_listener_repository[] = {
-#ifdef STATIC_nfqueue
-	{"nf_queue", &crtx_new_nf_queue_listener},
-#endif
-	{"fanotify", &crtx_new_fanotify_listener},
-	{"inotify", &crtx_new_inotify_listener},
-#ifdef STATIC_socket
-	{"socket_server", &crtx_new_socket_server_listener},
-	{"socket_raw_server", &crtx_new_socket_raw_server_listener},
-	{"socket_client", &crtx_new_socket_client_listener},
-	{"socket_raw_client", &crtx_new_socket_raw_client_listener},
-#endif
-// #ifdef STATIC_sd_bus_notifications
-// 	{"sd_bus_notification", &crtx_new_sd_bus_notification_listener},
+// #ifdef STATIC_socket
+// #include "socket.h"
+// #include "socket_raw.h"
 // #endif
-	{"signals", &crtx_new_signals_listener},
-	{"timer", &crtx_new_timer_listener},
-#ifdef STATIC_readline
-	{"readline", &crtx_new_readline_listener},
-#endif
-#ifdef STATIC_netlink_raw
-	{"netlink_raw", &crtx_new_netlink_raw_listener},
-#endif
-#ifdef STATIC_netling_ge
-	{"genl", &crtx_new_genl_listener},
-#endif
-	{"epoll", &crtx_new_epoll_listener},
-#ifdef STATIC_evdev
-	{"evdev", &crtx_new_evdev_listener},
-#endif
-#ifdef STATIC_udev
-	{"udev", &crtx_new_udev_listener},
-#endif
-#ifdef STATIC_xcb_randr
-	{"xcb_randr", &crtx_new_xcb_randr_listener},
-#endif
-#ifdef STATIC_sdbus
-	{"sdbus", &crtx_sdbus_new_listener},
-#endif
-#ifdef STATIC_pulseaudio
-	{"pulseaudio", &crtx_new_pa_listener},
-#endif
-#ifdef STATIC_can
-	{"can", &crtx_new_can_listener},
-#endif
-#ifdef STATIC_avahi
-	{"avahi", &crtx_new_avahi_listener},
-#endif
-#ifdef STATIC_uevents
-	{"uevents", &crtx_new_uevents_listener},
-#endif
-#ifdef STATIC_nl_libnl
-	{"nl_libnl", &crtx_new_nl_libnl_listener},
-#endif
-#ifdef STATIC_nl_route
-	{"nl_route", &crtx_new_nl_route_listener},
-#endif
-#ifdef STATIC_libvirt
-	{"libvirt", &crtx_new_libvirt_listener},
-#endif
-#ifdef STATIC_sip
-	{"sip", &crtx_new_sip_listener},
-#endif
-#ifdef STATIC_v4l
-	{"v4l", &crtx_new_v4l_listener},
-	#endif
-	{"writequeue", &crtx_writequeue_new_listener},
-	{0, 0}
-};
+// #ifdef STATIC_sd_bus
+// #include "sd_bus.h"
+// #endif
+// #ifdef STATIC_sd_bus_notifications
+// #include "sd_bus_notifications.h"
+// #endif
+// #ifdef STATIC_nf_queue
+// #include "nf_queue.h"
+// #endif
+// #ifdef STATIC_readline
+// #include "readline.h"
+// #endif
+// #include "fanotify.h"
+// #include "inotify.h"
+// #include "threads.h"
+// #include "signals.h"
+// #include "timer.h"
+// #ifdef STATIC_netlink_raw
+// #include "netlink_raw.h"
+// #endif
+// #ifdef STATIC_netlink_ge
+// #include "netlink_ge.h"
+// #endif
+// #include "epoll.h"
+// #ifdef STATIC_evdev
+// #include "evdev.h"
+// #endif
+// #ifdef STATIC_udev
+// #include "udev.h"
+// #endif
+// #ifdef STATIC_xcb_randr
+// #include "xcb_randr.h"
+// #endif
+// #ifdef STATIC_pulseaudio
+// #include "pulseaudio.h"
+// #endif
+// #ifdef STATIC_can
+// #include "can.h"
+// #endif
+// #ifdef STATIC_avahi
+// #include "avahi.h"
+// #endif
+// #ifdef STATIC_uevents
+// #include "uevents.h"
+// #endif
+// #ifdef STATIC_nl_libnl
+// #include "nl_libnl.h"
+// #endif
+// #ifdef STATIC_nl_route_raw
+// #include "nl_route_raw.h"
+// #endif
+// #ifdef STATIC_libvirt
+// #include "libvirt.h"
+// #endif
+// #ifdef STATIC_sip
+// #include "sip.h"
+// #endif
+// #ifdef STATIC_v4l
+// #include "v4l.h"
+// #endif
+// #include "writequeue.h"
+// 
+// struct crtx_module static_modules[] = {
+// 	{"threads", &crtx_threads_init, &crtx_threads_finish},
+// 	{"signals", &crtx_signals_init, &crtx_signals_finish},
+// #ifdef STATIC_socket
+// 	{"socket", &crtx_socket_init, &crtx_socket_finish},
+// 	{"socket_raw", &crtx_socket_raw_init, &crtx_socket_raw_finish},
+// #endif
+// #ifdef STATIC_sdbus
+// 	{"sdbus", &crtx_sdbus_init, &crtx_sdbus_finish},
+// #endif
+// #ifdef STATIC_sd_bus_notifications
+// 	{"sd_bus_notifications", &crtx_sd_bus_notifications_init, &crtx_sd_bus_notifications_finish},
+// #endif
+// #ifdef STATIC_nfqueue
+// 	{"nf-queue", &crtx_nf_queue_init, &crtx_nf_queue_finish},
+// #endif
+// #ifdef STATIC_readline
+// 	{"readline", &crtx_readline_init, &crtx_readline_finish},
+// #endif
+// 	{"fanotify", &crtx_fanotify_init, &crtx_fanotify_finish},
+// 	{"inotify", &crtx_inotify_init, &crtx_inotify_finish},
+// #ifdef STATIC_netlink_raw
+// 	{"netlink_raw", &crtx_netlink_raw_init, &crtx_netlink_raw_finish},
+// #endif
+// #ifdef STATIC_netlink_ge
+// 	{"netlink_ge", &crtx_netlink_ge_init, &crtx_netlink_ge_finish},
+// #endif
+// 	{"epoll", &crtx_epoll_init, &crtx_epoll_finish},
+// #ifdef STATIC_evdev
+// 	{"evdev", &crtx_evdev_init, &crtx_evdev_finish},
+// #endif
+// #ifdef STATIC_udev
+// 	{"udev", &crtx_udev_init, &crtx_udev_finish},
+// #endif
+// #ifdef STATIC_xcb_randr
+// 	{"xcb_randr", &crtx_xcb_randr_init, &crtx_xcb_randr_finish},
+// #endif
+// #ifdef STATIC_pulseaudio
+// 	{"pulseaudio", &crtx_pa_init, &crtx_pa_finish},
+// #endif
+// #ifdef STATIC_can
+// 	{"can", &crtx_can_init, &crtx_can_finish},
+// #endif
+// #ifdef STATIC_avahi
+// 	{"avahi", &crtx_avahi_init, &crtx_avahi_finish},
+// #endif
+// #ifdef STATIC_uevents
+// 	{"uevents", &crtx_uevents_init, &crtx_uevents_finish},
+// #endif
+// #ifdef STATIC_nl_libnl
+// 	{"nl_libnl", &crtx_nl_libnl_init, &crtx_nl_libnl_finish},
+// #endif
+// #ifdef STATIC_nl_route
+// 	{"nl_route", &crtx_nl_route_init, &crtx_nl_route_finish},
+// #endif
+// #ifdef STATIC_sip
+// 	{"sip", &crtx_sip_init, &crtx_sip_finish},
+// #endif
+// #ifdef STATIC_v4l
+// 	{"v4l", &crtx_v4l_init, &crtx_v4l_finish},
+// #endif
+// 	{0, 0}
+// };
+// 
+// struct crtx_listener_repository static_listener_repository[] = {
+// #ifdef STATIC_nfqueue
+// 	{"nf_queue", &crtx_new_nf_queue_listener},
+// #endif
+// 	{"fanotify", &crtx_new_fanotify_listener},
+// 	{"inotify", &crtx_new_inotify_listener},
+// #ifdef STATIC_socket
+// 	{"socket_server", &crtx_new_socket_server_listener},
+// 	{"socket_raw_server", &crtx_new_socket_raw_server_listener},
+// 	{"socket_client", &crtx_new_socket_client_listener},
+// 	{"socket_raw_client", &crtx_new_socket_raw_client_listener},
+// #endif
+// // #ifdef STATIC_sd_bus_notifications
+// // 	{"sd_bus_notification", &crtx_new_sd_bus_notification_listener},
+// // #endif
+// 	{"signals", &crtx_new_signals_listener},
+// 	{"timer", &crtx_new_timer_listener},
+// #ifdef STATIC_readline
+// 	{"readline", &crtx_new_readline_listener},
+// #endif
+// #ifdef STATIC_netlink_raw
+// 	{"netlink_raw", &crtx_new_netlink_raw_listener},
+// #endif
+// #ifdef STATIC_netling_ge
+// 	{"genl", &crtx_new_genl_listener},
+// #endif
+// 	{"epoll", &crtx_new_epoll_listener},
+// #ifdef STATIC_evdev
+// 	{"evdev", &crtx_new_evdev_listener},
+// #endif
+// #ifdef STATIC_udev
+// 	{"udev", &crtx_new_udev_listener},
+// #endif
+// #ifdef STATIC_xcb_randr
+// 	{"xcb_randr", &crtx_new_xcb_randr_listener},
+// #endif
+// #ifdef STATIC_sdbus
+// 	{"sdbus", &crtx_sdbus_new_listener},
+// #endif
+// #ifdef STATIC_pulseaudio
+// 	{"pulseaudio", &crtx_new_pa_listener},
+// #endif
+// #ifdef STATIC_can
+// 	{"can", &crtx_new_can_listener},
+// #endif
+// #ifdef STATIC_avahi
+// 	{"avahi", &crtx_new_avahi_listener},
+// #endif
+// #ifdef STATIC_uevents
+// 	{"uevents", &crtx_new_uevents_listener},
+// #endif
+// #ifdef STATIC_nl_libnl
+// 	{"nl_libnl", &crtx_new_nl_libnl_listener},
+// #endif
+// #ifdef STATIC_nl_route
+// 	{"nl_route", &crtx_new_nl_route_listener},
+// #endif
+// #ifdef STATIC_libvirt
+// 	{"libvirt", &crtx_new_libvirt_listener},
+// #endif
+// #ifdef STATIC_sip
+// 	{"sip", &crtx_new_sip_listener},
+// #endif
+// #ifdef STATIC_v4l
+// 	{"v4l", &crtx_new_v4l_listener},
+// 	#endif
+// 	{"writequeue", &crtx_writequeue_new_listener},
+// 	{0, 0}
+// };
 
 // struct crtx_listener_repository *listener_repository = 0;
 // unsigned int listener_repository_length = 0;

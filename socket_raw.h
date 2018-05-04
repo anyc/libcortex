@@ -33,6 +33,7 @@ void crtx_free_addrinfo(struct addrinfo *result);
 
 void crtx_socket_raw_init();
 void crtx_socket_raw_finish();
+struct crtx_listener_base *crtx_new_socket_raw_listener(void *options);
 struct crtx_listener_base *crtx_new_socket_raw_server_listener(void *options);
 struct crtx_listener_base *crtx_new_socket_raw_client_listener(void *options);
 
