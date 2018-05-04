@@ -92,12 +92,14 @@ core_modules.h: $(local_mk)
 	echo "struct crtx_module static_modules[] = {" >> $@
 	for m in $(BUILTIN_MODULES); do echo -e "\t{\"$${m}\", &crtx_$${m}_init, &crtx_$${m}_finish}," >> $@; done
 	for m in $(STATIC_MODULES); do echo -e "#ifdef STATIC_$${m}\n\t{\"$${m}\", &crtx_$${m}_init, &crtx_$${m}_finish},\n#endif" >> $@; done
+	echo -e "\t{0, 0, 0}," >> $@
 	echo "};" >> $@
 	
 	echo "" >> $@
 	echo "struct crtx_listener_repository static_listener_repository[] = {" >> $@
 	for m in $(BUILTIN_MODULES); do echo -e "\t{\"$${m}\", &crtx_new_$${m}_listener}," >> $@; done
 	for m in $(STATIC_MODULES); do echo -e "#ifdef STATIC_$${m}\n\t{\"$${m}\", &crtx_new_$${m}_listener},\n#endif" >> $@; done
+	echo -e "\t{0, 0}," >> $@
 	echo "};" >> $@
 
 dllist.o: CFLAGS+=-DCRTX_DLL
