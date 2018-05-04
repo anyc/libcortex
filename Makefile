@@ -33,9 +33,9 @@ LDLIBS+=-lpthread -ldl
 include Makefile.modules
 
 # default module sets
-BUILTIN_MODULES=fanotify inotify signals timer epoll writequeue
+BUILTIN_MODULES=signals epoll
 STATIC_TOOLS+=cache dict_inout dict_inout_json event_comm socket
-STATIC_MODULES+=netlink_raw nl_route_raw uevents socket_raw
+STATIC_MODULES+=fanotify inotify netlink_raw nl_route_raw uevents socket_raw timer writequeue
 DYN_MODULES+=avahi can evdev libvirt netlink_ge nl_libnl nf_queue pulseaudio readline sd_bus sd_bus_notifications sip udev v4l xcb_randr
 
 -include $(local_mk)
