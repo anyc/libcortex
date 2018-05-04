@@ -1,6 +1,10 @@
-
 #ifndef _CRTX_SDBUS_H
 #define _CRTX_SDBUS_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include <systemd/sd-bus.h>
 

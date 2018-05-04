@@ -1,6 +1,10 @@
-
 #ifndef _CRTX_FANOTIFY_H
 #define _CRTX_FANOTIFY_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include <fcntl.h>
 #include <sys/fanotify.h>

@@ -1,6 +1,10 @@
-
 #ifndef _CRTX_XCB_RANDR_H
 #define _CRTX_XCB_RANDR_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include <xcb/randr.h>
 

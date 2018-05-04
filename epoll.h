@@ -1,6 +1,10 @@
-
 #ifndef _CRTX_EPOLL_H
 #define _CRTX_EPOLL_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 struct crtx_epoll_listener {
 	struct crtx_listener_base parent;

@@ -1,6 +1,10 @@
-
 #ifndef _CRTX_NETLINK_RAW
 #define _CRTX_NETLINK_RAW
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include <sys/socket.h>
 

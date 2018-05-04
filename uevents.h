@@ -1,6 +1,10 @@
-
 #ifndef _CRTX_UEVENTS_H
 #define _CRTX_UEVENTS_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include "netlink_raw.h"
 

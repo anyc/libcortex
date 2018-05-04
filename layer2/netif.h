@@ -1,6 +1,10 @@
-
 #ifndef _CRTX_NETIF_H
 #define _CRTX_NETIF_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include "../nl_libnl.h"
 

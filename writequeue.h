@@ -1,6 +1,11 @@
 #ifndef CRTX_WRITE_QUEUE_H
 #define CRTX_WRITE_QUEUE_H
 
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
+
 struct crtx_writequeue;
 typedef int (*crtx_wq_write_cb)(struct crtx_writequeue *wqueue, void *userdata);
 

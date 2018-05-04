@@ -1,6 +1,10 @@
-
 #ifndef _CRTX_UDEV_H
 #define _CRTX_UDEV_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include <libudev.h>
 

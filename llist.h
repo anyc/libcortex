@@ -1,3 +1,10 @@
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
+
+// no preprocessor guard necessary as linkedlist.h will include this header
+// twice
 
 #ifdef CRTX_DLL
 	#define CRTX_DLL_PREFIX crtx_dll

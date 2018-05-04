@@ -1,3 +1,10 @@
+#ifndef _CRTX_CACHE_H
+#define _CRTX_CACHE_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include "dict.h"
 
@@ -73,3 +80,4 @@ char crtx_cache_update_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item 
 struct crtx_task *crtx_create_presence_cache_task(char *id, create_key_action_cb_t create_key);
 void crtx_free_presence_cache_task(struct crtx_task *task);
 
+#endif

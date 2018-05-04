@@ -1,3 +1,7 @@
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,7 +39,7 @@ int mail_main(int argc, char **argv) {
 	}
 	
 	r = imap_mailstorage_init(storage, "mail.zeus06.de", 143, NULL, CONNECTION_TYPE_STARTTLS,
-		IMAP_AUTH_TYPE_PLAIN, "l3s6476p3", "pXbdF3bk", 0, NULL);
+		IMAP_AUTH_TYPE_PLAIN, "l3s6476p3", "password", 0, NULL);
 	if (r != MAIL_NO_ERROR) {
 		printf("error initializing storage\n");
 // 		goto free_opt;

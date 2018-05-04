@@ -1,6 +1,10 @@
-
 #ifndef _CRTX_DICT_INOUT_H
 #define _CRTX_DICT_INOUT_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 typedef int (*write_fct)(void *conn_id, void *data, size_t data_size);
 typedef int (*read_fct)(void *conn_id, void *data, size_t data_size);

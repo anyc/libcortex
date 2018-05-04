@@ -1,6 +1,10 @@
-
 #ifndef _CRTX_TIMER_H
 #define _CRTX_TIMER_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #define CRTX_EVT_TIMER "cortex.timer"
 

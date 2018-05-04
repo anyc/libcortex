@@ -1,3 +1,7 @@
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 /*
  * To open a TCPv4 connection with localhost:1234

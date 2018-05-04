@@ -1,6 +1,10 @@
-
 #ifndef _CRTX_CAN_H
 #define _CRTX_CAN_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include <linux/can.h>
 

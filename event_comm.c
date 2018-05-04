@@ -1,4 +1,7 @@
-
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include <stdio.h>
 #include <stdlib.h>

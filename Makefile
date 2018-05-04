@@ -1,4 +1,8 @@
-
+#
+# Mario Kicherer (dev@kicherer.org) 2016
+#
+#
+ 
 local_mk ?= Makefile.local
 local_mk_rules ?= Makefile.local_rules
 

@@ -1,5 +1,9 @@
 #! /usr/bin/env python
 
+#
+# Mario Kicherer (dev@kicherer.org) 2016
+#
+
 import sys, argparse, os
 import clang.cindex
 

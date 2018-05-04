@@ -1,3 +1,7 @@
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -265,16 +269,3 @@ char *crtx_readfile(char *path) {
 	
 	return s;
 }
-
-// void crtx_store_dict(struct crtx_dict *dict) {
-// // 	int f = open(config->name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP);
-// // 	if (f == -1) {
-// // 		printf("error %s\n", strerror(errno));
-// // 		return;
-// // 	}
-// 
-// // 	send_dict(crtx_wrapper_write, &f, d);
-// 
-// // 	close(f);
-// }
-

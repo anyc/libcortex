@@ -1,3 +1,7 @@
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 /*
  * Setup an iptables rule like the following to use nfqueue:

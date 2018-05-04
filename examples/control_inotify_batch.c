@@ -1,4 +1,3 @@
-
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *

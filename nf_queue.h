@@ -1,3 +1,10 @@
+#ifndef _CRTX_NF_QUEUE_H
+#define _CRTX_NF_QUEUE_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 // #define NFQ_PACKET_MSG_ETYPE "nf_queue/packet_msg"
 
@@ -45,3 +52,5 @@ void crtx_nf_queue_finish();
 
 char crtx_nfq_print_packet(struct crtx_dict *ds);
 char *crtx_nfq_proto2str(u_int16_t protocol);
+
+#endif

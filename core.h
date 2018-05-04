@@ -1,6 +1,10 @@
-
 #ifndef _CRTX_CORE_H
 #define _CRTX_CORE_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include <stdint.h>
 #include <regex.h>

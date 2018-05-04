@@ -1,6 +1,10 @@
-
 #ifndef _CRTX_V4L_H
 #define _CRTX_V4L_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 struct crtx_v4l_listener {
 	struct crtx_listener_base parent;

@@ -1,6 +1,10 @@
-
 #ifndef _CRTX_NETLINK_GE_H
 #define _CRTX_NETLINK_GE_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include <netlink/genl/genl.h>
 #include <netlink/genl/family.h>

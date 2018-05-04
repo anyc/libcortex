@@ -1,3 +1,7 @@
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,15 +27,16 @@ int crtx_avahi_resolve_service(struct crtx_avahi_service *service) {
 	struct crtx_sdbus_listener *slist;
 	size_t size;
 	
+	
 	slist = crtx_sdbus_get_default_listener(CRTX_SDBUS_TYPE_SYSTEM);
 	
 	r = sd_bus_message_new_method_call(slist->bus,
-									&m,
-									"org.freedesktop.Avahi",
-									"/",
-									"org.freedesktop.Avahi.Server",
-									"ResolveService"
-	);
+						&m,
+						"org.freedesktop.Avahi",
+						"/",
+						"org.freedesktop.Avahi.Server",
+						"ResolveService"
+						);
 	if (r < 0) {
 		ERROR("Failed to create method call: %s %s\n", error.name, error.message);
 		return r;

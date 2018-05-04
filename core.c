@@ -1,3 +1,8 @@
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,7 +36,6 @@
 #ifdef STATIC_readline
 #include "readline.h"
 #endif
-#include "controls.h"
 #include "fanotify.h"
 #include "inotify.h"
 #include "threads.h"
@@ -91,7 +95,6 @@ struct crtx_root *crtx_root = &crtx_global_root;
 
 struct crtx_module static_modules[] = {
 	{"threads", &crtx_threads_init, &crtx_threads_finish},
-	{"controls", &crtx_controls_init, &crtx_controls_finish},
 	{"signals", &crtx_signals_init, &crtx_signals_finish},
 	{"socket", &crtx_socket_init, &crtx_socket_finish},
 	{"socket_raw", &crtx_socket_raw_init, &crtx_socket_raw_finish},

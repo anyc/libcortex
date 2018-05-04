@@ -1,6 +1,10 @@
+#ifndef _CRTX_PULSEAUDIO_H
+#define _CRTX_PULSEAUDIO_H
 
-#ifndef _CRTX_PA_H
-#define _CRTX_PA_H
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include "core.h"
 #include "sd_bus.h"

@@ -1,6 +1,10 @@
-
 #ifndef _CRTX_SIP_H
 #define _CRTX_SIP_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 struct crtx_sip_listener {
 	struct crtx_listener_base parent;

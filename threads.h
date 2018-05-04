@@ -1,6 +1,10 @@
-
 #ifndef CRTX_THREADS_H
 #define CRTX_THREADS_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include <pthread.h>
 

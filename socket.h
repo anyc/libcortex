@@ -1,3 +1,5 @@
+#ifndef _CRTX_SOCKET_H
+#define _CRTX_SOCKET_H
 
 #include <arpa/inet.h>
 
@@ -35,3 +37,5 @@ void crtx_socket_init();
 void crtx_socket_finish();
 struct crtx_listener_base *crtx_new_socket_server_listener(void *options);
 struct crtx_listener_base *crtx_new_socket_client_listener(void *options);
+
+#endif

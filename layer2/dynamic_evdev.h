@@ -1,6 +1,10 @@
-
 #ifndef _CRTX_DYNAMIC_EVDEV_H
 #define _CRTX_DYNAMIC_EVDEV_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include <crtx/udev.h>
 #include <crtx/evdev.h>

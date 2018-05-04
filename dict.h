@@ -1,6 +1,10 @@
-
 #ifndef CRTX_DICT_H
 #define CRTX_DICT_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #define CRTX_DICT_GET_NUMBER(dict_item) ( \
 	(dict_item)->type == 'u' ? (dict_item)->uint32 : \

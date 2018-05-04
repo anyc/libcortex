@@ -1,7 +1,10 @@
-
 #ifndef INTERN_H
 #define INTERN_H
 
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #define STRINGIFYB(x) #x
 #define STRINGIFY(x) STRINGIFYB(x)

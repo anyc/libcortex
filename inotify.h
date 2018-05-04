@@ -1,6 +1,10 @@
-
 #ifndef _CRTX_INOTIFY_H
 #define _CRTX_INOTIFY_H
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
 
 #include <sys/inotify.h>
 
