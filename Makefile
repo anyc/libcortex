@@ -43,7 +43,7 @@ DYN_MODULES+=avahi can evdev libvirt netlink_ge nl_libnl nf_queue pulseaudio rea
 # build tests for enabled modules
 TESTS+=$(foreach t,$(STATIC_MODULES) $(DYN_MODULES),$(if $(findstring $(t),$(AVAILABLE_TESTS)), $(t).test))
 
-OBJS+=$(patsubst %,%.o,$(STATIC_MODULES)) $(patsubst %,%.o,$(STATIC_TOOLS))
+OBJS+=$(patsubst %,%.o,$(BUILTIN_MODULES)) $(patsubst %,%.o,$(STATIC_MODULES)) $(patsubst %,%.o,$(STATIC_TOOLS))
 
 DYN_MODULES_LIST=$(patsubst %,libcrtx_%.so, $(DYN_MODULES))
 
