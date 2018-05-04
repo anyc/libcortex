@@ -17,14 +17,11 @@ includedir?=$(prefix)/include
 APP=cortexd
 SHAREDLIB=libcrtx.so
 
-OBJS+=cortexd.o core.o socket.o socket_raw.o controls.o fanotify.o inotify.o \
-	event_comm.o cache.o threads.o signals.o dict.o dict_inout.o \
+OBJS+=core.o fanotify.o inotify.o \
+	threads.o signals.o dict.o \
 	llist.o dllist.o timer.o epoll.o writequeue.o
 
 AVAILABLE_TESTS=avahi can epoll evdev libvirt nl_libnl netlink_ge nl_route_raw pulseaudio sdbus sip timer udev uevents v4l xcb_randr writequeue
-
-# LDFLAGS=-rdynamic
-# CONTROLS+=$(patsubst examples/control_%.c,examples/libcrtx_%.so,$(wildcard examples/*.c))
 
 CFLAGS+=$(DEBUG_CFLAGS) -D_FILE_OFFSET_BITS=64 -fPIC -DCRTX_PLUGIN_DIR=\"$(plugindir)\"
 LDLIBS+=-lpthread -ldl
@@ -36,7 +33,7 @@ LDLIBS+=-lpthread -ldl
 include Makefile.modules
 
 # default module sets
-STATIC_MODULES+=netlink_raw nl_route_raw uevents dict_inout_json
+STATIC_MODULES+=cache dict_inout dict_inout_json event_comm netlink_raw nl_route_raw uevents socket socket_raw
 DYN_MODULES+=avahi can evdev libvirt netlink_ge nl_libnl nf_queue pulseaudio readline sd_bus sd_bus_notifications sip udev v4l xcb_randr
 
 -include $(local_mk)

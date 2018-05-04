@@ -22,8 +22,10 @@
 #include "intern.h"
 #include "intern.h"
 #include "core.h"
+#ifdef STATIC_socket
 #include "socket.h"
 #include "socket_raw.h"
+#endif
 #ifdef STATIC_sd_bus
 #include "sd_bus.h"
 #endif
@@ -96,8 +98,10 @@ struct crtx_root *crtx_root = &crtx_global_root;
 struct crtx_module static_modules[] = {
 	{"threads", &crtx_threads_init, &crtx_threads_finish},
 	{"signals", &crtx_signals_init, &crtx_signals_finish},
+#ifdef STATIC_socket
 	{"socket", &crtx_socket_init, &crtx_socket_finish},
 	{"socket_raw", &crtx_socket_raw_init, &crtx_socket_raw_finish},
+#endif
 #ifdef STATIC_sdbus
 	{"sdbus", &crtx_sdbus_init, &crtx_sdbus_finish},
 #endif
@@ -161,10 +165,12 @@ struct crtx_listener_repository static_listener_repository[] = {
 #endif
 	{"fanotify", &crtx_new_fanotify_listener},
 	{"inotify", &crtx_new_inotify_listener},
+#ifdef STATIC_socket
 	{"socket_server", &crtx_new_socket_server_listener},
 	{"socket_raw_server", &crtx_new_socket_raw_server_listener},
 	{"socket_client", &crtx_new_socket_client_listener},
 	{"socket_raw_client", &crtx_new_socket_raw_client_listener},
+#endif
 // #ifdef STATIC_sd_bus_notifications
 // 	{"sd_bus_notification", &crtx_new_sd_bus_notification_listener},
 // #endif
