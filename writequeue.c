@@ -169,7 +169,7 @@ int writequeue_main(int argc, char **argv) {
 	}
 	
 	ret = crtx_start_listener(lbase);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting writequeue listener failed\n");
 		return 1;
 	}

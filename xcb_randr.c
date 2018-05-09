@@ -671,7 +671,7 @@ int xcb_randr_main(int argc, char **argv) {
 	crtx_create_task(lbase->graph, 0, "xcb_randr_test", xcb_randr_test_handler, 0);
 	
 	ret = crtx_start_listener(lbase);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting xcb_randr listener failed\n");
 		return 1;
 	}

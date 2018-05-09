@@ -324,7 +324,7 @@ int pa_main(int argc, char **argv) {
 	crtx_create_task(lbase->graph, 0, "pa_test", pa_test_handler, 0);
 	
 	ret = crtx_start_listener(lbase);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting pulseaudio listener failed\n");
 		return 1;
 	}

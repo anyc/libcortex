@@ -560,7 +560,7 @@ static char nl_route_start_listener(struct crtx_listener_base *listener) {
 	nlr_list = (struct crtx_nl_route_listener*) listener;
 	
 	ret = crtx_start_listener(&nlr_list->nl_listener.parent);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting netlink_raw listener failed\n");
 		return ret;
 	}
@@ -747,7 +747,7 @@ char crtx_get_own_ip_addresses() {
 	}
 	
 	ret = crtx_start_listener(lbase);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting nl_route listener failed\n");
 		return 1;
 	}

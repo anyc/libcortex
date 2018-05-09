@@ -301,8 +301,8 @@ void crtx_printf(char level, char *format, ...);
 char *crtx_stracpy(const char *str, size_t *str_length);
 struct crtx_event *new_event();
 void free_event(struct crtx_event *event);
-void crtx_init();
-void crtx_finish();
+int crtx_init();
+int crtx_finish();
 void crtx_loop();
 void free_eventgraph(struct crtx_graph *egraph);
 void crtx_init_graph(struct crtx_graph *crtx_graph, char *name);
@@ -318,9 +318,11 @@ struct crtx_graph *find_graph_for_event_type(char *event_type);
 struct crtx_graph *find_graph_by_name(char *na6me);
 struct crtx_graph *get_graph_for_event_type(char *event_type, char **new_event_types);
 struct crtx_task *new_task();
-void free_task(struct crtx_task *task);
+void crtx_free_task(struct crtx_task *task);
 char wait_on_event(struct crtx_event *event);
 struct crtx_listener_base *create_listener(char *id, void *options);
+int crtx_create_listener(struct crtx_listener_base **listener, char *id, void *options);
+
 // void free_listener(struct crtx_listener_base *listener);
 void crtx_free_listener(struct crtx_listener_base *listener);
 struct crtx_event *crtx_create_event(char *type); //, void *data, size_t data_size, unsigned char flags);
@@ -329,7 +331,7 @@ struct crtx_task *crtx_create_task(struct crtx_graph *graph, unsigned char posit
 void crtx_process_event(struct crtx_graph *graph, struct crtx_dll *queue_entry);
 void crtx_init_shutdown();
 
-char crtx_start_listener(struct crtx_listener_base *listener);
+int crtx_start_listener(struct crtx_listener_base *listener);
 char crtx_update_listener(struct crtx_listener_base *listener);
 void crtx_stop_listener(struct crtx_listener_base *listener);
 void print_tasks(struct crtx_graph *graph);
@@ -351,7 +353,7 @@ char is_graph_empty(struct crtx_graph *graph, char *event_type);
 void crtx_init_notification_listeners(void **data);
 void crtx_finish_notification_listeners(void *data);
 
-void crtx_handle_std_signals();
+int crtx_handle_std_signals();
 
 struct crtx_event_loop* crtx_get_event_loop();
 void *crtx_process_graph_tmain(void *arg);

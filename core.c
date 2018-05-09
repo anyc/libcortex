@@ -10,6 +10,7 @@
 #include <regex.h>
 #include <stddef.h>
 #include <inttypes.h>
+#include <errno.h>
  
 // for get_username()
 #include <unistd.h>
@@ -324,7 +325,7 @@ static void crtx_default_el_error_cb(struct crtx_event_loop_payload *el_payload,
 	crtx_free_listener(listener);
 }
 
-char crtx_start_listener(struct crtx_listener_base *listener) {
+int crtx_start_listener(struct crtx_listener_base *listener) {
 	enum crtx_processing_mode mode;
 	struct crtx_event *event;
 	int ret;
@@ -334,14 +335,14 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 	if (listener->state == CRTX_LSTNR_STARTED) {
 		DBG("listener already started\n");
 		UNLOCK(listener->state_mutex);
-		return 1;
+		return -EEXIST;
 	}
 	
 	if (!listener->el_payload.fd && listener->thread_job.fct && !listener->start_listener) {
 		DBG("no method to start listener \"%s\" provided\n", listener->id);
 		
 		UNLOCK(listener->state_mutex);
-		return -1;
+		return -EINVAL;
 	}
 	
 	listener->state = CRTX_LSTNR_STARTING;
@@ -370,7 +371,7 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 			
 			UNLOCK(listener->state_mutex);
 			
-			return 0;
+			return -ret;
 		}
 	}
 	
@@ -417,7 +418,7 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 		} else {
 			ERROR("invalid start listener mode: %d\n", mode);
 			UNLOCK(listener->state_mutex);
-			return 0;
+			return -EINVAL;
 		}
 	}
 	
@@ -432,7 +433,7 @@ char crtx_start_listener(struct crtx_listener_base *listener) {
 	
 	UNLOCK(listener->state_mutex);
 	
-	return 1;
+	return 0;
 }
 
 char crtx_update_listener(struct crtx_listener_base *listener) {
@@ -513,6 +514,15 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 // 	}
 	
 	return lbase;
+}
+
+int crtx_create_listener(struct crtx_listener_base **listener, char *id, void *options) {
+	if (id == 0 || listener == 0)
+		return -EINVAL;
+	
+	*listener = create_listener(id, options);
+	
+	return 0;
 }
 
 void crtx_stop_listener(struct crtx_listener_base *listener) {
@@ -1249,7 +1259,7 @@ void crtx_shutdown_graph_intern(struct crtx_graph *egraph, char crtx_shutdown) {
 	
 	for (t = egraph->tasks; t; t=tnext) {
 		tnext = t->next;
-		free_task(t);
+		crtx_free_task(t);
 	}
 }
 
@@ -1274,7 +1284,7 @@ struct crtx_task *new_task() {
 	return etask;
 }
 
-void free_task(struct crtx_task *task) {
+void crtx_free_task(struct crtx_task *task) {
 	struct crtx_task *t, *prev;
 	
 	DBG("free task %s\n", task->id);
@@ -1292,6 +1302,10 @@ void free_task(struct crtx_task *task) {
 	}
 	
 	free(task);
+}
+
+void free_task(struct crtx_task *task) {
+	crtx_free_task(task);
 }
 
 void crtx_flush_events() {
@@ -1508,7 +1522,7 @@ void crtx_daemonize() {
 // 	stderr = fopen("/dev/null", "w+");
 }
 
-void crtx_init() {
+int crtx_init() {
 	struct crtx_task *t;
 	unsigned int i;
 	
@@ -1550,9 +1564,11 @@ void crtx_init() {
 	}
 	
 	load_plugins(CRTX_PLUGIN_DIR);
+	
+	return 0;
 }
 
-void crtx_finish() {
+int crtx_finish() {
 	unsigned int i;
 	
 	crtx_init_shutdown();
@@ -1594,6 +1610,8 @@ void crtx_finish() {
 	UNLOCK(crtx_root->graphs_mutex);
 	
 	DBG("finished shutdown\n");
+	
+	return 0;
 }
 
 void print_tasks(struct crtx_graph *graph) {
@@ -1770,7 +1788,7 @@ struct crtx_event_loop* crtx_get_event_loop() {
 		
 		if (crtx_root->detached_event_loop) {
 			ret = crtx_start_listener(lbase);
-			if (!ret) {
+			if (ret) {
 				ERROR("starting epoll listener failed\n");
 				return 0;
 			}

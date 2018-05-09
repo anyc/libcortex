@@ -110,7 +110,7 @@ int crtx_sdbus_match_add(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus_ma
 	
 	DBG("sdbus will listen for \"%s\" (etype: \"%s\")\n", match->match_str, match->event_type);
 	
-	r = sd_bus_add_match(lstnr->bus, NULL, match->match_str, match->callback, match->callback_data);
+	r = sd_bus_add_match(lstnr->bus, &match->slot, match->match_str, match->callback, match->callback_data);
 	if (r < 0) {
 		ERROR("sd_bus_add_match failed: %s\n", strerror(-r));
 		
@@ -118,6 +118,21 @@ int crtx_sdbus_match_add(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus_ma
 		free(dll);
 		
 		return r;
+	}
+	
+	return 0;
+}
+
+int crtx_sdbus_match_remove(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus_match *match) {
+	struct crtx_dll *dll;
+	
+	for (dll=lstnr->matches; dll && dll->data != match; dll=dll->next) {}
+	if (dll) {
+		crtx_dll_unlink(&lstnr->matches, dll);
+		
+		sd_bus_slot_unref(match->slot);
+	} else {
+		ERROR("did not find match obj in linked list\n");
 	}
 	
 	return 0;
@@ -150,6 +165,16 @@ int crtx_sdbus_track_add(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus_tr
 		free(track->match.match_str);
 		
 		return r;
+	}
+	
+	return 0;
+}
+
+int crtx_sdbus_track_remove(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus_track *track) {
+	if (track->match.match_str) {
+		free(track->match.match_str);
+		
+		crtx_sdbus_match_remove(lstnr, &track->match);
 	}
 	
 	return 0;
@@ -283,6 +308,7 @@ char crtx_sdbus_open_bus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name
 
 struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 	struct crtx_sdbus_listener *sdlist;
+	int r;
 	
 	
 	sdlist = (struct crtx_sdbus_listener *) options;
@@ -292,6 +318,12 @@ struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 			return 0;
 	}
 	
+	r = sd_bus_get_unique_name(sdlist->bus, &sdlist->unique_name);
+	if (r < 0) {
+		ERROR("sd_bus_get_unique_name failed: %s\n", strerror(-r));
+		return 0;
+	}
+	
 	sdlist->parent.el_payload.fd = sd_bus_get_fd(sdlist->bus);
 	sdlist->parent.el_payload.event_flags = crtx_sdbus_get_events(sdlist->bus);
 	sdlist->parent.el_payload.data = sdlist;
@@ -299,6 +331,17 @@ struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 	sdlist->parent.el_payload.event_handler_name = "sdbus event handler";
 	
 	sdlist->parent.shutdown = &crtx_sdbus_shutdown_listener;
+	
+	if (sdlist->connection_signals) {
+#if 0 // starting with version 237/238
+		r = sd_bus_set_connected_signal(sdlist->bus, 1);
+		if (r < 0) {
+			ERROR("sd_bus_set_connected_signal returned: %s\n", strerror(-r));
+			return 0;
+		}
+#endif
+	}
+	
 	
 	return &sdlist->parent;
 }
@@ -319,7 +362,7 @@ struct crtx_sdbus_listener *crtx_sdbus_get_default_listener(enum crtx_sdbus_type
 		}
 		
 		ret = crtx_start_listener(lbase);
-		if (!ret) {
+		if (ret) {
 			return 0;
 		}
 	}
@@ -354,6 +397,7 @@ static char sdbus_test_handler(struct crtx_event *event, void *userdata, void **
 }
 
 struct crtx_sdbus_match matches[] = {
+	/* match string, event type, callback fct, callback data, <reserved> */
 	{ "type='signal'", "sd_bus/signal", 0, 0, 0 },
 	{0},
 };
@@ -368,6 +412,7 @@ int sdbus_main(int argc, char **argv) {
 	memset(&sdlist, 0, sizeof(struct crtx_sdbus_listener));
 	
 	sdlist.bus_type = CRTX_SDBUS_TYPE_USER;
+	sdlist.connection_signals = 1;
 	
 	lbase = create_listener("sdbus", &sdlist);
 	if (!lbase) {
@@ -378,7 +423,7 @@ int sdbus_main(int argc, char **argv) {
 	crtx_create_task(lbase->graph, 0, "sdbus_test", sdbus_test_handler, 0);
 	
 	ret = crtx_start_listener(lbase);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting sdbus listener failed\n");
 		return 1;
 	}
@@ -386,6 +431,7 @@ int sdbus_main(int argc, char **argv) {
 	it = matches;
 	while (it && it->match_str) {
 		crtx_sdbus_match_add(&sdlist, it);
+		it++;
 	}
 	
 	crtx_loop();

@@ -406,9 +406,9 @@ struct crtx_listener_base *crtx_new_avahi_listener(void *options) {
 	crtx_create_task(alist->sdbase->graph, 0, "sdbus_to_avahi_handler", sdbus_to_avahi_handler, alist);
 	
 	ret = crtx_start_listener(alist->sdbase);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting sdbus listener failed\n");
-		return 0;
+		return ret;
 	}
 	
 	
@@ -473,7 +473,7 @@ int avahi_main(int argc, char **argv) {
 	crtx_create_task(lbase->graph, 0, "avahi_test", avahi_test_handler, 0);
 	
 	ret = crtx_start_listener(lbase);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting avahi listener failed\n");
 		return 1;
 	}

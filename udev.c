@@ -359,7 +359,7 @@ int udev_main(int argc, char **argv) {
 	crtx_create_task(lbase->graph, 0, "udev_test", udev_test_handler, 0);
 	
 	ret = crtx_start_listener(lbase);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting udev listener failed\n");
 		return 1;
 	}

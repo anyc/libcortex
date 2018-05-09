@@ -78,9 +78,9 @@ debug:
 
 
 crtx_include_dir:
-	mkdir -p include/crtx include/crtx/layer2/
-	for h in *.h; do [ -e include/crtx/$$h ] || ln -s ../../$$h include/crtx/; done
-	for h in layer2/*.h; do [ -e include/crtx/$$h ] || ln -s ../../../$$h include/crtx/layer2/; done
+	mkdir -p include/cortex include/cortex/layer2/
+	for h in *.h; do [ -e include/cortex/$$h ] || ln -s ../../$$h include/cortex/; done
+	for h in layer2/*.h; do [ -e include/cortex/$$h ] || ln -s ../../../$$h include/cortex/layer2/; done
 
 core_modules.h: $(local_mk)
 	echo -n "" > $@

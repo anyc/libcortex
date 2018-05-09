@@ -928,7 +928,7 @@ int libvirt_main(int argc, char **argv) {
 	retry_lstnr = crtx_timer_retry_listener(&lvlist.parent, 5);
 	
 	ret = crtx_start_listener(lbase);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting libvirt listener failed\n");
 // 		return 1;
 	}

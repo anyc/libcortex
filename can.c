@@ -372,7 +372,7 @@ int can_main(int argc, char **argv) {
 	}
 	
 	ret = crtx_start_listener(lbase);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting can listener failed\n");
 		return 0;
 	}

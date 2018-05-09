@@ -549,7 +549,7 @@ int v4l_main(int argc, char **argv) {
 	crtx_create_task(lbase->graph, 0, "v4l_test", &v4l_event_handler, &clist);
 	
 	ret = crtx_start_listener(lbase);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting v4l listener failed\n");
 		return 0;
 	}

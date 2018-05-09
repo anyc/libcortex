@@ -187,7 +187,7 @@ int libnl_main(int argc, char **argv) {
 	crtx_create_task(lbase->graph, 0, "libnl_test", libnl_test_handler, 0);
 	
 	r = crtx_start_listener(lbase);
-	if (!r) {
+	if (r) {
 		ERROR("starting libnl listener failed\n");
 		return 1;
 	}

@@ -515,7 +515,7 @@ int epoll_main(int argc, char **argv) {
 	crtx_create_task(lbase->graph, 0, "epoll_test", epoll_test_handler, 0);
 	
 	ret = crtx_start_listener(lbase);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting epoll listener failed\n");
 		return 1;
 	}

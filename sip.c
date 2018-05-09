@@ -291,7 +291,7 @@ int sip_main(int argc, char **argv) {
 	crtx_create_task(lbase->graph, 0, "sip2notify", sip2notify_handler, notify_graph);
 	
 	ret = crtx_start_listener(lbase);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting sip listener failed\n");
 		return 1;
 	}

@@ -137,15 +137,17 @@ static char sigint_handler(struct crtx_event *event, void *userdata, void **sess
 }
 
 
-void crtx_handle_std_signals() {
+int crtx_handle_std_signals() {
 	struct crtx_task *t;
+	int err;
+	
 	
 	signal_list.signals = std_signals;
 	
-	sl_base = create_listener("signals", &signal_list);
-	if (!sl_base) {
-		printf("cannot create crtx_signal_listener\n");
-		return;
+// 	sl_base = create_listener("signals", &signal_list);
+	err = crtx_create_listener(&sl_base, "signals", &signal_list);
+	if (err < 0) {
+		return err;
 	}
 	
 	t = new_task();
@@ -165,6 +167,8 @@ void crtx_handle_std_signals() {
 	signal(SIGPIPE, SIG_IGN);
 	
 	crtx_start_listener(sl_base);
+	
+	return 0;
 }
 
 void crtx_signals_init() {

@@ -93,7 +93,7 @@ static char netif_start_listener(struct crtx_listener_base *listener) {
 	netif_lstnr = (struct crtx_netif_listener*) listener;
 	
 	ret = crtx_start_listener(&netif_lstnr->libnl_lstnr.parent);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting libnl listener failed\n");
 		return ret;
 	}
@@ -124,6 +124,8 @@ struct crtx_listener_base *crtx_new_netif_listener(void *options) {
 	struct crtx_netif_listener *netif_lstnr;
 	struct crtx_listener_base *lbase;
 	struct crtx_libnl_callback *cbit;
+	int ret;
+	
 	
 	netif_lstnr = (struct crtx_netif_listener*) options;
 	
@@ -132,8 +134,9 @@ struct crtx_listener_base *crtx_new_netif_listener(void *options) {
 	}
 	netif_lstnr->libnl_lstnr.callbacks = libnl_callbacks;
 	
-	lbase = create_listener("nl_libnl", &netif_lstnr->libnl_lstnr);
-	if (!lbase) {
+// 	lbase = create_listener("nl_libnl", &netif_lstnr->libnl_lstnr);
+	ret = crtx_create_listener(&lbase, "nl_libnl", &netif_lstnr->libnl_lstnr);
+	if (ret) {
 		ERROR("create_listener(libnl) failed\n");
 		exit(1);
 	}
@@ -178,8 +181,9 @@ int netif_main(int argc, char **argv) {
 	
 	netif_lstnr.query_existing = 2;
 	
-	lbase = create_listener("netif", &netif_lstnr);
-	if (!lbase) {
+// 	lbase = create_listener("netif", &netif_lstnr);
+	r = crtx_create_listener(&lbase, "netif", &netif_lstnr);
+	if (r) {
 		ERROR("create_listener(netif) failed\n");
 		exit(1);
 	}

@@ -230,7 +230,7 @@ int evdev_main(int argc, char **argv) {
 	crtx_create_task(lbase->graph, 0, "evdev_test", evdev_test_handler, 0);
 	
 	ret = crtx_start_listener(lbase);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting evdev listener failed\n");
 		return 1;
 	}

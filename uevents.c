@@ -139,7 +139,7 @@ static char uevents_start_listener(struct crtx_listener_base *listener) {
 	ulist = (struct crtx_uevents_listener*) listener;
 	
 	ret = crtx_start_listener(&ulist->nl_listener.parent);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting netlink_raw listener failed\n");
 		return ret;
 	}
@@ -226,7 +226,7 @@ int netlink_raw_main(int argc, char **argv) {
 	crtx_create_task(lbase->graph, 0, "uevents_test", uevents_test_handler, 0);
 	
 	ret = crtx_start_listener(lbase);
-	if (!ret) {
+	if (ret) {
 		ERROR("starting uevents listener failed\n");
 		return 1;
 	}
