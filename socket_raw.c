@@ -235,6 +235,7 @@ struct crtx_listener_base *crtx_new_socket_raw_client_listener(void *options) {
 
 struct crtx_listener_base *crtx_new_socket_raw_listener(void *options) {
 	/* TODO use crtx_new_socket_raw_client_listener or crtx_new_socket_raw_server_listener */
+	return 0;
 }
 
 void crtx_socket_raw_init() {

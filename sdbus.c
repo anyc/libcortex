@@ -129,6 +129,7 @@ int crtx_sdbus_match_remove(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus
 	for (dll=lstnr->matches; dll && dll->data != match; dll=dll->next) {}
 	if (dll) {
 		crtx_dll_unlink(&lstnr->matches, dll);
+		free(dll);
 		
 		sd_bus_slot_unref(match->slot);
 	} else {

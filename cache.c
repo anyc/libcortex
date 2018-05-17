@@ -660,7 +660,7 @@ void crtx_free_presence_cache_task(struct crtx_task *task) {
 	crtx_dict_unref(ct->cache->dict);
 	free(ct->cache);
 	free(ct);
-	free_task(task);
+	crtx_free_task(task);
 }
 
 char crtx_load_cache(struct crtx_cache *cache, char *path) {

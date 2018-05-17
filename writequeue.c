@@ -65,8 +65,10 @@ int crtx_add_writequeue2listener(struct crtx_writequeue *writequeue, struct crtx
 	writequeue->write = write_cb;
 	writequeue->write_userdata = write_userdata;
 	
-	writequeue->parent.el_payload.el_data = (struct epoll_event*) calloc(1, sizeof(struct epoll_event));
-	((struct epoll_event*) writequeue->parent.el_payload.el_data)->data.ptr = &writequeue->parent.el_payload;
+	// 	writequeue->parent.el_payload.el_data = (struct epoll_event*) calloc(1, sizeof(struct epoll_event));
+// 	((struct epoll_event*) writequeue->parent.el_payload.el_data)->data.ptr = &writequeue->parent.el_payload;
+	writequeue->parent.el_payload.el_data = &writequeue->epoll_event;
+	writequeue->epoll_event.data.ptr = &writequeue->parent.el_payload;
 	
 	lbase = create_listener("writequeue", writequeue);
 	if (!lbase) {

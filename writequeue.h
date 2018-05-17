@@ -11,6 +11,7 @@ typedef int (*crtx_wq_write_cb)(struct crtx_writequeue *wqueue, void *userdata);
 
 struct crtx_writequeue {
 	struct crtx_listener_base parent;
+	struct epoll_event epoll_event;
 	
 	int write_fd;
 // 	void *buffer;
