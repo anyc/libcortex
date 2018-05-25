@@ -609,7 +609,7 @@ struct crtx_listener_base *crtx_new_xcb_randr_listener(void *options) {
 	xrlist->parent.thread_job.fct_data = xrlist;
 	
 	xrlist->parent.el_payload.fd = xcb_get_file_descriptor(xrlist->conn);
-	xrlist->parent.el_payload.event_flags = EPOLLIN;
+	xrlist->parent.el_payload.event_flags = EVLOOP_READ;
 	xrlist->parent.el_payload.data = xrlist;
 	xrlist->parent.el_payload.event_handler = &xcb_randr_fd_event_handler;
 	xrlist->parent.el_payload.event_handler_name = "xcb-randr fd handler";

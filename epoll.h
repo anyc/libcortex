@@ -8,8 +8,8 @@
 
 #include <sys/epoll.h>
 
-#define EVLOOP_READ EPOLLIN
-#define EVLOOP_WRITE EPOLLOUT
+#define EVLOOP_READ 1<<0
+#define EVLOOP_WRITE 1<<1
 
 struct crtx_epoll_listener {
 	struct crtx_listener_base parent;

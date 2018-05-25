@@ -114,7 +114,6 @@ void crtx_epoll_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 	VDBG("epoll del %d\n", el_payload->fd);
 	
 	fd = el_payload->fd;
-// 	el_payload->fd = 0;
 	
 	epl = (struct crtx_epoll_listener *) lbase;
 	crtx_epoll_del_fd_intern(epl, fd);
@@ -129,7 +128,6 @@ struct epoll_control_pipe {
 
 char *epoll_flags2str(int *flags) {
 	#define RETFLAG(flag) if (*flags & flag) { *flags = (*flags) & (~flag); return #flag; }
-// 	#define RETFLAG(flag) if (eflags & flag) { eflags = (eflags) & (~flag); return #flag; }
 	
 	RETFLAG(EPOLLIN);
 	RETFLAG(EPOLLOUT);
@@ -144,18 +142,15 @@ char *epoll_flags2str(int *flags) {
 static void crtx_epoll_notify(struct crtx_event_loop_payload *el_payload, struct epoll_event *rec_event) {
 	struct crtx_event *event;
 	
-	el_payload->trigger_flags = rec_event->events;
+	el_payload->triggered_flags = rec_event->events;
 	
-	memcpy(el_payload->el_data, rec_event, sizeof(struct epoll_event));
+// 	memcpy(el_payload->el_data, rec_event, sizeof(struct epoll_event));
 	
 	VDBG("received wakeup for fd %d\n", el_payload->fd);
 	
 	if (el_payload->event_handler) {
 		event = crtx_create_event(0);
 		
-		// 					event->data.pointer = el_payload;
-		// 					event->data.type = 'p';
-		// 					event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 		crtx_event_set_raw_data(event, 'p', el_payload, sizeof(el_payload), CRTX_DIF_DONT_FREE_DATA);
 		
 		// TODO we call the event handler directly as walking through the event graph
@@ -168,9 +163,9 @@ static void crtx_epoll_notify(struct crtx_event_loop_payload *el_payload, struct
 		// the event handlers check if the event is meant for them
 		// 					crtx_add_event(epl->parent.graph, event);
 	} else
-		if (el_payload->simple_callback) {
-			el_payload->simple_callback(el_payload);
-		}
+	if (el_payload->simple_callback) {
+		el_payload->simple_callback(el_payload);
+	}
 }
 
 void *crtx_epoll_main(void *data) {
@@ -181,18 +176,8 @@ void *crtx_epoll_main(void *data) {
 	struct crtx_event_loop_payload *el_payload;
 	struct epoll_control_pipe ecp;
 	
-// 	printf("epoll main %p\n", data);
+
 	epl = (struct crtx_epoll_listener*) data;
-	
-// 	for (i=0; i < epl->n_events; i++) {
-// 		s = epoll_ctl(epl->epoll_fd, EPOLL_CTL_ADD, epl->fds[i].data.fd, &epl->fds[i].data);
-// 		if (s < 0) {
-// 			ERROR("epoll_ctl failed for fd %d: %s\n", event->data.fd, strerror(errno));
-// 			continue;
-// 		}
-// 	}
-	
-	
 	
 	rec_events = (struct epoll_event*) malloc(sizeof(struct epoll_event)*epl->max_n_events);
 	
@@ -253,53 +238,14 @@ void *crtx_epoll_main(void *data) {
 				// check if there are specialized handlers for this kind of event
 				if (rec_events[i].events & EPOLLIN && el_payload->epollin)
 					crtx_epoll_notify(el_payload->epollin, &rec_events[i]);
-// 					el_payload = el_payload->epollin;
 				if (rec_events[i].events & EPOLLOUT && el_payload->epollout)
 					crtx_epoll_notify(el_payload->epollout, &rec_events[i]);
-// 					el_payload = el_payload->epollout;
 				if (rec_events[i].events & EPOLLPRI && el_payload->epollpri)
 					crtx_epoll_notify(el_payload->epollpri, &rec_events[i]);
-// 					el_payload = el_payload->epollpri;
 				
 				crtx_epoll_notify(el_payload, &rec_events[i]);
-				
-// 				el_payload->trigger_flags = rec_events[i].events;
-// 				
-// 				memcpy(el_payload->el_data, &rec_events[i], sizeof(struct epoll_event));
-// 				
-// 				VDBG("received wakeup for fd %d\n", el_payload->fd);
-// 				
-// 				if (el_payload->event_handler) {
-// 					event = crtx_create_event(0);
-// 					
-// // 					event->data.pointer = el_payload;
-// // 					event->data.type = 'p';
-// // 					event->data.flags = CRTX_DIF_DONT_FREE_DATA;
-// 					crtx_event_set_raw_data(event, 'p', el_payload, sizeof(el_payload), CRTX_DIF_DONT_FREE_DATA);
-// 					
-// 					// TODO we call the event handler directly as walking through the event graph
-// 					// only causes additional processing overhead in most cases
-// 					el_payload->event_handler(event, 0, 0);
-// 					free_event(event);
-// 					
-// 					
-// 					// TODO if this is called, either create individual graph per fd or ensure
-// 					// the event handlers check if the event is meant for them
-// // 					crtx_add_event(epl->parent.graph, event);
-// 				} else
-// 				if (el_payload->simple_callback) {
-// 					el_payload->simple_callback(el_payload);
-// 				}
 			}
 		}
-		
-// 		if (epl->process_events) {
-// 			struct crtx_dll *git, *eit;
-// 			
-// 			crtx_claim_next_event(&git, &eit);
-// 			
-// 			crtx_process_event(git->graph, eit);
-// 		}
 	}
 	
 	DBG("epoll stops\n");
@@ -347,7 +293,6 @@ static void shutdown_epoll_listener(struct crtx_listener_base *lbase) {
 
 struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	struct crtx_epoll_listener *epl;
-// 	int pipe_fds[2];
 	struct epoll_event ctrl_event;
 	int ret;
 	
@@ -360,36 +305,20 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 		return 0;
 	}
 	
-// 	new_eventgraph(&epl->parent.graph, "epoll", 0);
-	
 	epl->parent.shutdown = &shutdown_epoll_listener;
 	
-// 	if (!epl->no_thread) {
-// 		epl->parent.thread = get_thread(crtx_epoll_main, epl, 0);
-		epl->parent.thread_job.fct = &crtx_epoll_main;
-		epl->parent.thread_job.fct_data = epl;
-		epl->parent.thread_job.do_stop = &stop_thread;
-		
-		// either the main thread will execute crtx_epoll_main or we spawn a new thread
-		epl->parent.mode = CRTX_PREFER_THREAD;
-		
-		// we only set our fd here to avoid warnings, the add_fd function will ignore our fd
-// 		epl->parent.el_payload.fd = epl->epoll_fd;
-// 	} 
-// 	else {
-// 		if (crtx_root->event_loop.listener)
-// 			ERROR("multiple crtx_root->event_loop\n");
-// 		
-// 		crtx_root->event_loop.listener = epl;
-// 	}
+	epl->parent.thread_job.fct = &crtx_epoll_main;
+	epl->parent.thread_job.fct_data = epl;
+	epl->parent.thread_job.do_stop = &stop_thread;
+	
+	// either the main thread will execute crtx_epoll_main or we spawn a new thread
+	epl->parent.mode = CRTX_PREFER_THREAD;
+	
 	
 	ret = pipe(epl->pipe_fds); // 0 read, 1 write
 	if (ret < 0) {
 		ERROR("creating control pipe failed: %s\n", strerror(errno));
-// 		epl->control_fd = -1;
 	} else {
-// 		epl->control_fd = pipe_fds[1];
-		
 		memset(&ctrl_event, 0, sizeof(struct epoll_event));
 		ctrl_event.events = EPOLLIN;
 		ctrl_event.data.ptr = 0;

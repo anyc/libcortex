@@ -78,9 +78,9 @@ static int elw_virEventPollFromNativeEvents(int events) {
 static int elw_virEventPollToNativeEvents(int events) {
 	int ret = 0;
 	if (events & VIR_EVENT_HANDLE_READABLE)
-		ret |= EPOLLIN;
+		ret |= EVLOOP_READ;
 	if (events & VIR_EVENT_HANDLE_WRITABLE)
-		ret |= EPOLLOUT;
+		ret |= EVLOOP_WRITE;
 	if (events & VIR_EVENT_HANDLE_ERROR)
 		ret |= EPOLLERR;
 	if (events & VIR_EVENT_HANDLE_HANGUP)
@@ -90,9 +90,9 @@ static int elw_virEventPollToNativeEvents(int events) {
 
 static int elw_virEventPollFromNativeEvents(int events) {
 	int ret = 0;
-	if (events & EPOLLIN)
+	if (events & EVLOOP_READ)
 		ret |= VIR_EVENT_HANDLE_READABLE;
-	if (events & EPOLLOUT)
+	if (events & EVLOOP_WRITE)
 		ret |= VIR_EVENT_HANDLE_WRITABLE;
 	if (events & EPOLLERR)
 		ret |= VIR_EVENT_HANDLE_ERROR;

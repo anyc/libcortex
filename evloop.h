@@ -16,7 +16,7 @@ struct crtx_event_loop_payload {
 	
 	crtx_handle_task_t event_handler;
 	char *event_handler_name;
-	int trigger_flags;
+	int triggered_flags;
 	
 	void (*simple_callback)(struct crtx_event_loop_payload *el_payload);
 	void (*error_cb)(struct crtx_event_loop_payload *el_payload, void *data);
@@ -24,9 +24,10 @@ struct crtx_event_loop_payload {
 	
 	void *el_data;
 	
-	struct crtx_event_loop_payload *epollin;
-	struct crtx_event_loop_payload *epollout;
-	struct crtx_event_loop_payload *epollpri;
+	struct crtx_event_loop_payload *sub_payloads;
+// 	struct crtx_event_loop_payload *epollin;
+// 	struct crtx_event_loop_payload *epollout;
+// 	struct crtx_event_loop_payload *epollpri;
 };
 
 struct crtx_listener_base;

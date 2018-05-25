@@ -203,11 +203,11 @@ int crtx_sdbus_get_events(sd_bus *bus) {
 	
 	f = sd_bus_get_events(bus);
 	if (f & POLLIN) {
-		result |= EPOLLIN;
+		result |= EVLOOP_READ;
 		f = f & (~POLLIN);
 	}
 	if (f & POLLOUT) {
-		result |= EPOLLOUT;
+		result |= EVLOOP_WRITE;
 		f = f & (~POLLOUT);
 	}
 	

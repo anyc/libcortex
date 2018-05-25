@@ -148,7 +148,7 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 // 	}
 	
 	tlist->parent.el_payload.fd = tlist->fd;
-	tlist->parent.el_payload.event_flags = EPOLLIN;
+	tlist->parent.el_payload.event_flags = EVLOOP_READ;
 	tlist->parent.el_payload.data = tlist;
 	tlist->parent.el_payload.event_handler = &timer_fd_event_handler;
 	tlist->parent.el_payload.event_handler_name = "timer fd handler";

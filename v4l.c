@@ -176,7 +176,7 @@ static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void 
 // 	}
 	
 	// events are signaled through EPOLLPRI
-	if (payload->trigger_flags & EPOLLPRI) {
+	if (payload->triggered_flags & EPOLLPRI) {
 		v4l_event = (struct v4l2_event *) malloc(sizeof(struct v4l2_event));
 		r = ioctl(clist->fd, VIDIOC_DQEVENT, v4l_event);
 		if (r < 0) {
@@ -189,7 +189,7 @@ static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void 
 		
 		crtx_add_event(clist->parent.graph, nevent);
 	} else
-	if (payload->trigger_flags & EPOLLIN) {
+	if (payload->triggered_flags & EVLOOP_READ) {
 		nevent = crtx_create_event("frame");
 // 		crtx_event_set_raw_data(nevent, 'p', v4l_event, sizeof(v4l_event), 0);
 		
@@ -448,7 +448,7 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 	lstnr->parent.el_payload.data = lstnr;
 	lstnr->parent.el_payload.event_handler = &v4l_fd_event_handler;
 	lstnr->parent.el_payload.event_handler_name = "v4l fd handler";
-	lstnr->parent.el_payload.event_flags = EPOLLPRI | EPOLLIN;
+	lstnr->parent.el_payload.event_flags = EPOLLPRI | EVLOOP_READ;
 // 	lstnr->parent.el_payload.error_cb = &on_error_cb;
 // 	lstnr->parent.el_payload.error_cb_data = lstnr;
 	

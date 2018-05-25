@@ -159,7 +159,7 @@ struct crtx_listener_base *crtx_new_evdev_listener(void *options) {
 	
 	evdev->parent.el_payload.fd = evdev->fd;
 	evdev->parent.el_payload.data = evdev;
-	evdev->parent.el_payload.event_flags = EPOLLIN;
+	evdev->parent.el_payload.event_flags = EVLOOP_READ;
 	evdev->parent.el_payload.event_handler = &evdev_fd_event_handler;
 	evdev->parent.el_payload.event_handler_name = "evdev fd handler";
 	
