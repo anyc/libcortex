@@ -16,7 +16,7 @@
 
 #include "intern.h"
 #include "avahi.h"
-#include "sd_bus.h"
+#include "sdbus.h"
 
 #ifndef CRTX_TEST
 
@@ -393,9 +393,12 @@ struct crtx_listener_base *crtx_new_avahi_listener(void *options) {
 	
 	alist->sdbus_match[2].match_str = 0;
 	
-// 	memset(&sdlist, 0, sizeof(struct crtx_sdbus_listener));
 	alist->sdlist.bus_type = CRTX_SDBUS_TYPE_SYSTEM;
-	alist->sdlist.matches = alist->sdbus_match;
+	
+// 	alist->sdlist.matches = alist->sdbus_match;
+	crtx_sdbus_match_add(&alist->sdlist, &alist->sdbus_match[0]);
+	crtx_sdbus_match_add(&alist->sdlist, &alist->sdbus_match[1]);
+	crtx_sdbus_match_add(&alist->sdlist, &alist->sdbus_match[2]);
 	
 	alist->sdbase = create_listener("sdbus", &alist->sdlist);
 	if (!alist->sdbase) {
@@ -408,7 +411,7 @@ struct crtx_listener_base *crtx_new_avahi_listener(void *options) {
 	ret = crtx_start_listener(alist->sdbase);
 	if (ret) {
 		ERROR("starting sdbus listener failed\n");
-		return ret;
+		return 0;
 	}
 	
 	

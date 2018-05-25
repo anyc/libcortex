@@ -39,38 +39,13 @@ enum crtx_processing_mode {CRTX_PREFER_NONE=0, CRTX_PREFER_THREAD, CRTX_PREFER_E
 struct crtx_event;
 struct crtx_listener_base;
 
-// struct crtx_raw_event_data {
-// 	void *(*copy_raw)(struct crtx_event_data *data);
-// 	void *(*release_raw)(struct crtx_event_data *data);
-// 	
-// 	void (*on_copy)(struct crtx_raw_item *item); // reference data
-// 	void (*on_release)(struct crtx_raw_item *item); // dereference data
-// 	
-// 	void (*raw_to_dict)(struct crtx_event_data *data);
-// };
-
-// struct crtx_event_data {
-// // 	void *raw;
-// // 	size_t raw_size;
-// 	struct crtx_dict_item raw;
-// 	
-// // 	char flags;
-// 	
-// 	void *(*copy_raw)(struct crtx_event_data *data);
-// 	void (*raw_to_dict)(struct crtx_event_data *data);
-// 	
-// 	struct crtx_dict *dict;
-// };
-
 typedef void (*crtx_raw_to_dict_t)(struct crtx_event *event, struct crtx_dict_item *item, void *user_data);
 
 struct crtx_event {
 	char *type;
 	
-// 	struct crtx_event_data data;
 	struct crtx_dict_item data;
 	
-// 	struct crtx_event_data response;
 	struct crtx_dict_item response;
 	char response_expected;
 	
@@ -87,22 +62,11 @@ struct crtx_event {
 	
 	struct crtx_listener_base *origin;
 	
-// 	void (*event_to_str)(struct crtx_event *event);
-	
 	void (*cb_before_release)(struct crtx_event *event, void *cb_before_release_data);
 	void *cb_before_release_data;
 	
 	pthread_mutex_t mutex;
 };
-
-// struct crtx_event_ll {
-// 	struct crtx_event *event;
-// 	
-// 	char in_process;
-// 	
-// 	struct crtx_event_ll *prev;
-// 	struct crtx_event_ll *next;
-// };
 
 typedef char (*crtx_handle_task_t)(struct crtx_event *event, void *userdata, void **sessiondata);
 
@@ -139,13 +103,7 @@ struct crtx_graph {
 	
 	enum crtx_processing_mode mode;
 	
-// 	struct crtx_thread *consumers;
-// 	unsigned int n_consumers;
-// 	unsigned int n_max_consumers;
-	
-// 	struct crtx_event_ll *equeue;
 	struct crtx_dll *equeue;
-// 	unsigned int n_queue_entries;
 	
 	pthread_mutex_t queue_mutex;
 	pthread_cond_t queue_cond;

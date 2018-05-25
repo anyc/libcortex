@@ -3,7 +3,7 @@
 #define _CRTX_AVAHI_H
 
 #include "core.h"
-#include "sd_bus.h"
+#include "sdbus.h"
 
 // not required here but included for user convenience
 #include <avahi-common/address.h>
