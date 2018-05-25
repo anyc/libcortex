@@ -68,7 +68,7 @@ char *crtx_stracpy(const char *str, size_t *str_length) {
 	return r;
 }
 
-void crtx_printf_va(char level, char *format, va_list va) {
+void crtx_printf_va(char level, char const *format, va_list va) {
 	if (level == CRTX_ERR) {
 		vfprintf(stderr, format, va);
 	} else {
@@ -79,7 +79,7 @@ void crtx_printf_va(char level, char *format, va_list va) {
 	}
 }
 
-void crtx_printf(char level, char *format, ...) {
+void crtx_printf(char level, char const *format, ...) {
 	va_list va;
 	
 	va_start(va, format);

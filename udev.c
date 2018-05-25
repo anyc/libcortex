@@ -104,13 +104,13 @@ struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_r
 			a = i->attributes;
 			while (*a) {
 				value = udev_device_get_sysattr_value(dev, *a);
-				printf("value %s %s\n", *a, value);
+// 				printf("value %s %s\n", *a, value);
 				if (value) {
 					sdi = crtx_alloc_item(di->dict);
 					crtx_fill_data_item(sdi, 's', *a, value, strlen(value), flags);
 				} else {
 					value = udev_device_get_property_value(dev, *a);
-					printf("value2 %s %s\n", *a, value);
+// 					printf("value2 %s %s\n", *a, value);
 					if (value) {
 						sdi = crtx_alloc_item(di->dict);
 						crtx_fill_data_item(sdi, 's', *a, value, strlen(value), flags);

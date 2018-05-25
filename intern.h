@@ -38,7 +38,7 @@
 
 #define ASSERT_STR(x, msg, ...) do { if (!(x)) { ERROR(__FILE__ ":" STRINGIFY(__LINE__) " " msg " " #x "failed\n", __VA_ARGS__); exit(1); } } while (0)
 
-#define POPCOUNT32(x) __builtin_popcount(x);
+#define POPCOUNT32(x) __builtin_popcount(x)
 
 struct crtx_event;
 typedef char (*crtx_handle_task_t)(struct crtx_event *event, void *userdata, void **sessiondata);

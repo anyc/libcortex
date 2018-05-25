@@ -36,7 +36,7 @@ include Makefile.modules
 BUILTIN_MODULES=signals epoll
 STATIC_TOOLS+=cache dict_inout dict_inout_json event_comm socket evloop
 STATIC_MODULES+=fanotify inotify netlink_raw nl_route_raw uevents socket_raw timer writequeue
-DYN_MODULES+=avahi can evdev libvirt netlink_ge nl_libnl nf_queue pulseaudio readline sdbus sip udev v4l xcb_randr
+DYN_MODULES+=avahi can evdev libvirt netlink_ge nl_libnl nf_queue pulseaudio readline sdbus sip udev v4l xcb_randr evloop_qt
 
 -include $(local_mk)
 
@@ -109,6 +109,10 @@ dllist.o: llist.c
 %.o: CFLAGS+=$(CFLAGS_${@:.o=})
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+%.o: CXXFLAGS+=$(CXXFLAGS_${@:.o=})
+%.o: %.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 $(SHAREDLIB): LDLIBS+=$(foreach o,$(STATIC_TOOLS) $(STATIC_MODULES), $(LDLIBS_$(o)) )
 $(SHAREDLIB): $(OBJS)
