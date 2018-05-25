@@ -26,7 +26,7 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 	r = wqueue->write(wqueue, wqueue->write_userdata);
 	if (r != EAGAIN && r != ENOBUFS) {
 		printf("write done %s %d\n", strerror(r), r);
-// 		wqueue->parent.el_payload.event_flags = 0;
+// 		wqueue->parent.el_payload.crtx_event_flags = 0;
 // 		
 // 		eloop = crtx_get_event_loop();
 // 		crtx_epoll_mod_fd(&eloop->listener->parent, &wqueue->parent.el_payload);
@@ -39,7 +39,7 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 void crtx_writequeue_start(struct crtx_writequeue *wqueue) {
 	struct crtx_event_loop *eloop;
 	
-	wqueue->parent.el_payload.event_flags = EVLOOP_WRITE;
+	wqueue->parent.el_payload.crtx_event_flags = EVLOOP_WRITE;
 	
 	eloop = crtx_get_event_loop();
 // 	crtx_epoll_mod_fd(&eloop->listener->parent, &wqueue->parent.el_payload);
@@ -49,7 +49,7 @@ void crtx_writequeue_start(struct crtx_writequeue *wqueue) {
 void crtx_writequeue_stop(struct crtx_writequeue *wqueue) {
 	struct crtx_event_loop *eloop;
 	
-// 	wqueue->parent.el_payload.event_flags = 0;
+// 	wqueue->parent.el_payload.crtx_event_flags = 0;
 	
 	eloop = crtx_get_event_loop();
 // 	crtx_epoll_mod_fd(&eloop->listener->parent, &wqueue->parent.el_payload);
@@ -63,7 +63,7 @@ struct crtx_listener_base *crtx_new_writequeue_listener(void *options) {
 	wqueue = (struct crtx_writequeue *) options;
 	
 	wqueue->parent.el_payload.fd = wqueue->write_fd;
-	wqueue->parent.el_payload.event_flags = 0;
+	wqueue->parent.el_payload.crtx_event_flags = 0;
 	wqueue->parent.el_payload.data = wqueue;
 	wqueue->parent.el_payload.event_handler = fd_event_handler;
 	

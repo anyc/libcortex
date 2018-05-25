@@ -161,7 +161,7 @@ static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback c
 	wrap = (struct libvirt_eventloop_wrapper*) calloc(1, sizeof(struct libvirt_eventloop_wrapper));
 	
 	wrap->el_payload.fd = fd;
-	wrap->el_payload.event_flags = elw_virEventPollToNativeEvents(event);
+	wrap->el_payload.crtx_event_flags = elw_virEventPollToNativeEvents(event);
 	wrap->el_payload.simple_callback = &elw_fd_callback;
 	wrap->el_payload.error_cb = &elw_fd_error_cb;
 	wrap->el_payload.data = wrap;
@@ -182,7 +182,7 @@ static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback c
 			wrap->id++;
 	}
 	
-	DBG("libvirt: new fd %d (id %d flag %d)\n", fd, wrap->id, wrap->el_payload.event_flags);
+	DBG("libvirt: new fd %d (id %d flag %d)\n", fd, wrap->id, wrap->el_payload.crtx_event_flags);
 	
 	wrap->llentry = crtx_ll_append_new(&event_list, wrap);
 	
@@ -206,9 +206,9 @@ static void elw_virEventUpdateHandleFunc(int watch, int event) {
 	}
 	
 	wrap = ((struct libvirt_eventloop_wrapper*) it->data);
-	wrap->el_payload.event_flags = elw_virEventPollToNativeEvents(event);
+	wrap->el_payload.crtx_event_flags = elw_virEventPollToNativeEvents(event);
 	
-	DBG("libvirt: update %d flags %d\n", wrap->id, wrap->el_payload.event_flags);
+	DBG("libvirt: update %d flags %d\n", wrap->id, wrap->el_payload.crtx_event_flags);
 	
 	crtx_root->event_loop.mod_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
 }

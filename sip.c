@@ -89,7 +89,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	eXosip_unlock (slist->ctx);
 	
 	slist->parent.el_payload.fd = eXosip_event_geteventsocket(slist->ctx);
-	slist->parent.el_payload.event_flags = EVLOOP_READ;
+	slist->parent.el_payload.crtx_event_flags = EVLOOP_READ;
 	slist->parent.el_payload.data = slist;
 	slist->parent.el_payload.event_handler = &sip_fd_event_handler;
 	slist->parent.el_payload.event_handler_name = "sip fd handler";

@@ -59,6 +59,21 @@ int crtx_epoll_del_fd_intern(struct crtx_epoll_listener *epl, int fd) {
 	return 0;
 }
 
+static int crtx_event_flags2epoll_flags(int crtx_event_flags) {
+	int ret;
+	
+	
+	ret = 0;
+	if (crtx_event_flags & EVLOOP_READ)
+		ret |= EPOLLIN;
+	if (crtx_event_flags & EVLOOP_WRITE)
+		ret |= EPOLLOUT;
+	if (crtx_event_flags & EVLOOP_SPECIAL)
+		ret |= EPOLLPRI;
+	
+	return ret;
+}
+
 void crtx_epoll_manage_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
 	struct epoll_event *epoll_event;
 	struct crtx_epoll_listener *epl;
@@ -84,7 +99,7 @@ void crtx_epoll_manage_fd(struct crtx_listener_base *lbase, struct crtx_event_lo
 	}
 	
 	if (base_payload->active)
-		epoll_event->events = base_payload->event_flags;
+		epoll_event->events = crtx_event_flags2epoll_flags(base_payload->crtx_event_flags);
 	else
 		epoll_event->events = 0;
 	
@@ -96,7 +111,7 @@ void crtx_epoll_manage_fd(struct crtx_listener_base *lbase, struct crtx_event_lo
 		if (!sub->active)
 			continue;
 		
-		epoll_event->events |= sub->event_flags;
+		epoll_event->events |= crtx_event_flags2epoll_flags(sub->crtx_event_flags);
 	}
 	
 	if (epoll_event->events) {
@@ -160,7 +175,7 @@ void crtx_epoll_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 // 		base_payload = el_payload->parent;
 // 	
 // 	if (base_payload->added)
-// 		epoll_event->events = base_payload->event_flags;
+// 		epoll_event->events = base_payload->crtx_event_flags;
 // 	else
 // 		epoll_event->events = 0;
 // 	
@@ -172,7 +187,7 @@ void crtx_epoll_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 // 		if (!sub->added && sub != el_payload)
 // 			continue;
 // 		
-// 		epoll_event->events |= sub->event_flags;
+// 		epoll_event->events |= sub->crtx_event_flags;
 // 	}
 // 	
 // 	VDBG("epoll mod %d %d\n", base_payload->fd, epoll_event->events);
@@ -235,7 +250,7 @@ static void crtx_epoll_notify(struct crtx_event_loop_payload *el_payload, struct
 	
 // 	memcpy(el_payload->el_data, rec_event, sizeof(struct epoll_event));
 	
-	if ((el_payload->event_flags & rec_event->events) == 0)
+	if ((crtx_event_flags2epoll_flags(el_payload->crtx_event_flags) & rec_event->events) == 0)
 		return;
 	
 	VDBG("received wakeup for fd %d\n", el_payload->fd);

@@ -87,7 +87,7 @@ struct crtx_listener_base *crtx_new_nl_libnl_listener(void *options) {
 	libnl_lstnr->parent.start_listener = &libnl_start_listener;
 	
 	libnl_lstnr->parent.el_payload.data = libnl_lstnr;
-	libnl_lstnr->parent.el_payload.event_flags = EVLOOP_READ;
+	libnl_lstnr->parent.el_payload.crtx_event_flags = EVLOOP_READ;
 	libnl_lstnr->parent.el_payload.event_handler = &libnl_fd_event_handler;
 	libnl_lstnr->parent.el_payload.event_handler_name = "libnl fd handler";
 	libnl_lstnr->parent.free = &free_libnl_listener;

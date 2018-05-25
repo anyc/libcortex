@@ -448,7 +448,7 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 	lstnr->parent.el_payload.data = lstnr;
 	lstnr->parent.el_payload.event_handler = &v4l_fd_event_handler;
 	lstnr->parent.el_payload.event_handler_name = "v4l fd handler";
-	lstnr->parent.el_payload.event_flags = EPOLLPRI | EVLOOP_READ;
+	lstnr->parent.el_payload.crtx_event_flags = EPOLLPRI | EVLOOP_READ;
 // 	lstnr->parent.el_payload.error_cb = &on_error_cb;
 // 	lstnr->parent.el_payload.error_cb_data = lstnr;
 	

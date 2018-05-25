@@ -10,6 +10,7 @@
 
 #define EVLOOP_READ 1<<0
 #define EVLOOP_WRITE 1<<1
+#define EVLOOP_SPECIAL 1<<2
 
 struct crtx_event_loop_payload {
 	struct crtx_ll ll;

@@ -165,7 +165,7 @@ struct crtx_listener_base *crtx_new_socket_raw_server_listener(void *options) {
 	slistener->parent.shutdown = &shutdown_socket_raw_listener;
 	
 	slistener->parent.el_payload.fd = slistener->sockfd;
-// 	slistener->parent.el_payload.event_flags = EVLOOP_READ;
+// 	slistener->parent.el_payload.crtx_event_flags = EVLOOP_READ;
 	slistener->parent.el_payload.data = slistener;
 	slistener->parent.el_payload.event_handler = &socket_raw_accept_handler;
 	slistener->parent.el_payload.event_handler_name = "socket_raw_accept_handler";
@@ -225,7 +225,7 @@ struct crtx_listener_base *crtx_new_socket_raw_client_listener(void *options) {
 	slistener->parent.shutdown = &shutdown_socket_raw_listener;
 	
 	slistener->parent.el_payload.fd = slistener->sockfd;
-	// 	slistener->parent.el_payload.event_flags = EVLOOP_READ;
+	// 	slistener->parent.el_payload.crtx_event_flags = EVLOOP_READ;
 	slistener->parent.el_payload.data = slistener;
 	slistener->parent.el_payload.event_handler = &client_read_handler;
 	slistener->parent.el_payload.event_handler_name = "client_read_handler";

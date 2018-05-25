@@ -310,7 +310,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 				crtx_get_event_loop();
 			
 			el_payload.fd = inotify_fd;
-			el_payload.event_flags = EVLOOP_READ;
+			el_payload.crtx_event_flags = EVLOOP_READ;
 			el_payload.data = 0;
 			el_payload.event_handler = &inotify_fd_event_handler;
 			el_payload.event_handler_name = "inotify fd handler";

@@ -320,7 +320,7 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 		
 		clist->parent.el_payload.fd = clist->sockfd;
 		clist->parent.el_payload.data = clist;
-		clist->parent.el_payload.event_flags = EVLOOP_READ;
+		clist->parent.el_payload.crtx_event_flags = EVLOOP_READ;
 		clist->parent.el_payload.event_handler = &can_fd_event_handler;
 		clist->parent.el_payload.event_handler_name = "can fd handler";
 		clist->parent.el_payload.error_cb = &on_error_cb;

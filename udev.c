@@ -273,7 +273,7 @@ struct crtx_listener_base *crtx_new_udev_listener(void *options) {
 	}
 	
 	ulist->parent.el_payload.fd = udev_monitor_get_fd(ulist->monitor);
-	ulist->parent.el_payload.event_flags = EVLOOP_READ;
+	ulist->parent.el_payload.crtx_event_flags = EVLOOP_READ;
 	ulist->parent.el_payload.data = ulist;
 	ulist->parent.el_payload.event_handler = &udev_fd_event_handler;
 	ulist->parent.el_payload.event_handler_name = "udev fd handler";

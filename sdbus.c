@@ -240,9 +240,9 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 	// TODO set epoll flags again everytime?
 // 	int new_flags;
 // 	new_flags = crtx_sd_bus_get_events(sdlist->bus);
-// 	if (payload->event_flags != new_flags) {
-// 		printf("%d != %d\n", payload->event_flags, new_flags);
-// 		payload->event_flags = new_flags;
+// 	if (payload->crtx_event_flags != new_flags) {
+// 		printf("%d != %d\n", payload->crtx_event_flags, new_flags);
+// 		payload->crtx_event_flags = new_flags;
 // 	}
 	
 	return r;
@@ -326,7 +326,7 @@ struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 	}
 	
 	sdlist->parent.el_payload.fd = sd_bus_get_fd(sdlist->bus);
-	sdlist->parent.el_payload.event_flags = crtx_sdbus_get_events(sdlist->bus);
+	sdlist->parent.el_payload.crtx_event_flags = crtx_sdbus_get_events(sdlist->bus);
 	sdlist->parent.el_payload.data = sdlist;
 	sdlist->parent.el_payload.event_handler = &fd_event_handler;
 	sdlist->parent.el_payload.event_handler_name = "sdbus event handler";
