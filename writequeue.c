@@ -16,7 +16,7 @@
 static char fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event_loop_payload *payload;
 	struct crtx_writequeue *wqueue;
-	struct crtx_event_loop *eloop;
+// 	struct crtx_event_loop *eloop;
 	int r;
 	
 	payload = (struct crtx_event_loop_payload*) event->data.pointer;
@@ -75,12 +75,16 @@ int crtx_add_writequeue2listener(struct crtx_writequeue *writequeue, struct crtx
 	
 	memset(writequeue, 0, sizeof(struct crtx_writequeue));
 	
-	listener->el_payload.epollout = &writequeue->parent.el_payload;
-	writequeue->parent.el_payload.epollin = &listener->el_payload;
+// 	listener->el_payload.epollout = &writequeue->parent.el_payload;
+// 	writequeue->parent.el_payload.epollin = &listener->el_payload;
 	
 	writequeue->write_fd = listener->el_payload.fd;
 	writequeue->write = write_cb;
 	writequeue->write_userdata = write_userdata;
+	
+	writequeue->parent.el_payload.parent = &listener->el_payload;
+	
+	crtx_ll_append(&listener->el_payload.sub_payloads, (struct crtx_ll*) &writequeue->parent.el_payload);
 	
 // 	writequeue->parent.el_payload.el_data = (struct epoll_event*) calloc(1, sizeof(struct epoll_event));
 // 	((struct epoll_event*) writequeue->parent.el_payload.el_data)->data.ptr = &writequeue->parent.el_payload;

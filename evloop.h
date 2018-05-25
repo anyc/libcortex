@@ -8,9 +8,16 @@
 
 #include "intern.h"
 
+#define EVLOOP_READ 1<<0
+#define EVLOOP_WRITE 1<<1
+
 struct crtx_event_loop_payload {
+	struct crtx_ll ll;
+	
 	int fd;
-	int event_flags;
+	int crtx_event_flags;
+	char fd_added;
+	char active;
 	
 	void *data;
 	
@@ -24,7 +31,8 @@ struct crtx_event_loop_payload {
 	
 	void *el_data;
 	
-	struct crtx_event_loop_payload *sub_payloads;
+	struct crtx_event_loop_payload *parent;
+	struct crtx_ll *sub_payloads;
 // 	struct crtx_event_loop_payload *epollin;
 // 	struct crtx_event_loop_payload *epollout;
 // 	struct crtx_event_loop_payload *epollpri;

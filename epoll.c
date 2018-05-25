@@ -59,68 +59,157 @@ int crtx_epoll_del_fd_intern(struct crtx_epoll_listener *epl, int fd) {
 	return 0;
 }
 
-void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
+void crtx_epoll_manage_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
 	struct epoll_event *epoll_event;
 	struct crtx_epoll_listener *epl;
+	struct crtx_event_loop_payload *base_payload;
+	struct crtx_ll *ll;
+	int ret;
 	
 	
 	epl = (struct crtx_epoll_listener *) lbase;
 	
-	epoll_event = (struct epoll_event*) calloc(1, sizeof(struct epoll_event));
-	el_payload->el_data = epoll_event;
+	if (el_payload->parent == 0)
+		base_payload = el_payload;
+	else
+		base_payload = el_payload->parent;
 	
-	if (el_payload->event_flags == 0)
-		DBG("epoll %d: no event flags\n", el_payload->fd, el_payload->event_flags);
+	if (!base_payload->el_data) {
+		epoll_event = (struct epoll_event*) calloc(1, sizeof(struct epoll_event));
+		base_payload->el_data = epoll_event;
+		
+		epoll_event->data.ptr = base_payload;
+	} else {
+		epoll_event = base_payload->el_data;
+	}
 	
-	epoll_event->events = el_payload->event_flags;
-	epoll_event->data.ptr = el_payload;
+	if (base_payload->active)
+		epoll_event->events = base_payload->event_flags;
+	else
+		epoll_event->events = 0;
 	
-	if (el_payload->epollin)
-		epoll_event->events |= el_payload->epollin->event_flags;
-	if (el_payload->epollout)
-		epoll_event->events |= el_payload->epollout->event_flags;
-	if (el_payload->epollpri)
-		epoll_event->events |= el_payload->epollpri->event_flags;
+	for (ll=&base_payload->ll; ll; ll=ll->next) {
+		struct crtx_event_loop_payload *sub;
+		
+		
+		sub = (struct crtx_event_loop_payload *) ll;
+		if (!sub->active)
+			continue;
+		
+		epoll_event->events |= sub->event_flags;
+	}
 	
-	VDBG("epoll add %d %d\n", el_payload->fd, epoll_event->events);
+	if (epoll_event->events) {
+		if (!base_payload->fd_added) {
+			VDBG("epoll add %d %d\n", base_payload->fd, epoll_event->events);
+			
+			ret = crtx_epoll_add_fd_intern(epl, base_payload->fd, epoll_event);
+	// 		if (ret == 0) {
+	// 			base_payload->added = 1;
+	// 			el_payload->added = 1;
+	// 		} else {
+	// 			base_payload->added = 0;
+	// 			el_payload->added = 0;
+	// 		}
+			
+			base_payload->fd_added = (ret == 0);
+		} else {
+			VDBG("epoll mod %d %d\n", base_payload->fd, epoll_event->events);
+			
+			crtx_epoll_mod_fd_intern(epl, base_payload->fd, epoll_event);
+		}
+	} else {
+		VDBG("epoll del %d\n", base_payload->fd);
+		
+		crtx_epoll_del_fd_intern(epl, base_payload->fd);
+		
+		free(base_payload->el_data);
+		base_payload->el_data = 0;
+	}
+}
+
+void crtx_epoll_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
+	el_payload->active = 1;
 	
-	crtx_epoll_add_fd_intern(epl, el_payload->fd, epoll_event);
+	crtx_epoll_manage_fd(lbase, el_payload);
 }
 
 void crtx_epoll_mod_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
-	struct epoll_event *epoll_event;
+	el_payload->active = 1;
 	
-	epoll_event = (struct epoll_event *) el_payload->el_data;
-	
-	epoll_event->events = el_payload->event_flags;
-	
-	if (el_payload->epollin)
-		epoll_event->events |= el_payload->epollin->event_flags;
-	if (el_payload->epollout)
-		epoll_event->events |= el_payload->epollout->event_flags;
-	if (el_payload->epollpri)
-		epoll_event->events |= el_payload->epollpri->event_flags;
-	
-	VDBG("epoll mod %d %d\n", el_payload->fd, epoll_event->events);
-	
-	crtx_epoll_mod_fd_intern((struct crtx_epoll_listener *) lbase, el_payload->fd, el_payload->el_data);
+	crtx_epoll_manage_fd(lbase, el_payload);
 }
 
 void crtx_epoll_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
-	struct crtx_epoll_listener *epl;
-	int fd;
+	el_payload->active = 0;
 	
-	
-	VDBG("epoll del %d\n", el_payload->fd);
-	
-	fd = el_payload->fd;
-	
-	epl = (struct crtx_epoll_listener *) lbase;
-	crtx_epoll_del_fd_intern(epl, fd);
-	
-	free(el_payload->el_data);
-	el_payload->el_data = 0;
+	crtx_epoll_manage_fd(lbase, el_payload);
 }
+
+// void crtx_epoll_mod_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
+// 	struct epoll_event *epoll_event;
+// 	struct crtx_event_loop_payload *base_payload;
+// 	struct crtx_ll *ll;
+// 	
+// 	
+// 	epoll_event = (struct epoll_event *) el_payload->el_data;
+// 	
+// 	if (el_payload->parent == 0)
+// 		base_payload = el_payload;
+// 	else:
+// 		base_payload = el_payload->parent;
+// 	
+// 	if (base_payload->added)
+// 		epoll_event->events = base_payload->event_flags;
+// 	else
+// 		epoll_event->events = 0;
+// 	
+// 	for (ll=base_payload; ll; ll=ll->next) {
+// 		struct crtx_event_loop_payload *sub;
+// 		
+// 		
+// 		sub = (struct crtx_event_loop_payload *) ll;
+// 		if (!sub->added && sub != el_payload)
+// 			continue;
+// 		
+// 		epoll_event->events |= sub->event_flags;
+// 	}
+// 	
+// 	VDBG("epoll mod %d %d\n", base_payload->fd, epoll_event->events);
+// 	
+// 	if (!base_payload->added) {
+// 		ret = crtx_epoll_add_fd_intern(epl, base_payload->fd, epoll_event);
+// 		if (ret == 0) {
+// 			base_payload->added = 1;
+// 		} else {
+// 			base_payload->added = 0;
+// 		}
+// 	} else {
+// 		crtx_epoll_mod_fd_intern((struct crtx_epoll_listener *) lbase, base_payload->fd, base_payload->el_data);
+// 	}
+// }
+
+// void crtx_epoll_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
+// 	struct crtx_epoll_listener *epl;
+// 	struct crtx_event_loop_payload *base_payload;
+// 	int fd;
+// 	
+// 	
+// 	if (el_payload->parent == 0)
+// 		base_payload = el_payload;
+// 	else:
+// 		base_payload = el_payload->parent;
+// 	
+// 	VDBG("epoll del %d\n", base_payload->fd);
+// 	
+// 	fd = base_payload->fd;
+// 	
+// 	epl = (struct crtx_epoll_listener *) lbase;
+// 	crtx_epoll_del_fd_intern(epl, fd);
+// 	
+// 	free(base_payload->el_data);
+// 	base_payload->el_data = 0;
+// }
 
 struct epoll_control_pipe {
 	struct crtx_graph *graph;
@@ -145,6 +234,9 @@ static void crtx_epoll_notify(struct crtx_event_loop_payload *el_payload, struct
 	el_payload->triggered_flags = rec_event->events;
 	
 // 	memcpy(el_payload->el_data, rec_event, sizeof(struct epoll_event));
+	
+	if ((el_payload->event_flags & rec_event->events) == 0)
+		return;
 	
 	VDBG("received wakeup for fd %d\n", el_payload->fd);
 	
@@ -233,17 +325,33 @@ void *crtx_epoll_main(void *data) {
 				if (ecp.graph)
 					crtx_process_graph_tmain(ecp.graph);
 			} else {
+				struct crtx_ll *ll;
+				
+				
 				el_payload = (struct crtx_event_loop_payload* ) rec_events[i].data.ptr;
 				
 				// check if there are specialized handlers for this kind of event
-				if (rec_events[i].events & EPOLLIN && el_payload->epollin)
-					crtx_epoll_notify(el_payload->epollin, &rec_events[i]);
-				if (rec_events[i].events & EPOLLOUT && el_payload->epollout)
-					crtx_epoll_notify(el_payload->epollout, &rec_events[i]);
-				if (rec_events[i].events & EPOLLPRI && el_payload->epollpri)
-					crtx_epoll_notify(el_payload->epollpri, &rec_events[i]);
+// 				if (rec_events[i].events & EPOLLIN && el_payload->epollin)
+// 					crtx_epoll_notify(el_payload->epollin, &rec_events[i]);
+// 				if (rec_events[i].events & EPOLLOUT && el_payload->epollout)
+// 					crtx_epoll_notify(el_payload->epollout, &rec_events[i]);
+// 				if (rec_events[i].events & EPOLLPRI && el_payload->epollpri)
+// 					crtx_epoll_notify(el_payload->epollpri, &rec_events[i]);
 				
-				crtx_epoll_notify(el_payload, &rec_events[i]);
+				if (el_payload->active)
+					crtx_epoll_notify(el_payload, &rec_events[i]);
+				
+				
+				for (ll=&el_payload->ll; ll; ll=ll->next) {
+					struct crtx_event_loop_payload *sub;
+					
+					
+					sub = (struct crtx_event_loop_payload *) ll;
+					if (!sub->active)
+						continue;
+					
+					crtx_epoll_notify(sub, &rec_events[i]);
+				}
 			}
 		}
 	}

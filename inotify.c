@@ -26,7 +26,7 @@ MUTEX_TYPE mutex;
 
 static struct crtx_thread_job_description thread_job = {0};
 static struct crtx_thread *global_thread = 0;
-static struct crtx_event_loop_payload el_payload = {0};
+static struct crtx_event_loop_payload el_payload = {};
 static char stop = 0;
 
 #define INOFITY_BUFLEN (sizeof(struct inotify_event) + NAME_MAX + 1)
