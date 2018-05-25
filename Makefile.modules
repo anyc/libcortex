@@ -40,5 +40,5 @@ LDLIBS_udev+=$(shell $(PKG_CONFIG) --libs libudev)
 CFLAGS_xcb_randr+=$(shell $(PKG_CONFIG) --cflags xcb xcb-randr)
 LDLIBS_xcb_randr+=$(shell $(PKG_CONFIG) --libs xcb xcb-randr)
 
-CXXFLAGS_evloop_qt+=-I/usr/include/qt5/ -fPIC
-LDLIBS_evloop_qt+=-lQt5Core
+CXXFLAGS_evloop_qt+=$(shell $(PKG_CONFIG) --cflags Qt5Core) -fPIC -std=c++11
+LDLIBS_evloop_qt+=$(shell $(PKG_CONFIG) --libs Qt5Core)

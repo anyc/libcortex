@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <QtCore/QSocketNotifier>
+#include <QSocketNotifier>
 
 extern "C" {
 #include "intern.h"
