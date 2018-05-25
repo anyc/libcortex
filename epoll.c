@@ -14,7 +14,12 @@
 #include "core.h"
 #include "epoll.h"
 
-int crtx_epoll_add_fd_intern(struct crtx_epoll_listener *epl, int fd, struct epoll_event *event) {
+struct epoll_control_pipe {
+	struct crtx_graph *graph;
+};
+
+
+static int crtx_epoll_add_fd_intern(struct crtx_epoll_listener *epl, int fd, struct epoll_event *event) {
 	int ret;
 	
 	ret = epoll_ctl(epl->epoll_fd, EPOLL_CTL_ADD, fd, event);
@@ -27,7 +32,7 @@ int crtx_epoll_add_fd_intern(struct crtx_epoll_listener *epl, int fd, struct epo
 	return 0;
 }
 
-int crtx_epoll_mod_fd_intern(struct crtx_epoll_listener *epl, int fd, struct epoll_event *event) {
+static int crtx_epoll_mod_fd_intern(struct crtx_epoll_listener *epl, int fd, struct epoll_event *event) {
 	int ret;
 	
 	if (epl->stop)
@@ -43,7 +48,7 @@ int crtx_epoll_mod_fd_intern(struct crtx_epoll_listener *epl, int fd, struct epo
 	return 0;
 }
 
-int crtx_epoll_del_fd_intern(struct crtx_epoll_listener *epl, int fd) {
+static int crtx_epoll_del_fd_intern(struct crtx_epoll_listener *epl, int fd) {
 	int ret;
 	
 	if (epl->stop)
@@ -74,7 +79,7 @@ static int crtx_event_flags2epoll_flags(int crtx_event_flags) {
 	return ret;
 }
 
-void crtx_epoll_manage_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
+static void crtx_epoll_manage_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
 	struct epoll_event *epoll_event;
 	struct crtx_epoll_listener *epl;
 	struct crtx_event_loop_payload *base_payload;
@@ -226,11 +231,8 @@ void crtx_epoll_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_
 // 	base_payload->el_data = 0;
 // }
 
-struct epoll_control_pipe {
-	struct crtx_graph *graph;
-};
-
-char *epoll_flags2str(int *flags) {
+#if 0
+static char *epoll_flags2str(int *flags) {
 	#define RETFLAG(flag) if (*flags & flag) { *flags = (*flags) & (~flag); return #flag; }
 	
 	RETFLAG(EPOLLIN);
@@ -242,6 +244,7 @@ char *epoll_flags2str(int *flags) {
 	
 	return "";
 }
+#endif
 
 static void crtx_epoll_notify(struct crtx_event_loop_payload *el_payload, struct epoll_event *rec_event) {
 	struct crtx_event *event;

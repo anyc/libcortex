@@ -47,3 +47,15 @@ struct crtx_event_loop* crtx_get_event_loop() {
 	
 	return &crtx_root->event_loop;
 }
+
+void crtx_evloop_queue_graph(struct crtx_event_loop *evloop, struct crtx_graph *graph) {
+	crtx_epoll_queue_graph(evloop->listener, graph);
+}
+
+void crtx_evloop_start(struct crtx_event_loop *evloop) {
+	crtx_epoll_main(evloop->listener);
+}
+
+void crtx_evloop_stop(struct crtx_event_loop *evloop) {
+	crtx_epoll_stop(evloop->listener);
+}

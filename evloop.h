@@ -34,9 +34,6 @@ struct crtx_event_loop_payload {
 	
 	struct crtx_event_loop_payload *parent;
 	struct crtx_ll *sub_payloads;
-// 	struct crtx_event_loop_payload *epollin;
-// 	struct crtx_event_loop_payload *epollout;
-// 	struct crtx_event_loop_payload *epollpri;
 };
 
 struct crtx_listener_base;
@@ -48,9 +45,16 @@ struct crtx_event_loop {
 	void (*mod_fd)(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
 	void (*del_fd)(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
 	
-	char start_thread;
+// 	char start_thread;
 };
 
 struct crtx_event_loop* crtx_get_event_loop();
+
+void crtx_evloop_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
+void crtx_evloop_mod_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
+void crtx_evloop_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
+void crtx_evloop_queue_graph(struct crtx_event_loop *evloop, struct crtx_graph *graph);
+void crtx_evloop_start(struct crtx_event_loop *evloop);
+void crtx_evloop_stop(struct crtx_event_loop *evloop);
 
 #endif

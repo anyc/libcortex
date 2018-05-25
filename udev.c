@@ -90,7 +90,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_r
 					dev = new_dev;
 				else
 					i++;
-					continue;
+				continue;
 			}
 			
 			di = crtx_alloc_item(dict);

@@ -581,6 +581,14 @@ static const char *eventDetailToString(int event, int detail) {
 			break;
 		case VIR_DOMAIN_EVENT_SHUTDOWN:
 			switch ((virDomainEventShutdownDetailType) detail) {
+#if LIBVIR_CHECK_VERSION(3,2,0)
+			case VIR_DOMAIN_EVENT_SHUTDOWN_GUEST:
+				ret = "guest";
+				break;
+			case VIR_DOMAIN_EVENT_SHUTDOWN_HOST:
+				ret = "host";
+				break;
+#endif
 			case VIR_DOMAIN_EVENT_SHUTDOWN_FINISHED:
 				ret = "Finished";
 				break;

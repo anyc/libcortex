@@ -8,7 +8,7 @@
 
 #include "intern.h"
 #include "core.h"
-#include "sd_bus.h"
+#include "sdbus.h"
 #include "sd_bus_notifications.h"
 #include "threads.h"
 #include "dict.h"

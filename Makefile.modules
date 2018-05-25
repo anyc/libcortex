@@ -1,7 +1,7 @@
 
 CFLAGS_avahi+=
 LDLIBS_avahi+=
-DEPS_avahi+=sd_bus
+DEPS_avahi+=sdbus
 
 CFLAGS_core+=$(patsubst %,-DSTATIC_%,$(STATIC_MODULES))
 
