@@ -11,15 +11,10 @@ typedef int (*crtx_wq_write_cb)(struct crtx_writequeue *wqueue, void *userdata);
 
 struct crtx_writequeue {
 	struct crtx_listener_base parent;
-	struct epoll_event epoll_event;
+// 	struct epoll_event epoll_event;
 	
 	int write_fd;
-// 	void *buffer;
-// 	size_t buffer_size;
 	
-	// 	int pipe_fds[2];
-	
-	// 	crtx_handle_task_t fd_event_handler;
 	crtx_wq_write_cb write;
 	void *write_userdata;
 };

@@ -6,6 +6,11 @@
  *
  */
 
+#include <sys/epoll.h>
+
+#define EVLOOP_READ EPOLLIN
+#define EVLOOP_WRITE EPOLLOUT
+
 struct crtx_epoll_listener {
 	struct crtx_listener_base parent;
 	

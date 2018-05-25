@@ -34,7 +34,7 @@ include Makefile.modules
 
 # default module sets
 BUILTIN_MODULES=signals epoll
-STATIC_TOOLS+=cache dict_inout dict_inout_json event_comm socket
+STATIC_TOOLS+=cache dict_inout dict_inout_json event_comm socket evloop
 STATIC_MODULES+=fanotify inotify netlink_raw nl_route_raw uevents socket_raw timer writequeue
 DYN_MODULES+=avahi can evdev libvirt netlink_ge nl_libnl nf_queue pulseaudio readline sd_bus sd_bus_notifications sip udev v4l xcb_randr
 

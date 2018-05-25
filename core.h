@@ -12,6 +12,7 @@
 #include "threads.h"
 #include "dict.h"
 #include "linkedlist.h"
+#include "evloop.h"
 
 #define CRTX_TEST_MAIN(mainfct) \
 	int main(int argc, char **argv) { \
@@ -121,28 +122,6 @@ struct crtx_listener_repository {
 	struct crtx_listener_base *(*create)(void *options);
 };
 
-#include <sys/epoll.h>
-struct crtx_event_loop_payload {
-	int fd;
-	int event_flags;
-	
-	void *data;
-	
-	crtx_handle_task_t event_handler;
-	char *event_handler_name;
-	int trigger_flags;
-	
-	void (*simple_callback)(struct crtx_event_loop_payload *el_payload);
-	void (*error_cb)(struct crtx_event_loop_payload *el_payload, void *data);
-	void *error_cb_data;
-	
-	void *el_data;
-	
-	struct crtx_event_loop_payload *epollin;
-	struct crtx_event_loop_payload *epollout;
-	struct crtx_event_loop_payload *epollpri;
-};
-
 enum crtx_listener_state { CRTX_LSTNR_UNKNOWN=0, CRTX_LSTNR_STARTING, CRTX_LSTNR_STARTED, CRTX_LSTNR_PAUSED, CRTX_LSTNR_STOPPING, CRTX_LSTNR_STOPPED, CRTX_LSTNR_SHUTDOWN }; //CRTX_LSTNR_ABORTED, 
 
 struct crtx_listener_base {
@@ -178,17 +157,6 @@ struct crtx_module {
 	
 	void (*init)();
 	void (*finish)();
-};
-
-
-struct crtx_event_loop {
-	struct crtx_epoll_listener *listener;
-	
-	void (*add_fd)(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
-	void (*mod_fd)(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
-	void (*del_fd)(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
-	
-	char start_thread;
 };
 
 struct crtx_lstnr_plugin {
@@ -313,7 +281,6 @@ void crtx_finish_notification_listeners(void *data);
 
 int crtx_handle_std_signals();
 
-struct crtx_event_loop* crtx_get_event_loop();
 void *crtx_process_graph_tmain(void *arg);
 
 // void crtx_event_set_data(struct crtx_event *event, void *raw_pointer, unsigned char flags, struct crtx_dict *data_dict, unsigned char n_additional_fields);
@@ -329,7 +296,6 @@ void crtx_autofill_graph_with_tasks(struct crtx_graph *graph, char *event_type);
 
 enum crtx_processing_mode crtx_get_mode(enum crtx_processing_mode local_mode);
 void crtx_wait_on_graph_empty(struct crtx_graph *graph);
-// struct crtx_thread * crtx_start_detached_event_loop();
 
 struct crtx_listener_repository* crtx_get_new_listener_repo_entry();
 
