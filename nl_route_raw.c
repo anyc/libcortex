@@ -776,7 +776,7 @@ char crtx_get_own_ip_addresses() {
 	
 	crtx_free_listener(lbase);
 	
-	free_task(ip_cache_task);
+	crtx_free_task(ip_cache_task);
 	free_response_cache_task(ctask);
 	
 	return 1;

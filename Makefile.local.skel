@@ -5,6 +5,7 @@
 
 # LAYER2=crtx_layer2
 # LAYER2_TESTS=crtx_layer2_tests
+# LAYER2_MODULES=dynamic_evdev netif
 
 # CFLAGS+=-DCRTX_PLUGIN_DIR=\"/usr/lib/cortexd/plugins/\"
 

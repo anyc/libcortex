@@ -132,7 +132,7 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 		return -EEXIST;
 	}
 	
-	if (!listener->el_payload.fd && listener->thread_job.fct && !listener->start_listener) {
+	if (!listener->el_payload.fd && !listener->thread_job.fct && !listener->start_listener) {
 		DBG("no method to start listener \"%s\" provided\n", listener->id);
 		
 		UNLOCK(listener->state_mutex);
@@ -198,16 +198,22 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 			crtx_thread_start_job(listener->eloop_thread);
 		} else 
 		if (mode == CRTX_PREFER_ELOOP) {
-			if (!crtx_root->event_loop.listener)
-				crtx_get_event_loop();
+// 			if (!crtx_root->event_loop.listener)
+// 			crtx_get_main_event_loop();
 			
 			if (listener->el_payload.error_cb == 0) {
 				listener->el_payload.error_cb = crtx_default_el_error_cb;
 				listener->el_payload.error_cb_data = listener;
 			}
 			
+// 			crtx_root->event_loop.add_fd(
+// 				&crtx_root->event_loop.listener->parent,
+// 				&listener->el_payload);
+			
+			crtx_get_main_event_loop();
+			
 			crtx_root->event_loop.add_fd(
-				&crtx_root->event_loop.listener->parent,
+				&crtx_root->event_loop,
 				&listener->el_payload);
 		} else {
 			ERROR("invalid start listener mode: %d\n", mode);
@@ -294,10 +300,10 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 // 	if (!lbase) {
 // 		ERROR("listener \"%s\" not found\n", id);
 // 	} else {
-	if (lbase->el_payload.fd > 0) {
-		if (!crtx_root->event_loop.listener)
-			crtx_get_event_loop();
-	}
+// 	if (lbase->el_payload.fd > 0) {
+// 		if (!crtx_root->event_loop.listener)
+// 			crtx_get_event_loop();
+// 	}
 // 	if (lbase->thread) {
 // 		reference_signal(&lbase->thread->finished);
 // 			if (lbase->thread->on_finish)
@@ -310,7 +316,7 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 	return lbase;
 }
 
-int crtx_create_listener(struct crtx_listener_base **listener, char *id, void *options) {
+int crtx_create_listener(char *id, void *options) {
 	struct crtx_listener_base *lbase;
 	
 	
@@ -319,10 +325,10 @@ int crtx_create_listener(struct crtx_listener_base **listener, char *id, void *o
 	
 	lbase = create_listener(id, options);
 	
-	if (listener)
-		*listener = lbase;
+// 	if (listener)
+// 		*listener = lbase;
 	
-	return 0;
+	return (lbase == 0);
 }
 
 void crtx_stop_listener(struct crtx_listener_base *listener) {
@@ -343,7 +349,8 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 	if (listener->el_payload.fd > 0) {
 // 		printf("del fd %d\n", listener->el_payload.fd);
 		crtx_root->event_loop.del_fd(
-			&crtx_root->event_loop.listener->parent,
+// 			&crtx_root->event_loop.listener->parent,
+			&crtx_root->event_loop,
 			&listener->el_payload);
 	}
 	
@@ -741,9 +748,12 @@ void crtx_add_event(struct crtx_graph *graph, struct crtx_event *event) {
 			crtx_thread_start_job(t);
 // 		}
 	} else {
-		if (!crtx_root->event_loop.listener)
-			crtx_get_event_loop();
+// 		if (!crtx_root->event_loop.listener)
+// 			crtx_get_event_loop();
 // 		crtx_epoll_queue_graph(crtx_root->event_loop.listener, graph);
+		
+		crtx_get_main_event_loop();
+		
 		crtx_evloop_queue_graph(&crtx_root->event_loop, graph);
 	}
 	

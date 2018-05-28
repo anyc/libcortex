@@ -3,6 +3,13 @@
  *
  */
 
+#ifdef CRTX_TEST
+// for pipe2()
+#define _GNU_SOURCE
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -37,23 +44,23 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 }
 
 void crtx_writequeue_start(struct crtx_writequeue *wqueue) {
-	struct crtx_event_loop *eloop;
+// 	struct crtx_event_loop *eloop;
 	
 	wqueue->parent.el_payload.crtx_event_flags = EVLOOP_WRITE;
 	
-	eloop = crtx_get_event_loop();
+// 	eloop = crtx_get_event_loop();
 // 	crtx_epoll_mod_fd(&eloop->listener->parent, &wqueue->parent.el_payload);
-	crtx_epoll_add_fd(&eloop->listener->parent, &wqueue->parent.el_payload);
+	crtx_root->event_loop.add_fd(&crtx_root->event_loop, &wqueue->parent.el_payload);
 }
 
 void crtx_writequeue_stop(struct crtx_writequeue *wqueue) {
-	struct crtx_event_loop *eloop;
+// 	struct crtx_event_loop *eloop;
 	
 // 	wqueue->parent.el_payload.crtx_event_flags = 0;
 	
-	eloop = crtx_get_event_loop();
+// 	eloop = crtx_get_event_loop();
 // 	crtx_epoll_mod_fd(&eloop->listener->parent, &wqueue->parent.el_payload);
-	crtx_epoll_del_fd(&eloop->listener->parent, &wqueue->parent.el_payload);
+	crtx_root->event_loop.del_fd(&crtx_root->event_loop, &wqueue->parent.el_payload);
 }
 
 struct crtx_listener_base *crtx_new_writequeue_listener(void *options) {
@@ -108,9 +115,6 @@ void crtx_writequeue_finish() {
 }
 
 #ifdef CRTX_TEST
-
-#include <unistd.h>
-#include <fcntl.h>
 
 int pipe_fds[2];
 char stop;

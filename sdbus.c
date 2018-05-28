@@ -399,7 +399,7 @@ static char sdbus_test_handler(struct crtx_event *event, void *userdata, void **
 
 struct crtx_sdbus_match matches[] = {
 	/* match string, event type, callback fct, callback data, <reserved> */
-	{ "type='signal'", "sd_bus/signal", 0, 0, 0 },
+	{ 0, "type='signal'", "sd_bus/signal", 0, 0, 0 },
 	{0},
 };
 

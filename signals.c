@@ -28,7 +28,7 @@ struct signal_map {
 
 static int std_signals[] = {SIGTERM, SIGINT, 0};
 struct crtx_signal_listener signal_list;
-struct crtx_listener_base *sl_base;
+// struct crtx_listener_base *sl_base;
 
 struct signal_map *get_signal(int signum) {
 	struct signal_map *sm;
@@ -145,7 +145,7 @@ int crtx_handle_std_signals() {
 	signal_list.signals = std_signals;
 	
 // 	sl_base = create_listener("signals", &signal_list);
-	err = crtx_create_listener(&sl_base, "signals", &signal_list);
+	err = crtx_create_listener("signals", &signal_list);
 	if (err < 0) {
 		return err;
 	}
@@ -155,18 +155,18 @@ int crtx_handle_std_signals() {
 	t->handle = &sigterm_handler;
 	t->userdata = 0;
 	t->event_type_match = get_signal(SIGTERM)->etype;
-	add_task(sl_base->graph, t);
+	add_task(signal_list.parent.graph, t);
 	
 	t = new_task();
 	t->id = "sigint_handler";
 	t->handle = &sigint_handler;
 	t->userdata = 0;
 	t->event_type_match = get_signal(SIGINT)->etype;
-	add_task(sl_base->graph, t);
+	add_task(signal_list.parent.graph, t);
 	
 	signal(SIGPIPE, SIG_IGN);
 	
-	crtx_start_listener(sl_base);
+	crtx_start_listener(&signal_list.parent);
 	
 	return 0;
 }

@@ -306,8 +306,8 @@ static char start_listener(struct crtx_listener_base *listener) {
 	// 		global_thread->do_stop = &stop_thread;
 		} else
 		if (mode == CRTX_PREFER_ELOOP) {
-			if (!crtx_root->event_loop.listener)
-				crtx_get_event_loop();
+// 			if (!crtx_root->event_loop.listener)
+// 				crtx_get_event_loop();
 			
 			el_payload.fd = inotify_fd;
 			el_payload.crtx_event_flags = EVLOOP_READ;
@@ -315,8 +315,10 @@ static char start_listener(struct crtx_listener_base *listener) {
 			el_payload.event_handler = &inotify_fd_event_handler;
 			el_payload.event_handler_name = "inotify fd handler";
 			
+			crtx_get_main_event_loop();
 			crtx_root->event_loop.add_fd(
-				&crtx_root->event_loop.listener->parent,
+// 				&crtx_root->event_loop.listener->parent,
+				&crtx_root->event_loop,
 				&el_payload);
 		}
 		

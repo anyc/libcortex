@@ -107,7 +107,8 @@ static void elw_fd_cleanup(struct libvirt_eventloop_wrapper* wrap) {
 	if (wrap->ff)
 		wrap->ff(wrap->opaque);
 	
-	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
+// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
+	crtx_root->event_loop.del_fd(&crtx_root->event_loop, &wrap->el_payload);
 	
 	crtx_ll_unlink(&event_list, wrap->llentry);
 	
@@ -186,7 +187,7 @@ static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback c
 	
 	wrap->llentry = crtx_ll_append_new(&event_list, wrap);
 	
-	crtx_root->event_loop.add_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
+	crtx_root->event_loop.add_fd(&crtx_root->event_loop, &wrap->el_payload);
 	
 	return wrap->id;
 }
@@ -210,7 +211,7 @@ static void elw_virEventUpdateHandleFunc(int watch, int event) {
 	
 	DBG("libvirt: update %d flags %d\n", wrap->id, wrap->el_payload.crtx_event_flags);
 	
-	crtx_root->event_loop.mod_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
+	crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &wrap->el_payload);
 }
 
 static int elw_virEventRemoveHandleFunc(int watch) {

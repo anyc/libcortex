@@ -52,16 +52,7 @@ static enum MyQSocketNotifier::Type crtx_event_flags2qt_flags(int crtx_event_fla
 
 extern "C" {
 
-static int evloop_create(struct crtx_event_loop *evloop) {
-	
-	return 0;
-}
-
-static void evloop_release(struct crtx_event_loop *evloop) {
-	
-}
-
-static void crtx_evloop_qt_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
+static int crtx_evloop_qt_add_fd(struct crtx_event_loop *evloop, struct crtx_event_loop_payload *el_payload) {
 	MyQSocketNotifier *notifier;
 	
 	notifier = new MyQSocketNotifier(el_payload->fd, crtx_event_flags2qt_flags(el_payload->crtx_event_flags));
@@ -72,14 +63,42 @@ static void crtx_evloop_qt_add_fd(struct crtx_listener_base *lbase, struct crtx_
 	notifier->setEnabled(true);
 	
 	el_payload->el_data = notifier;
+	
+	return 0;
 }
 
-static void crtx_evloop_qt_mod_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
+static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_event_loop_payload *el_payload) {
 	
+	return 0;
 }
 
-static void crtx_evloop_qt_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
+static int crtx_evloop_qt_del_fd(struct crtx_event_loop *evloop, struct crtx_event_loop_payload *el_payload) {
 	
+	return 0;
+}
+
+static int evloop_start(struct crtx_event_loop *evloop) {
+	// 	struct crtx_event_loop_payload *el_payload;
+	// 	struct epoll_event ctrl_event;
+	
+	return 0;
+}
+
+static int evloop_stop(struct crtx_event_loop *evloop) {
+	
+	return 0;
+}
+
+static int evloop_create(struct crtx_event_loop *evloop) {
+// 	struct crtx_event_loop_payload *el_payload;
+// 	struct epoll_event ctrl_event;
+	
+	return 0;
+}
+
+static int evloop_release(struct crtx_event_loop *evloop) {
+	
+	return 0;
 }
 
 static void crtx_evloop_qt_queue_graph(struct crtx_event_loop *evloop, struct crtx_graph *graph) {
@@ -89,10 +108,14 @@ static void crtx_evloop_qt_queue_graph(struct crtx_event_loop *evloop, struct cr
 struct crtx_event_loop qt_loop = {
 	{ 0 },
 	"qt",
+	{ 0 },
+	{ {0} },
 	0,
 	
 	&evloop_create,
 	&evloop_release,
+	&evloop_start,
+	&evloop_stop,
 	
 	&crtx_evloop_qt_add_fd,
 	&crtx_evloop_qt_mod_fd,
@@ -100,8 +123,8 @@ struct crtx_event_loop qt_loop = {
 };
 
 void crtx_evloop_qt_start(struct crtx_event_loop *evloop) {
-	qt_loop->ll.data = qt_loop;
-	crtx_ll_append(&crtx_event_loops, qt_loop);
+	qt_loop.ll.data = &qt_loop;
+	crtx_ll_append((struct crtx_ll**) &crtx_event_loops, &qt_loop.ll);
 }
 
 void crtx_evloop_qt_stop(struct crtx_event_loop *evloop) {

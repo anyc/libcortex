@@ -122,7 +122,7 @@ static void netif_shutdown_listener(struct crtx_listener_base *listener) {
 
 struct crtx_listener_base *crtx_new_netif_listener(void *options) {
 	struct crtx_netif_listener *netif_lstnr;
-	struct crtx_listener_base *lbase;
+// 	struct crtx_listener_base *lbase;
 	struct crtx_libnl_callback *cbit;
 	int ret;
 	
@@ -135,14 +135,14 @@ struct crtx_listener_base *crtx_new_netif_listener(void *options) {
 	netif_lstnr->libnl_lstnr.callbacks = libnl_callbacks;
 	
 // 	lbase = create_listener("nl_libnl", &netif_lstnr->libnl_lstnr);
-	ret = crtx_create_listener(&lbase, "nl_libnl", &netif_lstnr->libnl_lstnr);
+	ret = crtx_create_listener("nl_libnl", &netif_lstnr->libnl_lstnr);
 	if (ret) {
 		ERROR("create_listener(libnl) failed\n");
 		exit(1);
 	}
 	
-	lbase->state_graph = lbase->graph;
-	crtx_create_task(lbase->graph, 0, "netif_state_handler", netif_state_handler, netif_lstnr);
+	netif_lstnr->libnl_lstnr.parent.state_graph = netif_lstnr->libnl_lstnr.parent.graph;
+	crtx_create_task(netif_lstnr->libnl_lstnr.parent.graph, 0, "netif_state_handler", netif_state_handler, netif_lstnr);
 	
 	netif_lstnr->parent.shutdown = &netif_shutdown_listener;
 	netif_lstnr->parent.start_listener = &netif_start_listener;
@@ -173,7 +173,7 @@ static char netif_event_handler(struct crtx_event *event, void *userdata, void *
 
 int netif_main(int argc, char **argv) {
 	struct crtx_netif_listener netif_lstnr;
-	struct crtx_listener_base *lbase;
+// 	struct crtx_listener_base *lbase;
 	int r;
 	
 	
@@ -182,18 +182,18 @@ int netif_main(int argc, char **argv) {
 	netif_lstnr.query_existing = 2;
 	
 // 	lbase = create_listener("netif", &netif_lstnr);
-	r = crtx_create_listener(&lbase, "netif", &netif_lstnr);
+	r = crtx_create_listener("netif", &netif_lstnr);
 	if (r) {
 		ERROR("create_listener(netif) failed\n");
 		exit(1);
 	}
 	
 	// we also want to receive status events of the listener in this graph
-	lbase->state_graph = lbase->graph;
+	netif_lstnr.parent.state_graph = netif_lstnr.parent.graph;
 	
-	crtx_create_task(lbase->graph, 0, "netif_event_handler", netif_event_handler, 0);
+	crtx_create_task(netif_lstnr.parent.graph, 0, "netif_event_handler", netif_event_handler, 0);
 	
-	r = crtx_start_listener(lbase);
+	r = crtx_start_listener(&netif_lstnr.parent);
 	if (!r) {
 		ERROR("starting netif listener failed\n");
 		return 1;
