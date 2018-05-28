@@ -37,8 +37,11 @@ BUILTIN_MODULES=signals epoll
 STATIC_TOOLS+=cache dict_inout dict_inout_json event_comm socket evloop
 STATIC_MODULES+=fanotify inotify netlink_raw nl_route_raw uevents socket_raw timer writequeue
 DYN_MODULES+=avahi can evdev libvirt netlink_ge nl_libnl nf_queue pulseaudio readline sdbus sip udev v4l xcb_randr evloop_qt
+DEFAULT_EVLOOP=epoll
 
 -include $(local_mk)
+
+CFLAGS+=-DDEFAULT_EVLOOP=\"$(DEFAULT_EVLOOP)\"
 
 # build tests for enabled modules
 TESTS+=$(foreach t,$(STATIC_MODULES) $(DYN_MODULES),$(if $(findstring $(t),$(AVAILABLE_TESTS)), $(t).test))

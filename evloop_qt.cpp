@@ -52,7 +52,16 @@ static enum MyQSocketNotifier::Type crtx_event_flags2qt_flags(int crtx_event_fla
 
 extern "C" {
 
-void crtx_evloop_qt_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
+static int evloop_create(struct crtx_event_loop *evloop) {
+	
+	return 0;
+}
+
+static void evloop_release(struct crtx_event_loop *evloop) {
+	
+}
+
+static void crtx_evloop_qt_add_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
 	MyQSocketNotifier *notifier;
 	
 	notifier = new MyQSocketNotifier(el_payload->fd, crtx_event_flags2qt_flags(el_payload->crtx_event_flags));
@@ -65,20 +74,34 @@ void crtx_evloop_qt_add_fd(struct crtx_listener_base *lbase, struct crtx_event_l
 	el_payload->el_data = notifier;
 }
 
-void crtx_evloop_qt_mod_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
+static void crtx_evloop_qt_mod_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
 	
 }
 
-void crtx_evloop_qt_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
+static void crtx_evloop_qt_del_fd(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload) {
 	
 }
 
-void crtx_evloop_qt_queue_graph(struct crtx_event_loop *evloop, struct crtx_graph *graph) {
+static void crtx_evloop_qt_queue_graph(struct crtx_event_loop *evloop, struct crtx_graph *graph) {
 	
 }
+
+struct crtx_event_loop qt_loop = {
+	{ 0 },
+	"qt",
+	0,
+	
+	&evloop_create,
+	&evloop_release,
+	
+	&crtx_evloop_qt_add_fd,
+	&crtx_evloop_qt_mod_fd,
+	&crtx_evloop_qt_del_fd,
+};
 
 void crtx_evloop_qt_start(struct crtx_event_loop *evloop) {
-// 	evloop->eloop = new EvloopQt();
+	qt_loop->ll.data = qt_loop;
+	crtx_ll_append(&crtx_event_loops, qt_loop);
 }
 
 void crtx_evloop_qt_stop(struct crtx_event_loop *evloop) {

@@ -31,7 +31,6 @@ CRTX_DLL_TYPE {
 	#endif
 	CRTX_DLL_TYPE *next;
 	
-// 	void *data;
 	union {
 		void *data;
 		size_t size;

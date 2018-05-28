@@ -311,10 +311,16 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 }
 
 int crtx_create_listener(struct crtx_listener_base **listener, char *id, void *options) {
-	if (id == 0 || listener == 0)
+	struct crtx_listener_base *lbase;
+	
+	
+	if (id == 0)
 		return -EINVAL;
 	
-	*listener = create_listener(id, options);
+	lbase = create_listener(id, options);
+	
+	if (listener)
+		*listener = lbase;
 	
 	return 0;
 }

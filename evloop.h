@@ -39,14 +39,22 @@ struct crtx_event_loop_payload {
 struct crtx_listener_base;
 
 struct crtx_event_loop {
-	struct crtx_epoll_listener *listener;
+	struct crtx_ll ll;
+	
+	const char *id;
+	
+// 	struct crtx_epoll_listener *listener;
+	struct crtx_listener_base *listener;
+	
+	void (*create)(struct crtx_event_loop *evloop);
+	void (*release)(struct crtx_event_loop *evloop);
 	
 	void (*add_fd)(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
 	void (*mod_fd)(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
 	void (*del_fd)(struct crtx_listener_base *lbase, struct crtx_event_loop_payload *el_payload);
-	
-// 	char start_thread;
 };
+
+extern struct crtx_event_loop *crtx_event_loops;
 
 struct crtx_event_loop* crtx_get_event_loop();
 

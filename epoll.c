@@ -461,7 +461,36 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	return &epl->parent;
 }
 
+static int evloop_create(struct crtx_event_loop *evloop) {
+	evloop->listener = (struct crtx_listener_base*) calloc(1, sizeof(struct crtx_epoll_listener));
+	
+	lbase = create_listener("epoll", evloop->listener);
+	if (!lbase) {
+		ERROR("create_listener(epoll) failed\n");
+		exit(1);
+	}
+}
+
+static void evloop_release(struct crtx_event_loop *evloop) {
+	
+}
+
+struct crtx_event_loop epoll_loop = {
+	{ 0 },
+	"epoll",
+	0,
+	
+	&evloop_create,
+	&evloop_release,
+	
+	&crtx_epoll_add_fd,
+	&crtx_epoll_mod_fd,
+	&crtx_epoll_del_fd,
+};
+
 void crtx_epoll_init() {
+	epoll_loop->ll.data = epoll_loop;
+	crtx_ll_append(&crtx_event_loops, epoll_loop);
 }
 
 void crtx_epoll_finish() {
