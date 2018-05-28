@@ -667,6 +667,7 @@ int epoll_main(int argc, char **argv) {
 // 	event.data.ptr = &payload;
 // 	crtx_epoll_add_fd_intern(&epl, testpipe[0], &event);
 // 	evloop.add_fd(&evloop, &payload);
+	printf("add local pipe\n");
 	crtx_root->event_loop.add_fd(&crtx_root->event_loop, &payload);
 	
 // 	crtx_create_task(evloop.listener->graph, 0, "epoll_test", epoll_test_handler, 0);
