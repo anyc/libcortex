@@ -20,6 +20,25 @@
 
 struct crtx_event_loop *crtx_event_loops = 0;
 
+static char evloop_ctrl_pipe_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_event_loop_payload *el_payload;
+	struct crtx_event_loop_control_pipe ecp;
+	
+	
+	el_payload = (struct crtx_event_loop_payload*) event->data.pointer;
+	
+	VDBG("received wake-up event\n");
+	
+	read(el_payload->fd, &ecp, sizeof(struct crtx_event_loop_control_pipe));
+	
+	if (ecp.graph) {
+		crtx_process_graph_tmain(ecp.graph);
+		ecp.graph = 0;
+	}
+	
+	return 0;
+}
+
 int crtx_evloop_create(struct crtx_event_loop *evloop) {
 	int ret;
 	
@@ -37,6 +56,8 @@ int crtx_evloop_create(struct crtx_event_loop *evloop) {
 	} else {
 		evloop->ctrl_pipe_evloop_handler.crtx_event_flags = EVLOOP_READ;
 		evloop->ctrl_pipe_evloop_handler.fd = evloop->ctrl_pipe[0];
+		evloop->ctrl_pipe_evloop_handler.event_handler = &evloop_ctrl_pipe_handler;
+		
 		evloop->add_fd(evloop, &evloop->ctrl_pipe_evloop_handler);
 	}
 	

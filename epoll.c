@@ -265,7 +265,7 @@ int crtx_epoll_del_fd(struct crtx_event_loop *evloop, struct crtx_event_loop_pay
 // 	base_payload->el_data = 0;
 // }
 
-static void crtx_epoll_notify(struct crtx_event_loop_payload *el_payload, struct epoll_event *rec_event) {
+static void crtx_epoll_notify(struct crtx_epoll_listener *epl, struct crtx_event_loop_payload *el_payload, struct epoll_event *rec_event) {
 	struct crtx_event *event;
 	
 	el_payload->triggered_flags = rec_event->events;
@@ -277,20 +277,31 @@ static void crtx_epoll_notify(struct crtx_event_loop_payload *el_payload, struct
 	
 	VDBG("received wakeup for fd %d\n", el_payload->fd);
 	
-	if (el_payload->event_handler) {
+	if (el_payload->graph || el_payload->event_handler) {
 		event = crtx_create_event(0);
 		
 		crtx_event_set_raw_data(event, 'p', el_payload, sizeof(el_payload), CRTX_DIF_DONT_FREE_DATA);
 		
-		// TODO we call the event handler directly as walking through the event graph
-		// only causes additional processing overhead in most cases
-		el_payload->event_handler(event, 0, 0);
-		free_event(event);
-		
-		
-		// TODO if this is called, either create individual graph per fd or ensure
-		// the event handlers check if the event is meant for them
-		// 					crtx_add_event(epl->parent.graph, event);
+		if (el_payload->event_handler) {
+			// TODO we call the event handler directly as walking through the event graph
+			// only causes additional processing overhead in most cases
+			el_payload->event_handler(event, 0, 0);
+			
+			free_event(event);
+		} else {
+			enum crtx_processing_mode mode;
+			
+			mode = crtx_get_mode(el_payload->graph->mode);
+			
+			// TODO process events here directly if mode == CRTX_PREFER_ELOOP ?
+			if (mode == CRTX_PREFER_THREAD) {
+				crtx_add_event(el_payload->graph, event);
+			} else {
+				crtx_add_event(el_payload->graph, event);
+				
+// 				crtx_process_graph_tmain(graph);
+			}
+		}
 	} else
 	if (el_payload->simple_callback) {
 		el_payload->simple_callback(el_payload);
@@ -306,7 +317,8 @@ static int evloop_start(struct crtx_event_loop *evloop) {
 	int n_rdy_events;
 	struct epoll_event *rec_events;
 	struct crtx_event_loop_payload *el_payload;
-	struct crtx_event_loop_control_pipe ecp;
+// 	struct crtx_event_loop_control_pipe ecp;
+	struct crtx_event_loop_callback *el_cb;
 	
 
 // 	epl = (struct crtx_epoll_listener*) data;
@@ -328,24 +340,23 @@ static int evloop_start(struct crtx_event_loop *evloop) {
 		VDBG("epoll returned with %d events\n", n_rdy_events);
 		
 		for (i=0; i < n_rdy_events; i++) {
+			el_payload = (struct crtx_event_loop_payload* ) rec_events[i].data.ptr;
+			
 			#ifdef DEBUG
-			if (rec_events[i].data.ptr) {
-				el_payload = (struct crtx_event_loop_payload* ) rec_events[i].data.ptr;
-				VDBG("epoll #%d %d ", i, el_payload->fd);
-				#define PRINTFLAG(flag) if (rec_events[i].events & flag) VDBG(#flag " ");
-				
-				PRINTFLAG(EPOLLIN);
-				PRINTFLAG(EPOLLOUT);
-				PRINTFLAG(EPOLLRDHUP);
-				PRINTFLAG(EPOLLPRI);
-				PRINTFLAG(EPOLLERR);
-				PRINTFLAG(EPOLLHUP);
-				VDBG("\n");
-			}
+			VDBG("epoll #%d %d ", i, el_payload->fd);
+			#define PRINTFLAG(flag) if (rec_events[i].events & flag) VDBG(#flag " ");
+			
+			PRINTFLAG(EPOLLIN);
+			PRINTFLAG(EPOLLOUT);
+			PRINTFLAG(EPOLLRDHUP);
+			PRINTFLAG(EPOLLPRI);
+			PRINTFLAG(EPOLLERR);
+			PRINTFLAG(EPOLLHUP);
+			VDBG("\n");
 			#endif
 			
 			if (rec_events[i].events & EPOLLERR || rec_events[i].events & EPOLLRDHUP || rec_events[i].events & EPOLLHUP) {
-				el_payload = (struct crtx_event_loop_payload* ) rec_events[i].data.ptr;
+// 				el_payload = (struct crtx_event_loop_payload* ) el_payload;
 				
 				ERROR("epoll returned EPOLLERR for fd %d\n", el_payload->fd);
 				
@@ -357,23 +368,23 @@ static int evloop_start(struct crtx_event_loop *evloop) {
 // 				crtx_epoll_del_fd((struct crtx_listener_base *) epl, el_payload);
 				
 				continue;
-			} else
-			if (rec_events[i].data.ptr == 0) {
-				VDBG("epoll received wake-up event\n");
-				
-				el_payload = (struct crtx_event_loop_payload* ) rec_events[i].data.ptr;
-				
-				read(el_payload->fd, &ecp, sizeof(struct crtx_event_loop_control_pipe));
-				
-				if (ecp.graph) {
-					crtx_process_graph_tmain(ecp.graph);
-					ecp.graph = 0;
-				}
+// 			} else
+// 			if (el_payload == 0) {
+// 				VDBG("epoll received wake-up event\n");
+// 				
+// 				el_payload = (struct crtx_event_loop_payload* ) el_payload;
+// 				
+// 				read(el_payload->fd, &ecp, sizeof(struct crtx_event_loop_control_pipe));
+// 				
+// 				if (ecp.graph) {
+// 					crtx_process_graph_tmain(ecp.graph);
+// 					ecp.graph = 0;
+// 				}
 			} else {
 				struct crtx_ll *ll;
 				
 				
-				el_payload = (struct crtx_event_loop_payload* ) rec_events[i].data.ptr;
+// 				el_payload = (struct crtx_event_loop_payload* ) el_payload;
 				
 				// check if there are specialized handlers for this kind of event
 // 				if (rec_events[i].events & EPOLLIN && el_payload->epollin)
@@ -384,18 +395,17 @@ static int evloop_start(struct crtx_event_loop *evloop) {
 // 					crtx_epoll_notify(el_payload->epollpri, &rec_events[i]);
 				
 				if (el_payload->active)
-					crtx_epoll_notify(el_payload, &rec_events[i]);
+					crtx_epoll_notify(epl, el_payload, &rec_events[i]);
 				
 				
 				for (ll=&el_payload->ll; ll; ll=ll->next) {
 					struct crtx_event_loop_payload *sub;
 					
-					
 					sub = (struct crtx_event_loop_payload *) ll;
 					if (!sub->active)
 						continue;
 					
-					crtx_epoll_notify(sub, &rec_events[i]);
+					crtx_epoll_notify(epl, sub, &rec_events[i]);
 				}
 			}
 		}

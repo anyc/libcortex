@@ -12,28 +12,47 @@
 #define EVLOOP_WRITE 1<<1
 #define EVLOOP_SPECIAL 1<<2
 
+struct crtx_event_loop_callback {
+	int crtx_event_flags; // event flags set using libcortex #define's
+	
+	void *data; // data that can be set by the specific listener
+	
+	int triggered_flags;
+	
+	struct crtx_graph *graph;
+	crtx_handle_task_t event_handler;
+	char *event_handler_name;
+	void (*simple_callback)(struct crtx_event_loop_payload *el_payload);
+	
+	void (*error_cb)(struct crtx_event_loop_payload *el_payload, void *data);
+	void *error_cb_data;
+};
+
 struct crtx_event_loop_payload {
 	struct crtx_ll ll;
 	
 	int fd;
-	int crtx_event_flags;
+// 	int crtx_event_flags; // event flags set using libcortex #define's
 	char fd_added;
 	char active;
 	
-	void *data;
+// 	int triggered_flags;
 	
-	crtx_handle_task_t event_handler;
-	char *event_handler_name;
-	int triggered_flags;
+// 	void *data; // data that can be set by the specific listener
+	void *el_data; // data that can be set by the event loop implementation
 	
-	void (*simple_callback)(struct crtx_event_loop_payload *el_payload);
-	void (*error_cb)(struct crtx_event_loop_payload *el_payload, void *data);
-	void *error_cb_data;
+// 	struct crtx_graph *graph;
+// 	crtx_handle_task_t event_handler;
+// 	char *event_handler_name;
+// 	void (*simple_callback)(struct crtx_event_loop_payload *el_payload);
 	
-	void *el_data;
+// 	void (*error_cb)(struct crtx_event_loop_payload *el_payload, void *data);
+// 	void *error_cb_data;
 	
-	struct crtx_event_loop_payload *parent;
-	struct crtx_ll *sub_payloads;
+// 	struct crtx_event_loop_payload *parent;
+// 	struct crtx_ll *sub_payloads;
+	
+	struct crtx_event_loop_callback *callbacks;
 };
 
 struct crtx_listener_base;
