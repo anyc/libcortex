@@ -182,12 +182,12 @@ void push_new_udev_event(struct crtx_udev_listener *ulist, struct udev_device *d
 }
 
 static char udev_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_event_loop_payload *payload;
+	struct crtx_evloop_fd *payload;
 	struct crtx_udev_listener *ulist;
 	struct udev_device *dev;
 	
 	
-	payload = (struct crtx_event_loop_payload*) event->data.pointer;
+	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
 	ulist = (struct crtx_udev_listener *) payload->data;
 	
@@ -272,11 +272,19 @@ struct crtx_listener_base *crtx_new_udev_listener(void *options) {
 		p+=2;
 	}
 	
-	ulist->parent.el_payload.fd = udev_monitor_get_fd(ulist->monitor);
-	ulist->parent.el_payload.crtx_event_flags = EVLOOP_READ;
-	ulist->parent.el_payload.data = ulist;
-	ulist->parent.el_payload.event_handler = &udev_fd_event_handler;
-	ulist->parent.el_payload.event_handler_name = "udev fd handler";
+// 	ulist->parent.evloop_fd.fd = udev_monitor_get_fd(ulist->monitor);
+// 	ulist->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 	ulist->parent.evloop_fd.data = ulist;
+// 	ulist->parent.evloop_fd.event_handler = &udev_fd_event_handler;
+// 	ulist->parent.evloop_fd.event_handler_name = "udev fd handler";
+	crtx_evloop_create_fd_entry(&ulist->parent.evloop_fd,
+						udev_monitor_get_fd(ulist->monitor),
+						EVLOOP_READ,
+						0,
+						&udev_fd_event_handler,
+						ulist,
+						0,
+					);
 	
 	ulist->parent.shutdown = &crtx_shutdown_udev_listener;
 // 	new_eventgraph(&ulist->parent.graph, "udev", udev_msg_etype);

@@ -85,12 +85,12 @@ int crtx_genl_msg2dict(struct nl_msg *msg, void *arg) {
 
 // handler that is called on file descriptor events
 static char genl_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_event_loop_payload *payload;
+	struct crtx_evloop_fd *payload;
 	struct crtx_genl_listener *genlist;
 	int r;
 	
 	
-	payload = (struct crtx_event_loop_payload*) event->data.pointer;
+	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	genlist = (struct crtx_genl_listener *) payload->data;
 	
 	// nl_recvmsgs_default will eventually call the registered callback
@@ -148,11 +148,20 @@ struct crtx_listener_base *crtx_new_genl_listener(void *options) {
 	
 // 	new_eventgraph(&genlist->parent.graph, 0, 0);
 	
-	genlist->parent.el_payload.fd = nl_socket_get_fd(genlist->sock);
-	genlist->parent.el_payload.data = genlist;
-	genlist->parent.el_payload.event_handler = &genl_fd_event_handler;
-	genlist->parent.el_payload.event_handler_name = "genl fd handler";
+// 	genlist->parent.evloop_fd.fd = nl_socket_get_fd(genlist->sock);
+// 	genlist->parent.evloop_fd.data = genlist;
+// 	genlist->parent.evloop_fd.event_handler = &genl_fd_event_handler;
+// 	genlist->parent.evloop_fd.event_handler_name = "genl fd handler";
 	genlist->parent.free = &free_genl_listener;
+	
+	crtx_evloop_create_fd_entry(&genlist->parent.evloop_fd,
+						nl_socket_get_fd(genlist->sock),
+						EVLOOP_READ,
+						0,
+						&genl_fd_event_handler,
+						genlist,
+						0
+					);
 	
 	
 	g = genlist->groups;

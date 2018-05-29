@@ -26,7 +26,7 @@ MUTEX_TYPE mutex;
 
 static struct crtx_thread_job_description thread_job = {0};
 static struct crtx_thread *global_thread = 0;
-static struct crtx_event_loop_payload el_payload = {};
+static struct crtx_evloop_fd evloop_fd = {};
 static char stop = 0;
 
 #define INOFITY_BUFLEN (sizeof(struct inotify_event) + NAME_MAX + 1)
@@ -248,10 +248,10 @@ void *inotify_tmain(void *data) {
 }
 
 static char inotify_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	struct crtx_event_loop_payload *payload;
+// 	struct crtx_evloop_fd *payload;
 	
 	
-// 	payload = (struct crtx_event_loop_payload*) event->data.pointer;
+// 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
 	inotify_eloop();
 	
@@ -309,17 +309,24 @@ static char start_listener(struct crtx_listener_base *listener) {
 // 			if (!crtx_root->event_loop.listener)
 // 				crtx_get_event_loop();
 			
-			el_payload.fd = inotify_fd;
-			el_payload.crtx_event_flags = EVLOOP_READ;
-			el_payload.data = 0;
-			el_payload.event_handler = &inotify_fd_event_handler;
-			el_payload.event_handler_name = "inotify fd handler";
+// 			evloop_fd.fd = inotify_fd;
+// 			evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 			evloop_fd.data = 0;
+// 			evloop_fd.event_handler = &inotify_fd_event_handler;
+// 			evloop_fd.event_handler_name = "inotify fd handler";
+			crtx_evloop_create_fd_entry(&evloop_fd,
+							inotify_fd,
+							EVLOOP_READ,
+							0,
+							&inotify_fd_event_handler
+							0
+						);
 			
 			crtx_get_main_event_loop();
 			crtx_root->event_loop.add_fd(
 // 				&crtx_root->event_loop.listener->parent,
 				&crtx_root->event_loop,
-				&el_payload);
+				&evloop_fd);
 		}
 		
 	}

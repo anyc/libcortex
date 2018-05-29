@@ -110,7 +110,7 @@ enum crtx_processing_mode crtx_get_mode(enum crtx_processing_mode local_mode) {
 	return mode;
 }
 
-static void crtx_default_el_error_cb(struct crtx_event_loop_payload *el_payload, void *data) {
+static void crtx_default_el_error_cb(struct crtx_evloop_callback *el_cb, void *data) {
 	struct crtx_listener_base *listener;
 	
 	listener = (struct crtx_listener_base *) data;
@@ -132,7 +132,7 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 		return -EEXIST;
 	}
 	
-	if (!listener->el_payload.fd && !listener->thread_job.fct && !listener->start_listener) {
+	if (!listener->evloop_fd.fd && !listener->thread_job.fct && !listener->start_listener) {
 		DBG("no method to start listener \"%s\" provided\n", listener->id);
 		
 		UNLOCK(listener->state_mutex);
@@ -169,22 +169,22 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 		}
 	}
 	
-// 	if (!listener->el_payload.fd && !listener->thread) {
+// 	if (!listener->evloop_fd.fd && !listener->thread) {
 // 		DBG("no implicit method to start listener \"%s\" provided\n", listener->id);
 		
 // // 		UNLOCK(listener->state_mutex);
 // // 		return -1;
 // 	} else {
-	if (listener->el_payload.fd || listener->thread_job.fct) {
+	if (listener->evloop_fd.fd || listener->thread_job.fct) {
 		mode = crtx_get_mode(listener->mode);
 		
-		if (mode == CRTX_PREFER_ELOOP && listener->el_payload.fd <= 0) {
-			ERROR("listener mode set to \"event loop\" but no event loop data available (fd = %d)\n", listener->el_payload.fd);
+		if (mode == CRTX_PREFER_ELOOP && listener->evloop_fd.fd <= 0) {
+			ERROR("listener mode set to \"event loop\" but no event loop data available (fd = %d)\n", listener->evloop_fd.fd);
 			mode = CRTX_PREFER_THREAD;
 		}
 		if (mode == CRTX_PREFER_THREAD && !listener->thread_job.fct) {
 			ERROR("listener mode set to \"thread\" but no thread data available\n");
-			if (listener->el_payload.fd > 0)
+			if (listener->evloop_fd.fd > 0)
 				mode = CRTX_PREFER_ELOOP;
 			else
 				mode = 0;
@@ -201,20 +201,20 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 // 			if (!crtx_root->event_loop.listener)
 // 			crtx_get_main_event_loop();
 			
-			if (listener->el_payload.error_cb == 0) {
-				listener->el_payload.error_cb = crtx_default_el_error_cb;
-				listener->el_payload.error_cb_data = listener;
+			if (listener->evloop_fd.callbacks->error_cb == 0) {
+				listener->evloop_fd.callbacks->error_cb = crtx_default_el_error_cb;
+				listener->evloop_fd.callbacks->error_cb_data = listener;
 			}
 			
 // 			crtx_root->event_loop.add_fd(
 // 				&crtx_root->event_loop.listener->parent,
-// 				&listener->el_payload);
+// 				&listener->evloop_fd);
 			
 			crtx_get_main_event_loop();
 			
 			crtx_root->event_loop.add_fd(
 				&crtx_root->event_loop,
-				&listener->el_payload);
+				&listener->evloop_fd);
 		} else {
 			ERROR("invalid start listener mode: %d\n", mode);
 			UNLOCK(listener->state_mutex);
@@ -300,7 +300,7 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 // 	if (!lbase) {
 // 		ERROR("listener \"%s\" not found\n", id);
 // 	} else {
-// 	if (lbase->el_payload.fd > 0) {
+// 	if (lbase->evloop_fd.fd > 0) {
 // 		if (!crtx_root->event_loop.listener)
 // 			crtx_get_event_loop();
 // 	}
@@ -346,12 +346,12 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 	
 	listener->state = CRTX_LSTNR_STOPPING;
 	
-	if (listener->el_payload.fd > 0) {
-// 		printf("del fd %d\n", listener->el_payload.fd);
+	if (listener->evloop_fd.fd > 0) {
+// 		printf("del fd %d\n", listener->evloop_fd.fd);
 		crtx_root->event_loop.del_fd(
 // 			&crtx_root->event_loop.listener->parent,
 			&crtx_root->event_loop,
-			&listener->el_payload);
+			&listener->evloop_fd);
 	}
 	
 	if (listener->eloop_thread) {

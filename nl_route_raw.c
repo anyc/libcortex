@@ -634,10 +634,10 @@ struct crtx_listener_base *crtx_new_nl_route_raw_listener(void *options) {
 // 	nl_listener->parent.thread = get_thread(netlink_raw_tmain, nl_listener, 0);
 // 	nl_listener->parent.thread->do_stop = &stop_thread;
 	
-// 	nl_listener->parent.el_payload.fd = nl_listener->sockfd;
-// 	nl_listener->parent.el_payload.data = nl_listener;
-// 	nl_listener->parent.el_payload.event_handler = &netlink_el_event_handler;
-// 	nl_listener->parent.el_payload.event_handler_name = "netlink eventloop handler";
+// 	nl_listener->parent.evloop_fd.fd = nl_listener->sockfd;
+// 	nl_listener->parent.evloop_fd.data = nl_listener;
+// 	nl_listener->parent.evloop_fd.event_handler = &netlink_el_event_handler;
+// 	nl_listener->parent.evloop_fd.event_handler_name = "netlink eventloop handler";
 	
 // 	reference_signal(&nl_listener->parent.thread->finished);
 	

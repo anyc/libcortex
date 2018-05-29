@@ -31,9 +31,9 @@
 
 static char netlink_el_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_netlink_raw_listener *nl_listener;
-	struct crtx_event_loop_payload *payload;
+	struct crtx_evloop_fd *payload;
 	
-	payload = (struct crtx_event_loop_payload*) event->data.pointer;
+	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
 	nl_listener = (struct crtx_netlink_raw_listener*) payload->data;
 	
@@ -84,11 +84,19 @@ struct crtx_listener_base *crtx_new_netlink_raw_listener(void *options) {
 // 	nl_listener->parent.thread = get_thread(netlink_raw_tmain, nl_listener, 0);
 // 	nl_listener->parent.thread->do_stop = &stop_thread;
 	
-	nl_listener->parent.el_payload.fd = nl_listener->sockfd;
-	nl_listener->parent.el_payload.crtx_event_flags = EVLOOP_READ;
-	nl_listener->parent.el_payload.data = nl_listener;
-	nl_listener->parent.el_payload.event_handler = &netlink_el_event_handler;
-	nl_listener->parent.el_payload.event_handler_name = "netlink eventloop handler";
+	nl_listener->parent.evloop_fd.fd = nl_listener->sockfd;
+	nl_listener->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
+	nl_listener->parent.evloop_fd.data = nl_listener;
+	nl_listener->parent.evloop_fd.event_handler = &netlink_el_event_handler;
+	nl_listener->parent.evloop_fd.event_handler_name = "netlink eventloop handler";
+	crtx_evloop_create_fd_entry(&nl_listener->parent.evloop_fd,
+						nl_listener->sockfd,
+						EVLOOP_READ,
+						0,
+						&netlink_el_event_handler,
+						nl_listener,
+						0,
+					);
 	
 	return &nl_listener->parent;
 }

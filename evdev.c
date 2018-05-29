@@ -79,14 +79,14 @@ static void send_event(struct crtx_evdev_listener *el, struct input_event *ev, c
 // }
 
 static char evdev_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_event_loop_payload *payload;
+	struct crtx_evloop_callback *el_cb;
 	struct crtx_evdev_listener *evdev;
 	struct input_event ev;
 	int ret;
 	
 	
-	payload = (struct crtx_event_loop_payload*) event->data.pointer;
-	evdev = (struct crtx_evdev_listener *) payload->data;
+	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+	evdev = (struct crtx_evdev_listener *) el_cb->data;
 	
 	do {
 		ret = libevdev_next_event(evdev->device, LIBEVDEV_READ_FLAG_NORMAL, &ev);
@@ -157,11 +157,11 @@ struct crtx_listener_base *crtx_new_evdev_listener(void *options) {
 // 	evdev->parent.thread = get_thread(evdev_tmain, evdev, 0);
 // 	evdev->parent.thread->do_stop = &stop_thread;
 	
-	evdev->parent.el_payload.fd = evdev->fd;
-	evdev->parent.el_payload.data = evdev;
-	evdev->parent.el_payload.crtx_event_flags = EVLOOP_READ;
-	evdev->parent.el_payload.event_handler = &evdev_fd_event_handler;
-	evdev->parent.el_payload.event_handler_name = "evdev fd handler";
+	evdev->parent.evloop_fd.fd = evdev->fd;
+	evdev->parent.evloop_fd.data = evdev;
+	evdev->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
+	evdev->parent.evloop_fd.event_handler = &evdev_fd_event_handler;
+	evdev->parent.evloop_fd.event_handler_name = "evdev fd handler";
 	
 	return &evdev->parent;
 }

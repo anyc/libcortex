@@ -14,12 +14,12 @@
 
 // handler that is called on file descriptor events
 static char libnl_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_event_loop_payload *payload;
+	struct crtx_evloop_fd *payload;
 	struct crtx_libnl_listener *libnl_lstnr;
 	int r;
 	
 	
-	payload = (struct crtx_event_loop_payload*) event->data.pointer;
+	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	libnl_lstnr = (struct crtx_libnl_listener *) payload->data;
 	
 	// nl_recvmsgs_default will eventually call the registered callback
@@ -44,7 +44,7 @@ static char libnl_start_listener(struct crtx_listener_base *listener) {
 		return ret;
 	}
 	
-	libnl_lstnr->parent.el_payload.fd = nl_socket_get_fd(libnl_lstnr->sock);
+	libnl_lstnr->parent.evloop_fd.fd = nl_socket_get_fd(libnl_lstnr->sock);
 	
 	return 0;
 }
@@ -86,12 +86,19 @@ struct crtx_listener_base *crtx_new_nl_libnl_listener(void *options) {
 	
 	libnl_lstnr->parent.start_listener = &libnl_start_listener;
 	
-	libnl_lstnr->parent.el_payload.data = libnl_lstnr;
-	libnl_lstnr->parent.el_payload.crtx_event_flags = EVLOOP_READ;
-	libnl_lstnr->parent.el_payload.event_handler = &libnl_fd_event_handler;
-	libnl_lstnr->parent.el_payload.event_handler_name = "libnl fd handler";
+// 	libnl_lstnr->parent.evloop_fd.data = libnl_lstnr;
+// 	libnl_lstnr->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 	libnl_lstnr->parent.evloop_fd.event_handler = &libnl_fd_event_handler;
+// 	libnl_lstnr->parent.evloop_fd.event_handler_name = "libnl fd handler";
 	libnl_lstnr->parent.free = &free_libnl_listener;
-	
+	crtx_evloop_create_fd_entry(&libnl_lstnr->parent.evloop_fd,
+						0,
+						EVLOOP_READ,
+						0,
+						&libnl_fd_event_handler,
+						libnl_lstnr,
+						0,
+					);
 	
 	
 	return &libnl_lstnr->parent;

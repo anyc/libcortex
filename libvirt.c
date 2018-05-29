@@ -25,7 +25,7 @@ static int elw_virEventRemoveHandleFunc(int watch);
 struct libvirt_eventloop_wrapper {
 	int id;
 	
-	struct crtx_event_loop_payload el_payload;
+	struct crtx_evloop_fd evloop_fd;
 	
 	int timeout;
 	struct crtx_timer_listener timer_listener;
@@ -107,8 +107,8 @@ static void elw_fd_cleanup(struct libvirt_eventloop_wrapper* wrap) {
 	if (wrap->ff)
 		wrap->ff(wrap->opaque);
 	
-// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
-	crtx_root->event_loop.del_fd(&crtx_root->event_loop, &wrap->el_payload);
+// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->evloop_fd);
+	crtx_root->event_loop.del_fd(&crtx_root->event_loop, &wrap->evloop_fd);
 	
 	crtx_ll_unlink(&event_list, wrap->llentry);
 	
@@ -116,12 +116,12 @@ static void elw_fd_cleanup(struct libvirt_eventloop_wrapper* wrap) {
 	free(wrap);
 }
 
-static void elw_fd_callback(struct crtx_event_loop_payload *el_payload) {
+static void elw_fd_callback(struct crtx_evloop_fd *evloop_fd) {
 	struct libvirt_eventloop_wrapper *wrap;
 	struct epoll_event *epoll_event;
 	
-	wrap = (struct libvirt_eventloop_wrapper*) el_payload->data;
-	epoll_event = (struct epoll_event *) el_payload->el_data;
+	wrap = (struct libvirt_eventloop_wrapper*) evloop_fd->data;
+	epoll_event = (struct epoll_event *) evloop_fd->el_data;
 	
 // 	printf("lv fd cb %d %p %d\n", wrap->id, wrap->event_cb, epoll_event->events);
 // 	if (epoll_event->events & EPOLLHUP) {
@@ -131,26 +131,26 @@ static void elw_fd_callback(struct crtx_event_loop_payload *el_payload) {
 // 		return;
 // 	}
 	
-	wrap->event_cb(wrap->id, wrap->el_payload.fd, elw_virEventPollFromNativeEvents(epoll_event->events), wrap->opaque);
+	wrap->event_cb(wrap->id, wrap->evloop_fd.fd, elw_virEventPollFromNativeEvents(epoll_event->events), wrap->opaque);
 	
 	if (wrap->delete)
 		elw_fd_cleanup(wrap);
 }
 
-static void elw_fd_error_cb(struct crtx_event_loop_payload *el_payload, void *data) {
+static void elw_fd_error_cb(struct crtx_evloop_fd *evloop_fd, void *data) {
 	struct libvirt_eventloop_wrapper *wrap;
 	struct epoll_event *epoll_event;
 	
 	
-	wrap = (struct libvirt_eventloop_wrapper*) el_payload->data;
-	epoll_event = (struct epoll_event *) el_payload->el_data;
+	wrap = (struct libvirt_eventloop_wrapper*) evloop_fd->data;
+	epoll_event = (struct epoll_event *) evloop_fd->el_data;
 	
-	DBG("libvirt event loop error callback for fd %d\n", el_payload->fd);
+	DBG("libvirt event loop error callback for fd %d\n", evloop_fd->fd);
 	
 	if (wrap->delete)
 		elw_fd_cleanup(wrap);
 	
-	wrap->event_cb(wrap->id, wrap->el_payload.fd, elw_virEventPollFromNativeEvents(epoll_event->events), wrap->opaque);
+	wrap->event_cb(wrap->id, wrap->evloop_fd.fd, elw_virEventPollFromNativeEvents(epoll_event->events), wrap->opaque);
 	
 	wrap->delete = 1;
 }
@@ -161,11 +161,20 @@ static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback c
 	
 	wrap = (struct libvirt_eventloop_wrapper*) calloc(1, sizeof(struct libvirt_eventloop_wrapper));
 	
-	wrap->el_payload.fd = fd;
-	wrap->el_payload.crtx_event_flags = elw_virEventPollToNativeEvents(event);
-	wrap->el_payload.simple_callback = &elw_fd_callback;
-	wrap->el_payload.error_cb = &elw_fd_error_cb;
-	wrap->el_payload.data = wrap;
+// 	wrap->evloop_fd.fd = fd;
+// 	wrap->evloop_fd.crtx_event_flags = elw_virEventPollToNativeEvents(event);
+// 	wrap->evloop_fd.simple_callback = &elw_fd_callback;
+// 	wrap->evloop_fd.error_cb = &elw_fd_error_cb;
+// 	wrap->evloop_fd.data = wrap;
+	crtx_evloop_create_fd_entry(&wrap->evloop_fd,
+						   fd,
+					    elw_virEventPollToNativeEvents(event),
+					    0,
+					    &elw_fd_callback,
+					    wrap,
+					    &elw_fd_error_cb
+					);
+	
 	wrap->event_cb = cb;
 	wrap->opaque = opaque;
 	wrap->ff = ff;
@@ -183,11 +192,11 @@ static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback c
 			wrap->id++;
 	}
 	
-	DBG("libvirt: new fd %d (id %d flag %d)\n", fd, wrap->id, wrap->el_payload.crtx_event_flags);
+	DBG("libvirt: new fd %d (id %d flag %d)\n", fd, wrap->id, wrap->evloop_fd.crtx_event_flags);
 	
 	wrap->llentry = crtx_ll_append_new(&event_list, wrap);
 	
-	crtx_root->event_loop.add_fd(&crtx_root->event_loop, &wrap->el_payload);
+	crtx_root->event_loop.add_fd(&crtx_root->event_loop, &wrap->evloop_fd);
 	
 	return wrap->id;
 }
@@ -207,11 +216,11 @@ static void elw_virEventUpdateHandleFunc(int watch, int event) {
 	}
 	
 	wrap = ((struct libvirt_eventloop_wrapper*) it->data);
-	wrap->el_payload.crtx_event_flags = elw_virEventPollToNativeEvents(event);
+	wrap->evloop_fd.subsystems->crtx_event_flags = elw_virEventPollToNativeEvents(event);
 	
-	DBG("libvirt: update %d flags %d\n", wrap->id, wrap->el_payload.crtx_event_flags);
+	DBG("libvirt: update %d flags %d\n", wrap->id, wrap->evloop_fd.crtx_event_flags);
 	
-	crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &wrap->el_payload);
+	crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &wrap->evloop_fd);
 }
 
 static int elw_virEventRemoveHandleFunc(int watch) {
@@ -236,9 +245,9 @@ static int elw_virEventRemoveHandleFunc(int watch) {
 	wrap->delete = 1;
 	
 	// 	printf("rem id %d\n", wrap->id);
-	DBG("libvirt: remove fd %d (id %d)\n", wrap->el_payload.fd, wrap->id);
+	DBG("libvirt: remove fd %d (id %d)\n", wrap->evloop_fd.fd, wrap->id);
 	
-// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
+// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->evloop_fd);
 	
 // 	crtx_ll_unlink(&event_list, it);
 // 	
@@ -426,7 +435,7 @@ static int elw_virEventRemoveTimeoutFunc(int timer) {
 // 	wrap->ff(wrap->opaque);
 	wrap->delete = 1;
 	
-// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->el_payload);
+// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->evloop_fd);
 
 	crtx_free_listener(&wrap->timer_listener.parent);
 	

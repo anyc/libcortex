@@ -22,13 +22,13 @@ static void sip_event_before_release_cb(struct crtx_event *event, void *userdata
 }
 
 static char sip_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_event_loop_payload *payload;
+	struct crtx_evloop_fd *payload;
 	struct crtx_sip_listener *slist;
 	eXosip_event_t *evt;
 	struct crtx_event *nevent;
 	
 	
-	payload = (struct crtx_event_loop_payload*) event->data.pointer;
+	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
 	slist = (struct crtx_sip_listener *) payload->data;
 	
@@ -88,11 +88,19 @@ static char start_listener(struct crtx_listener_base *listener) {
 	}
 	eXosip_unlock (slist->ctx);
 	
-	slist->parent.el_payload.fd = eXosip_event_geteventsocket(slist->ctx);
-	slist->parent.el_payload.crtx_event_flags = EVLOOP_READ;
-	slist->parent.el_payload.data = slist;
-	slist->parent.el_payload.event_handler = &sip_fd_event_handler;
-	slist->parent.el_payload.event_handler_name = "sip fd handler";
+// 	slist->parent.evloop_fd.fd = eXosip_event_geteventsocket(slist->ctx);
+// 	slist->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 	slist->parent.evloop_fd.data = slist;
+// 	slist->parent.evloop_fd.event_handler = &sip_fd_event_handler;
+// 	slist->parent.evloop_fd.event_handler_name = "sip fd handler";
+	crtx_evloop_create_fd_entry(&slist->parent.evloop_fd,
+						eXosip_event_geteventsocket(slist->ctx),
+						EVLOOP_READ,
+						0,
+						&sip_fd_event_handler,
+						slist,
+						0,
+					);
 	
 	return 0;
 }

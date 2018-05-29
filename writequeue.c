@@ -21,22 +21,22 @@
 #include "writequeue.h"
 
 static char fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_event_loop_payload *payload;
+	struct crtx_evloop_fd *payload;
 	struct crtx_writequeue *wqueue;
 // 	struct crtx_event_loop *eloop;
 	int r;
 	
-	payload = (struct crtx_event_loop_payload*) event->data.pointer;
+	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
 	wqueue = (struct crtx_writequeue *) payload->data;
 	
 	r = wqueue->write(wqueue, wqueue->write_userdata);
 	if (r != EAGAIN && r != ENOBUFS) {
 		printf("write done %s %d\n", strerror(r), r);
-// 		wqueue->parent.el_payload.crtx_event_flags = 0;
+// 		wqueue->parent.evloop_fd.crtx_event_flags = 0;
 // 		
 // 		eloop = crtx_get_event_loop();
-// 		crtx_epoll_mod_fd(&eloop->listener->parent, &wqueue->parent.el_payload);
+// 		crtx_epoll_mod_fd(&eloop->listener->parent, &wqueue->parent.evloop_fd);
 		crtx_writequeue_stop(wqueue);
 	}
 	
@@ -46,21 +46,21 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 void crtx_writequeue_start(struct crtx_writequeue *wqueue) {
 // 	struct crtx_event_loop *eloop;
 	
-	wqueue->parent.el_payload.crtx_event_flags = EVLOOP_WRITE;
+// 	wqueue->parent.evloop_fd.crtx_event_flags = EVLOOP_WRITE;
 	
 // 	eloop = crtx_get_event_loop();
-// 	crtx_epoll_mod_fd(&eloop->listener->parent, &wqueue->parent.el_payload);
-	crtx_root->event_loop.add_fd(&crtx_root->event_loop, &wqueue->parent.el_payload);
+// 	crtx_epoll_mod_fd(&eloop->listener->parent, &wqueue->parent.evloop_fd);
+	crtx_root->event_loop.add_fd(&crtx_root->event_loop, &wqueue->parent.evloop_fd);
 }
 
 void crtx_writequeue_stop(struct crtx_writequeue *wqueue) {
 // 	struct crtx_event_loop *eloop;
 	
-// 	wqueue->parent.el_payload.crtx_event_flags = 0;
+// 	wqueue->parent.evloop_fd.crtx_event_flags = 0;
 	
 // 	eloop = crtx_get_event_loop();
-// 	crtx_epoll_mod_fd(&eloop->listener->parent, &wqueue->parent.el_payload);
-	crtx_root->event_loop.del_fd(&crtx_root->event_loop, &wqueue->parent.el_payload);
+// 	crtx_epoll_mod_fd(&eloop->listener->parent, &wqueue->parent.evloop_fd);
+	crtx_root->event_loop.del_fd(&crtx_root->event_loop, &wqueue->parent.evloop_fd);
 }
 
 struct crtx_listener_base *crtx_new_writequeue_listener(void *options) {
@@ -69,10 +69,18 @@ struct crtx_listener_base *crtx_new_writequeue_listener(void *options) {
 	
 	wqueue = (struct crtx_writequeue *) options;
 	
-	wqueue->parent.el_payload.fd = wqueue->write_fd;
-	wqueue->parent.el_payload.crtx_event_flags = 0;
-	wqueue->parent.el_payload.data = wqueue;
-	wqueue->parent.el_payload.event_handler = fd_event_handler;
+// 	wqueue->parent.evloop_fd.fd = wqueue->write_fd;
+// 	wqueue->parent.evloop_fd.crtx_event_flags = 0;
+// 	wqueue->parent.evloop_fd.data = wqueue;
+// 	wqueue->parent.evloop_fd.event_handler = fd_event_handler;
+	crtx_evloop_create_fd_entry(&wqueue->parent.evloop_fd,
+						wqueue->write_fd,
+						EVLOOP_WRITE,
+						0,
+						&fd_event_handler,
+						wqueue,
+						0,
+					);
 	
 	return &wqueue->parent;
 }
@@ -82,22 +90,22 @@ int crtx_add_writequeue2listener(struct crtx_writequeue *writequeue, struct crtx
 	
 	memset(writequeue, 0, sizeof(struct crtx_writequeue));
 	
-// 	listener->el_payload.epollout = &writequeue->parent.el_payload;
-// 	writequeue->parent.el_payload.epollin = &listener->el_payload;
+// 	listener->evloop_fd.epollout = &writequeue->parent.evloop_fd;
+// 	writequeue->parent.evloop_fd.epollin = &listener->evloop_fd;
 	
-	writequeue->write_fd = listener->el_payload.fd;
+	writequeue->write_fd = listener->evloop_fd.fd;
 	writequeue->write = write_cb;
 	writequeue->write_userdata = write_userdata;
 	
-	writequeue->parent.el_payload.parent = &listener->el_payload;
+	writequeue->parent.evloop_fd.parent = &listener->evloop_fd;
 	
-	crtx_ll_append(&listener->el_payload.sub_payloads, (struct crtx_ll*) &writequeue->parent.el_payload);
+	crtx_ll_append(&listener->evloop_fd.sub_payloads, (struct crtx_ll*) &writequeue->parent.evloop_fd);
 	
-// 	writequeue->parent.el_payload.el_data = (struct epoll_event*) calloc(1, sizeof(struct epoll_event));
-// 	((struct epoll_event*) writequeue->parent.el_payload.el_data)->data.ptr = &writequeue->parent.el_payload;
+// 	writequeue->parent.evloop_fd.el_data = (struct epoll_event*) calloc(1, sizeof(struct epoll_event));
+// 	((struct epoll_event*) writequeue->parent.evloop_fd.el_data)->data.ptr = &writequeue->parent.evloop_fd;
 
-// 	writequeue->parent.el_payload.el_data = &writequeue->epoll_event;
-// 	writequeue->epoll_event.data.ptr = &writequeue->parent.el_payload;
+// 	writequeue->parent.evloop_fd.el_data = &writequeue->epoll_event;
+// 	writequeue->epoll_event.data.ptr = &writequeue->parent.evloop_fd;
 	
 	lbase = create_listener("writequeue", writequeue);
 	if (!lbase) {

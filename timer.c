@@ -64,13 +64,13 @@
 // }
 
 static char timer_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_event_loop_payload *payload;
+	struct crtx_evloop_fd *payload;
 	struct crtx_timer_listener *tlist;
 	uint64_t exp;
 	ssize_t s;
 	
 	
-	payload = (struct crtx_event_loop_payload*) event->data.pointer;
+	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
 	tlist = (struct crtx_timer_listener *) payload->data;
 	
@@ -147,11 +147,19 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 // 		return 0;
 // 	}
 	
-	tlist->parent.el_payload.fd = tlist->fd;
-	tlist->parent.el_payload.crtx_event_flags = EVLOOP_READ;
-	tlist->parent.el_payload.data = tlist;
-	tlist->parent.el_payload.event_handler = &timer_fd_event_handler;
-	tlist->parent.el_payload.event_handler_name = "timer fd handler";
+// 	tlist->parent.evloop_fd.fd = tlist->fd;
+// 	tlist->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 	tlist->parent.evloop_fd.data = tlist;
+// 	tlist->parent.evloop_fd.event_handler = &timer_fd_event_handler;
+// 	tlist->parent.evloop_fd.event_handler_name = "timer fd handler";
+	crtx_evloop_create_fd_entry(&tlist->parent.evloop_fd,
+						   tlist->fd,
+					    EVLOOP_READ,
+					    0,
+					    &timer_fd_event_handler,
+					    tlist,
+					    0,
+					);
 	
 	tlist->parent.start_listener = &update_listener;
 	tlist->parent.update_listener = &update_listener;

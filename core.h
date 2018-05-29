@@ -137,7 +137,7 @@ struct crtx_listener_base {
 	
 	enum crtx_processing_mode mode;
 	
-	struct crtx_event_loop_payload el_payload;
+	struct crtx_evloop_fd evloop_fd;
 	
 	struct crtx_thread_job_description thread_job;
 	struct crtx_thread *eloop_thread;

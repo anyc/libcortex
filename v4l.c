@@ -160,13 +160,13 @@ char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr, s
 }
 
 static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_event_loop_payload *payload;
+	struct crtx_evloop_fd *payload;
 	struct crtx_event *nevent;
 	struct crtx_v4l_listener *clist;
 	struct v4l2_event *v4l_event;
 	int r;
 	
-	payload = (struct crtx_event_loop_payload*) event->data.pointer;
+	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
 	clist = (struct crtx_v4l_listener *) payload->data;
 	
@@ -444,13 +444,21 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 	 */
 	query_ctrls(lstnr);
 	
-	lstnr->parent.el_payload.fd = lstnr->fd;
-	lstnr->parent.el_payload.data = lstnr;
-	lstnr->parent.el_payload.event_handler = &v4l_fd_event_handler;
-	lstnr->parent.el_payload.event_handler_name = "v4l fd handler";
-	lstnr->parent.el_payload.crtx_event_flags = EPOLLPRI | EVLOOP_READ;
-// 	lstnr->parent.el_payload.error_cb = &on_error_cb;
-// 	lstnr->parent.el_payload.error_cb_data = lstnr;
+	lstnr->parent.evloop_fd.fd = lstnr->fd;
+	lstnr->parent.evloop_fd.data = lstnr;
+	lstnr->parent.evloop_fd.event_handler = &v4l_fd_event_handler;
+	lstnr->parent.evloop_fd.event_handler_name = "v4l fd handler";
+	lstnr->parent.evloop_fd.crtx_event_flags = EPOLLPRI | EVLOOP_READ;
+// 	lstnr->parent.evloop_fd.error_cb = &on_error_cb;
+// 	lstnr->parent.evloop_fd.error_cb_data = lstnr;
+	crtx_evloop_create_fd_entry(&lstnr->parent.evloop_fd,
+						lstnr->fd,
+						EVLOOP_SPECIAL | EVLOOP_READ,
+						0,
+						&v4l_fd_event_handler,
+						lstnr,
+						0,
+					);
 	
 	lstnr->parent.shutdown = &shutdown_listener;
 	

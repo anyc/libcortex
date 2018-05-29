@@ -35,15 +35,15 @@
 #ifndef CRTX_TEST
 
 static char can_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_event_loop_payload *payload;
+	struct crtx_evloop_callback *ev_cb;
 	struct can_frame *frame;
 	struct crtx_event *nevent;
 	struct crtx_can_listener *clist;
 	int r;
 	
-	payload = (struct crtx_event_loop_payload*) event->data.pointer;
+	ev_cb = (struct crtx_evloop_callback*) event->data.pointer;
 	
-	clist = (struct crtx_can_listener *) payload->data;
+	clist = (struct crtx_can_listener *) ev_cb->data;
 	
 	// only create event if there are tasks in the queue
 	if (clist->parent.graph->tasks) {
@@ -248,7 +248,7 @@ error_socket:
 	return r;
 }
 
-static void on_error_cb(struct crtx_event_loop_payload *el_payload, void *data) {
+static void on_error_cb(struct crtx_evloop_callback *el_cb, void *data) {
 	struct crtx_can_listener *clist;
 	
 	clist = (struct crtx_can_listener *) data;
@@ -318,13 +318,23 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 			return 0;
 		}
 		
-		clist->parent.el_payload.fd = clist->sockfd;
-		clist->parent.el_payload.data = clist;
-		clist->parent.el_payload.crtx_event_flags = EVLOOP_READ;
-		clist->parent.el_payload.event_handler = &can_fd_event_handler;
-		clist->parent.el_payload.event_handler_name = "can fd handler";
-		clist->parent.el_payload.error_cb = &on_error_cb;
-		clist->parent.el_payload.error_cb_data = clist;
+// 		clist->parent.evloop_fd.fd = clist->sockfd;
+// 		clist->parent.evloop_fd.data = clist;
+// 		clist->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 		clist->parent.evloop_fd.event_handler = &can_fd_event_handler;
+// 		clist->parent.evloop_fd.event_handler_name = "can fd handler";
+// 		clist->parent.evloop_fd.error_cb = &on_error_cb;
+// 		clist->parent.evloop_fd.error_cb_data = clist;
+		crtx_evloop_create_fd_entry(&clist->parent.evloop_fd,
+							clist->sockfd,
+							EVLOOP_READ,
+							0,
+							&can_fd_event_handler,
+							clist,
+							&on_error_cb
+						);
+// 		clist->parent.evloop_fd.subsystems->error_cb = &on_error_cb;
+// 		clist->parent.evloop_fd.subsystems->error_cb_data = clist;
 		
 		clist->parent.shutdown = &crtx_shutdown_can_listener;
 	}

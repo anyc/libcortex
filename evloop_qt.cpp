@@ -117,9 +117,9 @@ struct crtx_event_loop qt_loop = {
 	&evloop_start,
 	&evloop_stop,
 	
-	&crtx_evloop_qt_add_fd,
+// 	&crtx_evloop_qt_add_fd,
 	&crtx_evloop_qt_mod_fd,
-	&crtx_evloop_qt_del_fd,
+// 	&crtx_evloop_qt_del_fd,
 };
 
 void crtx_evloop_qt_start(struct crtx_event_loop *evloop) {
