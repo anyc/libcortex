@@ -365,6 +365,12 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 		listener->stop_listener(listener);
 	}
 	
+	if (listener->eloop_thread) {
+		wait_on_signal(&listener->eloop_thread->finished);
+		dereference_signal(&listener->eloop_thread->finished);
+		listener->eloop_thread = 0;
+	}
+	
 	listener->state = CRTX_LSTNR_STOPPED;
 	
 	if (listener->state_graph) {
@@ -390,12 +396,11 @@ static void free_listener_intern(struct crtx_listener_base *listener) {
 	if (listener->graph)
 		free_eventgraph(listener->graph);
 	
-// 	&& crtx_signal_is_active(&listener->thread->start)
-	if (listener->eloop_thread) {
-		wait_on_signal(&listener->eloop_thread->finished);
-		dereference_signal(&listener->eloop_thread->finished);
-		listener->eloop_thread = 0;
-	}
+// 	if (listener->eloop_thread) {
+// 		wait_on_signal(&listener->eloop_thread->finished);
+// 		dereference_signal(&listener->eloop_thread->finished);
+// 		listener->eloop_thread = 0;
+// 	}
 	
 	if (listener->free) {
 		listener->free(listener, listener->free_userdata);

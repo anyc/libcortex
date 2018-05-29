@@ -463,14 +463,19 @@ void *crtx_epoll_main(void *data) {
 static int evloop_stop(struct crtx_event_loop *evloop) {
 	struct crtx_event_loop_control_pipe ecp;
 	struct crtx_epoll_listener *epl;
+	ssize_t ret;
 	
-// 	epl->stop = 1;
+	printf("evloop stop %d %d\n", evloop->ctrl_pipe[0], evloop->ctrl_pipe[1]);
+	
 	epl = (struct crtx_epoll_listener *) evloop->listener;
 	epl->stop = 1;
 	
 	ecp.graph = 0;
 // 	write(epl->pipe_fds[1], &ecp, sizeof(struct crtx_event_loop_control_pipe));
-	write(evloop->ctrl_pipe[1], &ecp, sizeof(struct crtx_event_loop_control_pipe));
+	ret = write(evloop->ctrl_pipe[1], &ecp, sizeof(struct crtx_event_loop_control_pipe));
+	if (ret < sizeof(struct crtx_event_loop_control_pipe)) {
+		ERROR("evloop_stop() write returned %zd %s\n", ret, strerror(errno));
+	}
 	
 	return 0;
 }
@@ -492,8 +497,9 @@ static void shutdown_epoll_listener(struct crtx_listener_base *lbase) {
 	
 	crtx_evloop_release(epl->evloop);
 	
-// 	stop_thread(0, lbase);
+	stop_thread(0, epl->evloop);
 	
+	printf("close epoll fd\n");
 // 	close(epl->pipe_fds[1]);
 // 	close(epl->pipe_fds[0]);
 	close(epl->epoll_fd);
@@ -747,7 +753,7 @@ int epoll_main(int argc, char **argv) {
 		
 		printf("stop\n");
 		
-		crtx_evloop_stop(&crtx_root->event_loop);
+// 		crtx_evloop_stop(&crtx_root->event_loop);
 // 		epl.stop = 1;
 // 		ecp.graph = 0;
 // 		write(epl.ctrl_pipe[1], &ecp, sizeof(struct crtx_event_loop_control_pipe));

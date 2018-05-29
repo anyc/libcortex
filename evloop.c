@@ -278,7 +278,7 @@ int crtx_evloop_stop(struct crtx_event_loop *evloop) {
 int crtx_evloop_release(struct crtx_event_loop *evloop) {
 	evloop->stop(evloop);
 	evloop->release(evloop);
-	
+	printf("release ctrl pipe\n");
 	close(evloop->ctrl_pipe[1]);
 	close(evloop->ctrl_pipe[0]);
 	
