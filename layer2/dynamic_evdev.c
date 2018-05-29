@@ -79,8 +79,8 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 	el = (struct crtx_evdev_listener *) dll->data;
 	
 	el->device_path = crtx_stracpy(devpath, 0);
-	el->parent.free = on_free_evdev_listener_data;
-	el->parent.free_userdata = dyn_evdev;
+	el->base.free = on_free_evdev_listener_data;
+	el->base.free_userdata = dyn_evdev;
 	
 // 	lbase = create_listener("evdev", el);
 	ret = crtx_create_listener("evdev", el);
@@ -98,7 +98,7 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 		return 1;
 	}
 	
-	crtx_create_task(el->parent.graph, 0, "dyn_evdev_handler", dyn_evdev->handler, dyn_evdev->handler_userdata);
+	crtx_create_task(el->base.graph, 0, "dyn_evdev_handler", dyn_evdev->handler, dyn_evdev->handler_userdata);
 	
 // 		printf("dll %p %p %p\n", dll, el, lbase->graph->listener);
 	
@@ -110,13 +110,13 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 	
 	// 	reference_event_release(event);
 	
-// 	crtx_add_event(el->parent.graph, event);
+// 	crtx_add_event(el->base.graph, event);
 	
-	ret = crtx_start_listener(&el->parent);
+	ret = crtx_start_listener(&el->base);
 	if (ret) {
 		ERROR("starting evdev listener failed\n");
 		
-		crtx_free_listener(&el->parent);
+		crtx_free_listener(&el->base);
 		
 		return 1;
 	}
@@ -153,7 +153,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	
 	dyn_evdev = (struct crtx_dynamic_evdev_listener *) listener;
 	
-	ret = crtx_start_listener(&dyn_evdev->udev_lstnr.parent);
+	ret = crtx_start_listener(&dyn_evdev->udev_lstnr.base);
 	if (ret) {
 		ERROR("starting udev listener failed\n");
 		return 0;
@@ -175,7 +175,7 @@ static void shutdown_listener(struct crtx_listener_base *data) {
 		eitn = eit->next;
 		el = eit->data;
 		
-		crtx_free_listener(&el->parent);
+		crtx_free_listener(&el->base);
 	}
 }
 
@@ -199,12 +199,12 @@ struct crtx_listener_base *crtx_new_dynamic_evdev_listener(void *options) {
 		return 0;
 	}
 	
-	crtx_create_task(dyn_evdev->parent.graph, 0, "udev_test", udev_test_handler, dyn_evdev);
+	crtx_create_task(dyn_evdev->base.graph, 0, "udev_test", udev_test_handler, dyn_evdev);
 	
-	dyn_evdev->parent.shutdown = &shutdown_listener;
-	dyn_evdev->parent.start_listener = &start_listener;
+	dyn_evdev->base.shutdown = &shutdown_listener;
+	dyn_evdev->base.start_listener = &start_listener;
 	
-	return &dyn_evdev->parent;  
+	return &dyn_evdev->base;  
 }
 
 void crtx_dynamic_evdev_init() {
@@ -290,7 +290,7 @@ static char dyn_evdev_test_handler(struct crtx_event *event, void *userdata, voi
 		for (i=0; i < counter->n_ivs; i++) {
 			iv = &counter->ivs[i];
 			
-			if (event && event->origin == &counter->lstnr.parent) {
+			if (event && event->origin == &counter->lstnr.base) {
 				iv->n_events[iv->bucket]++;
 			}
 		
@@ -506,10 +506,10 @@ int dynamic_evdev_main(int argc, char **argv) {
 	struct crtx_timer_listener timer_lstnr;
 	
 	if (crtx_timer_get_listener(&timer_lstnr, 0, SLOT_TIME * 1000000, 0, SLOT_TIME * 1000000)) {
-		crtx_create_task(timer_lstnr.parent.graph, 0, "timer_tick", timer_tick, &dyn_evdev);
+		crtx_create_task(timer_lstnr.base.graph, 0, "timer_tick", timer_tick, &dyn_evdev);
 	}
 	
-	crtx_start_listener(&timer_lstnr.parent);
+	crtx_start_listener(&timer_lstnr.base);
 	
 	char *createparams[] = {
 		"rrdcreate",
@@ -532,7 +532,7 @@ int dynamic_evdev_main(int argc, char **argv) {
 	curs_set (0);
 	#endif
 	
-	ret = crtx_start_listener(&dyn_evdev.parent);
+	ret = crtx_start_listener(&dyn_evdev.base);
 	if (!ret) {
 		ERROR("starting dynamic_evdev listener failed\n");
 		return 0;
@@ -544,7 +544,7 @@ int dynamic_evdev_main(int argc, char **argv) {
 	endwin();
 	#endif
 	
-	crtx_free_listener(&dyn_evdev.parent);
+	crtx_free_listener(&dyn_evdev.base);
 	
 	return 0;
 }

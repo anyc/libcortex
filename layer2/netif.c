@@ -63,7 +63,7 @@ int crtx_libnl_msg2dict(struct nl_msg *msg, void *arg) {
 	
 	crtx_event_set_dict_data(event, dict, 0);
 	
-	crtx_add_event(netif_lstnr->parent.graph, event);
+	crtx_add_event(netif_lstnr->base.graph, event);
 	
 	return NL_OK;
 }
@@ -74,7 +74,7 @@ int crtx_libnl_msg_end(struct nl_msg *msg, void *arg) {
 	netif_lstnr = (struct crtx_netif_listener*) arg;
 	
 	if (netif_lstnr->query_existing == 2) {
-		crtx_stop_listener(&netif_lstnr->parent);
+		crtx_stop_listener(&netif_lstnr->base);
 	}
 	
 	return NL_OK;
@@ -92,7 +92,7 @@ static char netif_start_listener(struct crtx_listener_base *listener) {
 	
 	netif_lstnr = (struct crtx_netif_listener*) listener;
 	
-	ret = crtx_start_listener(&netif_lstnr->libnl_lstnr.parent);
+	ret = crtx_start_listener(&netif_lstnr->libnl_lstnr.base);
 	if (ret) {
 		ERROR("starting libnl listener failed\n");
 		return ret;
@@ -106,7 +106,7 @@ static char netif_stop_listener(struct crtx_listener_base *listener) {
 	
 	netif_lstnr = (struct crtx_netif_listener*) listener;
 	
-	crtx_stop_listener(&netif_lstnr->libnl_lstnr.parent);
+	crtx_stop_listener(&netif_lstnr->libnl_lstnr.base);
 	
 	return 0;
 }
@@ -116,8 +116,8 @@ static void netif_shutdown_listener(struct crtx_listener_base *listener) {
 	
 	netif_lstnr = (struct crtx_netif_listener*) listener;
 	
-	crtx_free_listener(&netif_lstnr->libnl_lstnr.parent);
-	netif_lstnr->libnl_lstnr.parent.graph = 0;
+	crtx_free_listener(&netif_lstnr->libnl_lstnr.base);
+	netif_lstnr->libnl_lstnr.base.graph = 0;
 }
 
 struct crtx_listener_base *crtx_new_netif_listener(void *options) {
@@ -141,14 +141,14 @@ struct crtx_listener_base *crtx_new_netif_listener(void *options) {
 		exit(1);
 	}
 	
-	netif_lstnr->libnl_lstnr.parent.state_graph = netif_lstnr->libnl_lstnr.parent.graph;
-	crtx_create_task(netif_lstnr->libnl_lstnr.parent.graph, 0, "netif_state_handler", netif_state_handler, netif_lstnr);
+	netif_lstnr->libnl_lstnr.base.state_graph = netif_lstnr->libnl_lstnr.base.graph;
+	crtx_create_task(netif_lstnr->libnl_lstnr.base.graph, 0, "netif_state_handler", netif_state_handler, netif_lstnr);
 	
-	netif_lstnr->parent.shutdown = &netif_shutdown_listener;
-	netif_lstnr->parent.start_listener = &netif_start_listener;
-	netif_lstnr->parent.stop_listener = &netif_stop_listener;
+	netif_lstnr->base.shutdown = &netif_shutdown_listener;
+	netif_lstnr->base.start_listener = &netif_start_listener;
+	netif_lstnr->base.stop_listener = &netif_stop_listener;
 	
-	return &netif_lstnr->parent;
+	return &netif_lstnr->base;
 }
 
 void crtx_netif_init() {}
@@ -189,11 +189,11 @@ int netif_main(int argc, char **argv) {
 	}
 	
 	// we also want to receive status events of the listener in this graph
-	netif_lstnr.parent.state_graph = netif_lstnr.parent.graph;
+	netif_lstnr.base.state_graph = netif_lstnr.base.graph;
 	
-	crtx_create_task(netif_lstnr.parent.graph, 0, "netif_event_handler", netif_event_handler, 0);
+	crtx_create_task(netif_lstnr.base.graph, 0, "netif_event_handler", netif_event_handler, 0);
 	
-	r = crtx_start_listener(&netif_lstnr.parent);
+	r = crtx_start_listener(&netif_lstnr.base);
 	if (!r) {
 		ERROR("starting netif listener failed\n");
 		return 1;
@@ -201,7 +201,7 @@ int netif_main(int argc, char **argv) {
 	
 	crtx_loop();
 	
-	crtx_free_listener(&netif_lstnr.parent);
+	crtx_free_listener(&netif_lstnr.base);
 	
 	return 0;
 }

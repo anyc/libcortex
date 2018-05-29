@@ -9,7 +9,7 @@
 #include "../nl_libnl.h"
 
 struct crtx_netif_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	struct crtx_libnl_listener libnl_lstnr;
 	

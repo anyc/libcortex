@@ -10,7 +10,7 @@
 #include <evdev.h>
 
 struct crtx_dynamic_evdev_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	struct crtx_dll *evdev_listeners;
 	struct crtx_udev_listener udev_lstnr;
