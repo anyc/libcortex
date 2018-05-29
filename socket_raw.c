@@ -171,7 +171,7 @@ struct crtx_listener_base *crtx_new_socket_raw_server_listener(void *options) {
 // 	slistener->parent.evloop_fd.data = slistener;
 // 	slistener->parent.evloop_fd.event_handler = &socket_raw_accept_handler;
 // 	slistener->parent.evloop_fd.event_handler_name = "socket_raw_accept_handler";
-	crtx_evloop_create_fd_entry(&slistener->parent.evloop_fd,
+	crtx_evloop_init_listener(&slistener->parent,
 						slistener->sockfd,
 						EVLOOP_READ,
 						0,
@@ -241,7 +241,7 @@ struct crtx_listener_base *crtx_new_socket_raw_client_listener(void *options) {
 // 	slistener->parent.evloop_fd.data = slistener;
 // 	slistener->parent.evloop_fd.event_handler = &client_read_handler;
 // 	slistener->parent.evloop_fd.event_handler_name = "client_read_handler";
-	crtx_evloop_create_fd_entry(&slistener->parent.evloop_fd,
+	crtx_evloop_init_listener(&slistener->parent,
 						slistener->sockfd,
 						EVLOOP_READ,
 						0,

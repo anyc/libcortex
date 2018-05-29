@@ -325,7 +325,7 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 // 		clist->parent.evloop_fd.event_handler_name = "can fd handler";
 // 		clist->parent.evloop_fd.error_cb = &on_error_cb;
 // 		clist->parent.evloop_fd.error_cb_data = clist;
-		crtx_evloop_create_fd_entry(&clist->parent.evloop_fd, &clist->parent.default_el_cb,
+		crtx_evloop_init_listener(&clist->parent,
 							clist->sockfd,
 							EVLOOP_READ,
 							0,

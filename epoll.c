@@ -92,7 +92,7 @@ RETFLAG(EPOLLPRI);
 RETFLAG(EPOLLERR);
 RETFLAG(EPOLLHUP);
 
-VDBG(" %u\n", *flags);
+// VDBG(" %u\n", *flags);
 return "";
 }
 #endif
@@ -571,6 +571,7 @@ struct crtx_event_loop epoll_loop = {
 	"epoll",
 	{ 0 },
 	{ {0} },
+	{ {0} },
 	0,
 	
 	&evloop_create,
@@ -604,12 +605,14 @@ int count = 0;
 
 static char epoll_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char buf[1024];
-	struct crtx_evloop_fd *payload;
+// 	struct crtx_evloop_fd *payload;
 	ssize_t n_read;
+	struct crtx_evloop_callback *el_cb;
 	
-	payload = (struct crtx_evloop_fd*) event->data.pointer;
+	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+// 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
-	n_read = read(payload->fd, buf, sizeof(buf)-1);
+	n_read = read(el_cb->fd_entry->fd, buf, sizeof(buf)-1);
 	if (n_read < 0) {
 		ERROR("epoll test read failed: %s\n", strerror(errno));
 		return 1;
@@ -640,7 +643,7 @@ void start_timer() {
 	tlist.newtimer.it_value.tv_nsec = 0;
 	
 	// set interval for repeating alarm, set to 0 to disable repetition
-	tlist.newtimer.it_interval.tv_sec = 10;
+	tlist.newtimer.it_interval.tv_sec = 3;
 	tlist.newtimer.it_interval.tv_nsec = 0;
 	
 	tlist.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
@@ -663,7 +666,8 @@ int epoll_main(int argc, char **argv) {
 // 	struct crtx_listener_base *lbase;
 	char ret;
 // 	struct epoll_event event;
-	struct crtx_evloop_fd payload;
+	struct crtx_evloop_fd evloop_fd;
+	struct crtx_evloop_callback default_el_cb;
 // 	struct crtx_event_loop evloop;
 	
 // 	memset(&epl, 0, sizeof(struct crtx_epoll_listener));
@@ -691,19 +695,31 @@ int epoll_main(int argc, char **argv) {
 		return 1;
 	}
 	
-	memset(&payload, 0, sizeof(struct crtx_evloop_fd));
-	payload.fd = testpipe[0];
-// 	payload.el_data = &event;
-	payload.crtx_event_flags = EVLOOP_READ;
-	payload.event_handler = epoll_test_handler;
+	memset(&evloop_fd, 0, sizeof(struct crtx_evloop_fd));
+	memset(&default_el_cb, 0, sizeof(struct crtx_evloop_callback));
+// 	evloop_fd.fd = testpipe[0];
+// // 	payload.el_data = &event;
+// 	evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 	evloop_fd.event_handler = epoll_test_handler;
+	
+	crtx_evloop_create_fd_entry(&evloop_fd, &default_el_cb,
+						testpipe[0],
+						EVLOOP_READ,
+						0,
+						&epoll_test_handler,
+						0,
+						0
+					);
 	
 // 	event.events = EPOLLIN;
 // 	event.data.fd = fd;
 // 	event.data.ptr = &payload;
 // 	crtx_epoll_add_fd_intern(&epl, testpipe[0], &event);
 // 	evloop.add_fd(&evloop, &payload);
-	printf("add local pipe\n");
-	crtx_root->event_loop.add_fd(&crtx_root->event_loop, &payload);
+// 	printf("add local pipe\n");
+// 	crtx_root->event_loop.add_fd(&crtx_root->event_loop, &evloop_fd);
+	
+	crtx_evloop_enable_cb(&crtx_root->event_loop, &default_el_cb);
 	
 // 	crtx_create_task(evloop.listener->graph, 0, "epoll_test", epoll_test_handler, 0);
 	
@@ -730,6 +746,7 @@ int epoll_main(int argc, char **argv) {
 		sleep(1);
 		
 		printf("stop\n");
+		
 		crtx_evloop_stop(&crtx_root->event_loop);
 // 		epl.stop = 1;
 // 		ecp.graph = 0;

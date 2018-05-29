@@ -212,9 +212,11 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 			
 			crtx_get_main_event_loop();
 			
-			crtx_root->event_loop.add_fd(
-				&crtx_root->event_loop,
-				&listener->evloop_fd);
+// 			crtx_root->event_loop.add_fd(
+// 				&crtx_root->event_loop,
+// 				&listener->evloop_fd);
+			
+			crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &listener->evloop_fd);
 		} else {
 			ERROR("invalid start listener mode: %d\n", mode);
 			UNLOCK(listener->state_mutex);
@@ -339,7 +341,7 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 // 	
 	LOCK(listener->state_mutex);
 	
-	if (listener->state == CRTX_LSTNR_STOPPING || listener->state == CRTX_LSTNR_STOPPED) {
+	if (listener->state == CRTX_LSTNR_STOPPING || listener->state == CRTX_LSTNR_STOPPED || listener->state == CRTX_LSTNR_SHUTDOWN) {
 		UNLOCK(listener->state_mutex);
 		return;
 	}
@@ -347,11 +349,11 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 	listener->state = CRTX_LSTNR_STOPPING;
 	
 	if (listener->evloop_fd.fd > 0) {
-// 		printf("del fd %d\n", listener->evloop_fd.fd);
-		crtx_root->event_loop.del_fd(
-// 			&crtx_root->event_loop.listener->parent,
-			&crtx_root->event_loop,
-			&listener->evloop_fd);
+// 		crtx_root->event_loop.del_fd(
+// 			&crtx_root->event_loop,
+// 			&listener->evloop_fd);
+		
+		crtx_evloop_disable_cb(&crtx_root->event_loop, &listener->default_el_cb);
 	}
 	
 	if (listener->eloop_thread) {
@@ -404,11 +406,19 @@ void crtx_free_listener(struct crtx_listener_base *listener) {
 	crtx_stop_listener(listener);
 	
 	LOCK(listener->state_mutex);
-	if (listener->state != CRTX_LSTNR_STOPPED) {
+	
+	if (listener->state < CRTX_LSTNR_STOPPED) {
 		ERROR("listener is not stopped\n");
 	}
 	
+	if (listener->state == CRTX_LSTNR_SHUTDOWN) {
+		UNLOCK(listener->state_mutex);
+		return;
+	}
+	
 	listener->state = CRTX_LSTNR_SHUTDOWN;
+	
+	UNLOCK(listener->state_mutex);
 	
 	if (listener->shutdown)
 		listener->shutdown(listener);

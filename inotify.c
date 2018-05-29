@@ -27,6 +27,7 @@ MUTEX_TYPE mutex;
 static struct crtx_thread_job_description thread_job = {0};
 static struct crtx_thread *global_thread = 0;
 static struct crtx_evloop_fd evloop_fd = {};
+static struct crtx_evloop_callback el_cb = {};
 static char stop = 0;
 
 #define INOFITY_BUFLEN (sizeof(struct inotify_event) + NAME_MAX + 1)
@@ -314,7 +315,8 @@ static char start_listener(struct crtx_listener_base *listener) {
 // 			evloop_fd.data = 0;
 // 			evloop_fd.event_handler = &inotify_fd_event_handler;
 // 			evloop_fd.event_handler_name = "inotify fd handler";
-			crtx_evloop_create_fd_entry(&evloop_fd,
+			
+			crtx_evloop_create_fd_entry(&evloop_fd, &el_cb,
 							inotify_fd,
 							EVLOOP_READ,
 							0,

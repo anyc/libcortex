@@ -26,6 +26,7 @@ struct libvirt_eventloop_wrapper {
 	int id;
 	
 	struct crtx_evloop_fd evloop_fd;
+	struct crtx_evloop_callback default_el_cb;
 	
 	int timeout;
 	struct crtx_timer_listener timer_listener;
@@ -123,7 +124,7 @@ static char elw_fd_event_handler(struct crtx_event *event, void *userdata, void 
 	struct epoll_event *epoll_event;
 	
 	struct crtx_evloop_callback *el_cb;
-// 	
+	
 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 	
 	wrap = (struct libvirt_eventloop_wrapper*) el_cb->data;
@@ -174,13 +175,13 @@ static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback c
 // 	wrap->evloop_fd.simple_callback = &elw_fd_callback;
 // 	wrap->evloop_fd.error_cb = &elw_fd_error_cb;
 // 	wrap->evloop_fd.data = wrap;
-	crtx_evloop_create_fd_entry(&wrap->evloop_fd, 
-						   fd,
-					    elw_virEventPollToNativeEvents(event),
-					    0,
-					    &elw_fd_event_handler,
-					    wrap,
-					    &elw_fd_error_cb
+	crtx_evloop_create_fd_entry(&wrap->evloop_fd, &wrap->default_el_cb,
+						fd,
+						elw_virEventPollToNativeEvents(event),
+						0,
+						&elw_fd_event_handler,
+						wrap,
+						&elw_fd_error_cb
 					);
 	
 	wrap->event_cb = cb;
@@ -200,11 +201,12 @@ static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback c
 			wrap->id++;
 	}
 	
-	DBG("libvirt: new fd %d (id %d flag %d)\n", fd, wrap->id, wrap->evloop_fd.crtx_event_flags);
+	DBG("libvirt: new fd %d (id %d flag %d)\n", fd, wrap->id, wrap->default_el_cb.crtx_event_flags);
 	
 	wrap->llentry = crtx_ll_append_new(&event_list, wrap);
 	
-	crtx_root->event_loop.add_fd(&crtx_root->event_loop, &wrap->evloop_fd);
+// 	crtx_root->event_loop.add_fd(&crtx_root->event_loop, &wrap->evloop_fd);
+	crtx_evloop_enable_cb(&crtx_root->event_loop, &wrap->default_el_cb);
 	
 	return wrap->id;
 }
@@ -224,11 +226,12 @@ static void elw_virEventUpdateHandleFunc(int watch, int event) {
 	}
 	
 	wrap = ((struct libvirt_eventloop_wrapper*) it->data);
-	wrap->evloop_fd.subsystems->crtx_event_flags = elw_virEventPollToNativeEvents(event);
+	wrap->default_el_cb.crtx_event_flags = elw_virEventPollToNativeEvents(event);
 	
-	DBG("libvirt: update %d flags %d\n", wrap->id, wrap->evloop_fd.crtx_event_flags);
+	DBG("libvirt: update %d flags %d\n", wrap->id, wrap->default_el_cb.crtx_event_flags);
 	
-	crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &wrap->evloop_fd);
+// 	crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &wrap->evloop_fd);
+	crtx_evloop_enable_cb(&crtx_root->event_loop, &wrap->default_el_cb);
 }
 
 static int elw_virEventRemoveHandleFunc(int watch) {

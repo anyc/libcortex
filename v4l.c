@@ -160,15 +160,17 @@ char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr, s
 }
 
 static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_evloop_fd *payload;
+// 	struct crtx_evloop_fd *payload;
 	struct crtx_event *nevent;
 	struct crtx_v4l_listener *clist;
 	struct v4l2_event *v4l_event;
 	int r;
+	struct crtx_evloop_callback *el_cb;
 	
-	payload = (struct crtx_evloop_fd*) event->data.pointer;
+	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+// 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
-	clist = (struct crtx_v4l_listener *) payload->data;
+	clist = (struct crtx_v4l_listener *) el_cb->data;
 	
 // 	int flags = payload->trigger_flags;
 // 	while (flags) {
@@ -176,7 +178,7 @@ static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void 
 // 	}
 	
 	// events are signaled through EPOLLPRI
-	if (payload->triggered_flags & EPOLLPRI) {
+	if (el_cb->triggered_flags & EPOLLPRI) {
 		v4l_event = (struct v4l2_event *) malloc(sizeof(struct v4l2_event));
 		r = ioctl(clist->fd, VIDIOC_DQEVENT, v4l_event);
 		if (r < 0) {
@@ -189,7 +191,7 @@ static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void 
 		
 		crtx_add_event(clist->parent.graph, nevent);
 	} else
-	if (payload->triggered_flags & EVLOOP_READ) {
+	if (el_cb->triggered_flags & EVLOOP_READ) {
 		nevent = crtx_create_event("frame");
 // 		crtx_event_set_raw_data(nevent, 'p', v4l_event, sizeof(v4l_event), 0);
 		
@@ -444,20 +446,20 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 	 */
 	query_ctrls(lstnr);
 	
-	lstnr->parent.evloop_fd.fd = lstnr->fd;
-	lstnr->parent.evloop_fd.data = lstnr;
-	lstnr->parent.evloop_fd.event_handler = &v4l_fd_event_handler;
-	lstnr->parent.evloop_fd.event_handler_name = "v4l fd handler";
-	lstnr->parent.evloop_fd.crtx_event_flags = EPOLLPRI | EVLOOP_READ;
+// 	lstnr->parent.evloop_fd.fd = lstnr->fd;
+// 	lstnr->parent.evloop_fd.data = lstnr;
+// 	lstnr->parent.evloop_fd.event_handler = &v4l_fd_event_handler;
+// 	lstnr->parent.evloop_fd.event_handler_name = "v4l fd handler";
+// 	lstnr->parent.evloop_fd.crtx_event_flags = EPOLLPRI | EVLOOP_READ;
 // 	lstnr->parent.evloop_fd.error_cb = &on_error_cb;
 // 	lstnr->parent.evloop_fd.error_cb_data = lstnr;
-	crtx_evloop_create_fd_entry(&lstnr->parent.evloop_fd,
+	crtx_evloop_init_listener(&lstnr->parent,
 						lstnr->fd,
 						EVLOOP_SPECIAL | EVLOOP_READ,
 						0,
 						&v4l_fd_event_handler,
 						lstnr,
-						0,
+						0
 					);
 	
 	lstnr->parent.shutdown = &shutdown_listener;

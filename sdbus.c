@@ -219,13 +219,15 @@ int crtx_sdbus_get_events(sd_bus *bus) {
 }
 
 static char fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_evloop_fd *payload;
+// 	struct crtx_evloop_fd *payload;
 	struct crtx_sdbus_listener *sdlist;
 	int r;
+	struct crtx_evloop_callback *el_cb;
 	
-	payload = (struct crtx_evloop_fd*) event->data.pointer;
+	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+// 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
-	sdlist = (struct crtx_sdbus_listener *) payload->data;
+	sdlist = (struct crtx_sdbus_listener *) el_cb->data;
 	
 	while (1) {
 		r = sd_bus_process(sdlist->bus, NULL);
@@ -330,13 +332,13 @@ struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 // 	sdlist->parent.evloop_fd.data = sdlist;
 // 	sdlist->parent.evloop_fd.event_handler = &fd_event_handler;
 // 	sdlist->parent.evloop_fd.event_handler_name = "sdbus event handler";
-	crtx_evloop_create_fd_entry(&sdlist->parent.evloop_fd,
+	crtx_evloop_init_listener(&sdlist->parent,
 						sd_bus_get_fd(sdlist->bus),
 						crtx_sdbus_get_events(sdlist->bus),
 						0,
 						&fd_event_handler,
 						sdlist,
-						0,
+						0
 					);
 	
 	sdlist->parent.shutdown = &crtx_sdbus_shutdown_listener;

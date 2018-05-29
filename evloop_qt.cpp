@@ -21,7 +21,10 @@ class MyQSocketNotifier : public QSocketNotifier {
 	Q_OBJECT
 	
 	using QSocketNotifier::QSocketNotifier;
-		
+	
+	public:
+		struct crtx_evloop_callback *el_cb;
+	
 	public slots:
 		void socketEvent(int socket) {
 // 			int readret;
@@ -31,6 +34,10 @@ class MyQSocketNotifier : public QSocketNotifier {
 // 			qDebug()<<"Received:"<<buf[0]<<", "<<buf[1]<<" read() returns "<<readret;
 			printf("asdasd %d\n", socket);
 		}
+};
+
+struct eloop_data {
+	MyQSocketNotifier *notifiers;
 };
 
 static enum MyQSocketNotifier::Type crtx_event_flags2qt_flags(int crtx_event_flags) {
@@ -52,30 +59,42 @@ static enum MyQSocketNotifier::Type crtx_event_flags2qt_flags(int crtx_event_fla
 
 extern "C" {
 
-static int crtx_evloop_qt_add_fd(struct crtx_event_loop *evloop, struct crtx_event_loop_payload *el_payload) {
+static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd) {
 	MyQSocketNotifier *notifier;
+	struct crtx_evloop_callback *el_cb;
 	
-	notifier = new MyQSocketNotifier(el_payload->fd, crtx_event_flags2qt_flags(el_payload->crtx_event_flags));
-// 	connect(notifier, SIGNAL(activated(int)), SLOT(rxEvent(int)), Qt::BlockingQueuedConnection );
+	if (!evloop_fd->el_data) {
+		evloop_fd->el_data = (struct eloop_data*) calloc(1, sizeof(struct eloop_data));
+	}
 	
-	notifier->connect(notifier, &MyQSocketNotifier::activated, notifier, &MyQSocketNotifier::socketEvent);
+	for (el_cb=evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
+		if (!el_cb->active)
+			continue;
+		
+		notifier = new MyQSocketNotifier(evloop_fd->fd, crtx_event_flags2qt_flags(el_cb->crtx_event_flags));
+	// 	connect(notifier, SIGNAL(activated(int)), SLOT(rxEvent(int)), Qt::BlockingQueuedConnection );
+		
+		notifier->connect(notifier, &MyQSocketNotifier::activated, notifier, &MyQSocketNotifier::socketEvent);
+		
+		notifier->setEnabled(true);
+		
+		notifier->el_cb = el_cb;
+	}
 	
-	notifier->setEnabled(true);
-	
-	el_payload->el_data = notifier;
+// 	evloop_fd->el_data = notifier;
 	
 	return 0;
 }
 
-static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_event_loop_payload *el_payload) {
-	
-	return 0;
-}
-
-static int crtx_evloop_qt_del_fd(struct crtx_event_loop *evloop, struct crtx_event_loop_payload *el_payload) {
-	
-	return 0;
-}
+// static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_event_loop_payload *el_payload) {
+// 	
+// 	return 0;
+// }
+// 
+// static int crtx_evloop_qt_del_fd(struct crtx_event_loop *evloop, struct crtx_event_loop_payload *el_payload) {
+// 	
+// 	return 0;
+// }
 
 static int evloop_start(struct crtx_event_loop *evloop) {
 	// 	struct crtx_event_loop_payload *el_payload;
@@ -109,6 +128,7 @@ struct crtx_event_loop qt_loop = {
 	{ 0 },
 	"qt",
 	{ 0 },
+	{ {0} },
 	{ {0} },
 	0,
 	

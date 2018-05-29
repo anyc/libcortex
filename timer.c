@@ -154,7 +154,7 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 // 	tlist->parent.evloop_fd.data = tlist;
 // 	tlist->parent.evloop_fd.event_handler = &timer_fd_event_handler;
 // 	tlist->parent.evloop_fd.event_handler_name = "timer fd handler";
-	crtx_evloop_create_fd_entry(&tlist->parent.evloop_fd,
+	crtx_evloop_init_listener(&tlist->parent,
 						   tlist->fd,
 					    EVLOOP_READ,
 					    0,

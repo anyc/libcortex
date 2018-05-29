@@ -89,7 +89,7 @@ struct crtx_listener_base *crtx_new_netlink_raw_listener(void *options) {
 // 	nl_listener->parent.evloop_fd.data = nl_listener;
 // 	nl_listener->parent.evloop_fd.event_handler = &netlink_el_event_handler;
 // 	nl_listener->parent.evloop_fd.event_handler_name = "netlink eventloop handler";
-	crtx_evloop_create_fd_entry(&nl_listener->parent.evloop_fd,
+	crtx_evloop_init_listener(&nl_listener->parent,
 						nl_listener->sockfd,
 						EVLOOP_READ,
 						0,

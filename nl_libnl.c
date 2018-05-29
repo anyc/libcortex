@@ -14,13 +14,14 @@
 
 // handler that is called on file descriptor events
 static char libnl_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_evloop_fd *payload;
+// 	struct crtx_evloop_fd *payload;
 	struct crtx_libnl_listener *libnl_lstnr;
 	int r;
+	struct crtx_evloop_callback *el_cb;
 	
-	
-	payload = (struct crtx_evloop_fd*) event->data.pointer;
-	libnl_lstnr = (struct crtx_libnl_listener *) payload->data;
+	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+// 	payload = (struct crtx_evloop_fd*) event->data.pointer;
+	libnl_lstnr = (struct crtx_libnl_listener *) el_cb->data;
 	
 	// nl_recvmsgs_default will eventually call the registered callback
 	r = nl_recvmsgs_default(libnl_lstnr->sock);
@@ -91,13 +92,13 @@ struct crtx_listener_base *crtx_new_nl_libnl_listener(void *options) {
 // 	libnl_lstnr->parent.evloop_fd.event_handler = &libnl_fd_event_handler;
 // 	libnl_lstnr->parent.evloop_fd.event_handler_name = "libnl fd handler";
 	libnl_lstnr->parent.free = &free_libnl_listener;
-	crtx_evloop_create_fd_entry(&libnl_lstnr->parent.evloop_fd,
+	crtx_evloop_init_listener(&libnl_lstnr->parent,
 						0,
 						EVLOOP_READ,
 						0,
 						&libnl_fd_event_handler,
 						libnl_lstnr,
-						0,
+						0
 					);
 	
 	

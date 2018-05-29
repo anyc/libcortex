@@ -93,7 +93,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 // 	slist->parent.evloop_fd.data = slist;
 // 	slist->parent.evloop_fd.event_handler = &sip_fd_event_handler;
 // 	slist->parent.evloop_fd.event_handler_name = "sip fd handler";
-	crtx_evloop_create_fd_entry(&slist->parent.evloop_fd,
+	crtx_evloop_init_listener(&slist->parent.evloop_fd,
 						eXosip_event_geteventsocket(slist->ctx),
 						EVLOOP_READ,
 						0,

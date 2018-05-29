@@ -46,25 +46,29 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 }
 
 void crtx_writequeue_start(struct crtx_writequeue *wqueue) {
-// 	struct crtx_event_loop *eloop;
+// // 	struct crtx_event_loop *eloop;
+// 	
+// // 	wqueue->parent.evloop_fd.crtx_event_flags = EVLOOP_WRITE;
+// 	wqueue->evloop_cb->active = 1;
+// 	
+// // 	eloop = crtx_get_event_loop();
+// // 	crtx_epoll_mod_fd(&eloop->listener->parent, &wqueue->parent.evloop_fd);
+// 	crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &wqueue->parent.evloop_fd);
 	
-// 	wqueue->parent.evloop_fd.crtx_event_flags = EVLOOP_WRITE;
-	wqueue->evloop_cb->active = 1;
-	
-// 	eloop = crtx_get_event_loop();
-// 	crtx_epoll_mod_fd(&eloop->listener->parent, &wqueue->parent.evloop_fd);
-	crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &wqueue->parent.evloop_fd);
+	crtx_evloop_enable_cb(&crtx_root->event_loop, &wqueue->evloop_cb);
 }
 
 void crtx_writequeue_stop(struct crtx_writequeue *wqueue) {
-// 	struct crtx_event_loop *eloop;
+// // 	struct crtx_event_loop *eloop;
+// 	
+// // 	wqueue->parent.evloop_fd.crtx_event_flags = 0;
+// 	wqueue->evloop_cb->active = 0;
+// 	
+// // 	eloop = crtx_get_event_loop();
+// // 	crtx_epoll_mod_fd(&eloop->listener->parent, &wqueue->parent.evloop_fd);
+// 	crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &wqueue->parent.evloop_fd);
 	
-// 	wqueue->parent.evloop_fd.crtx_event_flags = 0;
-	wqueue->evloop_cb->active = 0;
-	
-// 	eloop = crtx_get_event_loop();
-// 	crtx_epoll_mod_fd(&eloop->listener->parent, &wqueue->parent.evloop_fd);
-	crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &wqueue->parent.evloop_fd);
+	crtx_evloop_disable_cb(&crtx_root->event_loop, &wqueue->evloop_cb);
 }
 
 struct crtx_listener_base *crtx_new_writequeue_listener(void *options) {
@@ -86,7 +90,7 @@ struct crtx_listener_base *crtx_new_writequeue_listener(void *options) {
 						0
 					);
 	
-	wqueue->evloop_cb->active = 0;
+// 	wqueue->evloop_cb->active = 0;
 	
 	return &wqueue->parent;
 }

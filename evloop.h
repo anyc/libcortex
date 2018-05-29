@@ -78,6 +78,7 @@ struct crtx_event_loop {
 // 	struct crtx_event_loop_control_pipe ctrl_pipe;
 	int ctrl_pipe[2];
 	struct crtx_evloop_fd ctrl_pipe_evloop_handler;
+	struct crtx_evloop_callback default_el_cb;
 	
 	struct crtx_listener_base *listener;
 	
