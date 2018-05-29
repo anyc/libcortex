@@ -157,11 +157,19 @@ struct crtx_listener_base *crtx_new_evdev_listener(void *options) {
 // 	evdev->parent.thread = get_thread(evdev_tmain, evdev, 0);
 // 	evdev->parent.thread->do_stop = &stop_thread;
 	
-	evdev->parent.evloop_fd.fd = evdev->fd;
-	evdev->parent.evloop_fd.data = evdev;
-	evdev->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
-	evdev->parent.evloop_fd.event_handler = &evdev_fd_event_handler;
-	evdev->parent.evloop_fd.event_handler_name = "evdev fd handler";
+// 	evdev->parent.evloop_fd.fd = evdev->fd;
+// 	evdev->parent.evloop_fd.data = evdev;
+// 	evdev->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 	evdev->parent.evloop_fd.event_handler = &evdev_fd_event_handler;
+// 	evdev->parent.evloop_fd.event_handler_name = "evdev fd handler";
+	crtx_evloop_create_fd_entry(&evdev->parent.evloop_fd, &evdev->parent.default_el_cb,
+						evdev->fd,
+						EVLOOP_READ,
+						0,
+						&evdev_fd_event_handler,
+						evdev,
+						0
+					);
 	
 	return &evdev->parent;
 }

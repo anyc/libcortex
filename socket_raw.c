@@ -85,15 +85,17 @@ void crtx_free_addrinfo(struct addrinfo *result) {
 }
 
 static char socket_raw_accept_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_evloop_fd *evloop_fd;
+// 	struct crtx_evloop_fd *evloop_fd;
 	struct crtx_socket_raw_listener *slist;
 	struct sockaddr *cliaddr;
 	int fd;
 	
+	struct crtx_evloop_callback *el_cb;
 	
-	evloop_fd = (struct crtx_evloop_fd*) event->data.pointer;
+	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+// 	evloop_fd = (struct crtx_evloop_fd*) event->data.pointer;
 	
-	slist = (struct crtx_socket_raw_listener *) evloop_fd->data;
+	slist = (struct crtx_socket_raw_listener *) el_cb->data;
 	
 	cliaddr = malloc(slist->addrlen);
 	fd = accept(slist->sockfd, cliaddr, &slist->addrlen);
@@ -175,7 +177,7 @@ struct crtx_listener_base *crtx_new_socket_raw_server_listener(void *options) {
 						0,
 						&socket_raw_accept_handler,
 						slistener,
-						0,
+						0
 					);
 	
 	return &slistener->parent;
@@ -183,15 +185,17 @@ struct crtx_listener_base *crtx_new_socket_raw_server_listener(void *options) {
 
 
 static char client_read_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_evloop_fd *evloop_fd;
+// 	struct crtx_evloop_fd *evloop_fd;
 	struct crtx_socket_raw_listener *slist;
 	
+	struct crtx_evloop_callback *el_cb;
 	
-	evloop_fd = (struct crtx_evloop_fd*) event->data.pointer;
+	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+// 	evloop_fd = (struct crtx_evloop_fd*) event->data.pointer;
 	
-	slist = (struct crtx_socket_raw_listener *) evloop_fd->data;
+	slist = (struct crtx_socket_raw_listener *) el_cb->data;
 	
-	slist->accept_cb(slist, evloop_fd->fd, 0);
+	slist->accept_cb(slist, el_cb->fd_entry->fd, 0);
 	
 	return 0;
 }
@@ -243,7 +247,7 @@ struct crtx_listener_base *crtx_new_socket_raw_client_listener(void *options) {
 						0,
 						&client_read_handler,
 						slistener,
-						0,
+						0
 					);
 	
 	return &slistener->parent;

@@ -13,6 +13,10 @@ struct crtx_writequeue {
 	struct crtx_listener_base parent;
 // 	struct epoll_event epoll_event;
 	
+	struct crtx_listener_base *read_listener;
+	
+	struct crtx_evloop_callback evloop_cb;
+	
 	int write_fd;
 	
 	crtx_wq_write_cb write;

@@ -39,16 +39,16 @@ static char evloop_ctrl_pipe_handler(struct crtx_event *event, void *userdata, v
 	return 0;
 }
 
-int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd,
+int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd, struct crtx_evloop_callback *el_cb,
 						  int fd,
 						  int event_flags,
 						  struct crtx_graph *graph,
 						  crtx_handle_task_t event_handler,
 						  void *data,
-						  crtx_evloop_error_cb_t error_cb,
+						  crtx_evloop_error_cb_t error_cb
 						 )
 {
-	struct crtx_evloop_callback *el_cb;
+// 	struct crtx_evloop_callback *el_cb;
 	
 	evloop_fd->fd = fd;
 	
@@ -61,34 +61,62 @@ int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd,
 	el_cb->fd_entry = evloop_fd;
 	el_cb->error_cb = error_cb;
 	
-	crtx_ll_append((struct crtx_evloop_fd*) &evloop_fd->callbacks, &el_cb->ll);
+	crtx_ll_append((struct crtx_ll**) &evloop_fd->callbacks, &el_cb->ll);
+	
+// 	if (el_callback)
+// 		*el_callback = el_cb;
 	
 	return 0;
 }
 
-int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd,
+int crtx_evloop_init_listener(struct crtx_listener_base *listener,
 						  int fd,
 						  int event_flags,
 						  struct crtx_graph *graph,
 						  crtx_handle_task_t event_handler,
 						  void *data,
-						  crtx_evloop_error_cb_t error_cb,
-)
+						  crtx_evloop_error_cb_t error_cb
+						)
 {
-	struct crtx_evloop_callback *el_cb;
+	int ret;
 	
-	evloop_fd->fd = fd;
+	ret = crtx_evloop_create_fd_entry(&listener->evloop_fd, &listener->default_el_cb,
+						fd,
+						event_flags,
+						graph,
+						event_handler,
+						data,
+						error_cb
+					);
 	
-	el_cb = (struct crtx_evloop_callback *) calloc(1, sizeof(struct crtx_evloop_callback));
+	listener->default_el_cb.active = 1;
 	
-	el_cb->crtx_event_flags = event_flags;
-	el_cb->graph = graph;
-	el_cb->event_handler = event_handler;
-	el_cb->data = data;
-	el_cb->fd_entry = evloop_fd;
-	el_cb->error_cb = error_cb;
+	return ret;
+}
+
+int crtx_evloop_enable_cb(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb) {
+	el_cb->active = 0;
+	evloop->mod_fd(evloop, el_cb->fd_entry);
 	
-	crtx_ll_append((struct crtx_evloop_fd*) &evloop_fd->callbacks, &el_cb->ll);
+	return 0;
+}
+
+int crtx_evloop_disable_cb(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb) {
+	if (!el_cb->active)
+		return 0;
+	
+	el_cb->active = 0;
+	evloop->mod_fd(evloop, el_cb->fd_entry);
+	
+	return 0;
+}
+
+int crtx_evloop_remove_cb(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb) {
+// 	struct crtx_evloop_callback *cb_ll;
+	
+	crtx_evloop_disable_cb(evloop, el_cb);
+	
+	crtx_ll_unlink((struct crtx_ll**) &el_cb->fd_entry->callbacks, &el_cb->ll);
 	
 	return 0;
 }
@@ -112,16 +140,17 @@ int crtx_evloop_create(struct crtx_event_loop *evloop) {
 // 		evloop->ctrl_pipe_evloop_handler.fd = evloop->ctrl_pipe[0];
 // 		evloop->ctrl_pipe_evloop_handler.event_handler = &evloop_ctrl_pipe_handler;
 		
-		crtx_evloop_create_fd_entry(&evloop->ctrl_pipe_evloop_handler,
+		crtx_evloop_create_fd_entry(&evloop->ctrl_pipe_evloop_handler, 0,
 								evloop->ctrl_pipe[0],
 								EVLOOP_READ,
 								0,
 								&evloop_ctrl_pipe_handler,
+								0,
 								0
 							);
 		
 // 		evloop->add_fd(evloop, &evloop->ctrl_pipe_evloop_handler);
-		evloop->add_fd(evloop, evloop->ctrl_pipe_evloop_handler->callbacks);
+		evloop->mod_fd(evloop, &evloop->ctrl_pipe_evloop_handler);
 	}
 	
 	return 0;

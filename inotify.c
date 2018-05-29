@@ -318,12 +318,13 @@ static char start_listener(struct crtx_listener_base *listener) {
 							inotify_fd,
 							EVLOOP_READ,
 							0,
-							&inotify_fd_event_handler
+							&inotify_fd_event_handler,
+							0,
 							0
 						);
 			
 			crtx_get_main_event_loop();
-			crtx_root->event_loop.add_fd(
+			crtx_root->event_loop.mod_fd(
 // 				&crtx_root->event_loop.listener->parent,
 				&crtx_root->event_loop,
 				&evloop_fd);

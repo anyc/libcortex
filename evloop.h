@@ -87,7 +87,7 @@ struct crtx_event_loop {
 	int (*stop)(struct crtx_event_loop *evloop);
 	
 // 	int (*add_fd)(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
-	int (*mod_fd)(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
+	int (*mod_fd)(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd);
 // 	int (*del_fd)(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
 // 	int (*add_fd)(struct crtx_listener_base *lbase, struct crtx_evloop_fd *evloop_fd);
 // 	int (*mod_fd)(struct crtx_listener_base *lbase, struct crtx_evloop_fd *evloop_fd);
@@ -106,5 +106,23 @@ int crtx_evloop_queue_graph(struct crtx_event_loop *evloop, struct crtx_graph *g
 int crtx_evloop_start(struct crtx_event_loop *evloop);
 int crtx_evloop_stop(struct crtx_event_loop *evloop);
 int crtx_evloop_release(struct crtx_event_loop *evloop);
-
+int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd, struct crtx_evloop_callback *el_callback,
+						  int fd,
+						  int event_flags,
+						  struct crtx_graph *graph,
+						  crtx_handle_task_t event_handler,
+						  void *data,
+						  crtx_evloop_error_cb_t error_cb
+					);
+int crtx_evloop_init_listener(struct crtx_listener_base *listener,
+						int fd,
+						int event_flags,
+						struct crtx_graph *graph,
+						crtx_handle_task_t event_handler,
+						void *data,
+						crtx_evloop_error_cb_t error_cb
+					);
+int crtx_evloop_enable_cb(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
+int crtx_evloop_disable_cb(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
+int crtx_evloop_remove_cb(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
 #endif

@@ -108,7 +108,8 @@ static void elw_fd_cleanup(struct libvirt_eventloop_wrapper* wrap) {
 		wrap->ff(wrap->opaque);
 	
 // 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->evloop_fd);
-	crtx_root->event_loop.del_fd(&crtx_root->event_loop, &wrap->evloop_fd);
+// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop, &wrap->evloop_fd);
+	crtx_evloop_remove_cb(&crtx_root->event_loop, wrap->evloop_fd.callbacks);
 	
 	crtx_ll_unlink(&event_list, wrap->llentry);
 	
@@ -116,12 +117,17 @@ static void elw_fd_cleanup(struct libvirt_eventloop_wrapper* wrap) {
 	free(wrap);
 }
 
-static void elw_fd_callback(struct crtx_evloop_fd *evloop_fd) {
+// static void elw_fd_callback(struct crtx_evloop_fd *evloop_fd) {
+static char elw_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct libvirt_eventloop_wrapper *wrap;
 	struct epoll_event *epoll_event;
 	
-	wrap = (struct libvirt_eventloop_wrapper*) evloop_fd->data;
-	epoll_event = (struct epoll_event *) evloop_fd->el_data;
+	struct crtx_evloop_callback *el_cb;
+// 	
+	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+	
+	wrap = (struct libvirt_eventloop_wrapper*) el_cb->data;
+	epoll_event = (struct epoll_event *) el_cb->fd_entry->el_data;
 	
 // 	printf("lv fd cb %d %p %d\n", wrap->id, wrap->event_cb, epoll_event->events);
 // 	if (epoll_event->events & EPOLLHUP) {
@@ -135,22 +141,24 @@ static void elw_fd_callback(struct crtx_evloop_fd *evloop_fd) {
 	
 	if (wrap->delete)
 		elw_fd_cleanup(wrap);
+	
+	return 0;
 }
 
-static void elw_fd_error_cb(struct crtx_evloop_fd *evloop_fd, void *data) {
+static void elw_fd_error_cb(struct crtx_evloop_callback *el_cb, void *data) {
 	struct libvirt_eventloop_wrapper *wrap;
-	struct epoll_event *epoll_event;
+// 	struct epoll_event *epoll_event;
 	
 	
-	wrap = (struct libvirt_eventloop_wrapper*) evloop_fd->data;
-	epoll_event = (struct epoll_event *) evloop_fd->el_data;
+	wrap = (struct libvirt_eventloop_wrapper*) el_cb->data;
+// 	epoll_event = (struct epoll_event *) evloop_fd->el_data;
 	
-	DBG("libvirt event loop error callback for fd %d\n", evloop_fd->fd);
+	DBG("libvirt event loop error callback for fd %d\n", el_cb->fd_entry->fd);
 	
 	if (wrap->delete)
 		elw_fd_cleanup(wrap);
 	
-	wrap->event_cb(wrap->id, wrap->evloop_fd.fd, elw_virEventPollFromNativeEvents(epoll_event->events), wrap->opaque);
+	wrap->event_cb(wrap->id, wrap->evloop_fd.fd, elw_virEventPollFromNativeEvents(el_cb->triggered_flags), wrap->opaque);
 	
 	wrap->delete = 1;
 }
@@ -166,11 +174,11 @@ static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback c
 // 	wrap->evloop_fd.simple_callback = &elw_fd_callback;
 // 	wrap->evloop_fd.error_cb = &elw_fd_error_cb;
 // 	wrap->evloop_fd.data = wrap;
-	crtx_evloop_create_fd_entry(&wrap->evloop_fd,
+	crtx_evloop_create_fd_entry(&wrap->evloop_fd, 
 						   fd,
 					    elw_virEventPollToNativeEvents(event),
 					    0,
-					    &elw_fd_callback,
+					    &elw_fd_event_handler,
 					    wrap,
 					    &elw_fd_error_cb
 					);
