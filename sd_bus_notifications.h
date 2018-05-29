@@ -7,7 +7,7 @@
  */
 
 // struct crtx_sd_bus_notification_listener {
-// 	struct crtx_listener_base parent;
+// 	struct crtx_listener_base base;
 // };
 
 // void send_notification(char *icon, char *title, char *text, char **actions, char**chosen_action);

@@ -508,7 +508,7 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 					
 // 					reference_event_release(event);
 					
-// 					crtx_add_event(nl_listener->parent.graph, event);
+// 					crtx_add_event(nl_listener->base.graph, event);
 					
 // 					wait_on_event(event);
 					
@@ -523,7 +523,7 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 					crtx_event_set_dict_data(event, nlr_list->raw2dict(nlr_list, nlh), 0);
 					
 				}
-				crtx_add_event(nlr_list->parent.graph, event);
+				crtx_add_event(nlr_list->base.graph, event);
 			}
 			
 			nlh = NLMSG_NEXT(nlh, len);
@@ -535,7 +535,7 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 			} else {
 				event = crtx_create_event(0);
 				event->type = "done";
-				crtx_add_event(nlr_list->parent.graph, event);
+				crtx_add_event(nlr_list->base.graph, event);
 			}
 // 			send_signal(&nlr_list->msg_done, 0);
 // 			printf("DOOONEEEE\n");
@@ -559,7 +559,7 @@ static char nl_route_start_listener(struct crtx_listener_base *listener) {
 	
 	nlr_list = (struct crtx_nl_route_listener*) listener;
 	
-	ret = crtx_start_listener(&nlr_list->nl_listener.parent);
+	ret = crtx_start_listener(&nlr_list->nl_listener.base);
 	if (ret) {
 		ERROR("starting netlink_raw listener failed\n");
 		return ret;
@@ -573,7 +573,7 @@ static char nl_route_stop_listener(struct crtx_listener_base *listener) {
 	
 	nlr_list = (struct crtx_nl_route_listener*) listener;
 	
-	crtx_stop_listener(&nlr_list->nl_listener.parent);
+	crtx_stop_listener(&nlr_list->nl_listener.base);
 	
 	return 0;
 }
@@ -583,8 +583,8 @@ static void shutdown_nl_route_listener(struct crtx_listener_base *lbase) {
 	
 	nlr_list = (struct crtx_nl_route_listener*) lbase;
 	
-	crtx_free_listener(&nlr_list->nl_listener.parent);
-	nlr_list->parent.graph = 0;
+	crtx_free_listener(&nlr_list->nl_listener.base);
+	nlr_list->base.graph = 0;
 }
 
 
@@ -620,28 +620,28 @@ struct crtx_listener_base *crtx_new_nl_route_raw_listener(void *options) {
 // 		return 0;
 // 	}
 	
-// 	new_eventgraph(&nlr_list->parent.graph, 0, 0);
-	nlr_list->parent.graph = nlr_list->nl_listener.parent.graph;
+// 	new_eventgraph(&nlr_list->base.graph, 0, 0);
+	nlr_list->base.graph = nlr_list->nl_listener.base.graph;
 	
 // 	init_signal(&nlr_list->msg_done);
 	
-	nlr_list->parent.shutdown = &shutdown_nl_route_listener;
-	nlr_list->parent.start_listener = &nl_route_start_listener;
-	nlr_list->parent.stop_listener = &nl_route_stop_listener;
+	nlr_list->base.shutdown = &shutdown_nl_route_listener;
+	nlr_list->base.start_listener = &nl_route_start_listener;
+	nlr_list->base.stop_listener = &nl_route_stop_listener;
 	
-// 	nl_listener->parent.shutdown = &shutdown_netlink_raw_listener;
+// 	nl_listener->base.shutdown = &shutdown_netlink_raw_listener;
 	
-// 	nl_listener->parent.thread = get_thread(netlink_raw_tmain, nl_listener, 0);
-// 	nl_listener->parent.thread->do_stop = &stop_thread;
+// 	nl_listener->base.thread = get_thread(netlink_raw_tmain, nl_listener, 0);
+// 	nl_listener->base.thread->do_stop = &stop_thread;
 	
-// 	nl_listener->parent.evloop_fd.fd = nl_listener->sockfd;
-// 	nl_listener->parent.evloop_fd.data = nl_listener;
-// 	nl_listener->parent.evloop_fd.event_handler = &netlink_el_event_handler;
-// 	nl_listener->parent.evloop_fd.event_handler_name = "netlink eventloop handler";
+// 	nl_listener->base.evloop_fd.fd = nl_listener->sockfd;
+// 	nl_listener->base.evloop_fd.data = nl_listener;
+// 	nl_listener->base.evloop_fd.event_handler = &netlink_el_event_handler;
+// 	nl_listener->base.evloop_fd.event_handler_name = "netlink eventloop handler";
 	
-// 	reference_signal(&nl_listener->parent.thread->finished);
+// 	reference_signal(&nl_listener->base.thread->finished);
 	
-	return &nlr_list->parent;
+	return &nlr_list->base;
 }
 
 void crtx_nl_route_raw_init() {

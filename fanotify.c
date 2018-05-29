@@ -72,14 +72,14 @@ void *fanotify_tmain(void *data) {
 				continue;
 			}
 			
-			event = crtx_create_event(fal->parent.graph->types[0]);
+			event = crtx_create_event(fal->base.graph->types[0]);
 // 			metadata, sizeof(struct fanotify_event_metadata));
 // 			event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
 			crtx_event_set_raw_data(event, 'p', metadata, sizeof(struct fanotify_event_metadata), CRTX_DIF_DONT_FREE_DATA);
 			
 			reference_event_release(event);
 			
-			crtx_add_event(fal->parent.graph, event);
+			crtx_add_event(fal->base.graph, event);
 			
 			wait_on_event(event);
 			
@@ -137,16 +137,16 @@ struct crtx_listener_base *crtx_new_fanotify_listener(void *options) {
 		return 0;
 	}
 	
-	falist->parent.shutdown = &crtx_shutdown_fanotify_listener;
+	falist->base.shutdown = &crtx_shutdown_fanotify_listener;
 	
-// 	new_eventgraph(&falist->parent.graph, 0, fanotify_msg_etype);
+// 	new_eventgraph(&falist->base.graph, 0, fanotify_msg_etype);
 	
-// 	falist->parent.thread = get_thread(fanotify_tmain, falist, 0);
-	falist->parent.thread_job.fct = &fanotify_tmain;
-	falist->parent.thread_job.fct_data = falist;
-	falist->parent.thread_job.do_stop = &stop_thread;
+// 	falist->base.thread = get_thread(fanotify_tmain, falist, 0);
+	falist->base.thread_job.fct = &fanotify_tmain;
+	falist->base.thread_job.fct_data = falist;
+	falist->base.thread_job.do_stop = &stop_thread;
 	
-	return &falist->parent;
+	return &falist->base;
 }
 
 void crtx_fanotify_init() {

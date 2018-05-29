@@ -46,7 +46,7 @@ static char can_fd_event_handler(struct crtx_event *event, void *userdata, void 
 	clist = (struct crtx_can_listener *) ev_cb->data;
 	
 	// only create event if there are tasks in the queue
-	if (clist->parent.graph->tasks) {
+	if (clist->base.graph->tasks) {
 		frame = (struct can_frame *) malloc(sizeof(struct can_frame));
 		r = read(clist->sockfd, frame, sizeof(struct can_frame));
 		if (r != sizeof(struct can_frame)) {
@@ -57,7 +57,7 @@ static char can_fd_event_handler(struct crtx_event *event, void *userdata, void 
 		nevent = crtx_create_event("can");
 		crtx_event_set_raw_data(nevent, 'p', frame, sizeof(frame), 0);
 		
-		crtx_add_event(clist->parent.graph, nevent);
+		crtx_add_event(clist->base.graph, nevent);
 	} else {
 		// consume and discard the data
 		struct can_frame static_frame;
@@ -253,7 +253,7 @@ static void on_error_cb(struct crtx_evloop_callback *el_cb, void *data) {
 	
 	clist = (struct crtx_can_listener *) data;
 	
-	crtx_stop_listener(&clist->parent);
+	crtx_stop_listener(&clist->base);
 }
 
 struct crtx_listener_base *crtx_new_can_listener(void *options) {
@@ -318,14 +318,14 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 			return 0;
 		}
 		
-// 		clist->parent.evloop_fd.fd = clist->sockfd;
-// 		clist->parent.evloop_fd.data = clist;
-// 		clist->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 		clist->parent.evloop_fd.event_handler = &can_fd_event_handler;
-// 		clist->parent.evloop_fd.event_handler_name = "can fd handler";
-// 		clist->parent.evloop_fd.error_cb = &on_error_cb;
-// 		clist->parent.evloop_fd.error_cb_data = clist;
-		crtx_evloop_init_listener(&clist->parent,
+// 		clist->base.evloop_fd.fd = clist->sockfd;
+// 		clist->base.evloop_fd.data = clist;
+// 		clist->base.evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 		clist->base.evloop_fd.event_handler = &can_fd_event_handler;
+// 		clist->base.evloop_fd.event_handler_name = "can fd handler";
+// 		clist->base.evloop_fd.error_cb = &on_error_cb;
+// 		clist->base.evloop_fd.error_cb_data = clist;
+		crtx_evloop_init_listener(&clist->base,
 							clist->sockfd,
 							EVLOOP_READ,
 							0,
@@ -333,15 +333,15 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 							clist,
 							&on_error_cb
 						);
-// 		clist->parent.evloop_fd.subsystems->error_cb = &on_error_cb;
-// 		clist->parent.evloop_fd.subsystems->error_cb_data = clist;
+// 		clist->base.evloop_fd.subsystems->error_cb = &on_error_cb;
+// 		clist->base.evloop_fd.subsystems->error_cb_data = clist;
 		
-		clist->parent.shutdown = &crtx_shutdown_can_listener;
+		clist->base.shutdown = &crtx_shutdown_can_listener;
 	}
 	
-// 	new_eventgraph(&clist->parent.graph, "can", can_msg_etype);
+// 	new_eventgraph(&clist->base.graph, "can", can_msg_etype);
 	
-	return &clist->parent;
+	return &clist->base;
 }
 
 void crtx_can_init() {

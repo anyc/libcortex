@@ -16,7 +16,7 @@ struct crtx_libnl_callback {
 };
 
 struct crtx_libnl_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	struct nl_sock *sock;
 	

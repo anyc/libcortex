@@ -12,7 +12,7 @@
 #include "netlink_raw.h"
 
 struct crtx_nl_route_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	struct crtx_netlink_raw_listener nl_listener;
 	

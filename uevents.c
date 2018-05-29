@@ -113,7 +113,7 @@ static int uevents_read_cb(struct crtx_netlink_raw_listener *nl_listener, int fd
 	
 // 	reference_event_release(event);
 	
-	crtx_add_event(ulist->parent.graph, event);
+	crtx_add_event(ulist->base.graph, event);
 	
 // 	wait_on_event(event);
 	
@@ -127,8 +127,8 @@ static void shutdown_uevents_listener(struct crtx_listener_base *lbase) {
 	
 	ulist = (struct crtx_uevents_listener*) lbase;
 	
-	crtx_free_listener(&ulist->nl_listener.parent);
-	ulist->parent.graph = 0;
+	crtx_free_listener(&ulist->nl_listener.base);
+	ulist->base.graph = 0;
 }
 
 
@@ -138,7 +138,7 @@ static char uevents_start_listener(struct crtx_listener_base *listener) {
 	
 	ulist = (struct crtx_uevents_listener*) listener;
 	
-	ret = crtx_start_listener(&ulist->nl_listener.parent);
+	ret = crtx_start_listener(&ulist->nl_listener.base);
 	if (ret) {
 		ERROR("starting netlink_raw listener failed\n");
 		return ret;
@@ -167,11 +167,11 @@ struct crtx_listener_base *crtx_new_uevents_listener(void *options) {
 		exit(1);
 	}
 	
-	ulist->parent.graph = ulist->nl_listener.parent.graph;
-	ulist->parent.shutdown = &shutdown_uevents_listener;
-	ulist->parent.start_listener = &uevents_start_listener;
+	ulist->base.graph = ulist->nl_listener.base.graph;
+	ulist->base.shutdown = &shutdown_uevents_listener;
+	ulist->base.start_listener = &uevents_start_listener;
 	
-	return &ulist->parent;
+	return &ulist->base;
 }
 
 void crtx_uevents_init() {

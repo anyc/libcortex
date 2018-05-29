@@ -164,14 +164,14 @@ struct crtx_listener_base *crtx_new_socket_raw_server_listener(void *options) {
 	slistener->addrlen = rit->ai_addrlen;
 	crtx_free_addrinfo(addrinfos);
 	
-	slistener->parent.shutdown = &shutdown_socket_raw_listener;
+	slistener->base.shutdown = &shutdown_socket_raw_listener;
 	
-// 	slistener->parent.evloop_fd.fd = slistener->sockfd;
-// // 	slistener->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 	slistener->parent.evloop_fd.data = slistener;
-// 	slistener->parent.evloop_fd.event_handler = &socket_raw_accept_handler;
-// 	slistener->parent.evloop_fd.event_handler_name = "socket_raw_accept_handler";
-	crtx_evloop_init_listener(&slistener->parent,
+// 	slistener->base.evloop_fd.fd = slistener->sockfd;
+// // 	slistener->base.evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 	slistener->base.evloop_fd.data = slistener;
+// 	slistener->base.evloop_fd.event_handler = &socket_raw_accept_handler;
+// 	slistener->base.evloop_fd.event_handler_name = "socket_raw_accept_handler";
+	crtx_evloop_init_listener(&slistener->base,
 						slistener->sockfd,
 						EVLOOP_READ,
 						0,
@@ -180,7 +180,7 @@ struct crtx_listener_base *crtx_new_socket_raw_server_listener(void *options) {
 						0
 					);
 	
-	return &slistener->parent;
+	return &slistener->base;
 }
 
 
@@ -234,14 +234,14 @@ struct crtx_listener_base *crtx_new_socket_raw_client_listener(void *options) {
 	
 	crtx_free_addrinfo(addrinfos);
 	
-	slistener->parent.shutdown = &shutdown_socket_raw_listener;
+	slistener->base.shutdown = &shutdown_socket_raw_listener;
 	
-// 	slistener->parent.evloop_fd.fd = slistener->sockfd;
-// 	// 	slistener->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 	slistener->parent.evloop_fd.data = slistener;
-// 	slistener->parent.evloop_fd.event_handler = &client_read_handler;
-// 	slistener->parent.evloop_fd.event_handler_name = "client_read_handler";
-	crtx_evloop_init_listener(&slistener->parent,
+// 	slistener->base.evloop_fd.fd = slistener->sockfd;
+// 	// 	slistener->base.evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 	slistener->base.evloop_fd.data = slistener;
+// 	slistener->base.evloop_fd.event_handler = &client_read_handler;
+// 	slistener->base.evloop_fd.event_handler_name = "client_read_handler";
+	crtx_evloop_init_listener(&slistener->base,
 						slistener->sockfd,
 						EVLOOP_READ,
 						0,
@@ -250,7 +250,7 @@ struct crtx_listener_base *crtx_new_socket_raw_client_listener(void *options) {
 						0
 					);
 	
-	return &slistener->parent;
+	return &slistener->base;
 }
 
 struct crtx_listener_base *crtx_new_socket_raw_listener(void *options) {

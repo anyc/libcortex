@@ -45,7 +45,7 @@ struct crtx_sdbus_track {
 };
 
 struct crtx_sdbus_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	enum crtx_sdbus_type bus_type;
 	char *name;	// contains either the host name or machine name if bus_type is

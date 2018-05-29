@@ -138,7 +138,7 @@ static char rl_notify_send_handler(struct crtx_event *event, void *userdata, voi
 // 	struct crtx_graph *global_notify_graph;
 // 	
 // 	slistener = (struct crtx_readline_listener *) options;
-// 	slistener->parent.graph = get_graph_for_event_type(EV_RL_REQUEST, rl_event_types);
+// 	slistener->base.graph = get_graph_for_event_type(EV_RL_REQUEST, rl_event_types);
 // 	
 // 	/*
 // 	 * add this listener to the global notification graph
@@ -148,7 +148,7 @@ static char rl_notify_send_handler(struct crtx_event *event, void *userdata, voi
 // 	
 // 	crtx_create_task(global_notify_graph, 0, "rl_notify_send_handler", &rl_notify_send_handler, slistener);
 // 	
-// 	return &slistener->parent;
+// 	return &slistener->base;
 // }
 
 void crtx_readline_init() {

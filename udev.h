@@ -19,7 +19,7 @@ struct crtx_udev_raw2dict_attr_req {
 };
 
 struct crtx_udev_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	struct udev *udev;
 	int fd;

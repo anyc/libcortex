@@ -48,7 +48,7 @@ static char sip_fd_event_handler(struct crtx_event *event, void *userdata, void 
 		
 		nevent->cb_before_release = &sip_event_before_release_cb;
 		
-		crtx_add_event(slist->parent.graph, nevent);
+		crtx_add_event(slist->base.graph, nevent);
 	}
 	
 	return 0;
@@ -88,12 +88,12 @@ static char start_listener(struct crtx_listener_base *listener) {
 	}
 	eXosip_unlock (slist->ctx);
 	
-// 	slist->parent.evloop_fd.fd = eXosip_event_geteventsocket(slist->ctx);
-// 	slist->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 	slist->parent.evloop_fd.data = slist;
-// 	slist->parent.evloop_fd.event_handler = &sip_fd_event_handler;
-// 	slist->parent.evloop_fd.event_handler_name = "sip fd handler";
-	crtx_evloop_init_listener(&slist->parent.evloop_fd,
+// 	slist->base.evloop_fd.fd = eXosip_event_geteventsocket(slist->ctx);
+// 	slist->base.evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 	slist->base.evloop_fd.data = slist;
+// 	slist->base.evloop_fd.event_handler = &sip_fd_event_handler;
+// 	slist->base.evloop_fd.event_handler_name = "sip fd handler";
+	crtx_evloop_init_listener(&slist->base.evloop_fd,
 						eXosip_event_geteventsocket(slist->ctx),
 						EVLOOP_READ,
 						0,
@@ -167,11 +167,11 @@ struct crtx_listener_base *crtx_new_sip_listener(void *options) {
 	eXosip_add_authentication_info(slist->ctx, slist->username, slist->userid, slist->password, NULL, NULL);
 	eXosip_unlock(slist->ctx);
 	
-	slist->parent.start_listener = &start_listener;
-	slist->parent.stop_listener = &stop_listener;
-	slist->parent.free = &free_listener;
+	slist->base.start_listener = &start_listener;
+	slist->base.stop_listener = &stop_listener;
+	slist->base.free = &free_listener;
 	
-	return &slist->parent;
+	return &slist->base;
 }
 
 void crtx_sip_init() {

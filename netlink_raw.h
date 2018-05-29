@@ -11,7 +11,7 @@
 #include "core.h"
 
 struct crtx_netlink_raw_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	int socket_protocol;
 	

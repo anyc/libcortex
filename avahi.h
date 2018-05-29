@@ -27,7 +27,7 @@ struct crtx_avahi_service {
 };
 
 struct crtx_avahi_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	
 	struct crtx_sdbus_listener sdlist;

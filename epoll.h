@@ -9,7 +9,7 @@
 #include <sys/epoll.h>
 
 struct crtx_epoll_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	struct crtx_event_loop *evloop;
 	

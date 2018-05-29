@@ -14,7 +14,7 @@
 // extern char *xcb_randr_msg_etype[];
 
 struct crtx_xcb_randr_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	xcb_connection_t *conn;
 	xcb_screen_t *screen;

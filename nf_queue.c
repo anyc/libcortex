@@ -207,7 +207,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 	
 	nfq_list = (struct crtx_nfq_listener*) data;
 	
-	if (!is_graph_empty(nfq_list->parent.graph, 0)) {
+	if (!is_graph_empty(nfq_list->base.graph, 0)) {
 		struct crtx_nfq_packet *pkt;
 		struct crtx_event *event;
 		size_t msg_size;
@@ -291,7 +291,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		pkt->mark_out = nfq_list->default_mark;
 		
-		event = crtx_create_event(nfq_list->parent.graph->types[0]); //, pkt, data_size);
+		event = crtx_create_event(nfq_list->base.graph->types[0]); //, pkt, data_size);
 // 		event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
 // 		event->data.to_dict = &nfq_raw2dict;
 		crtx_event_set_raw_data(event, 'p', pkt, data_size, CRTX_DIF_DONT_FREE_DATA);
@@ -307,7 +307,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		reference_event_release(event);
 		
-		crtx_add_event(nfq_list->parent.graph, event);
+		crtx_add_event(nfq_list->base.graph, event);
 		
 		wait_on_event(event);
 		
@@ -398,19 +398,19 @@ void free_nf_queue_listener(struct crtx_listener_base *data, void *userdata) {
 }
 
 struct crtx_listener_base *crtx_new_nf_queue_listener(void *options) {
-	struct crtx_nfq_listener *nfq_listata;
+	struct crtx_nfq_listener *nfq_listener;
 	
-	nfq_listata = (struct crtx_nfq_listener*) options;
-	nfq_listata->parent.free = &free_nf_queue_listener;
+	nfq_listener = (struct crtx_nfq_listener*) options;
+	nfq_listener->base.free = &free_nf_queue_listener;
 	
-// 	new_eventgraph(&nfq_listata->parent.graph, 0, nfq_packet_msg_etype);
+// 	new_eventgraph(&nfq_listata->base.graph, 0, nfq_packet_msg_etype);
 	
-// 	nfq_listata->parent.thread = get_thread(nfq_tmain, nfq_listata, 0);
-	nfq_listata->parent.thread_job.fct = &nfq_tmain;
-	nfq_listata->parent.thread_job.fct_data = nfq_listata;
-	nfq_listata->parent.start_listener = 0;
+// 	nfq_listata->base.thread = get_thread(nfq_tmain, nfq_listata, 0);
+	nfq_listener->base.thread_job.fct = &nfq_tmain;
+	nfq_listener->base.thread_job.fct_data = nfq_listener;
+	nfq_listener->base.start_listener = 0;
 	
-	return &nfq_listata->parent;
+	return &nfq_listener->base;
 }
 
 char *crtx_nfq_proto2str(u_int16_t protocol) {

@@ -19,7 +19,7 @@ enum {PFW_NEWP_UDP_SPORT=0, PFW_NEWP_UDP_DPORT};
 
 
 struct crtx_nfq_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	pthread_t thread;
 	

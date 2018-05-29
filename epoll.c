@@ -518,14 +518,14 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 		return 0;
 	}
 	
-	epl->parent.shutdown = &shutdown_epoll_listener;
+	epl->base.shutdown = &shutdown_epoll_listener;
 	
-	epl->parent.thread_job.fct = &crtx_epoll_main;
-	epl->parent.thread_job.fct_data = epl->evloop;
-	epl->parent.thread_job.do_stop = &stop_thread;
+	epl->base.thread_job.fct = &crtx_epoll_main;
+	epl->base.thread_job.fct_data = epl->evloop;
+	epl->base.thread_job.do_stop = &stop_thread;
 	
 	// either the main thread will execute crtx_epoll_main or we spawn a new thread
-	epl->parent.mode = CRTX_PREFER_THREAD;
+	epl->base.mode = CRTX_PREFER_THREAD;
 	
 	
 // 	ret = pipe(epl->pipe_fds); // 0 read, 1 write
@@ -545,7 +545,7 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	// 0 is our default, -1 is no timeout for epoll
 	epl->timeout -= 1;
 	
-	return &epl->parent;
+	return &epl->base;
 }
 
 static int evloop_create(struct crtx_event_loop *evloop) {

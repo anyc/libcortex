@@ -78,7 +78,7 @@ int crtx_genl_msg2dict(struct nl_msg *msg, void *arg) {
 	
 // 	crtx_print_dict(dict);
 	
-	crtx_add_event(genlist->parent.graph, event);
+	crtx_add_event(genlist->base.graph, event);
 	
 	return 0;
 }
@@ -147,15 +147,15 @@ struct crtx_listener_base *crtx_new_genl_listener(void *options) {
 	}
 	
 	
-// 	new_eventgraph(&genlist->parent.graph, 0, 0);
+// 	new_eventgraph(&genlist->base.graph, 0, 0);
 	
-// 	genlist->parent.evloop_fd.fd = nl_socket_get_fd(genlist->sock);
-// 	genlist->parent.evloop_fd.data = genlist;
-// 	genlist->parent.evloop_fd.event_handler = &genl_fd_event_handler;
-// 	genlist->parent.evloop_fd.event_handler_name = "genl fd handler";
-	genlist->parent.free = &free_genl_listener;
+// 	genlist->base.evloop_fd.fd = nl_socket_get_fd(genlist->sock);
+// 	genlist->base.evloop_fd.data = genlist;
+// 	genlist->base.evloop_fd.event_handler = &genl_fd_event_handler;
+// 	genlist->base.evloop_fd.event_handler_name = "genl fd handler";
+	genlist->base.free = &free_genl_listener;
 	
-	crtx_evloop_init_listener(&genlist->parent,
+	crtx_evloop_init_listener(&genlist->base,
 						nl_socket_get_fd(genlist->sock),
 						EVLOOP_READ,
 						0,
@@ -178,7 +178,7 @@ struct crtx_listener_base *crtx_new_genl_listener(void *options) {
 		g++;
 	}
 	
-	return &genlist->parent;
+	return &genlist->base;
 }
 
 void crtx_netlink_ge_init() {

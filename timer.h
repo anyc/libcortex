@@ -9,7 +9,7 @@
 #define CRTX_EVT_TIMER "cortex.timer"
 
 struct crtx_timer_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	int fd;
 	char stop;

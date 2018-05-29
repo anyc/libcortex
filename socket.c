@@ -155,14 +155,14 @@ static void *socket_connection_tmain(void *data) {
 	
 	memcpy(&slist, args->slistener, sizeof(struct crtx_socket_listener));
 	
-// 	crtx_create_graph(&slist.parent.graph, 0, slist.recv_types);
+// 	crtx_create_graph(&slist.base.graph, 0, slist.recv_types);
 // 	crtx_create_graph(&slist.outbox, 0, slist.send_types);
-	crtx_create_graph(&slist.parent.graph, 0);
+	crtx_create_graph(&slist.base.graph, 0);
 	crtx_create_graph(&slist.outbox, 0);
 	
 	slist.sockfd = args->sockfd;
 	
-	crtx_create_task(slist.parent.graph, 200, "inbound_event_handler", &inbound_event_handler, &slist);
+	crtx_create_task(slist.base.graph, 200, "inbound_event_handler", &inbound_event_handler, &slist);
 	
 	crtx_create_task(slist.outbox, 200, "outbound_event_handler", &outbound_event_handler, &slist);
 	
@@ -176,8 +176,8 @@ static void *socket_connection_tmain(void *data) {
 			event->cb_before_release_data = &slist;
 		}
 		
-		if (slist.parent.graph)
-			crtx_add_event(slist.parent.graph, event);
+		if (slist.base.graph)
+			crtx_add_event(slist.base.graph, event);
 		else
 			add_raw_event(event);
 	}
@@ -299,8 +299,8 @@ static void *socket_client_tmain(void *data) {
 			event->cb_before_release_data = listeners;
 		}
 		
-		if (listeners->parent.graph)
-			crtx_add_event(listeners->parent.graph, event);
+		if (listeners->base.graph)
+			crtx_add_event(listeners->base.graph, event);
 		else
 			add_raw_event(event);
 	}
@@ -331,14 +331,14 @@ struct crtx_listener_base *crtx_new_socket_server_listener(void *options) {
 	
 	create_in_out_box();
 	
-	slistener->parent.start_listener = 0;
-// 	slistener->parent.thread = get_thread(socket_server_tmain, slistener, 0);
-// 	slistener->parent.thread->do_stop = &stop_thread;
-	slistener->parent.thread_job.fct = &socket_server_tmain;
-	slistener->parent.thread_job.fct_data = slistener;
-	slistener->parent.thread_job.do_stop = &stop_thread;
+	slistener->base.start_listener = 0;
+// 	slistener->base.thread = get_thread(socket_server_tmain, slistener, 0);
+// 	slistener->base.thread->do_stop = &stop_thread;
+	slistener->base.thread_job.fct = &socket_server_tmain;
+	slistener->base.thread_job.fct_data = slistener;
+	slistener->base.thread_job.do_stop = &stop_thread;
 	
-	return &slistener->parent;
+	return &slistener->base;
 }
 
 struct crtx_listener_base *crtx_new_socket_client_listener(void *options) {
@@ -348,21 +348,21 @@ struct crtx_listener_base *crtx_new_socket_client_listener(void *options) {
 	
 	create_in_out_box();
 	
-// 	crtx_create_graph(&slistener->parent.graph, 0, slistener->recv_types);
+// 	crtx_create_graph(&slistener->base.graph, 0, slistener->recv_types);
 // 	crtx_create_graph(&slistener->outbox, 0, slistener->send_types);
-	crtx_create_graph(&slistener->parent.graph, 0);
+	crtx_create_graph(&slistener->base.graph, 0);
 	crtx_create_graph(&slistener->outbox, 0);
 	
-	crtx_create_task(slistener->parent.graph, 200, "inbound_event_handler", &inbound_event_handler, slistener);
+	crtx_create_task(slistener->base.graph, 200, "inbound_event_handler", &inbound_event_handler, slistener);
 	crtx_create_task(slistener->outbox, 200, "outbound_event_handler", &outbound_event_handler, slistener);
 	
-	slistener->parent.start_listener = 0;
-// 	slistener->parent.thread = get_thread(socket_client_tmain, slistener, 0);
-	slistener->parent.thread_job.fct = &socket_client_tmain;
-	slistener->parent.thread_job.fct_data = slistener;
-	slistener->parent.thread_job.do_stop = &stop_thread;
+	slistener->base.start_listener = 0;
+// 	slistener->base.thread = get_thread(socket_client_tmain, slistener, 0);
+	slistener->base.thread_job.fct = &socket_client_tmain;
+	slistener->base.thread_job.fct_data = slistener;
+	slistener->base.thread_job.do_stop = &stop_thread;
 	
-	return &slistener->parent;
+	return &slistener->base;
 }
 
 void crtx_socket_init() {

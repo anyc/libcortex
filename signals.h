@@ -4,7 +4,7 @@
 #include "core.h"
 
 struct crtx_signal_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	int *signals; // { SIGINT, ..., 0 }
 };

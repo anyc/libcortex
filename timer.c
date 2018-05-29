@@ -52,7 +52,7 @@
 // 		event->data.type = 'u';
 // 		event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 // 		
-// 		crtx_add_event(tlist->parent.graph, event);
+// 		crtx_add_event(tlist->base.graph, event);
 // 		
 // 		if (tlist->newtimer.it_interval.tv_sec == 0 && tlist->newtimer.it_interval.tv_nsec == 0)
 // 			break;
@@ -92,7 +92,7 @@ static char timer_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	crtx_event_set_raw_data(event, 'U', exp, sizeof(exp), 0);
 // 	event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 	
-	crtx_add_event(tlist->parent.graph, event);
+	crtx_add_event(tlist->base.graph, event);
 	
 // 	if (tlist->newtimer->it_interval.tv_sec == 0 && tlist->newtimer->it_interval.tv_nsec == 0)
 // 		break;
@@ -135,7 +135,7 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 // 	if (!tlist->newtimer)
 // 		return 0;
 	
-// 	new_eventgraph(&tlist->parent.graph, 0, 0);
+// 	new_eventgraph(&tlist->base.graph, 0, 0);
 	
 	tlist->fd = timerfd_create(tlist->clockid, 0);
 	if (tlist->fd == -1) {
@@ -149,12 +149,12 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 // 		return 0;
 // 	}
 	
-// 	tlist->parent.evloop_fd.fd = tlist->fd;
-// 	tlist->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 	tlist->parent.evloop_fd.data = tlist;
-// 	tlist->parent.evloop_fd.event_handler = &timer_fd_event_handler;
-// 	tlist->parent.evloop_fd.event_handler_name = "timer fd handler";
-	crtx_evloop_init_listener(&tlist->parent,
+// 	tlist->base.evloop_fd.fd = tlist->fd;
+// 	tlist->base.evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 	tlist->base.evloop_fd.data = tlist;
+// 	tlist->base.evloop_fd.event_handler = &timer_fd_event_handler;
+// 	tlist->base.evloop_fd.event_handler_name = "timer fd handler";
+	crtx_evloop_init_listener(&tlist->base,
 						   tlist->fd,
 					    EVLOOP_READ,
 					    0,
@@ -163,15 +163,15 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 					    0
 					);
 	
-	tlist->parent.start_listener = &update_listener;
-	tlist->parent.update_listener = &update_listener;
-// 	tlist->parent.thread = get_thread(timer_tmain, tlist, 0);
-// 	tlist->parent.thread->do_stop = &stop_thread;
+	tlist->base.start_listener = &update_listener;
+	tlist->base.update_listener = &update_listener;
+// 	tlist->base.thread = get_thread(timer_tmain, tlist, 0);
+// 	tlist->base.thread->do_stop = &stop_thread;
 // 	start_thread(t);
 	
-// 	tlist->parent.shutdown = &crtx_shutdown_timer_listener;
+// 	tlist->base.shutdown = &crtx_shutdown_timer_listener;
 	
-	return &tlist->parent;
+	return &tlist->base;
 }
 
 
@@ -224,7 +224,7 @@ struct crtx_timer_retry_listener *crtx_timer_retry_listener(struct crtx_listener
 }
 
 void crtx_timer_retry_listener_free(struct crtx_timer_retry_listener *retry_lstnr) {
-	crtx_stop_listener(&retry_lstnr->timer_lstnr.parent);
+	crtx_stop_listener(&retry_lstnr->timer_lstnr.base);
 	
 	free(retry_lstnr);
 }

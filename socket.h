@@ -8,7 +8,7 @@
 #endif
 
 struct crtx_socket_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	char **recv_types;
 	char **send_types;

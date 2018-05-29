@@ -9,7 +9,7 @@
 
 
 struct crtx_evloop_qt_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	void *eloop;
 };

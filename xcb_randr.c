@@ -511,7 +511,7 @@ static void xcb_handle_event(struct crtx_xcb_randr_listener *xrlist, xcb_generic
 			crtx_event->cb_before_release = &xcb_event_before_release_cb;
 			crtx_event->cb_before_release_data = xcb_event;
 			
-			crtx_add_event(xrlist->parent.graph, crtx_event);
+			crtx_add_event(xrlist->base.graph, crtx_event);
 		} else {
 			free(xcb_event);
 		}
@@ -603,18 +603,18 @@ struct crtx_listener_base *crtx_new_xcb_randr_listener(void *options) {
 	}
 	free(version);
 	
-	xrlist->parent.start_listener = &start_listener;
-	xrlist->parent.free = &crtx_free_xcb_randr_listener;
+	xrlist->base.start_listener = &start_listener;
+	xrlist->base.free = &crtx_free_xcb_randr_listener;
 	
-	xrlist->parent.thread_job.fct = &xcb_randr_tmain;
-	xrlist->parent.thread_job.fct_data = xrlist;
+	xrlist->base.thread_job.fct = &xcb_randr_tmain;
+	xrlist->base.thread_job.fct_data = xrlist;
 	
-// 	xrlist->parent.evloop_fd.fd = xcb_get_file_descriptor(xrlist->conn);
-// 	xrlist->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 	xrlist->parent.evloop_fd.data = xrlist;
-// 	xrlist->parent.evloop_fd.event_handler = &xcb_randr_fd_event_handler;
-// 	xrlist->parent.evloop_fd.event_handler_name = "xcb-randr fd handler";
-	crtx_evloop_init_listener(&xrlist->parent,
+// 	xrlist->base.evloop_fd.fd = xcb_get_file_descriptor(xrlist->conn);
+// 	xrlist->base.evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 	xrlist->base.evloop_fd.data = xrlist;
+// 	xrlist->base.evloop_fd.event_handler = &xcb_randr_fd_event_handler;
+// 	xrlist->base.evloop_fd.event_handler_name = "xcb-randr fd handler";
+	crtx_evloop_init_listener(&xrlist->base,
 						xcb_get_file_descriptor(xrlist->conn),
 						EVLOOP_READ,
 						0,
@@ -623,7 +623,7 @@ struct crtx_listener_base *crtx_new_xcb_randr_listener(void *options) {
 						0
 					);
 	
-	return &xrlist->parent;
+	return &xrlist->base;
 }
 
 void crtx_xcb_randr_init() {

@@ -326,7 +326,7 @@ static char sdbus_to_avahi_handler(struct crtx_event *event, void *userdata, voi
 // 	avahi_event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
 	avahi_event->cb_before_release = &cb_sdbus_event_release;
 	
-	crtx_add_event(alist->parent.graph, avahi_event);
+	crtx_add_event(alist->base.graph, avahi_event);
 	
 	return 0;
 }
@@ -415,11 +415,11 @@ struct crtx_listener_base *crtx_new_avahi_listener(void *options) {
 	}
 	
 	
-// 	new_eventgraph(&alist->parent.graph, "avahi", 0);
+// 	new_eventgraph(&alist->base.graph, "avahi", 0);
 
-// 	epl->parent.shutdown = &shutdown_avahi_listener;
+// 	epl->base.shutdown = &shutdown_avahi_listener;
 
-	return &alist->parent;
+	return &alist->base;
 }
 
 void crtx_avahi_init() {

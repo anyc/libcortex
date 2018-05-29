@@ -298,7 +298,7 @@ static char notify_send_handler(struct crtx_event *event, void *userdata, void *
 // 	// TODO: convert this into a module as we likely need only one listener?
 // 	
 // 	slistener = (struct crtx_sd_bus_notification_listener *) options;
-// 	slistener->parent.graph = get_graph_for_event_type(EV_NOTIF_SIGNAL, notif_event_types);
+// 	slistener->base.graph = get_graph_for_event_type(EV_NOTIF_SIGNAL, notif_event_types);
 // 	
 // 	/*
 // 	 * add this listener to the global notification graph
@@ -308,7 +308,7 @@ static char notify_send_handler(struct crtx_event *event, void *userdata, void *
 // 	
 // 	crtx_create_task(global_notify_graph, 0, "sd_bus_notify_send", &notify_send_handler, slistener);
 // 	
-// 	return &slistener->parent;
+// 	return &slistener->base;
 // }
 
 void crtx_sd_bus_notifications_init() {

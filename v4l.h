@@ -7,7 +7,7 @@
  */
 
 struct crtx_v4l_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	char * device_path;
 	int fd;

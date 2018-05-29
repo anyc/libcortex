@@ -13,7 +13,7 @@
 // extern char *fanotify_msg_etype[];
 
 struct crtx_fanotify_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	int fanotify_fd;
 	unsigned int init_flags;

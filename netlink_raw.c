@@ -81,15 +81,15 @@ struct crtx_listener_base *crtx_new_netlink_raw_listener(void *options) {
 		return 0;
 	}
 	
-// 	nl_listener->parent.thread = get_thread(netlink_raw_tmain, nl_listener, 0);
-// 	nl_listener->parent.thread->do_stop = &stop_thread;
+// 	nl_listener->base.thread = get_thread(netlink_raw_tmain, nl_listener, 0);
+// 	nl_listener->base.thread->do_stop = &stop_thread;
 	
-// 	nl_listener->parent.evloop_fd.fd = nl_listener->sockfd;
-// 	nl_listener->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 	nl_listener->parent.evloop_fd.data = nl_listener;
-// 	nl_listener->parent.evloop_fd.event_handler = &netlink_el_event_handler;
-// 	nl_listener->parent.evloop_fd.event_handler_name = "netlink eventloop handler";
-	crtx_evloop_init_listener(&nl_listener->parent,
+// 	nl_listener->base.evloop_fd.fd = nl_listener->sockfd;
+// 	nl_listener->base.evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 	nl_listener->base.evloop_fd.data = nl_listener;
+// 	nl_listener->base.evloop_fd.event_handler = &netlink_el_event_handler;
+// 	nl_listener->base.evloop_fd.event_handler_name = "netlink eventloop handler";
+	crtx_evloop_init_listener(&nl_listener->base,
 						nl_listener->sockfd,
 						EVLOOP_READ,
 						0,
@@ -98,7 +98,7 @@ struct crtx_listener_base *crtx_new_netlink_raw_listener(void *options) {
 						0
 					);
 	
-	return &nl_listener->parent;
+	return &nl_listener->base;
 }
 
 void crtx_netlink_raw_init() {

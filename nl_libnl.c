@@ -45,7 +45,7 @@ static char libnl_start_listener(struct crtx_listener_base *listener) {
 		return ret;
 	}
 	
-	libnl_lstnr->parent.evloop_fd.fd = nl_socket_get_fd(libnl_lstnr->sock);
+	libnl_lstnr->base.evloop_fd.fd = nl_socket_get_fd(libnl_lstnr->sock);
 	
 	return 0;
 }
@@ -85,14 +85,14 @@ struct crtx_listener_base *crtx_new_nl_libnl_listener(void *options) {
 		cb++;
 	}
 	
-	libnl_lstnr->parent.start_listener = &libnl_start_listener;
+	libnl_lstnr->base.start_listener = &libnl_start_listener;
 	
-// 	libnl_lstnr->parent.evloop_fd.data = libnl_lstnr;
-// 	libnl_lstnr->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 	libnl_lstnr->parent.evloop_fd.event_handler = &libnl_fd_event_handler;
-// 	libnl_lstnr->parent.evloop_fd.event_handler_name = "libnl fd handler";
-	libnl_lstnr->parent.free = &free_libnl_listener;
-	crtx_evloop_init_listener(&libnl_lstnr->parent,
+// 	libnl_lstnr->base.evloop_fd.data = libnl_lstnr;
+// 	libnl_lstnr->base.evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 	libnl_lstnr->base.evloop_fd.event_handler = &libnl_fd_event_handler;
+// 	libnl_lstnr->base.evloop_fd.event_handler_name = "libnl fd handler";
+	libnl_lstnr->base.free = &free_libnl_listener;
+	crtx_evloop_init_listener(&libnl_lstnr->base,
 						0,
 						EVLOOP_READ,
 						0,
@@ -102,7 +102,7 @@ struct crtx_listener_base *crtx_new_nl_libnl_listener(void *options) {
 					);
 	
 	
-	return &libnl_lstnr->parent;
+	return &libnl_lstnr->base;
 }
 
 void crtx_nl_libnl_init() {

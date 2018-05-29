@@ -39,7 +39,7 @@ static void send_event(struct crtx_evdev_listener *el, struct input_event *ev, c
 	
 // 	reference_event_release(event);
 	
-	crtx_add_event(el->parent.graph, event);
+	crtx_add_event(el->base.graph, event);
 	
 // 	wait_on_event(event);
 	
@@ -150,19 +150,19 @@ struct crtx_listener_base *crtx_new_evdev_listener(void *options) {
 	
 	DBG("new evdev listener on %s: %s\n", evdev->device_path, libevdev_get_name(evdev->device));
 	
-	evdev->parent.shutdown = &crtx_shutdown_evdev_listener;
+	evdev->base.shutdown = &crtx_shutdown_evdev_listener;
 	
-// 	new_eventgraph(&evdev->parent.graph, 0, evdev_msg_etype);
+// 	new_eventgraph(&evdev->base.graph, 0, evdev_msg_etype);
 	
-// 	evdev->parent.thread = get_thread(evdev_tmain, evdev, 0);
-// 	evdev->parent.thread->do_stop = &stop_thread;
+// 	evdev->base.thread = get_thread(evdev_tmain, evdev, 0);
+// 	evdev->base.thread->do_stop = &stop_thread;
 	
-// 	evdev->parent.evloop_fd.fd = evdev->fd;
-// 	evdev->parent.evloop_fd.data = evdev;
-// 	evdev->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 	evdev->parent.evloop_fd.event_handler = &evdev_fd_event_handler;
-// 	evdev->parent.evloop_fd.event_handler_name = "evdev fd handler";
-	crtx_evloop_init_listener(&evdev->parent,
+// 	evdev->base.evloop_fd.fd = evdev->fd;
+// 	evdev->base.evloop_fd.data = evdev;
+// 	evdev->base.evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 	evdev->base.evloop_fd.event_handler = &evdev_fd_event_handler;
+// 	evdev->base.evloop_fd.event_handler_name = "evdev fd handler";
+	crtx_evloop_init_listener(&evdev->base,
 						evdev->fd,
 						EVLOOP_READ,
 						0,
@@ -171,7 +171,7 @@ struct crtx_listener_base *crtx_new_evdev_listener(void *options) {
 						0
 					);
 	
-	return &evdev->parent;
+	return &evdev->base;
 }
 
 void crtx_evdev_init() {

@@ -54,7 +54,7 @@ static void signal_handler(int signum) {
 	
 	event = crtx_create_event(smap->etype);
 	
-	crtx_add_event(signal_list.parent.graph, event);
+	crtx_add_event(signal_list.base.graph, event);
 }
 
 static char start_listener(struct crtx_listener_base *listener) {
@@ -81,11 +81,11 @@ static char start_listener(struct crtx_listener_base *listener) {
 			
 			DBG("new signal handler for %s (%d)\n", smap->name, *i);
 			
-			signal_list.parent.graph->n_types++;
-			signal_list.parent.graph->types = (char**) realloc(signal_list.parent.graph->types,
-													 sizeof(char*) * signal_list.parent.graph->n_types);
+			signal_list.base.graph->n_types++;
+			signal_list.base.graph->types = (char**) realloc(signal_list.base.graph->types,
+													 sizeof(char*) * signal_list.base.graph->n_types);
 			
-			signal_list.parent.graph->types[signal_list.parent.graph->n_types-1] = smap->etype;
+			signal_list.base.graph->types[signal_list.base.graph->n_types-1] = smap->etype;
 			
 			sigaction(*i, &new_action, 0);
 		}
@@ -104,10 +104,10 @@ struct crtx_listener_base *crtx_new_signals_listener(void *options) {
 	if (!slistener->signals)
 		return 0;
 	
-// 	signal_list.parent.thread = 0;
-	signal_list.parent.start_listener = &start_listener;
+// 	signal_list.base.thread = 0;
+	signal_list.base.start_listener = &start_listener;
 	
-	return &signal_list.parent;
+	return &signal_list.base;
 }
 
 static char sigterm_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -155,31 +155,31 @@ int crtx_handle_std_signals() {
 	t->handle = &sigterm_handler;
 	t->userdata = 0;
 	t->event_type_match = get_signal(SIGTERM)->etype;
-	add_task(signal_list.parent.graph, t);
+	add_task(signal_list.base.graph, t);
 	
 	t = new_task();
 	t->id = "sigint_handler";
 	t->handle = &sigint_handler;
 	t->userdata = 0;
 	t->event_type_match = get_signal(SIGINT)->etype;
-	add_task(signal_list.parent.graph, t);
+	add_task(signal_list.base.graph, t);
 	
 	signal(SIGPIPE, SIG_IGN);
 	
-	crtx_start_listener(&signal_list.parent);
+	crtx_start_listener(&signal_list.base);
 	
 	return 0;
 }
 
 void crtx_signals_init() {
 	memset(&signal_list, 0, sizeof(struct crtx_signal_listener));
-// 	crtx_create_graph(&signal_list.parent.graph, "cortex.signals", 0);
+// 	crtx_create_graph(&signal_list.base.graph, "cortex.signals", 0);
 }
 
 void crtx_signals_finish() {
-	if (signal_list.parent.graph->types) {
-		free(signal_list.parent.graph->types);
-		signal_list.parent.graph->types = 0;
+	if (signal_list.base.graph->types) {
+		free(signal_list.base.graph->types);
+		signal_list.base.graph->types = 0;
 	}
 }
 

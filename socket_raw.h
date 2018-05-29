@@ -10,7 +10,7 @@
 #include <netinet/in.h>
 
 struct crtx_socket_raw_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	int ai_family; // AF_UNSPEC AF_INET AF_UNIX
 	int type; // SOCK_STREAM

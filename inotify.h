@@ -12,7 +12,7 @@
 // extern char *inotify_msg_etype[];
 
 struct crtx_inotify_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	int wd;
 	uint32_t mask;

@@ -121,7 +121,7 @@ static void generic_pa_get_info_callback(pa_context *c, void *info, int eol, voi
 		}
 	}
 	
-	crtx_add_event(helper->palist->parent.graph, nevent);
+	crtx_add_event(helper->palist->base.graph, nevent);
 	
 	free(helper);
 }
@@ -186,7 +186,7 @@ static void * pa_tmain(void *data) {
 	
 	palist = (struct crtx_pa_listener *) data;
 	
-	while (!palist->parent.eloop_thread->stop) {
+	while (!palist->base.eloop_thread->stop) {
 		pa_mainloop_iterate(palist->mainloop, 1, 0);
 	}
 	
@@ -208,7 +208,7 @@ static void crtx_free_pa_listener(struct crtx_listener_base *data, void *userdat
 	
 	pa_mainloop_wakeup(palist->mainloop);
 	
-	wait_on_signal(&palist->parent.eloop_thread->finished);
+	wait_on_signal(&palist->base.eloop_thread->finished);
 	
 	pa_context_unref(palist->context);
 	pa_mainloop_free(palist->mainloop);
@@ -268,16 +268,16 @@ struct crtx_listener_base *crtx_new_pa_listener(void *options) {
 		return 0;
 	}
 	
-	palist->parent.free = &crtx_free_pa_listener;
-// 	new_eventgraph(&palist->parent.graph, "pulseaudio", 0);
+	palist->base.free = &crtx_free_pa_listener;
+// 	new_eventgraph(&palist->base.graph, "pulseaudio", 0);
 	
 	// TODO set own poll function that wraps our epoll listener
 	// 	pa_mainloop_set_poll_func(palist->mainloop, pa_poll_func, data);
-// 	palist->parent.thread = get_thread(pa_tmain, palist, 0);
-	palist->parent.thread_job.fct = &pa_tmain;
-	palist->parent.thread_job.fct_data = palist;
+// 	palist->base.thread = get_thread(pa_tmain, palist, 0);
+	palist->base.thread_job.fct = &pa_tmain;
+	palist->base.thread_job.fct_data = palist;
 	
-	return &palist->parent;
+	return &palist->base;
 }
 
 void crtx_pa_init() {

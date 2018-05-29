@@ -9,7 +9,7 @@
 #include <libvirt/libvirt.h>
 
 struct crtx_libvirt_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	char *hypervisor;
 	

@@ -12,7 +12,7 @@
 // extern char *can_msg_etype[];
 
 struct crtx_can_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	char *interface_name;
 	char ignore_if_state;

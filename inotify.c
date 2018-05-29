@@ -209,7 +209,7 @@ static char inotify_eloop() {
 			ev_data = (struct inotify_event *) malloc(sizeof(struct inotify_event) + in_event->len);
 			memcpy(ev_data, in_event, sizeof(struct inotify_event) + in_event->len);
 			
-			event = crtx_create_event(fal->parent.graph->types[0]); // ev_data, sizeof(struct inotify_event) + in_event->len);
+			event = crtx_create_event(fal->base.graph->types[0]); // ev_data, sizeof(struct inotify_event) + in_event->len);
 			// 				event->data.to_dict = &inotify_to_dict;
 			// 				crtx_dict_upgrade_event_data(event, 0, 1);
 			
@@ -222,7 +222,7 @@ static char inotify_eloop() {
 			
 			// 				reference_event_release(event);
 			
-			crtx_add_event(fal->parent.graph, event);
+			crtx_add_event(fal->base.graph, event);
 			
 			// 				wait_on_event(event);
 			
@@ -327,7 +327,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 			
 			crtx_get_main_event_loop();
 			crtx_root->event_loop.mod_fd(
-// 				&crtx_root->event_loop.listener->parent,
+// 				&crtx_root->event_loop.listener->base,
 				&crtx_root->event_loop,
 				&evloop_fd);
 		}
@@ -391,14 +391,14 @@ struct crtx_listener_base *crtx_new_inotify_listener(void *options) {
 	listeners[list_idx] = inlist;
 	
 	
-	inlist->parent.shutdown = &crtx_shutdown_inotify_listener;
+	inlist->base.shutdown = &crtx_shutdown_inotify_listener;
 	
-// 	new_eventgraph(&inlist->parent.graph, 0, inotify_msg_etype);
+// 	new_eventgraph(&inlist->base.graph, 0, inotify_msg_etype);
 	
-// 	inlist->parent.thread = 0;
-	inlist->parent.start_listener = &start_listener;
+// 	inlist->base.thread = 0;
+	inlist->base.start_listener = &start_listener;
 	
-	return &inlist->parent;
+	return &inlist->base;
 }
 
 void crtx_inotify_init() {

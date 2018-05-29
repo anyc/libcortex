@@ -10,7 +10,7 @@ struct crtx_writequeue;
 typedef int (*crtx_wq_write_cb)(struct crtx_writequeue *wqueue, void *userdata);
 
 struct crtx_writequeue {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 // 	struct epoll_event epoll_event;
 	
 	struct crtx_listener_base *read_listener;

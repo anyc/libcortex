@@ -34,7 +34,7 @@ struct crtx_genl_callback {
 };
 
 struct crtx_genl_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	struct nl_sock *sock;
 	

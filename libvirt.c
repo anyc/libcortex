@@ -108,7 +108,7 @@ static void elw_fd_cleanup(struct libvirt_eventloop_wrapper* wrap) {
 	if (wrap->ff)
 		wrap->ff(wrap->opaque);
 	
-// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->evloop_fd);
+// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->base, &wrap->evloop_fd);
 // 	crtx_root->event_loop.del_fd(&crtx_root->event_loop, &wrap->evloop_fd);
 	crtx_evloop_remove_cb(&crtx_root->event_loop, wrap->evloop_fd.callbacks);
 	
@@ -258,7 +258,7 @@ static int elw_virEventRemoveHandleFunc(int watch) {
 	// 	printf("rem id %d\n", wrap->id);
 	DBG("libvirt: remove fd %d (id %d)\n", wrap->evloop_fd.fd, wrap->id);
 	
-// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->evloop_fd);
+// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->base, &wrap->evloop_fd);
 	
 // 	crtx_ll_unlink(&event_list, it);
 // 	
@@ -275,7 +275,7 @@ static void elw_timer_cleanup(struct libvirt_eventloop_wrapper *wrap) {
 	if (wrap->ff)
 		wrap->ff(wrap->opaque);
 	
-// 	crtx_free_listener(&wrap->timer_listener.parent);
+// 	crtx_free_listener(&wrap->timer_listener.base);
 	
 	crtx_ll_unlink(&timeout_list, wrap->llentry);
 	free(wrap->llentry);
@@ -357,8 +357,8 @@ static int elw_virEventAddTimeoutFunc(int timeout, virEventTimeoutCallback cb, v
 	wrap->timer_listener.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
 	wrap->timer_listener.settime_flags = 0;
 	
-// 	wrap->timer_listener.parent.free = &elw_free_timer_lstnr;
-// 	wrap->timer_listener.parent.free_userdata = wrap;
+// 	wrap->timer_listener.base.free = &elw_free_timer_lstnr;
+// 	wrap->timer_listener.base.free_userdata = wrap;
 	
 	blist = create_listener("timer", &wrap->timer_listener);
 	if (!blist) {
@@ -420,7 +420,7 @@ static void elw_virEventUpdateTimeoutFunc(int timer, int timeout) {
 	wrap->timer_listener.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
 	wrap->timer_listener.settime_flags = 0;
 	
-	crtx_update_listener(&wrap->timer_listener.parent);
+	crtx_update_listener(&wrap->timer_listener.base);
 	
 // 	DBG("libvirt: mod timeout %d\n", timeout);
 }
@@ -446,9 +446,9 @@ static int elw_virEventRemoveTimeoutFunc(int timer) {
 // 	wrap->ff(wrap->opaque);
 	wrap->delete = 1;
 	
-// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->parent, &wrap->evloop_fd);
+// 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->base, &wrap->evloop_fd);
 
-	crtx_free_listener(&wrap->timer_listener.parent);
+	crtx_free_listener(&wrap->timer_listener.base);
 	
 // 	crtx_ll_unlink(&timeout_list, it);
 // 	free(it);
@@ -689,7 +689,7 @@ static int domain_evt_cb(virConnectPtr conn,
 	
 	crtx_print_dict(dict);
 	
-	crtx_add_event(lvlist->parent.graph, crtx_event);
+	crtx_add_event(lvlist->base.graph, crtx_event);
 	
 	return 0;
 }
@@ -745,7 +745,7 @@ static void conn_evt_cb(virConnectPtr conn, int reason, void *opaque) {
 	lvlist->conn = 0;
 	
 	// signal crtx that we stopped
-	crtx_stop_listener(&lvlist->parent);
+	crtx_stop_listener(&lvlist->base);
 }
 
 static char stop_listener(struct crtx_listener_base *base) {
@@ -832,8 +832,8 @@ struct crtx_listener_base *crtx_new_libvirt_listener(void *options) {
 	
 	lvlist = (struct crtx_libvirt_listener *) options;
 	
-	lvlist->parent.start_listener = start_listener;
-	lvlist->parent.stop_listener = stop_listener;
+	lvlist->base.start_listener = start_listener;
+	lvlist->base.stop_listener = stop_listener;
 	
 	ret = virInitialize();
 	if (ret < 0) {
@@ -857,9 +857,9 @@ struct crtx_listener_base *crtx_new_libvirt_listener(void *options) {
 // 		return 0;
 // 	}
 	
-// 	new_eventgraph(&lvlist->parent.graph, "libvirt", 0);
+// 	new_eventgraph(&lvlist->base.graph, "libvirt", 0);
 	
-	return &lvlist->parent;
+	return &lvlist->base;
 }
 
 void crtx_libvirt_init() {
@@ -877,18 +877,18 @@ struct crtx_timer_retry_listener *retry_lstnr;
 // struct crtx_listener_base *tblist;
 
 static char libvirt_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	printf("virt %d timer %d\n", lvlist.parent.state, tlist.parent.state);
+// 	printf("virt %d timer %d\n", lvlist.base.state, tlist.base.state);
 	if (!strcmp(event->type, "listener_state")) {
 // 		printf("ev %d\n", event->data.uint32);
-// 		if (event->data.uint32 == CRTX_LSTNR_STARTED && tlist.parent.state == CRTX_LSTNR_STARTED) {
+// 		if (event->data.uint32 == CRTX_LSTNR_STARTED && tlist.base.state == CRTX_LSTNR_STARTED) {
 		if (event->data.uint32 == CRTX_LSTNR_STARTED) {
 // 			printf("stop timer\n");
-			crtx_stop_listener(&retry_lstnr->timer_lstnr.parent);
+			crtx_stop_listener(&retry_lstnr->timer_lstnr.base);
 		}
-// 		if (event->data.uint32 == CRTX_LSTNR_STOPPED && tlist.parent.state == CRTX_LSTNR_STOPPED) {
+// 		if (event->data.uint32 == CRTX_LSTNR_STOPPED && tlist.base.state == CRTX_LSTNR_STOPPED) {
 		if (event->data.uint32 == CRTX_LSTNR_STOPPED) {
 // 			printf("start timer\n");
-			crtx_start_listener(&retry_lstnr->timer_lstnr.parent);
+			crtx_start_listener(&retry_lstnr->timer_lstnr.base);
 		}
 	} else
 	if (!strcmp(event->type, "domain_event")) {
@@ -900,10 +900,10 @@ static char libvirt_test_handler(struct crtx_event *event, void *userdata, void 
 
 // static char timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	if (!strcmp(event->type, CRTX_EVT_TIMER)) {
-// // 		printf("state %d\n", lvlist.parent.state);
-// 		if (lvlist.parent.state == CRTX_LSTNR_STOPPED) {
+// // 		printf("state %d\n", lvlist.base.state);
+// 		if (lvlist.base.state == CRTX_LSTNR_STOPPED) {
 // // 			printf("start libvirt\n");
-// 			crtx_start_listener(&lvlist.parent);
+// 			crtx_start_listener(&lvlist.base);
 // 		}
 // 	}
 // 	
@@ -930,7 +930,7 @@ int libvirt_main(int argc, char **argv) {
 	
 	lbase->state_graph = lbase->graph;
 	
-// 	new_eventgraph(&lvlist->parent.graph, "libvirt", 0);
+// 	new_eventgraph(&lvlist->base.graph, "libvirt", 0);
 	
 	crtx_create_task(lbase->graph, 0, "libvirt_test", libvirt_test_handler, 0);
 	
@@ -954,7 +954,7 @@ int libvirt_main(int argc, char **argv) {
 	
 // 	crtx_start_listener(tblist);
 	
-	retry_lstnr = crtx_timer_retry_listener(&lvlist.parent, 5);
+	retry_lstnr = crtx_timer_retry_listener(&lvlist.base, 5);
 	
 	ret = crtx_start_listener(lbase);
 	if (ret) {

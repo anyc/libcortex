@@ -12,7 +12,7 @@
 // extern char *evdev_msg_etype[];
 
 struct crtx_evdev_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	char *device_path;
 	

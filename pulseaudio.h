@@ -15,7 +15,7 @@
 extern char *crtx_pa_msg_etype[];
 
 struct crtx_pa_listener {
-	struct crtx_listener_base parent;
+	struct crtx_listener_base base;
 	
 	pa_proplist *client_proplist;
 	enum pa_subscription_mask subscription_mask;

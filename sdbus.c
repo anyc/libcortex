@@ -51,7 +51,7 @@ static int match_event_cb_generic(sd_bus_message *m, void *userdata, sd_bus_erro
 	
 	sd_bus_message_ref(m);
 	
-	crtx_add_event(match->listener->parent.graph, event);
+	crtx_add_event(match->listener->base.graph, event);
 	
 	return 0;
 }
@@ -327,12 +327,12 @@ struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 		return 0;
 	}
 	
-// 	sdlist->parent.evloop_fd.fd = sd_bus_get_fd(sdlist->bus);
-// 	sdlist->parent.evloop_fd.crtx_event_flags = crtx_sdbus_get_events(sdlist->bus);
-// 	sdlist->parent.evloop_fd.data = sdlist;
-// 	sdlist->parent.evloop_fd.event_handler = &fd_event_handler;
-// 	sdlist->parent.evloop_fd.event_handler_name = "sdbus event handler";
-	crtx_evloop_init_listener(&sdlist->parent,
+// 	sdlist->base.evloop_fd.fd = sd_bus_get_fd(sdlist->bus);
+// 	sdlist->base.evloop_fd.crtx_event_flags = crtx_sdbus_get_events(sdlist->bus);
+// 	sdlist->base.evloop_fd.data = sdlist;
+// 	sdlist->base.evloop_fd.event_handler = &fd_event_handler;
+// 	sdlist->base.evloop_fd.event_handler_name = "sdbus event handler";
+	crtx_evloop_init_listener(&sdlist->base,
 						sd_bus_get_fd(sdlist->bus),
 						crtx_sdbus_get_events(sdlist->bus),
 						0,
@@ -341,7 +341,7 @@ struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 						0
 					);
 	
-	sdlist->parent.shutdown = &crtx_sdbus_shutdown_listener;
+	sdlist->base.shutdown = &crtx_sdbus_shutdown_listener;
 	
 	if (sdlist->connection_signals) {
 #if 0 // starting with version 237/238
@@ -354,7 +354,7 @@ struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 	}
 	
 	
-	return &sdlist->parent;
+	return &sdlist->base;
 }
 
 static struct crtx_sdbus_listener default_listeners[CRTX_SDBUS_TYPE_MAX] = { { { 0 } } };
@@ -389,7 +389,7 @@ void crtx_sdbus_finish() {
 	
 	for (i=0; i < CRTX_SDBUS_TYPE_MAX; i++) {
 		if (default_listeners[i].bus)
-			crtx_free_listener(&default_listeners[i].parent);
+			crtx_free_listener(&default_listeners[i].base);
 	}
 }
 

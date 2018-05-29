@@ -172,7 +172,7 @@ void push_new_udev_event(struct crtx_udev_listener *ulist, struct udev_device *d
 	nevent->cb_before_release = &udev_event_before_release_cb;
 	// 		reference_event_release(nevent);
 
-	crtx_add_event(ulist->parent.graph, nevent);
+	crtx_add_event(ulist->base.graph, nevent);
 
 	// 		wait_on_event(nevent);
 
@@ -273,12 +273,12 @@ struct crtx_listener_base *crtx_new_udev_listener(void *options) {
 		p+=2;
 	}
 	
-// 	ulist->parent.evloop_fd.fd = udev_monitor_get_fd(ulist->monitor);
-// 	ulist->parent.evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 	ulist->parent.evloop_fd.data = ulist;
-// 	ulist->parent.evloop_fd.event_handler = &udev_fd_event_handler;
-// 	ulist->parent.evloop_fd.event_handler_name = "udev fd handler";
-	crtx_evloop_init_listener(&ulist->parent,
+// 	ulist->base.evloop_fd.fd = udev_monitor_get_fd(ulist->monitor);
+// 	ulist->base.evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 	ulist->base.evloop_fd.data = ulist;
+// 	ulist->base.evloop_fd.event_handler = &udev_fd_event_handler;
+// 	ulist->base.evloop_fd.event_handler_name = "udev fd handler";
+	crtx_evloop_init_listener(&ulist->base,
 						udev_monitor_get_fd(ulist->monitor),
 						EVLOOP_READ,
 						0,
@@ -287,12 +287,12 @@ struct crtx_listener_base *crtx_new_udev_listener(void *options) {
 						0
 					);
 	
-	ulist->parent.shutdown = &crtx_shutdown_udev_listener;
-// 	new_eventgraph(&ulist->parent.graph, "udev", udev_msg_etype);
+	ulist->base.shutdown = &crtx_shutdown_udev_listener;
+// 	new_eventgraph(&ulist->base.graph, "udev", udev_msg_etype);
 	
-	ulist->parent.start_listener = &start_listener;
+	ulist->base.start_listener = &start_listener;
 	
-	return &ulist->parent;
+	return &ulist->base;
 }
 
 void crtx_udev_init() {
