@@ -230,7 +230,7 @@ int crtx_get_event_loop(struct crtx_event_loop *evloop, const char *id) {
 
 struct crtx_event_loop* crtx_get_main_event_loop() {
 // 	printf("get main loop %p\n", crtx_root->event_loop.listener);
-	if (!crtx_root->event_loop.listener) {
+	if (!crtx_root->event_loop.id) {
 // 		struct crtx_listener_base *lbase;
 		int ret;
 		const char *chosen_evloop;

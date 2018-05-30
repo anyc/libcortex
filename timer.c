@@ -85,7 +85,7 @@ static char timer_fd_event_handler(struct crtx_event *event, void *userdata, voi
 		ERROR("reading from timerfd failed: %zd != %" PRIu64 " %s (%d)\n", s, exp, strerror(errno), errno);
 		return 0;
 	}
-	printf("queing timer event\n");
+	
 	event = crtx_create_event(CRTX_EVT_TIMER);
 // 	event->data.uint32 = exp;
 // 	event->data.type = 'u';

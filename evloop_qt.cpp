@@ -20,35 +20,22 @@ extern "C" {
 static int qt_flags2crtx_event_flags(enum QSocketNotifier::Type qt_flags);
 
 class MyQSocketNotifier : public QSocketNotifier {
-// 	Q_OBJECT
-	
 	using QSocketNotifier::QSocketNotifier;
 	
 	public:
 		struct crtx_evloop_callback *el_cb;
-// 		MyQSocketNotifier() {}
-// 		MyQSocketNotifier();
-// 		virtual ~MyQSocketNotifier() {}
 	
 	public slots:
 		void socketEvent(int socket) {
-// 			int readret;
-// 			int buf[1024];
-// 			qDebug()<<"rxEvent()";
-// 			readret = read(socket/*rxfd*/, buf, 2*sizeof(double));
-// 			qDebug()<<"Received:"<<buf[0]<<", "<<buf[1]<<" read() returns "<<readret;
-			
 			this->el_cb->triggered_flags = qt_flags2crtx_event_flags(this->type());
-			
-// 			printf("asd %d\n", this->el_cb->triggered_flags);
 			
 			crtx_evloop_callback(this->el_cb);
 		}
 };
 
-struct eloop_data {
-	MyQSocketNotifier *notifiers;
-};
+// struct eloop_data {
+// 	struct crtx_ll *notifiers;
+// };
 
 #ifndef CRTX_TEST
 
@@ -92,13 +79,19 @@ static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evl
 	MyQSocketNotifier *notifier;
 	struct crtx_evloop_callback *el_cb;
 	
-	if (!evloop_fd->el_data) {
-		evloop_fd->el_data = (struct eloop_data*) calloc(1, sizeof(struct eloop_data));
-	}
+// 	if (!evloop_fd->el_data) {
+// 		evloop_fd->el_data = (struct eloop_data*) calloc(1, sizeof(struct eloop_data));
+// 	}
 	
 	for (el_cb=evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
-		if (!el_cb->active)
+		if (!el_cb->active && el_cb->el_data) {
+			notifier = (MyQSocketNotifier*) el_cb->el_data;
+			delete notifier;
+			
+			el_cb->el_data = 0;
+			
 			continue;
+		}
 		
 		notifier = new MyQSocketNotifier(evloop_fd->fd, crtx_event_flags2qt_flags(el_cb->crtx_event_flags));
 	// 	connect(notifier, SIGNAL(activated(int)), SLOT(rxEvent(int)), Qt::BlockingQueuedConnection );
@@ -106,6 +99,7 @@ static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evl
 		notifier->connect(notifier, &MyQSocketNotifier::activated, notifier, &MyQSocketNotifier::socketEvent);
 		
 		notifier->el_cb = el_cb;
+		el_cb->el_data = notifier;
 		
 		notifier->setEnabled(true);
 	}
@@ -126,26 +120,19 @@ static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evl
 // }
 
 static int evloop_start(struct crtx_event_loop *evloop) {
-	// 	struct crtx_event_loop_payload *el_payload;
-	// 	struct epoll_event ctrl_event;
-	
+	// Qt's event loop should be already running
 	return 0;
 }
 
 static int evloop_stop(struct crtx_event_loop *evloop) {
-	
 	return 0;
 }
 
 static int evloop_create(struct crtx_event_loop *evloop) {
-// 	struct crtx_event_loop_payload *el_payload;
-// 	struct epoll_event ctrl_event;
-	
 	return 0;
 }
 
 static int evloop_release(struct crtx_event_loop *evloop) {
-	
 	return 0;
 }
 
@@ -166,9 +153,7 @@ struct crtx_event_loop qt_loop = {
 	&evloop_start,
 	&evloop_stop,
 	
-// 	&crtx_evloop_qt_add_fd,
 	&crtx_evloop_qt_mod_fd,
-// 	&crtx_evloop_qt_del_fd,
 };
 
 void crtx_evloop_qt_init(struct crtx_event_loop *evloop) {
@@ -193,9 +178,15 @@ extern "C" {
 
 struct crtx_timer_listener tlist;
 struct crtx_listener_base *blist;
+int counter = 0;
+QCoreApplication *a;
 
 static char timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	printf("received timer event: %u\n", event->data.uint32);
+	
+	counter++;
+	if (counter > 2)
+		a->exit(0);
 	
 	return 1;
 }
@@ -233,13 +224,13 @@ int main(int argc, char *argv[]) {
 	crtx_set_main_event_loop("qt");
 // 	crtx_evloop_qt_start();
 	
-	QCoreApplication a(argc, argv);
+	a = new QCoreApplication(argc, argv);
 	
 	crtx_handle_std_signals();
 	
 	setup_timer();
 	
-	ret = a.exec();
+	ret = a->exec();
 	
 	crtx_finish();
 	

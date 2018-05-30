@@ -24,6 +24,7 @@ struct crtx_evloop_callback {
 	char active;
 	
 	void *data; // data that can be set by the specific listener
+	void *el_data; // data that can be set by the event loop implementation
 	
 	int triggered_flags;
 	
