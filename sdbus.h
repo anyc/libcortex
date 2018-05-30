@@ -59,7 +59,7 @@ struct crtx_sdbus_listener {
 };
 
 int crtx_sd_bus_message_read_string(sd_bus_message *m, char **p);
-char crtx_open_sdbus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name);
+char crtx_sdbus_open_bus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name);
 void crtx_sdbus_print_msg(sd_bus_message *m);
 
 int crtx_sdbus_match_add(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus_match *match);

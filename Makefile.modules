@@ -32,6 +32,9 @@ LDLIBS_pulseaudio+=$(shell $(PKG_CONFIG) --libs libpulse)
 CFLAGS_sdbus+=$(shell $(PKG_CONFIG) --cflags libsystemd)
 LDLIBS_sdbus+=$(shell $(PKG_CONFIG) --libs libsystemd)
 
+DEPS_sd_bus_notifications+=sdbus
+
+CFLAGS_sip+=-DENABLE_TRACE
 LDLIBS_sip+=-leXosip2 -losipparser2
 
 CFLAGS_udev+=$(shell $(PKG_CONFIG) --cflags libudev)

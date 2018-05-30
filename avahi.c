@@ -374,7 +374,7 @@ struct crtx_listener_base *crtx_new_avahi_listener(void *options) {
 	
 	alist = (struct crtx_avahi_listener*) options;
 	
-	ret = crtx_open_sdbus(&alist->sdlist.bus, CRTX_SDBUS_TYPE_SYSTEM, 0);
+	ret = crtx_sdbus_open_bus(&alist->sdlist.bus, CRTX_SDBUS_TYPE_SYSTEM, 0);
 	
 	/*
 	 * setup SD-BUS listener

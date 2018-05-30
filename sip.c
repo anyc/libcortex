@@ -22,15 +22,16 @@ static void sip_event_before_release_cb(struct crtx_event *event, void *userdata
 }
 
 static char sip_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_evloop_fd *payload;
+// 	struct crtx_evloop_fd *payload;
 	struct crtx_sip_listener *slist;
 	eXosip_event_t *evt;
 	struct crtx_event *nevent;
+	struct crtx_evloop_callback *el_cb;
 	
+	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+// 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
-	payload = (struct crtx_evloop_fd*) event->data.pointer;
-	
-	slist = (struct crtx_sip_listener *) payload->data;
+	slist = (struct crtx_sip_listener *) el_cb->data;
 	
 	while(1) {
 		evt = eXosip_event_wait(slist->ctx, 0, 0);
@@ -65,7 +66,6 @@ static char start_listener(struct crtx_listener_base *listener) {
 	
 	snprintf(from, 255, "sip:%s@%s", slist->username, slist->dst_addr);
 	snprintf(proxy, 255, "sip:%s", slist->dst_addr);
-	// 	r = initial_register(ctx, from, proxy, &rid);
 	
 	
 	eXosip_lock(slist->ctx);
@@ -88,18 +88,13 @@ static char start_listener(struct crtx_listener_base *listener) {
 	}
 	eXosip_unlock (slist->ctx);
 	
-// 	slist->base.evloop_fd.fd = eXosip_event_geteventsocket(slist->ctx);
-// 	slist->base.evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 	slist->base.evloop_fd.data = slist;
-// 	slist->base.evloop_fd.event_handler = &sip_fd_event_handler;
-// 	slist->base.evloop_fd.event_handler_name = "sip fd handler";
-	crtx_evloop_init_listener(&slist->base.evloop_fd,
+	crtx_evloop_init_listener(&slist->base,
 						eXosip_event_geteventsocket(slist->ctx),
 						EVLOOP_READ,
 						0,
 						&sip_fd_event_handler,
 						slist,
-						0,
+						0
 					);
 	
 	return 0;

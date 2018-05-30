@@ -145,6 +145,13 @@ static char notification_signal_handler(struct crtx_event *event, void *userdata
 	return 1;
 }
 
+static struct crtx_sdbus_match notification_match[] = {
+	/* slot, match string, event type, callback fct, callback data, <reserved> */
+	{ 0, "type='signal',path='/org/freedesktop/Notifications'", EV_NOTIF_SIGNAL, 0, 0, 0 },
+	{0},
+};
+static struct crtx_sdbus_listener *sdbus_lstnr;
+
 void crtx_send_notification(char *icon, char *title, char *text, char **actions, char**chosen_action) {
 	if (!initialized) {
 		int ret;
@@ -160,7 +167,10 @@ void crtx_send_notification(char *icon, char *title, char *text, char **actions,
 		
 		// TODO check if sd-bus module is initialized!
 		
-		sd_bus_add_signal_listener(sd_bus_main_bus, "/org/freedesktop/Notifications", EV_NOTIF_SIGNAL);
+// 		sd_bus_add_signal_listener(sd_bus_main_bus, "", EV_NOTIF_SIGNAL);
+		sdbus_lstnr = crtx_sdbus_get_default_listener(CRTX_SDBUS_TYPE_USER);
+		
+		crtx_sdbus_match_add(sdbus_lstnr, &notification_match[0]);
 		
 		crtx_create_task(graph, 200, "sd_bus_handle_notify_signal", &notification_signal_handler, 0);
 		
