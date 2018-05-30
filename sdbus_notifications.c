@@ -9,7 +9,7 @@
 #include "intern.h"
 #include "core.h"
 #include "sdbus.h"
-#include "sd_bus_notifications.h"
+#include "sdbus_notifications.h"
 #include "threads.h"
 #include "dict.h"
 
@@ -21,21 +21,97 @@ char *notif_event_types[] = { EV_NOTIF_SIGNAL, 0 };
 static char initialized = 0;
 
 struct wait_list_item {
+	struct crtx_dll ll;
+	
 	uint32_t id;
 	char *answer;
 	struct crtx_signal barrier;
 	
-	struct wait_list_item *prev;
-	struct wait_list_item *next;
+// 	struct wait_list_item *prev;
+// 	struct wait_list_item *next;
 };
 
 struct wait_list_item *wait_list = 0;
 pthread_mutex_t wait_list_mutex;
 
-static sd_bus *def_bus = 0;
+
+static struct crtx_sdbus_match notification_match[] = {
+	/* slot, match string, event type, callback fct, callback data, <reserved> */
+	{ 0, "type='signal',path='/org/freedesktop/Notifications'", EV_NOTIF_SIGNAL, 0, 0, 0 },
+	{0},
+};
+
+static struct crtx_sdbus_listener *sdbus_lstnr;
+
+
+
+static char notification_signal_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	sd_bus_message *m = (sd_bus_message *) event->data.pointer;
+	struct wait_list_item *it;
+	char *s;
+	const char *signal;
+	uint32_t id, reason;
+	
+	signal = sd_bus_message_get_member(m);
+	
+	if (!strcmp(signal, "ActionInvoked")) {
+		sd_bus_message_read_basic(m, 'u', &id);
+		sd_bus_message_read_basic(m, 's', &s);
+	} else
+	if (!strcmp(signal, "NotificationClosed")) {
+		sd_bus_message_read_basic(m, 'u', &id);
+		sd_bus_message_read_basic(m, 'u', &reason);
+		s = 0;
+	}
+	
+	// lookup list of notifications and register answer
+	pthread_mutex_lock(&wait_list_mutex);
+	for (it=wait_list; it; it = (struct wait_list_item *) it->ll.next) {
+		if (it->id == id) {
+			if (s)
+				it->answer = crtx_stracpy(s, 0);
+			else
+				it->answer = 0;
+			
+			send_signal(&it->barrier, 1);
+			break;
+		}
+	}
+	pthread_mutex_unlock(&wait_list_mutex);
+	
+	return 1;
+}
+
+static void init_listener() {
+	if (!initialized) {
+		int ret;
+		struct crtx_graph *graph;
+		
+		
+		ret = pthread_mutex_init(&wait_list_mutex, 0); ASSERT(ret >= 0);
+		
+		graph = get_graph_for_event_type(EV_NOTIF_SIGNAL, notif_event_types);
+		
+		/*
+		 * instruct the sd_bus module to listen for notification DBUS signals
+		 */
+		
+		// TODO check if sd-bus module is initialized!
+		
+		// 		sd_bus_add_signal_listener(sd_bus_main_bus, "", EV_NOTIF_SIGNAL);
+		sdbus_lstnr = crtx_sdbus_get_default_listener(CRTX_SDBUS_TYPE_USER);
+		
+		crtx_sdbus_match_add(sdbus_lstnr, &notification_match[0]);
+		
+		crtx_create_task(graph, 200, "sd_bus_handle_notify_signal", &notification_signal_handler, 0);
+		
+		
+		initialized = 1;
+	}
+}
 
 /// send a SD-BUS message to the notification service
-static uint32_t sd_bus_send_notification(char *icon, char *title, char *text, char **actions) {
+static uint32_t sdbus_send_notification(char *icon, char *title, char *text, char **actions) {
 	int r;
 	sd_bus_error error = SD_BUS_ERROR_NULL;
 	sd_bus_message *m = NULL, *reply = NULL;
@@ -43,15 +119,16 @@ static uint32_t sd_bus_send_notification(char *icon, char *title, char *text, ch
 	int32_t id = 0;
 	int32_t time = 0;
 	
-	if (!def_bus) {
-		r = sd_bus_default(&def_bus);
-		if (r < 0) {
-			printf("Failed to connect to bus: %s\n", strerror(-r));
-			return 0;
-		}
-	}
+// 	if (!def_bus) {
+// 		r = sd_bus_default(&def_bus);
+// 		if (r < 0) {
+// 			printf("Failed to connect to bus: %s\n", strerror(-r));
+// 			return 0;
+// 		}
+// 	}
+	init_listener();
 	
-	r = sd_bus_message_new_method_call(def_bus,
+	r = sd_bus_message_new_method_call(sdbus_lstnr->bus,
 							&m,
 							"org.freedesktop.Notifications",  /* service to contact */
 							"/org/freedesktop/Notifications", /* object path */
@@ -95,7 +172,7 @@ static uint32_t sd_bus_send_notification(char *icon, char *title, char *text, ch
 	
 	r = sd_bus_message_append_basic(m, 'i', &time); CRTX_RET_GEZ(r)
 	
-	r = sd_bus_call(def_bus, m, -1, &error, &reply); CRTX_RET_GEZ(r)
+	r = sd_bus_call(sdbus_lstnr->bus, m, -1, &error, &reply); CRTX_RET_GEZ(r)
 	
 	uint32_t res;
 	r = sd_bus_message_read(reply, "u", &res);
@@ -108,75 +185,8 @@ static uint32_t sd_bus_send_notification(char *icon, char *title, char *text, ch
 	return res;
 }
 
-static char notification_signal_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	sd_bus_message *m = (sd_bus_message *) event->data.pointer;
-	struct wait_list_item *it;
-	char *s;
-	const char *signal;
-	uint32_t id, reason;
-	
-	signal = sd_bus_message_get_member(m);
-	
-	if (!strcmp(signal, "ActionInvoked")) {
-		sd_bus_message_read_basic(m, 'u', &id);
-		sd_bus_message_read_basic(m, 's', &s);
-	} else
-	if (!strcmp(signal, "NotificationClosed")) {
-		sd_bus_message_read_basic(m, 'u', &id);
-		sd_bus_message_read_basic(m, 'u', &reason);
-		s = 0;
-	}
-	
-	// lookup list of notifications and register answer
-	pthread_mutex_lock(&wait_list_mutex);
-	for (it=wait_list; it; it = it->next) {
-		if (it->id == id) {
-			if (s)
-				it->answer = crtx_stracpy(s, 0);
-			else
-				it->answer = 0;
-			
-			send_signal(&it->barrier, 1);
-			break;
-		}
-	}
-	pthread_mutex_unlock(&wait_list_mutex);
-	
-	return 1;
-}
-
-static struct crtx_sdbus_match notification_match[] = {
-	/* slot, match string, event type, callback fct, callback data, <reserved> */
-	{ 0, "type='signal',path='/org/freedesktop/Notifications'", EV_NOTIF_SIGNAL, 0, 0, 0 },
-	{0},
-};
-static struct crtx_sdbus_listener *sdbus_lstnr;
-
 void crtx_send_notification(char *icon, char *title, char *text, char **actions, char**chosen_action) {
-	if (!initialized) {
-		int ret;
-		struct crtx_graph *graph;
-		
-		ret = pthread_mutex_init(&wait_list_mutex, 0); ASSERT(ret >= 0);
-		
-		graph = get_graph_for_event_type(EV_NOTIF_SIGNAL, notif_event_types);
-		
-		/*
-		 * instruct the sd_bus module to listen for notification DBUS signals
-		 */
-		
-		// TODO check if sd-bus module is initialized!
-		
-// 		sd_bus_add_signal_listener(sd_bus_main_bus, "", EV_NOTIF_SIGNAL);
-		sdbus_lstnr = crtx_sdbus_get_default_listener(CRTX_SDBUS_TYPE_USER);
-		
-		crtx_sdbus_match_add(sdbus_lstnr, &notification_match[0]);
-		
-		crtx_create_task(graph, 200, "sd_bus_handle_notify_signal", &notification_signal_handler, 0);
-		
-		
-		initialized = 1;
-	}
+	init_listener();
 	
 	if (actions && chosen_action) {
 		struct wait_list_item *it;
@@ -188,22 +198,26 @@ void crtx_send_notification(char *icon, char *title, char *text, char **actions,
 		pthread_mutex_lock(&wait_list_mutex);
 		
 		// add this notification to list of unanswered notifications
-		for (it = wait_list; it && it->next; it = it->next) {}
-		if (it) {
-			it->next = (struct wait_list_item *) malloc(sizeof(struct wait_list_item));
-			it->next->prev = it;
-			it = it->next;
-		} else {
-			wait_list = (struct wait_list_item *) malloc(sizeof(struct wait_list_item));
-			it = wait_list;
-			it->prev = 0;
-		}
-		it->next = 0;
+// 		for (it = wait_list; it && it->next; it = it->next) {}
+// 		if (it) {
+// 			it->next = (struct wait_list_item *) malloc(sizeof(struct wait_list_item));
+// 			it->next->prev = it;
+// 			it = it->next;
+// 		} else {
+// 			wait_list = (struct wait_list_item *) malloc(sizeof(struct wait_list_item));
+// 			it = wait_list;
+// 			it->prev = 0;
+// 		}
+// 		it->next = 0;
+		
+		it = (struct wait_list_item *) calloc(1, sizeof(struct wait_list_item));
+		
+		crtx_dll_append((struct crtx_dll**) &wait_list, &it->ll);
 		
 		pthread_mutex_unlock(&wait_list_mutex);
 		
 		init_signal(&it->barrier);
-		it->id = sd_bus_send_notification(icon, title, text, actions);
+		it->id = sdbus_send_notification(icon, title, text, actions);
 		
 		wait_on_signal(&it->barrier);
 		
@@ -211,17 +225,19 @@ void crtx_send_notification(char *icon, char *title, char *text, char **actions,
 		
 		// remove this notification from list
 		pthread_mutex_lock(&wait_list_mutex);
-		if (it->prev)
-			it->prev->next = it->next;
-		else
-			wait_list = it->next;
-		if (it->next)
-			it->next->prev = it->prev;
+// 		if (it->prev)
+// 			it->prev->next = it->next;
+// 		else
+// 			wait_list = it->next;
+// 		if (it->next)
+// 			it->next->prev = it->prev;
+		crtx_dll_unlink((struct crtx_dll**) &wait_list, &it->ll);
+		
 		pthread_mutex_unlock(&wait_list_mutex);
 		
 		free(it);
 	} else {
-		sd_bus_send_notification(icon, title, text, 0);
+		sdbus_send_notification(icon, title, text, 0);
 	}
 }
 
@@ -321,14 +337,14 @@ static char notify_send_handler(struct crtx_event *event, void *userdata, void *
 // 	return &slistener->base;
 // }
 
-void crtx_sd_bus_notifications_init() {
+void crtx_sdbus_notifications_init() {
 	crtx_register_handler_for_event_type("cortex.user_notification", "dbus_notification", &notify_send_handler, 0);
 }
 
-void crtx_sd_bus_notifications_finish() {
-	if (def_bus) {
-		sd_bus_flush(def_bus);
-		sd_bus_unref(def_bus);
-// 		sd_bus_close(def_bus);
-	}
+void crtx_sdbus_notifications_finish() {
+// 	if (def_bus) {
+// 		sd_bus_flush(def_bus);
+// 		sd_bus_unref(def_bus);
+// // 		sd_bus_close(def_bus);
+// 	}
 }

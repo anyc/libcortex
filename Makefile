@@ -37,7 +37,9 @@ include Makefile.modules
 BUILTIN_MODULES=signals epoll
 STATIC_TOOLS+=cache dict_inout dict_inout_json event_comm socket
 STATIC_MODULES+=fanotify inotify netlink_raw nl_route_raw uevents socket_raw timer writequeue
-DYN_MODULES+=avahi can evdev evloop_qt libvirt netlink_ge nl_libnl nf_queue pulseaudio readline sdbus sip udev v4l xcb_randr
+DYN_MODULES+=avahi can evdev evloop_qt libvirt netlink_ge nl_libnl nf_queue \
+	pulseaudio readline sdbus sip udev v4l xcb_randr sdbus_notifications \
+	
 
 LAYER2_MODULES?=dynamic_evdev netif
 
