@@ -1,7 +1,7 @@
 
 #STATIC_TOOLS=cache dict_inout dict_inout_json event_comm socket evloop
 #STATIC_MODULES=fanotify inotify netlink_raw nl_route_raw uevents socket_raw timer writequeue
-#DYN_MODULES=avahi can evdev libvirt netlink_ge nl_libnl nf_queue pulseaudio readline sdbus sip udev v4l xcb_randr
+#DYN_MODULES=avahi can evdev evloop_qt libvirt netlink_ge nl_libnl nf_queue pulseaudio readline sdbus sip udev v4l xcb_randr
 
 # LAYER2=crtx_layer2
 # LAYER2_TESTS=crtx_layer2_tests
