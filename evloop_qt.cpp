@@ -17,13 +17,18 @@ extern "C" {
 #include "evloop_qt.h"
 }
 
+static int qt_flags2crtx_event_flags(enum QSocketNotifier::Type qt_flags);
+
 class MyQSocketNotifier : public QSocketNotifier {
-	Q_OBJECT
+// 	Q_OBJECT
 	
 	using QSocketNotifier::QSocketNotifier;
 	
 	public:
 		struct crtx_evloop_callback *el_cb;
+// 		MyQSocketNotifier() {}
+// 		MyQSocketNotifier();
+// 		virtual ~MyQSocketNotifier() {}
 	
 	public slots:
 		void socketEvent(int socket) {
@@ -32,13 +37,20 @@ class MyQSocketNotifier : public QSocketNotifier {
 // 			qDebug()<<"rxEvent()";
 // 			readret = read(socket/*rxfd*/, buf, 2*sizeof(double));
 // 			qDebug()<<"Received:"<<buf[0]<<", "<<buf[1]<<" read() returns "<<readret;
-			printf("asdasd %d\n", socket);
+			
+			this->el_cb->triggered_flags = qt_flags2crtx_event_flags(this->type());
+			
+// 			printf("asd %d\n", this->el_cb->triggered_flags);
+			
+			crtx_evloop_callback(this->el_cb);
 		}
 };
 
 struct eloop_data {
 	MyQSocketNotifier *notifiers;
 };
+
+#ifndef CRTX_TEST
 
 static enum MyQSocketNotifier::Type crtx_event_flags2qt_flags(int crtx_event_flags) {
 	enum MyQSocketNotifier::Type ret;
@@ -53,6 +65,23 @@ static enum MyQSocketNotifier::Type crtx_event_flags2qt_flags(int crtx_event_fla
 		ret = MyQSocketNotifier::Write;
 	else if (crtx_event_flags & EVLOOP_SPECIAL)
 		ret = MyQSocketNotifier::Exception;
+	
+	return ret;
+}
+
+static int qt_flags2crtx_event_flags(enum QSocketNotifier::Type qt_flags) {
+	int ret;
+	
+	if (POPCOUNT32(qt_flags) > 1) {
+		ERROR("evloop_qt: %u\n", POPCOUNT32(qt_flags));
+	}
+	
+	if (qt_flags == MyQSocketNotifier::Read)
+		ret = EVLOOP_READ;
+	else if (qt_flags == MyQSocketNotifier::Write)
+		ret = EVLOOP_WRITE;
+	else if (qt_flags == MyQSocketNotifier::Exception)
+		ret = EVLOOP_SPECIAL;
 	
 	return ret;
 }
@@ -76,9 +105,9 @@ static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evl
 		
 		notifier->connect(notifier, &MyQSocketNotifier::activated, notifier, &MyQSocketNotifier::socketEvent);
 		
-		notifier->setEnabled(true);
-		
 		notifier->el_cb = el_cb;
+		
+		notifier->setEnabled(true);
 	}
 	
 // 	evloop_fd->el_data = notifier;
@@ -142,13 +171,79 @@ struct crtx_event_loop qt_loop = {
 // 	&crtx_evloop_qt_del_fd,
 };
 
-void crtx_evloop_qt_start(struct crtx_event_loop *evloop) {
+void crtx_evloop_qt_init(struct crtx_event_loop *evloop) {
 	qt_loop.ll.data = &qt_loop;
 	crtx_ll_append((struct crtx_ll**) &crtx_event_loops, &qt_loop.ll);
 }
 
-void crtx_evloop_qt_stop(struct crtx_event_loop *evloop) {
+void crtx_evloop_qt_finish(struct crtx_event_loop *evloop) {
 	
 }
 
 }
+
+
+#else
+
+#include <QCoreApplication>
+
+extern "C" {
+#include "timer.h"
+}
+
+struct crtx_timer_listener tlist;
+struct crtx_listener_base *blist;
+
+static char timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	printf("received timer event: %u\n", event->data.uint32);
+	
+	return 1;
+}
+
+void setup_timer() {
+	memset(&tlist, 0, sizeof(struct crtx_timer_listener));
+	
+	// set time for (first) alarm
+	tlist.newtimer.it_value.tv_sec = 1;
+	tlist.newtimer.it_value.tv_nsec = 0;
+	
+	// set interval for repeating alarm, set to 0 to disable repetition
+	tlist.newtimer.it_interval.tv_sec = 5;
+	tlist.newtimer.it_interval.tv_nsec = 0;
+	
+	tlist.clockid = CLOCK_REALTIME;
+	tlist.settime_flags = 0;
+	
+	blist = create_listener("timer", &tlist);
+	if (!blist) {
+		ERROR("create_listener(timer) failed\n");
+		exit(1);
+	}
+	
+	crtx_create_task(blist->graph, 0, "timertest", timertest_handler, 0);
+	
+	crtx_start_listener(blist);
+}
+
+int main(int argc, char *argv[]) {
+	int ret;
+	
+	crtx_init();
+	
+	crtx_set_main_event_loop("qt");
+// 	crtx_evloop_qt_start();
+	
+	QCoreApplication a(argc, argv);
+	
+	crtx_handle_std_signals();
+	
+	setup_timer();
+	
+	ret = a.exec();
+	
+	crtx_finish();
+	
+	return ret;
+}
+
+#endif

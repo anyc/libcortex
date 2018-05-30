@@ -100,6 +100,7 @@ extern struct crtx_event_loop *crtx_event_loops;
 struct crtx_event_loop* crtx_get_main_event_loop();
 int crtx_get_event_loop(struct crtx_event_loop *evloop, const char *id);
 
+void crtx_evloop_callback(struct crtx_evloop_callback *el_cb);
 // void crtx_evloop_add_fd(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd);
 // void crtx_evloop_mod_fd(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd);
 // void crtx_evloop_del_fd(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd);

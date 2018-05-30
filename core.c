@@ -37,7 +37,7 @@ char *crtx_evt_outbox[] = { CRTX_EVT_OUTBOX, 0 };
 
 char crtx_verbosity = CRTX_INFO;
 
-static void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **event_types);
+static void new_eventgraph(struct crtx_graph **crtx_graph, const char *name, char **event_types);
 
 
 char *crtx_stracpy(const char *str, size_t *str_length) {
@@ -250,7 +250,7 @@ char crtx_update_listener(struct crtx_listener_base *listener) {
 // 	free_listener( (struct crtx_listener_base*) userdata);
 // }
 
-struct crtx_listener_base *create_listener(char *id, void *options) {
+struct crtx_listener_base *create_listener(const char *id, void *options) {
 	struct crtx_listener_repository *l;
 	struct crtx_listener_base *lbase;
 	char static_lstnr;
@@ -318,7 +318,7 @@ struct crtx_listener_base *create_listener(char *id, void *options) {
 	return lbase;
 }
 
-int crtx_create_listener(char *id, void *options) {
+int crtx_create_listener(const char *id, void *options) {
 	struct crtx_listener_base *lbase;
 	
 	
@@ -622,7 +622,7 @@ void add_task(struct crtx_graph *graph, struct crtx_task *task) {
 	}
 }
 
-struct crtx_task *crtx_create_task(struct crtx_graph *graph, unsigned char position, char *id, crtx_handle_task_t handler, void *userdata) {
+struct crtx_task *crtx_create_task(struct crtx_graph *graph, unsigned char position, const char *id, crtx_handle_task_t handler, void *userdata) {
 	struct crtx_task * task;
 	
 	task = new_task();
@@ -979,7 +979,7 @@ void add_raw_event(struct crtx_event *event) {
 }
 
 
-void crtx_init_graph(struct crtx_graph *graph, char *name) {
+void crtx_init_graph(struct crtx_graph *graph, const char *name) {
 	int i, ret;
 	
 	ret = pthread_mutex_init(&graph->mutex, 0); ASSERT(ret >= 0);
@@ -1004,7 +1004,7 @@ void crtx_init_graph(struct crtx_graph *graph, char *name) {
 	UNLOCK(crtx_root->graphs_mutex);
 }
 
-static void new_eventgraph(struct crtx_graph **crtx_graph, char *name, char **event_types) {
+static void new_eventgraph(struct crtx_graph **crtx_graph, const char *name, char **event_types) {
 	struct crtx_graph *graph;
 // 	int i, ret;
 	
@@ -1941,3 +1941,11 @@ void crtx_autofill_graph_with_tasks(struct crtx_graph *graph, char *event_type) 
 		}
 	}
 }
+
+void crtx_set_main_event_loop(const char *event_loop) {
+	crtx_root->chosen_event_loop = event_loop;
+}
+
+// void crtx_start_event_loop() {
+// 	
+// }

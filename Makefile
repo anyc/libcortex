@@ -21,9 +21,10 @@ OBJS+=core.o \
 	threads.o dict.o \
 	llist.o dllist.o
 
-AVAILABLE_TESTS=avahi can epoll evdev libvirt nl_libnl netlink_ge nl_route_raw pulseaudio sdbus sip timer udev uevents v4l xcb_randr writequeue
+AVAILABLE_TESTS=avahi can epoll evdev evloop_qt libvirt nl_libnl netlink_ge nl_route_raw pulseaudio sdbus sip timer udev uevents v4l xcb_randr writequeue
 
-CFLAGS+=$(DEBUG_CFLAGS) -D_FILE_OFFSET_BITS=64 -fPIC -DCRTX_PLUGIN_DIR=\"$(plugindir)\"
+CFLAGS+=$(DEBUG_FLAGS) -D_FILE_OFFSET_BITS=64 -fPIC -DCRTX_PLUGIN_DIR=\"$(plugindir)\"
+CXXFLAGS+=$(DEBUG_FLAGS)
 LDLIBS+=-lpthread -ldl
 
 #
@@ -80,7 +81,7 @@ clean:
 	rm -rf *.o $(APP) core_modules.h $(TESTS) $(SHAREDLIB) libcrtx_*.so
 
 debug:
-	$(MAKE) $(MAKEFILE) DEBUG_CFLAGS="-g -g3 -gdwarf-2 -DDEBUG -Wall" #-Werror 
+	$(MAKE) $(MAKEFILE) DEBUG_FLAGS="-g -g3 -gdwarf-2 -DDEBUG -Wall" #-Werror 
 
 
 crtx_include_dir:
@@ -125,7 +126,7 @@ $(SHAREDLIB): $(OBJS)
 	$(CC) -shared -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS)
 
 libcrtx_%.so: LDLIBS+=$(LDLIBS_$(patsubst libcrtx_%.so,%,$@)) $(foreach d,$(DEPS_$(patsubst libcrtx_%.so,%,$@)),$(if $(findstring $(d),$(DYN_MODULES)),$(LDLIBS_$(d))) )
-libcrtx_%.so: %.o $(SHAREDLIB)
+libcrtx_%.so: %.o $(SHAREDLIB) # $(OBJS_$(patsubst libcrtx_%.so,%,$@))
 	$(CC) -shared $(LDFLAGS) $< -o $@ $(LDLIBS) -L. -lcrtx
 
 plugins: $(SHAREDLIB) $(DYN_MODULES_LIST)
@@ -139,6 +140,11 @@ tests: $(SHAREDLIB) $(TESTS) layer2_tests
 %.test: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) $< -o $@ $(LDFLAGS) $(LDLIBS) -L. -lcrtx
 
+%.test: CXXFLAGS+=-DCRTX_TEST -g -g3 -gdwarf-2 -DDEBUG -Wall $(CXXFLAGS_${@:.test=})
+%.test: LDLIBS+=$(LDLIBS_${@:.test=}) $(foreach d,${@:.test=} $(DEPS_${@:.test=}),$(if $(findstring $(d),$(DYN_MODULES)),-lcrtx_$(d)))
+%.test: %.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< -o $@ $(LDFLAGS) $(LDLIBS) -L. -lcrtx
+	
 examples/libcrtx_%.so: examples/control_%.c
 	$(CC) -shared -o $@ -fPIC $< $(LDFLAGS) $(CFLAGS) -I. $(LDLIBS)
 

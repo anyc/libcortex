@@ -39,6 +39,52 @@ static char evloop_ctrl_pipe_handler(struct crtx_event *event, void *userdata, v
 	return 0;
 }
 
+void crtx_evloop_callback(struct crtx_evloop_callback *el_cb) {
+	struct crtx_event *event;
+	
+// 	el_cb->triggered_flags = rec_event->events;
+	
+	// 	memcpy(el_cb->el_data, rec_event, sizeof(struct epoll_event));
+	
+	if ((el_cb->crtx_event_flags & el_cb->triggered_flags) == 0)
+		return;
+	
+	VDBG("received wakeup for fd %d\n", el_cb->fd_entry->fd);
+	
+	if (el_cb->graph || el_cb->event_handler) {
+		event = crtx_create_event(0);
+		
+		crtx_event_set_raw_data(event, 'p', el_cb, sizeof(el_cb), CRTX_DIF_DONT_FREE_DATA);
+		
+		if (el_cb->event_handler) {
+			// TODO we call the event handler directly as walking through the event graph
+			// only causes additional processing overhead in most cases
+			el_cb->event_handler(event, 0, 0);
+			
+			free_event(event);
+		} else {
+			enum crtx_processing_mode mode;
+			
+			mode = crtx_get_mode(el_cb->graph->mode);
+			
+			// TODO process events here directly if mode == CRTX_PREFER_ELOOP ?
+			if (mode == CRTX_PREFER_THREAD) {
+				crtx_add_event(el_cb->graph, event);
+			} else {
+				crtx_add_event(el_cb->graph, event);
+				
+				// 				crtx_process_graph_tmain(graph);
+			}
+		}
+		// 	} else
+		// 	if (el_cb->simple_callback) {
+		// 		el_cb->simple_callback(el_cb);
+	} else {
+		ERROR("no handler for fd %d\n", el_cb->fd_entry->fd);
+		exit(1);
+	}
+}
+
 int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd, struct crtx_evloop_callback *el_cb,
 						  int fd,
 						  int event_flags,
@@ -187,14 +233,20 @@ struct crtx_event_loop* crtx_get_main_event_loop() {
 	if (!crtx_root->event_loop.listener) {
 // 		struct crtx_listener_base *lbase;
 		int ret;
-		char *chosen_evloop;
+		const char *chosen_evloop;
 // 		struct epoll_event ctrl_event;
 		
 		chosen_evloop = getenv("CRTX_EVLOOP");
 		
 		if (!chosen_evloop) {
+			chosen_evloop = crtx_root->chosen_event_loop;
+		}
+		
+		if (!chosen_evloop) {
 			chosen_evloop = DEFAULT_EVLOOP;
 		}
+		
+		DBG("setup event loop %s\n", chosen_evloop);
 		
 		crtx_get_event_loop(&crtx_root->event_loop, chosen_evloop);
 		

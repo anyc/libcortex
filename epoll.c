@@ -80,6 +80,21 @@ static int crtx_event_flags2epoll_flags(int crtx_event_flags) {
 	return ret;
 }
 
+static int epoll_flags2crtx_event_flags(int epoll_flags) {
+	int ret;
+	
+	
+	ret = 0;
+	if (epoll_flags & EPOLLIN)
+		ret |= EVLOOP_READ;
+	if (epoll_flags & EPOLLOUT)
+		ret |= EVLOOP_WRITE;
+	if (epoll_flags & EPOLLPRI)
+		ret |= EVLOOP_SPECIAL;
+	
+	return ret;
+}
+
 #if 1
 static char *epoll_flags2str(unsigned int *flags) {
 // #define RETFLAG(flag) if (*flags & flag) { *flags = (*flags) & (~flag); return #flag; }
@@ -287,52 +302,6 @@ int crtx_epoll_mod_fd(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evl
 // 	base_payload->el_data = 0;
 // }
 
-static void crtx_epoll_notify(struct crtx_epoll_listener *epl, struct crtx_evloop_callback *el_cb, struct epoll_event *rec_event) {
-	struct crtx_event *event;
-	
-	el_cb->triggered_flags = rec_event->events;
-	
-// 	memcpy(el_cb->el_data, rec_event, sizeof(struct epoll_event));
-	
-	if ((crtx_event_flags2epoll_flags(el_cb->crtx_event_flags) & rec_event->events) == 0)
-		return;
-	
-	VDBG("received wakeup for fd %d\n", el_cb->fd_entry->fd);
-	
-	if (el_cb->graph || el_cb->event_handler) {
-		event = crtx_create_event(0);
-		
-		crtx_event_set_raw_data(event, 'p', el_cb, sizeof(el_cb), CRTX_DIF_DONT_FREE_DATA);
-		
-		if (el_cb->event_handler) {
-			// TODO we call the event handler directly as walking through the event graph
-			// only causes additional processing overhead in most cases
-			el_cb->event_handler(event, 0, 0);
-			
-			free_event(event);
-		} else {
-			enum crtx_processing_mode mode;
-			
-			mode = crtx_get_mode(el_cb->graph->mode);
-			
-			// TODO process events here directly if mode == CRTX_PREFER_ELOOP ?
-			if (mode == CRTX_PREFER_THREAD) {
-				crtx_add_event(el_cb->graph, event);
-			} else {
-				crtx_add_event(el_cb->graph, event);
-				
-// 				crtx_process_graph_tmain(graph);
-			}
-		}
-// 	} else
-// 	if (el_cb->simple_callback) {
-// 		el_cb->simple_callback(el_cb);
-	} else {
-		ERROR("no handler for fd %d\n", el_cb->fd_entry->fd);
-		exit(1);
-	}
-}
-
 static int evloop_start(struct crtx_event_loop *evloop) {
 	struct crtx_epoll_listener *epl;
 	size_t i;
@@ -429,8 +398,12 @@ static int evloop_start(struct crtx_event_loop *evloop) {
 // 					sub = (struct crtx_evloop_fd *) ll;
 					if (!el_cb->active)
 						continue;
+// 					crtx_event_flags2epoll_flags
 					
-					crtx_epoll_notify(epl, el_cb, &rec_events[i]);
+					el_cb->triggered_flags = epoll_flags2crtx_event_flags(rec_events[i].events);
+					
+// 					crtx_epoll_notify(epl, el_cb, &rec_events[i]);
+					crtx_evloop_callback(el_cb);
 				}
 			}
 		}
