@@ -1206,7 +1206,7 @@ static void load_plugin(char *path, char *basename) {
 	char plugin_name[1024];
 	size_t len;
 	
-	printf("load plugin \"%s\"\n", path);
+	DBG("load plugin \"%s\"\n", path);
 	
 	crtx_root->n_plugins++;
 	crtx_root->plugins = (struct crtx_lstnr_plugin*) realloc(crtx_root->plugins, sizeof(struct crtx_lstnr_plugin)*crtx_root->n_plugins);

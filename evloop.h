@@ -15,6 +15,7 @@
 struct crtx_evloop_fd;
 struct crtx_evloop_callback;
 
+
 typedef void (*crtx_evloop_error_cb_t)(struct crtx_evloop_callback *el_cb, void *data);
 
 struct crtx_evloop_callback {
@@ -31,7 +32,6 @@ struct crtx_evloop_callback {
 	struct crtx_graph *graph;
 	crtx_handle_task_t event_handler;
 	char *event_handler_name;
-// 	void (*simple_callback)(struct crtx_evloop_callback *el_cb);
 	
 	crtx_evloop_error_cb_t error_cb;
 	void *error_cb_data;
@@ -43,24 +43,9 @@ struct crtx_evloop_fd {
 	struct crtx_ll ll;
 	
 	int fd;
-// 	int crtx_event_flags; // event flags set using libcortex #define's
 	char fd_added;
 	
-// 	int triggered_flags;
-	
-// 	void *data; // data that can be set by the specific listener
 	void *el_data; // data that can be set by the event loop implementation
-	
-// 	struct crtx_graph *graph;
-// 	crtx_handle_task_t event_handler;
-// 	char *event_handler_name;
-// 	void (*simple_callback)(struct crtx_evloop_fd *evloop_fd);
-	
-// 	void (*error_cb)(struct crtx_evloop_fd *evloop_fd, void *data);
-// 	void *error_cb_data;
-	
-// 	struct crtx_evloop_fd *parent;
-// 	struct crtx_ll *sub_payloads;
 	
 	struct crtx_evloop_callback *callbacks;
 };
@@ -76,7 +61,6 @@ struct crtx_event_loop {
 	
 	const char *id;
 	
-// 	struct crtx_event_loop_control_pipe ctrl_pipe;
 	int ctrl_pipe[2];
 	struct crtx_evloop_fd ctrl_pipe_evloop_handler;
 	struct crtx_evloop_callback default_el_cb;
@@ -88,12 +72,7 @@ struct crtx_event_loop {
 	int (*start)(struct crtx_event_loop *evloop);
 	int (*stop)(struct crtx_event_loop *evloop);
 	
-// 	int (*add_fd)(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
 	int (*mod_fd)(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd);
-// 	int (*del_fd)(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
-// 	int (*add_fd)(struct crtx_listener_base *lbase, struct crtx_evloop_fd *evloop_fd);
-// 	int (*mod_fd)(struct crtx_listener_base *lbase, struct crtx_evloop_fd *evloop_fd);
-// 	int (*del_fd)(struct crtx_listener_base *lbase, struct crtx_evloop_fd *evloop_fd);
 };
 
 extern struct crtx_event_loop *crtx_event_loops;
@@ -102,9 +81,6 @@ struct crtx_event_loop* crtx_get_main_event_loop();
 int crtx_get_event_loop(struct crtx_event_loop *evloop, const char *id);
 
 void crtx_evloop_callback(struct crtx_evloop_callback *el_cb);
-// void crtx_evloop_add_fd(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd);
-// void crtx_evloop_mod_fd(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd);
-// void crtx_evloop_del_fd(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd);
 int crtx_evloop_queue_graph(struct crtx_event_loop *evloop, struct crtx_graph *graph);
 int crtx_evloop_start(struct crtx_event_loop *evloop);
 int crtx_evloop_stop(struct crtx_event_loop *evloop);

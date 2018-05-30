@@ -13,7 +13,6 @@ extern "C" {
 #include "intern.h"
 #include "core.h"
 #include "evloop.h"
-
 #include "evloop_qt.h"
 }
 
@@ -32,12 +31,6 @@ class MyQSocketNotifier : public QSocketNotifier {
 			crtx_evloop_callback(this->el_cb);
 		}
 };
-
-// struct eloop_data {
-// 	struct crtx_ll *notifiers;
-// };
-
-#ifndef CRTX_TEST
 
 static enum MyQSocketNotifier::Type crtx_event_flags2qt_flags(int crtx_event_flags) {
 	enum MyQSocketNotifier::Type ret;
@@ -73,15 +66,9 @@ static int qt_flags2crtx_event_flags(enum QSocketNotifier::Type qt_flags) {
 	return ret;
 }
 
-extern "C" {
-
 static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd) {
 	MyQSocketNotifier *notifier;
 	struct crtx_evloop_callback *el_cb;
-	
-// 	if (!evloop_fd->el_data) {
-// 		evloop_fd->el_data = (struct eloop_data*) calloc(1, sizeof(struct eloop_data));
-// 	}
 	
 	for (el_cb=evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
 		if (!el_cb->active && el_cb->el_data) {
@@ -94,7 +81,6 @@ static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evl
 		}
 		
 		notifier = new MyQSocketNotifier(evloop_fd->fd, crtx_event_flags2qt_flags(el_cb->crtx_event_flags));
-	// 	connect(notifier, SIGNAL(activated(int)), SLOT(rxEvent(int)), Qt::BlockingQueuedConnection );
 		
 		notifier->connect(notifier, &MyQSocketNotifier::activated, notifier, &MyQSocketNotifier::socketEvent);
 		
@@ -104,20 +90,8 @@ static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evl
 		notifier->setEnabled(true);
 	}
 	
-// 	evloop_fd->el_data = notifier;
-	
 	return 0;
 }
-
-// static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_event_loop_payload *el_payload) {
-// 	
-// 	return 0;
-// }
-// 
-// static int crtx_evloop_qt_del_fd(struct crtx_event_loop *evloop, struct crtx_event_loop_payload *el_payload) {
-// 	
-// 	return 0;
-// }
 
 static int evloop_start(struct crtx_event_loop *evloop) {
 	// Qt's event loop should be already running
@@ -136,11 +110,7 @@ static int evloop_release(struct crtx_event_loop *evloop) {
 	return 0;
 }
 
-static void crtx_evloop_qt_queue_graph(struct crtx_event_loop *evloop, struct crtx_graph *graph) {
-	
-}
-
-struct crtx_event_loop qt_loop = {
+static struct crtx_event_loop qt_loop = {
 	{ 0 },
 	"qt",
 	{ 0 },
@@ -156,19 +126,22 @@ struct crtx_event_loop qt_loop = {
 	&crtx_evloop_qt_mod_fd,
 };
 
+extern "C" {
+	
 void crtx_evloop_qt_init(struct crtx_event_loop *evloop) {
 	qt_loop.ll.data = &qt_loop;
 	crtx_ll_append((struct crtx_ll**) &crtx_event_loops, &qt_loop.ll);
 }
 
 void crtx_evloop_qt_finish(struct crtx_event_loop *evloop) {
-	
 }
 
-}
+} // extern "C"
 
 
-#else
+
+
+#ifdef CRTX_TEST
 
 #include <QCoreApplication>
 
@@ -222,7 +195,6 @@ int main(int argc, char *argv[]) {
 	crtx_init();
 	
 	crtx_set_main_event_loop("qt");
-// 	crtx_evloop_qt_start();
 	
 	a = new QCoreApplication(argc, argv);
 	

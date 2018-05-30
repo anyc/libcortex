@@ -15,10 +15,6 @@
 #include "epoll.h"
 #include "evloop.h"
 
-// struct epoll_control_pipe {
-// 	struct crtx_graph *graph;
-// };
-
 
 static int crtx_epoll_add_fd_intern(struct crtx_epoll_listener *epl, int fd, struct epoll_event *event) {
 	int ret;
@@ -116,19 +112,11 @@ return "";
 static int crtx_epoll_manage_fd(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd) {
 	struct epoll_event *epoll_event;
 	struct crtx_epoll_listener *epl;
-// 	struct crtx_evloop_fd *evloop_fd;
-// 	struct crtx_ll *ll;
 	struct crtx_evloop_callback *el_cb;
 	int ret;
 	
 	
-// 	epl = (struct crtx_epoll_listener *) lbase;
 	epl = (struct crtx_epoll_listener *) evloop->listener;
-	
-// 	if (evloop_fd->parent == 0)
-// 		evloop_fd = evloop_fd;
-// 	else
-// 		evloop_fd = evloop_fd->parent;
 	
 	if (!evloop_fd->el_data) {
 		epoll_event = (struct epoll_event*) calloc(1, sizeof(struct epoll_event));
@@ -139,49 +127,12 @@ static int crtx_epoll_manage_fd(struct crtx_event_loop *evloop, struct crtx_evlo
 		epoll_event = evloop_fd->el_data;
 	}
 	
-// 	if (evloop_fd->active)
-// 		epoll_event->events = crtx_event_flags2epoll_flags(evloop_fd->crtx_event_flags);
-// 	else
-// 		epoll_event->events = 0;
-	
-// 	for (ll=&evloop_fd->ll; ll; ll=ll->next) {
 	for (el_cb=evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
-// 		struct crtx_evloop_fd *sub;
-		
-// 		sub = (struct crtx_evloop_fd *) ll;
 		if (!el_cb->active)
 			continue;
 		
 		epoll_event->events |= crtx_event_flags2epoll_flags(el_cb->crtx_event_flags);
 	}
-	
-// 	if (epoll_event->events) {
-// 		if (!evloop_fd->fd_added) {
-// 			VDBG("epoll add %d %d\n", evloop_fd->fd, epoll_flags2str(&epoll_event->events));
-// 			
-// 			ret = crtx_epoll_add_fd_intern(epl, evloop_fd->fd, epoll_event);
-// 	// 		if (ret == 0) {
-// 	// 			evloop_fd->added = 1;
-// 	// 			evloop_fd->added = 1;
-// 	// 		} else {
-// 	// 			evloop_fd->added = 0;
-// 	// 			evloop_fd->added = 0;
-// 	// 		}
-// 			
-// 			evloop_fd->fd_added = (ret == 0);
-// 		} else {
-// 			VDBG("epoll mod %d %d\n", evloop_fd->fd, epoll_flags2str(&epoll_event->events));
-// 			
-// 			crtx_epoll_mod_fd_intern(epl, evloop_fd->fd, epoll_event);
-// 		}
-// 	} else {
-// 		VDBG("epoll del %d\n", evloop_fd->fd);
-// 		
-// 		crtx_epoll_del_fd_intern(epl, evloop_fd->fd);
-// 		
-// 		free(evloop_fd->el_data);
-// 		evloop_fd->el_data = 0;
-// 	}
 	
 	if (epoll_event->events) {
 		if (evloop_fd->fd_added) {
@@ -207,100 +158,13 @@ static int crtx_epoll_manage_fd(struct crtx_event_loop *evloop, struct crtx_evlo
 	return 0;
 }
 
-// int crtx_epoll_add_fd(struct crtx_event_loop *evloop, struct crtx_evloop_callback *ev_cb) {
-// 	int ret;
-// 	
-// 	ev_cb->active = 1;
-// 	
-// 	ret = crtx_epoll_manage_fd(evloop, ev_cb);
-// 	
-// 	return ret;
-// }
-
 int crtx_epoll_mod_fd(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd) {
 	int ret;
-	
-// 	ev_cb->active = 1;
 	
 	ret = crtx_epoll_manage_fd(evloop, evloop_fd);
 	
 	return ret;
 }
-
-// int crtx_epoll_del_fd(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd) {
-// 	int ret;
-// 	
-// 	ev_cb->active = 0;
-// 	
-// 	ret = crtx_epoll_manage_fd(evloop, evloop_fd);
-// 	
-// 	return ret;
-// }
-
-// void crtx_epoll_mod_fd(struct crtx_listener_base *lbase, struct crtx_evloop_fd *evloop_fd) {
-// 	struct epoll_event *epoll_event;
-// 	struct crtx_evloop_fd *base_payload;
-// 	struct crtx_ll *ll;
-// 	
-// 	
-// 	epoll_event = (struct epoll_event *) evloop_fd->el_data;
-// 	
-// 	if (evloop_fd->parent == 0)
-// 		base_payload = evloop_fd;
-// 	else:
-// 		base_payload = evloop_fd->parent;
-// 	
-// 	if (base_payload->added)
-// 		epoll_event->events = base_payload->crtx_event_flags;
-// 	else
-// 		epoll_event->events = 0;
-// 	
-// 	for (ll=base_payload; ll; ll=ll->next) {
-// 		struct crtx_evloop_fd *sub;
-// 		
-// 		
-// 		sub = (struct crtx_evloop_fd *) ll;
-// 		if (!sub->added && sub != evloop_fd)
-// 			continue;
-// 		
-// 		epoll_event->events |= sub->crtx_event_flags;
-// 	}
-// 	
-// 	VDBG("epoll mod %d %d\n", base_payload->fd, epoll_event->events);
-// 	
-// 	if (!base_payload->added) {
-// 		ret = crtx_epoll_add_fd_intern(epl, base_payload->fd, epoll_event);
-// 		if (ret == 0) {
-// 			base_payload->added = 1;
-// 		} else {
-// 			base_payload->added = 0;
-// 		}
-// 	} else {
-// 		crtx_epoll_mod_fd_intern((struct crtx_epoll_listener *) lbase, base_payload->fd, base_payload->el_data);
-// 	}
-// }
-
-// void crtx_epoll_del_fd(struct crtx_listener_base *lbase, struct crtx_evloop_fd *evloop_fd) {
-// 	struct crtx_epoll_listener *epl;
-// 	struct crtx_evloop_fd *base_payload;
-// 	int fd;
-// 	
-// 	
-// 	if (evloop_fd->parent == 0)
-// 		base_payload = evloop_fd;
-// 	else:
-// 		base_payload = evloop_fd->parent;
-// 	
-// 	VDBG("epoll del %d\n", base_payload->fd);
-// 	
-// 	fd = base_payload->fd;
-// 	
-// 	epl = (struct crtx_epoll_listener *) lbase;
-// 	crtx_epoll_del_fd_intern(epl, fd);
-// 	
-// 	free(base_payload->el_data);
-// 	base_payload->el_data = 0;
-// }
 
 static int evloop_start(struct crtx_event_loop *evloop) {
 	struct crtx_epoll_listener *epl;
@@ -308,11 +172,9 @@ static int evloop_start(struct crtx_event_loop *evloop) {
 	int n_rdy_events;
 	struct epoll_event *rec_events;
 	struct crtx_evloop_fd *evloop_fd;
-// 	struct crtx_event_loop_control_pipe ecp;
 	struct crtx_evloop_callback *el_cb;
 	
-
-// 	epl = (struct crtx_epoll_listener*) data;
+	
 	epl = (struct crtx_epoll_listener*) evloop->listener;
 	
 	rec_events = (struct epoll_event*) malloc(sizeof(struct epoll_event)*epl->max_n_events);
@@ -347,8 +209,6 @@ static int evloop_start(struct crtx_event_loop *evloop) {
 			#endif
 			
 			if (rec_events[i].events & EPOLLERR || rec_events[i].events & EPOLLRDHUP || rec_events[i].events & EPOLLHUP) {
-// 				evloop_fd = (struct crtx_evloop_fd* ) evloop_fd;
-				
 				ERROR("epoll returned EPOLLERR for fd %d\n", evloop_fd->fd);
 				
 				for (el_cb = evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
@@ -358,51 +218,14 @@ static int evloop_start(struct crtx_event_loop *evloop) {
 						DBG("no error_cb for fd %d\n", el_cb->fd_entry->fd);
 				}
 				
-// 				crtx_epoll_del_fd((struct crtx_listener_base *) epl, evloop_fd);
-				
 				continue;
-// 			} else
-// 			if (evloop_fd == 0) {
-// 				VDBG("epoll received wake-up event\n");
-// 				
-// 				evloop_fd = (struct crtx_evloop_fd* ) evloop_fd;
-// 				
-// 				read(evloop_fd->fd, &ecp, sizeof(struct crtx_event_loop_control_pipe));
-// 				
-// 				if (ecp.graph) {
-// 					crtx_process_graph_tmain(ecp.graph);
-// 					ecp.graph = 0;
-// 				}
 			} else {
-// 				struct crtx_ll *ll;
-				
-				
-// 				evloop_fd = (struct crtx_evloop_fd* ) evloop_fd;
-				
-				// check if there are specialized handlers for this kind of event
-// 				if (rec_events[i].events & EPOLLIN && evloop_fd->epollin)
-// 					crtx_epoll_notify(evloop_fd->epollin, &rec_events[i]);
-// 				if (rec_events[i].events & EPOLLOUT && evloop_fd->epollout)
-// 					crtx_epoll_notify(evloop_fd->epollout, &rec_events[i]);
-// 				if (rec_events[i].events & EPOLLPRI && evloop_fd->epollpri)
-// 					crtx_epoll_notify(evloop_fd->epollpri, &rec_events[i]);
-				
-// 				if (evloop_fd->active)
-// 					crtx_epoll_notify(epl, evloop_fd, &rec_events[i]);
-				
-				
-// 				for (ll=&evloop_fd->ll; ll; ll=ll->next) {
 				for (el_cb=evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
-// 					struct crtx_evloop_fd *sub;
-					
-// 					sub = (struct crtx_evloop_fd *) ll;
 					if (!el_cb->active)
 						continue;
-// 					crtx_event_flags2epoll_flags
 					
 					el_cb->triggered_flags = epoll_flags2crtx_event_flags(rec_events[i].events);
 					
-// 					crtx_epoll_notify(epl, el_cb, &rec_events[i]);
 					crtx_evloop_callback(el_cb);
 				}
 			}
@@ -417,34 +240,23 @@ static int evloop_start(struct crtx_event_loop *evloop) {
 }
 
 void *crtx_epoll_main(void *data) {
-// 	struct crtx_epoll_listener *epl;
-	
-// 	epl = (struct crtx_epoll_listener*) data;
-	
 	evloop_start( (struct crtx_event_loop*) data );
 	
 	return 0;
 }
-
-// void crtx_epoll_queue_graph(struct crtx_epoll_listener *epl, struct crtx_graph *graph) {
-// 	struct crtx_event_loop_control_pipe ecp;
-// 	
-// 	ecp.graph = graph;
-// 	write(epl->pipe_fds[1], &ecp, sizeof(struct crtx_event_loop_control_pipe));
-// }
 
 static int evloop_stop(struct crtx_event_loop *evloop) {
 	struct crtx_event_loop_control_pipe ecp;
 	struct crtx_epoll_listener *epl;
 	ssize_t ret;
 	
-	printf("evloop stop %d %d\n", evloop->ctrl_pipe[0], evloop->ctrl_pipe[1]);
+// 	printf("evloop stop %d %d\n", evloop->ctrl_pipe[0], evloop->ctrl_pipe[1]);
 	
 	epl = (struct crtx_epoll_listener *) evloop->listener;
 	epl->stop = 1;
 	
 	ecp.graph = 0;
-// 	write(epl->pipe_fds[1], &ecp, sizeof(struct crtx_event_loop_control_pipe));
+	
 	ret = write(evloop->ctrl_pipe[1], &ecp, sizeof(struct crtx_event_loop_control_pipe));
 	if (ret < sizeof(struct crtx_event_loop_control_pipe)) {
 		ERROR("evloop_stop() write returned %zd %s\n", ret, strerror(errno));
@@ -454,10 +266,8 @@ static int evloop_stop(struct crtx_event_loop *evloop) {
 }
 
 static void stop_thread(struct crtx_thread *t, void *data) {
-// 	struct crtx_epoll_listener *epl;
 	struct crtx_event_loop *evloop;
 	
-// 	epl = (struct crtx_epoll_listener*) data;
 	evloop = (struct crtx_event_loop *) data;
 	
 	evloop_stop(evloop);
@@ -472,15 +282,13 @@ static void shutdown_epoll_listener(struct crtx_listener_base *lbase) {
 	
 	stop_thread(0, epl->evloop);
 	
-	printf("close epoll fd\n");
-// 	close(epl->pipe_fds[1]);
-// 	close(epl->pipe_fds[0]);
+// 	printf("close epoll fd\n");
+	
 	close(epl->epoll_fd);
 }
 
 struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	struct crtx_epoll_listener *epl;
-// 	int ret;
 	
 	
 	epl = (struct crtx_epoll_listener*) options;
@@ -500,17 +308,6 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	// either the main thread will execute crtx_epoll_main or we spawn a new thread
 	epl->base.mode = CRTX_PREFER_THREAD;
 	
-	
-// 	ret = pipe(epl->pipe_fds); // 0 read, 1 write
-// 	if (ret < 0) {
-// 		ERROR("creating control pipe failed: %s\n", strerror(errno));
-// 	} else {
-// 		memset(&ctrl_event, 0, sizeof(struct epoll_event));
-// 		ctrl_event.events = EPOLLIN;
-// 		ctrl_event.data.ptr = 0;
-// 		
-// 		crtx_epoll_add_fd_intern(epl, epl->pipe_fds[0], &ctrl_event);
-// 	}
 	
 	if (epl->max_n_events < 1)
 		epl->max_n_events = 1;
@@ -558,9 +355,7 @@ struct crtx_event_loop epoll_loop = {
 	&evloop_start,
 	&evloop_stop,
 	
-// 	&crtx_epoll_add_fd,
 	&crtx_epoll_mod_fd,
-// 	&crtx_epoll_del_fd,
 };
 
 void crtx_epoll_init() {
@@ -584,12 +379,10 @@ int count = 0;
 
 static char epoll_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char buf[1024];
-// 	struct crtx_evloop_fd *payload;
 	ssize_t n_read;
 	struct crtx_evloop_callback *el_cb;
 	
 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
-// 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
 	n_read = read(el_cb->fd_entry->fd, buf, sizeof(buf)-1);
 	if (n_read < 0) {
@@ -627,7 +420,6 @@ void start_timer() {
 	
 	tlist.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
 	tlist.settime_flags = 0; // absolute (TFD_TIMER_ABSTIME), or relative (0) time, see: man timerfd_settime()
-// 	tlist.newtimer = &newtimer;
 	
 	blist = create_listener("timer", &tlist);
 	if (!blist) {
@@ -641,32 +433,17 @@ void start_timer() {
 }
 
 int epoll_main(int argc, char **argv) {
-// 	struct crtx_epoll_listener epl;
-// 	struct crtx_listener_base *lbase;
 	char ret;
-// 	struct epoll_event event;
 	struct crtx_evloop_fd evloop_fd;
 	struct crtx_evloop_callback default_el_cb;
-// 	struct crtx_event_loop evloop;
-	
-// 	memset(&epl, 0, sizeof(struct crtx_epoll_listener));
-// 	memset(&evloop, 0, sizeof(struct crtx_event_loop));
 	
 	if (argc > 1) {
-// 		epl.no_thread = 1;
 		crtx_root->force_mode = CRTX_PREFER_ELOOP;
 	} else {
 		crtx_root->force_mode = CRTX_PREFER_THREAD;
 	}
 	
-// 	crtx_get_event_loop(&evloop, "epoll");
 	crtx_get_main_event_loop();
-	
-// 	lbase = create_listener("epoll", &epl);
-// 	if (!lbase) {
-// 		ERROR("create_listener(epoll) failed\n");
-// 		exit(1);
-// 	}
 	
 	ret = pipe(testpipe); // 0 read, 1 write
 	if (ret < 0) {
@@ -676,10 +453,6 @@ int epoll_main(int argc, char **argv) {
 	
 	memset(&evloop_fd, 0, sizeof(struct crtx_evloop_fd));
 	memset(&default_el_cb, 0, sizeof(struct crtx_evloop_callback));
-// 	evloop_fd.fd = testpipe[0];
-// // 	payload.el_data = &event;
-// 	evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 	evloop_fd.event_handler = epoll_test_handler;
 	
 	crtx_evloop_create_fd_entry(&evloop_fd, &default_el_cb,
 						testpipe[0],
@@ -690,29 +463,13 @@ int epoll_main(int argc, char **argv) {
 						0
 					);
 	
-// 	event.events = EPOLLIN;
-// 	event.data.fd = fd;
-// 	event.data.ptr = &payload;
-// 	crtx_epoll_add_fd_intern(&epl, testpipe[0], &event);
-// 	evloop.add_fd(&evloop, &payload);
-// 	printf("add local pipe\n");
-// 	crtx_root->event_loop.add_fd(&crtx_root->event_loop, &evloop_fd);
-	
 	crtx_evloop_enable_cb(&crtx_root->event_loop, &default_el_cb);
-	
-// 	crtx_create_task(evloop.listener->graph, 0, "epoll_test", epoll_test_handler, 0);
-	
-
 	
 	if (argc > 1) {
 		start_timer();
 		
 		crtx_loop();
-		
-// 		free_listener(blist);
 	} else {
-// 		struct crtx_event_loop_control_pipe ecp;
-		
 		ret = crtx_start_listener(crtx_root->event_loop.listener);
 		if (ret) {
 			ERROR("starting epoll listener failed\n");
@@ -725,12 +482,6 @@ int epoll_main(int argc, char **argv) {
 		sleep(1);
 		
 		printf("stop\n");
-		
-// 		crtx_evloop_stop(&crtx_root->event_loop);
-// 		epl.stop = 1;
-// 		ecp.graph = 0;
-// 		write(epl.ctrl_pipe[1], &ecp, sizeof(struct crtx_event_loop_control_pipe));
-// 		write(testpipe[1], "stop", 7);
 	}
 	
 	close(testpipe[0]);
