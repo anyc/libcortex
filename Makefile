@@ -19,7 +19,7 @@ SHAREDLIB=libcrtx.so
 
 OBJS+=core.o \
 	threads.o dict.o \
-	llist.o dllist.o
+	llist.o dllist.o evloop.o
 
 AVAILABLE_TESTS=avahi can epoll evdev evloop_qt libvirt nl_libnl netlink_ge nl_route_raw pulseaudio sdbus sip timer udev uevents v4l xcb_randr writequeue
 
@@ -35,7 +35,7 @@ include Makefile.modules
 
 # default module sets
 BUILTIN_MODULES=signals epoll
-STATIC_TOOLS+=cache dict_inout dict_inout_json event_comm socket evloop
+STATIC_TOOLS+=cache dict_inout dict_inout_json event_comm socket
 STATIC_MODULES+=fanotify inotify netlink_raw nl_route_raw uevents socket_raw timer writequeue
 DYN_MODULES+=avahi can evdev evloop_qt libvirt netlink_ge nl_libnl nf_queue pulseaudio readline sdbus sip udev v4l xcb_randr
 
