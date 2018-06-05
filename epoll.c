@@ -127,6 +127,7 @@ static int crtx_epoll_manage_fd(struct crtx_event_loop *evloop, struct crtx_evlo
 		epoll_event = evloop_fd->el_data;
 	}
 	
+	epoll_event->events = 0;
 	for (el_cb=evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
 		if (!el_cb->active)
 			continue;

@@ -132,7 +132,7 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 		return -EEXIST;
 	}
 	
-	if (!listener->evloop_fd.fd && !listener->thread_job.fct && !listener->start_listener) {
+	if (listener->evloop_fd.fd < 0 && !listener->thread_job.fct && !listener->start_listener) {
 		DBG("no method to start listener \"%s\" provided\n", listener->id);
 		
 		UNLOCK(listener->state_mutex);
