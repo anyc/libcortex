@@ -18,7 +18,7 @@ APP=cortexd
 SHAREDLIB=libcrtx.so
 
 OBJS+=core.o \
-	threads.o dict.o \
+	dict.o \
 	llist.o dllist.o evloop.o
 
 AVAILABLE_TESTS=avahi can epoll evdev evloop_qt libvirt nl_libnl netlink_ge nl_route_raw pulseaudio sdbus sip timer udev uevents v4l xcb_randr writequeue
@@ -28,6 +28,14 @@ CXXFLAGS+=$(DEBUG_FLAGS)
 LDLIBS+=-lpthread -ldl
 
 #
+# make rules
+#
+
+.PHONY: clean
+
+all: $(local_mk) core_modules.h plugins shared layer2 crtx_include_dir
+
+#
 # module-specific flags
 #
 
@@ -35,7 +43,7 @@ include Makefile.modules
 
 # default module sets
 BUILTIN_MODULES=signals epoll
-STATIC_TOOLS+=cache dict_inout dict_inout_json event_comm socket
+STATIC_TOOLS+=cache dict_inout dict_inout_json event_comm socket threads
 STATIC_MODULES+=fanotify inotify netlink_raw nl_route_raw uevents socket_raw timer writequeue
 DYN_MODULES+=avahi can evdev evloop_qt libvirt netlink_ge nl_libnl nf_queue \
 	pulseaudio readline sdbus sip udev v4l xcb_randr sdbus_notifications \
@@ -63,13 +71,13 @@ ifneq ($(MISSING_DEPS),)
 $(error error missing dep(s) for module(s) $(MISSING_DEPS): $(foreach m,$(MISSING_DEPS),$(foreach d,$(DEPS_$(m)), $(if $(findstring $(d),$(STATIC_TOOLS) $(STATIC_MODULES) $(DYN_MODULES)),,$(d)) )))
 endif
 
-#
-# make rules
-#
-
-.PHONY: clean
-
-all: $(local_mk) core_modules.h plugins shared layer2 crtx_include_dir
+# #
+# # make rules
+# #
+# 
+# .PHONY: clean
+# 
+# all: $(local_mk) core_modules.h plugins shared layer2 crtx_include_dir
 
 $(APP): $(OBJS)
 
@@ -127,8 +135,9 @@ $(SHAREDLIB): LDLIBS+=$(foreach o,$(STATIC_TOOLS) $(STATIC_MODULES), $(LDLIBS_$(
 $(SHAREDLIB): $(OBJS)
 	$(CC) -shared -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS)
 
+# libcrtx_%.so: $(OBJS_$(patsubst libcrtx_%.so,%,$@))
 libcrtx_%.so: LDLIBS+=$(LDLIBS_$(patsubst libcrtx_%.so,%,$@)) $(foreach d,$(DEPS_$(patsubst libcrtx_%.so,%,$@)),$(if $(findstring $(d),$(DYN_MODULES)),$(LDLIBS_$(d))) )
-libcrtx_%.so: %.o $(SHAREDLIB) # $(OBJS_$(patsubst libcrtx_%.so,%,$@))
+libcrtx_%.so: %.o $(SHAREDLIB)
 	$(CC) -shared $(LDFLAGS) $< -o $@ $(LDLIBS) -L. -lcrtx
 
 plugins: $(SHAREDLIB) $(DYN_MODULES_LIST)

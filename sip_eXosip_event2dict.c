@@ -18,7 +18,7 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 	dict = *dict_ptr;
 
 	di = crtx_alloc_item(dict);
-	crtx_fill_data_item(di, 'i', "type", ptr->type, sizeof(ptr->type), 0);
+	crtx_fill_data_item(di, 'i', "type_id", ptr->type, sizeof(ptr->type), 0);
 
 	di = crtx_alloc_item(dict);
 	switch (ptr->type) {

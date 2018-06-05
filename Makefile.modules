@@ -34,6 +34,8 @@ LDLIBS_sdbus+=$(shell $(PKG_CONFIG) --libs libsystemd)
 
 DEPS_sd_bus_notifications+=sdbus
 
+# OBJS_sip+=sip_eXosip_event2dict.c
+# libcrtx_sip.so: sip_eXosip_event2dict.o
 CFLAGS_sip+=-DENABLE_TRACE
 LDLIBS_sip+=-leXosip2 -losipparser2
 
@@ -43,6 +45,5 @@ LDLIBS_udev+=$(shell $(PKG_CONFIG) --libs libudev)
 CFLAGS_xcb_randr+=$(shell $(PKG_CONFIG) --cflags xcb xcb-randr)
 LDLIBS_xcb_randr+=$(shell $(PKG_CONFIG) --libs xcb xcb-randr)
 
-OBJS_evloop_qt+= evloop_qt.moc.o
 CXXFLAGS_evloop_qt+=$(shell $(PKG_CONFIG) --cflags Qt5Core) -fPIC -std=c++11
 LDLIBS_evloop_qt+=$(shell $(PKG_CONFIG) --libs Qt5Core)

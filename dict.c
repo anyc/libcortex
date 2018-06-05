@@ -598,7 +598,7 @@ struct crtx_dict_item *crtx_get_next_item(struct crtx_dict *ds, struct crtx_dict
 		return 0;
 }
 
-struct crtx_dict_item * crtx_get_item(struct crtx_dict *ds, char *key) {
+struct crtx_dict_item * crtx_get_item(struct crtx_dict *ds, const char *key) {
 // 	char *s;
 	uint32_t i;
 	struct crtx_dict_item *di;
@@ -798,7 +798,7 @@ char crtx_get_item_value(struct crtx_dict_item *di, char type,  void *buffer, si
 	}
 }
 
-char crtx_get_value(struct crtx_dict *ds, char *key, char type, void *buffer, size_t buffer_size) {
+char crtx_get_value(struct crtx_dict *ds, const char *key, char type, void *buffer, size_t buffer_size) {
 	struct crtx_dict_item *di;
 	
 	di = crtx_get_item(ds, key);
@@ -815,7 +815,7 @@ char crtx_get_value(struct crtx_dict *ds, char *key, char type, void *buffer, si
 // 	return crtx_copy_value(di, buffer, buffer_size);
 }
 
-struct crtx_dict *crtx_get_dict(struct crtx_dict *ds, char *key) {
+struct crtx_dict *crtx_get_dict(struct crtx_dict *ds, const char *key) {
 	struct crtx_dict *dict;
 	char ret;
 	
@@ -823,7 +823,7 @@ struct crtx_dict *crtx_get_dict(struct crtx_dict *ds, char *key) {
 	return ret?dict:0;
 }
 
-char *crtx_get_string(struct crtx_dict *ds, char *key) {
+char *crtx_get_string(struct crtx_dict *ds, const char *key) {
 	char *s;
 	char ret;
 	
@@ -1018,14 +1018,14 @@ struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, 
 // 	for (pit = transf; pit && pit->type; pit++) {
 	for (i=0; i<sign_length; i++) {
 		di->type = pit->type;
-		di->key = pit->key;
+		di->key = (char*) pit->key;
 		
 		alloc = 24;
 		di->size = 0;
 		di->string = (char*) malloc(alloc);
 		
 		if (pit->type == 's') {
-			dict_printf(dict, pit->format, &di->string, &di->size, &alloc);
+			dict_printf(dict, (char*) pit->format, &di->string, &di->size, &alloc);
 		} else
 		if (pit->type == 'D') {
 			
@@ -1331,8 +1331,9 @@ void crtx_dict_unref(struct crtx_dict *dict) {
 	}
 }
 
-struct crtx_dict_item * crtx_dict_locate(struct crtx_dict *dict, char *path) {
-	char *p, *sep, *buf;
+struct crtx_dict_item * crtx_dict_locate(struct crtx_dict *dict, const char *path) {
+	const char *p;
+	char *sep, *buf;
 	struct crtx_dict_item *di;
 	size_t buflen;
 	
@@ -1369,7 +1370,7 @@ struct crtx_dict_item * crtx_dict_locate(struct crtx_dict *dict, char *path) {
 	return di;
 }
 
-char crtx_dict_locate_value(struct crtx_dict *dict, char *path, char type, void *buffer, size_t buffer_size) {
+char crtx_dict_locate_value(struct crtx_dict *dict, const char *path, char type, void *buffer, size_t buffer_size) {
 	struct crtx_dict_item * di;
 	char r;
 	
@@ -1383,7 +1384,7 @@ char crtx_dict_locate_value(struct crtx_dict *dict, char *path, char type, void 
 	return !r;
 }
 
-char *crtx_dict_locate_string(struct crtx_dict *dict, char *path) {
+char *crtx_dict_locate_string(struct crtx_dict *dict, const char *path) {
 	struct crtx_dict_item * di;
 	
 	di = crtx_dict_locate(dict, path);

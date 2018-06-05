@@ -1053,7 +1053,7 @@ static void new_eventgraph(struct crtx_graph **crtx_graph, const char *name, cha
 // 	UNLOCK(crtx_root->graphs_mutex);
 }
 
-void crtx_create_graph(struct crtx_graph **crtx_graph, char *name) {
+void crtx_create_graph(struct crtx_graph **crtx_graph, const char *name) {
 	new_eventgraph(crtx_graph, name, 0);
 }
 
@@ -1382,6 +1382,8 @@ int crtx_init() {
 	t->event_type_match = CRTX_EVT_SHUTDOWN;
 	add_task(crtx_root->crtx_ctrl_graph, t);
 	
+	crtx_threads_init();
+	
 	i=0;
 	while (static_modules[i].id) {
 		DBG("initialize \"%s\"\n", static_modules[i].id);
@@ -1411,7 +1413,7 @@ int crtx_finish() {
 // 	static_modules[0].finish();
 	crtx_threads_stop_all();
 	// stop controls second
-	static_modules[1].finish();
+// 	static_modules[1].finish();
 	
 	while (i > 1) {
 		DBG("finish \"%s\"\n", static_modules[i].id);
@@ -1426,7 +1428,8 @@ int crtx_finish() {
 	}
 	
 	// finish threads module
-	static_modules[0].finish();
+// 	static_modules[0].finish();
+	crtx_threads_finish();
 	
 	LOCK(crtx_root->graphs_mutex);
 	for (i=0; i < crtx_root->n_graphs; i++) {
@@ -1926,7 +1929,7 @@ void crtx_register_handler_for_event_type(char *event_type, char *handler_name, 
 	VDBG("new handler %s for etype %s\n", handler_name, event_type);
 }
 
-void crtx_autofill_graph_with_tasks(struct crtx_graph *graph, char *event_type) {
+void crtx_autofill_graph_with_tasks(struct crtx_graph *graph, const char *event_type) {
 	struct crtx_ll *catit, *entry;
 	
 	for (catit = crtx_root->handler_categories; catit && strcmp(catit->handler_category->event_type, event_type); catit=catit->next) {}

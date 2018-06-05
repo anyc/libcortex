@@ -13,6 +13,7 @@
 #include "core.h"
 #include "sip.h"
 
+#include "sip_eXosip_event2dict.c"
 
 static void sip_event_before_release_cb(struct crtx_event *event, void *userdata) {
 	eXosip_event_t *evt;
@@ -182,7 +183,6 @@ void crtx_sip_finish() {
 #include <netinet/in.h>
 #include <unistd.h>
 
-#include "sip_eXosip_event2dict.c"
 
 void help(char **argv) {
 	fprintf(stderr, "Usage: %s [options]\n", argv[0]);
