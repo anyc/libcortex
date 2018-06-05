@@ -25,7 +25,7 @@
 #define CRTX_PLUGIN_DIR "/usr/lib/cortexd/plugins/"
 #endif
 
-struct crtx_root crtx_global_root;
+struct crtx_root crtx_global_root = { 0 };
 struct crtx_root *crtx_root = &crtx_global_root;
 
 #include "core_modules.h"
@@ -1363,7 +1363,7 @@ int crtx_init() {
 	if (getenv("CRTX_VERBOSITY"))
 		crtx_verbosity = atoi(getenv("CRTX_VERBOSITY"));
 	
-	memset(crtx_root, 0, sizeof(struct crtx_root));
+// 	memset(crtx_root, 0, sizeof(struct crtx_root));
 	
 	DBG("initialized cortex (PID: %d)\n", getpid());
 	
