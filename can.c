@@ -331,7 +331,7 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 							0,
 							&can_fd_event_handler,
 							clist,
-							&on_error_cb
+							&on_error_cb, clist
 						);
 // 		clist->base.evloop_fd.subsystems->error_cb = &on_error_cb;
 // 		clist->base.evloop_fd.subsystems->error_cb_data = clist;

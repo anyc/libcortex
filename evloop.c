@@ -75,8 +75,9 @@ int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd, struct crtx_ev
 						  int event_flags,
 						  struct crtx_graph *graph,
 						  crtx_handle_task_t event_handler,
-						  void *data,
-						  crtx_evloop_error_cb_t error_cb
+						  void *event_handler_data,
+						  crtx_evloop_error_cb_t error_cb,
+						  void *error_cb_data
 						 )
 {
 	evloop_fd->fd = fd;
@@ -84,9 +85,10 @@ int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd, struct crtx_ev
 	el_cb->crtx_event_flags = event_flags;
 	el_cb->graph = graph;
 	el_cb->event_handler = event_handler;
-	el_cb->data = data;
+	el_cb->data = event_handler_data;
 	el_cb->fd_entry = evloop_fd;
 	el_cb->error_cb = error_cb;
+	el_cb->error_cb_data = error_cb_data;
 	
 	crtx_ll_append((struct crtx_ll**) &evloop_fd->callbacks, &el_cb->ll);
 	
@@ -98,8 +100,9 @@ int crtx_evloop_init_listener(struct crtx_listener_base *listener,
 						  int event_flags,
 						  struct crtx_graph *graph,
 						  crtx_handle_task_t event_handler,
-						  void *data,
-						  crtx_evloop_error_cb_t error_cb
+						  void *event_handler_data,
+						  crtx_evloop_error_cb_t error_cb,
+						  void *error_cb_data
 						)
 {
 	int ret;
@@ -109,8 +112,9 @@ int crtx_evloop_init_listener(struct crtx_listener_base *listener,
 						event_flags,
 						graph,
 						event_handler,
-						data,
-						error_cb
+						event_handler_data,
+						error_cb,
+						error_cb_data
 					);
 	
 	listener->default_el_cb.active = 1;
@@ -163,6 +167,7 @@ int crtx_evloop_create(struct crtx_event_loop *evloop) {
 								EVLOOP_READ,
 								0,
 								&evloop_ctrl_pipe_handler,
+								0,
 								0,
 								0
 							);

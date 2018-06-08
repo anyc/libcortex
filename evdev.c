@@ -168,7 +168,7 @@ struct crtx_listener_base *crtx_new_evdev_listener(void *options) {
 						0,
 						&evdev_fd_event_handler,
 						evdev,
-						0
+						0, 0
 					);
 	
 	return &evdev->base;

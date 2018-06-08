@@ -160,7 +160,7 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 					    0,
 					    &timer_fd_event_handler,
 					    tlist,
-					    0
+					    0, 0
 					);
 	
 	tlist->base.start_listener = &update_listener;

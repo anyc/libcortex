@@ -95,6 +95,7 @@ struct crtx_listener_base *crtx_new_netlink_raw_listener(void *options) {
 						0,
 						&netlink_el_event_handler,
 						nl_listener,
+						0,
 						0
 					);
 	

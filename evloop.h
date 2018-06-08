@@ -91,15 +91,17 @@ int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd, struct crtx_ev
 						  struct crtx_graph *graph,
 						  crtx_handle_task_t event_handler,
 						  void *data,
-						  crtx_evloop_error_cb_t error_cb
+						  crtx_evloop_error_cb_t error_cb,
+						  void *error_cb_data
 					);
 int crtx_evloop_init_listener(struct crtx_listener_base *listener,
 						int fd,
 						int event_flags,
 						struct crtx_graph *graph,
 						crtx_handle_task_t event_handler,
-						void *data,
-						crtx_evloop_error_cb_t error_cb
+						void *event_handler_data,
+						crtx_evloop_error_cb_t error_cb,
+						void *error_cb_data
 					);
 int crtx_evloop_enable_cb(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
 int crtx_evloop_disable_cb(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);

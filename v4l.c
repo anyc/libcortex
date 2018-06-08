@@ -459,7 +459,7 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 						0,
 						&v4l_fd_event_handler,
 						lstnr,
-						0
+						0, 0
 					);
 	
 	lstnr->base.shutdown = &shutdown_listener;

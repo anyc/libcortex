@@ -87,7 +87,7 @@ struct crtx_listener_base *crtx_new_writequeue_listener(void *options) {
 						0,
 						&fd_event_handler,
 						wqueue,
-						0
+						0, 0
 					);
 	
 // 	wqueue->evloop_cb->active = 0;

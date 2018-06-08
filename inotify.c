@@ -322,7 +322,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 							0,
 							&inotify_fd_event_handler,
 							0,
-							0
+							0, 0
 						);
 			
 			crtx_get_main_event_loop();

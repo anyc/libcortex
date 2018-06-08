@@ -177,7 +177,7 @@ struct crtx_listener_base *crtx_new_socket_raw_server_listener(void *options) {
 						0,
 						&socket_raw_accept_handler,
 						slistener,
-						0
+						0, 0
 					);
 	
 	return &slistener->base;
@@ -247,7 +247,7 @@ struct crtx_listener_base *crtx_new_socket_raw_client_listener(void *options) {
 						0,
 						&client_read_handler,
 						slistener,
-						0
+						0, 0
 					);
 	
 	return &slistener->base;

@@ -181,7 +181,7 @@ static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback c
 						0,
 						&elw_fd_event_handler,
 						wrap,
-						&elw_fd_error_cb
+						&elw_fd_error_cb, 0
 					);
 	
 	wrap->event_cb = cb;

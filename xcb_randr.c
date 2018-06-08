@@ -620,7 +620,7 @@ struct crtx_listener_base *crtx_new_xcb_randr_listener(void *options) {
 						0,
 						&xcb_randr_fd_event_handler,
 						xrlist,
-						0
+						0, 0
 					);
 	
 	return &xrlist->base;
