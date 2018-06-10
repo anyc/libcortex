@@ -250,6 +250,19 @@ char crtx_update_listener(struct crtx_listener_base *listener) {
 // 	free_listener( (struct crtx_listener_base*) userdata);
 // }
 
+int crtx_init_listener_base(struct crtx_listener_base *lbase) {
+// 	lbase->id = id;
+	
+	INIT_MUTEX(lbase->state_mutex);
+	
+	lbase->state = CRTX_LSTNR_STOPPED;
+	
+	new_eventgraph(&lbase->graph, lbase->id, 0);
+	lbase->graph->listener = lbase;
+	
+	return 0;
+}
+
 struct crtx_listener_base *create_listener(const char *id, void *options) {
 	struct crtx_listener_repository *l;
 	struct crtx_listener_base *lbase;
@@ -288,32 +301,7 @@ struct crtx_listener_base *create_listener(const char *id, void *options) {
 		return 0;
 	}
 	
-	lbase->id = id;
-	INIT_MUTEX(lbase->state_mutex);
-	lbase->state = CRTX_LSTNR_STOPPED;
-// 	printf("if %s\n", id);
-	new_eventgraph(&lbase->graph, lbase->id, 0);
-	lbase->graph->listener = lbase;
-// 	if (lbase->thread)
-// 		reference_signal(&lbase->thread->finished);
-	
-// 	new_eventgraph(&lbase->state_graph, 0, 0);
-	
-// 	if (!lbase) {
-// 		ERROR("listener \"%s\" not found\n", id);
-// 	} else {
-// 	if (lbase->evloop_fd.fd > 0) {
-// 		if (!crtx_root->event_loop.listener)
-// 			crtx_get_event_loop();
-// 	}
-// 	if (lbase->thread) {
-// 		reference_signal(&lbase->thread->finished);
-// 			if (lbase->thread->on_finish)
-// 				ERROR("thread->on_finish already set\n");
-// 			lbase->thread->on_finish = &listener_thread_on_finish;
-// 			lbase->thread->on_finish_data = lbase;
-// 	}
-// 	}
+	crtx_init_listener_base(lbase);
 	
 	return lbase;
 }

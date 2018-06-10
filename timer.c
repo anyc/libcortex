@@ -15,54 +15,6 @@
 #include "core.h"
 #include "timer.h"
 
-
-// static void stop_thread(struct crtx_thread *thread, void *data) {
-// 	struct crtx_timer_listener *tlist;
-// 	
-// 	tlist = (struct crtx_timer_listener*) data;
-// 	
-// 	tlist->stop = 1;
-// 	if (tlist->fd > 0) {
-// 		close(tlist->fd);
-// 		tlist->fd = 0;
-// 	}
-// }
-
-// static void *timer_tmain(void *data) {
-// 	struct crtx_timer_listener *tlist;
-// 	uint64_t exp;
-// 	ssize_t s;
-// 	struct crtx_event *event;
-// 	
-// 	tlist = (struct crtx_timer_listener*) data;
-// 	
-// 	while (!tlist->stop) {
-// 		s = read(tlist->fd, &exp, sizeof(uint64_t));
-// 		if (s == -1 && errno == EINTR) {
-// 			DBG("timerfd thread interrupted\n");
-// 			break;
-// 		}
-// 		if (s != sizeof(uint64_t)) {
-// 			ERROR("reading from timerfd failed: %zd != %" PRIu64 " %s (%d)\n", s, exp, strerror(errno), errno);
-// 			break;
-// 		}
-// 		
-// 		event = crtx_create_event(CRTX_EVT_TIMER, 0, 0);
-// 		event->data.uint32 = exp;
-// 		event->data.type = 'u';
-// 		event->data.flags = CRTX_DIF_DONT_FREE_DATA;
-// 		
-// 		crtx_add_event(tlist->base.graph, event);
-// 		
-// 		if (tlist->newtimer.it_interval.tv_sec == 0 && tlist->newtimer.it_interval.tv_nsec == 0)
-// 			break;
-// 	}
-// 	
-// 	stop_thread(0, data);
-// 	
-// 	return 0;
-// }
-
 static char timer_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	struct crtx_evloop_fd *payload;
 	struct crtx_timer_listener *tlist;
@@ -75,6 +27,14 @@ static char timer_fd_event_handler(struct crtx_event *event, void *userdata, voi
 // 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
 	tlist = (struct crtx_timer_listener *) el_cb->data;
+	
+	if (tlist->oneshot_callback) {
+		tlist->oneshot_callback(0, tlist->oneshot_data, 0);
+		
+		crtx_free_listener(&tlist->base);
+		
+		return 1;
+	}
 	
 	s = read(tlist->fd, &exp, sizeof(uint64_t));
 	if (s == -1 && errno == EINTR) {
@@ -91,6 +51,11 @@ static char timer_fd_event_handler(struct crtx_event *event, void *userdata, voi
 // 	event->data.type = 'u';
 	crtx_event_set_raw_data(event, 'U', exp, sizeof(exp), 0);
 // 	event->data.flags = CRTX_DIF_DONT_FREE_DATA;
+	
+// 	if (tlist->oneshot) {
+// 		event->cb_before_release = &oneshot_event_release_cb;
+// 		event->cb_before_release_data = tlist;
+// 	}
 	
 	crtx_add_event(tlist->base.graph, event);
 	
@@ -229,7 +194,13 @@ void crtx_timer_retry_listener_free(struct crtx_timer_retry_listener *retry_lstn
 	free(retry_lstnr);
 }
 
-struct crtx_listener_base *crtx_timer_get_listener(struct crtx_timer_listener *tlist, time_t offset_sec, long offset_nsec, time_t int_sec, long int_nsec) {
+int crtx_timer_get_listener(struct crtx_timer_listener *tlist,
+							time_t offset_sec,
+							long offset_nsec,
+							time_t int_sec,
+							long int_nsec
+							)
+{
 	struct crtx_listener_base *lbase;
 	
 	memset(tlist, 0, sizeof(struct crtx_timer_listener));
@@ -249,7 +220,50 @@ struct crtx_listener_base *crtx_timer_get_listener(struct crtx_timer_listener *t
 		return 0;
 	}
 	
-	return lbase;
+	return 0;
+}
+
+// static char oneshot_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+// 	struct crtx_timer_listener *tlist;
+// 	
+// 	tlist = (struct crtx_timer_listener *) userdata;
+// 	
+// 	
+// 	
+// 	crtx_free_listener(tlist);
+// }
+
+int crtx_timer_oneshot(time_t offset_sec,
+						long offset_nsec,
+						crtx_handle_task_t callback,
+						void *callback_userdata
+						)
+{
+	struct crtx_listener_base *lbase;
+	struct crtx_timer_listener *tlist;
+	
+	tlist = (struct crtx_timer_listener*) malloc(sizeof(struct crtx_timer_listener));
+	
+	memset(tlist, 0, sizeof(struct crtx_timer_listener));
+	
+	tlist->newtimer.it_value.tv_sec = offset_sec;
+	
+	tlist->clockid = CLOCK_REALTIME;
+	tlist->oneshot_callback = callback;
+	tlist->oneshot_data = callback_userdata;
+	
+	lbase = create_listener("timer", tlist);
+	if (!lbase) {
+		ERROR("create_listener(timer) failed\n");
+		return 0;
+	}
+	
+// 	tlist->parent.default_el_cb.event_handler = oneshot_fd_event_handler;
+// 	tlist->parent.default_el_cb.data = callback_userdata;
+	
+	crtx_start_listener(lbase);
+	
+	return 0;
 }
 
 void crtx_timer_init() {

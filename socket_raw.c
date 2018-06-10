@@ -37,6 +37,7 @@
 #include "core.h"
 #include "socket_raw.h"
 
+
 struct addrinfo *crtx_get_addrinfo(struct crtx_socket_raw_listener *listener) {
 	struct addrinfo hints, *result;
 	int ret;
@@ -84,17 +85,31 @@ void crtx_free_addrinfo(struct addrinfo *result) {
 	}
 }
 
+int crtx_init_basic_fd_listener(struct crtx_basic_fd_listener *lstnr) {
+	lstnr->base.id = "basic_fd";
+	
+	crtx_init_listener_base(&lstnr->base);
+	
+	crtx_evloop_init_listener(&lstnr->base,
+							lstnr->fd,
+							EVLOOP_READ,
+							0,
+							lstnr->read_cb,
+							lstnr,
+							0, 0
+						);
+	
+	return 0;
+}
+
 static char socket_raw_accept_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	struct crtx_evloop_fd *evloop_fd;
 	struct crtx_socket_raw_listener *slist;
 	struct sockaddr *cliaddr;
-	int fd;
-	
+	int fd, r;
 	struct crtx_evloop_callback *el_cb;
 	
-	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
-// 	evloop_fd = (struct crtx_evloop_fd*) event->data.pointer;
 	
+	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 	slist = (struct crtx_socket_raw_listener *) el_cb->data;
 	
 	cliaddr = malloc(slist->addrlen);
@@ -104,10 +119,42 @@ static char socket_raw_accept_handler(struct crtx_event *event, void *userdata, 
 		return 0;
 	}
 	
-	slist->accept_cb(slist, fd, cliaddr);
+	r = slist->accept_cb(slist, fd, cliaddr);
+	if (r < 0) {
+		
+	} else {
+		struct crtx_basic_fd_listener *fd_lstnr;
+		
+		fd_lstnr = (struct crtx_basic_fd_listener*) calloc(1, sizeof(struct crtx_basic_fd_listener));
+		fd_lstnr->read_cb = slist->read_cb;
+		fd_lstnr->read_cb_data = slist->read_cb_data;
+		fd_lstnr->fd = fd;
+		fd_lstnr->sock_lstnr = slist;
+		
+		r = crtx_init_basic_fd_listener(fd_lstnr);
+		if (r < 0) {
+			
+		}
+		
+		crtx_start_listener(&fd_lstnr->base);
+	}
 	
 	return 0;
 }
+
+// static char socket_raw_accept_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+// 	struct crtx_event *event;
+// 	
+// 	event = crtx_create_event(0);
+// 	
+// 	crtx_event_set_raw_data(nevent, 'p', evt, sizeof(eXosip_event_t*), CRTX_DIF_DONT_FREE_DATA);
+// 	
+// 	nevent->cb_before_release = &sip_event_before_release_cb;
+// 	
+// 	crtx_add_event(slist->base.graph, event);
+// 	
+// 	return 0;
+// }
 
 void shutdown_socket_raw_listener(struct crtx_listener_base *data) {
 	struct crtx_socket_raw_listener *slist;
@@ -117,14 +164,17 @@ void shutdown_socket_raw_listener(struct crtx_listener_base *data) {
 	close(slist->sockfd);
 }
 
-struct crtx_listener_base *crtx_new_socket_raw_server_listener(void *options) {
-	struct crtx_socket_raw_listener *slistener;
+// struct crtx_listener_base *crtx_new_socket_raw_server_listener(void *options) {
+int crtx_init_socket_raw_server_listener(struct crtx_socket_raw_listener *slistener) {
 	struct addrinfo *addrinfos, *rit;
 	int ret;
 	
-	slistener = (struct crtx_socket_raw_listener *) options;
+// 	slistener = (struct crtx_socket_raw_listener *) options;
 	
 	
+	slistener->base.id = "socket_raw_server";
+	
+	crtx_init_listener_base(&slistener->base);
 	
 	addrinfos = crtx_get_addrinfo(slistener);
 	
@@ -153,25 +203,21 @@ struct crtx_listener_base *crtx_new_socket_raw_server_listener(void *options) {
 	}
 	if (rit == 0) {
 		ERROR("crtx_new_socket_raw_server_listener: %s\n", strerror(errno));
-		return 0;
+		return errno;
 	}
-	
-	if (slistener->listen_backlog == 0)
-		slistener->listen_backlog = 5;
-	
-	listen(slistener->sockfd, slistener->listen_backlog);
 	
 	slistener->addrlen = rit->ai_addrlen;
 	crtx_free_addrinfo(addrinfos);
 	
 	slistener->base.shutdown = &shutdown_socket_raw_listener;
 	
-// 	slistener->base.evloop_fd.fd = slistener->sockfd;
-// // 	slistener->base.evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 	slistener->base.evloop_fd.data = slistener;
-// 	slistener->base.evloop_fd.event_handler = &socket_raw_accept_handler;
-// 	slistener->base.evloop_fd.event_handler_name = "socket_raw_accept_handler";
-	crtx_evloop_init_listener(&slistener->base,
+	if (slistener->type == SOCK_STREAM) {
+		if (slistener->listen_backlog == 0)
+			slistener->listen_backlog = 5;
+		
+		listen(slistener->sockfd, slistener->listen_backlog);
+		
+		crtx_evloop_init_listener(&slistener->base,
 						slistener->sockfd,
 						EVLOOP_READ,
 						0,
@@ -179,8 +225,19 @@ struct crtx_listener_base *crtx_new_socket_raw_server_listener(void *options) {
 						slistener,
 						0, 0
 					);
+	} else {
+		crtx_evloop_init_listener(&slistener->base,
+						slistener->sockfd,
+						EVLOOP_READ,
+						0,
+						slistener->read_cb,
+						slistener->read_cb_data,
+						0, 0
+					);
+	}
 	
-	return &slistener->base;
+// 	return &slistener->base;
+	return 0;
 }
 
 
@@ -200,20 +257,19 @@ static char client_read_handler(struct crtx_event *event, void *userdata, void *
 	return 0;
 }
 
-struct crtx_listener_base *crtx_new_socket_raw_client_listener(void *options) {
-	struct crtx_socket_raw_listener *slistener;
+int crtx_init_socket_raw_client_listener(struct crtx_socket_raw_listener *slistener) {
 	struct addrinfo *addrinfos, *rit;
-// 	int ret;
-	
-	slistener = (struct crtx_socket_raw_listener *) options;
 	
 	
+	slistener->base.id = "socket_raw_client";
+	
+	crtx_init_listener_base(&slistener->base);
 	
 	addrinfos = crtx_get_addrinfo(slistener);
 	
 	if (!addrinfos) {
 		ERROR("cannot resolve %s %s\n", slistener->host, slistener->service);
-		return 0;
+		return -ENXIO;
 	}
 	
 	for (rit = addrinfos; rit; rit = rit->ai_next) {
@@ -229,7 +285,7 @@ struct crtx_listener_base *crtx_new_socket_raw_client_listener(void *options) {
 	}
 	if (rit == 0) {
 		ERROR("cannot connect to %s:%s: %s\n", slistener->host, slistener->service, strerror(errno));
-		return 0;
+		return -EHOSTUNREACH;
 	}
 	
 	crtx_free_addrinfo(addrinfos);
@@ -250,11 +306,25 @@ struct crtx_listener_base *crtx_new_socket_raw_client_listener(void *options) {
 						0, 0
 					);
 	
-	return &slistener->base;
+	return 0;
 }
 
+// struct crtx_listener_base *crtx_new_socket_raw_client_listener(void *options) {
+// 	struct crtx_socket_raw_listener *slistener;
+// 	struct addrinfo *addrinfos, *rit;
+// 	int r;
+// 	
+// 	slistener = (struct crtx_socket_raw_listener *) options;
+// 	
+// 	r = crtx_init_socket_raw_client_listener(slistener);
+// 	if (r < 0) [
+// 		return 0;
+// 	}
+// 	
+// 	return &slistener->base;
+// }
+
 struct crtx_listener_base *crtx_new_socket_raw_listener(void *options) {
-	/* TODO use crtx_new_socket_raw_client_listener or crtx_new_socket_raw_server_listener */
 	return 0;
 }
 

@@ -6,6 +6,8 @@
  *
  */
 
+#include <sys/time.h>
+
 #include "intern.h"
 
 #define EVLOOP_READ 1<<0
