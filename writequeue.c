@@ -25,12 +25,12 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 	struct crtx_writequeue *wqueue;
 // 	struct crtx_event_loop *eloop;
 	int r;
-	struct crtx_evloop_callback *el_cb;
+// 	struct crtx_evloop_callback *el_cb;
 	
-	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+// 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 // 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
-	wqueue = (struct crtx_writequeue *) el_cb->data;
+	wqueue = (struct crtx_writequeue *) userdata;
 	
 	r = wqueue->write(wqueue, wqueue->write_userdata);
 	if (r != EAGAIN && r != ENOBUFS) {

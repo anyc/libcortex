@@ -35,15 +35,15 @@
 #ifndef CRTX_TEST
 
 static char can_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_evloop_callback *ev_cb;
+// 	struct crtx_evloop_callback *ev_cb;
 	struct can_frame *frame;
 	struct crtx_event *nevent;
 	struct crtx_can_listener *clist;
 	int r;
 	
-	ev_cb = (struct crtx_evloop_callback*) event->data.pointer;
+// 	ev_cb = (struct crtx_evloop_callback*) event->data.pointer;
 	
-	clist = (struct crtx_can_listener *) ev_cb->data;
+	clist = (struct crtx_can_listener *) userdata;
 	
 	// only create event if there are tasks in the queue
 	if (clist->base.graph->tasks) {

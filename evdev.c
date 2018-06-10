@@ -79,14 +79,14 @@ static void send_event(struct crtx_evdev_listener *el, struct input_event *ev, c
 // }
 
 static char evdev_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_evloop_callback *el_cb;
+// 	struct crtx_evloop_callback *el_cb;
 	struct crtx_evdev_listener *evdev;
 	struct input_event ev;
 	int ret;
 	
 	
-	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
-	evdev = (struct crtx_evdev_listener *) el_cb->data;
+// 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+	evdev = (struct crtx_evdev_listener *) userdata;
 	
 	do {
 		ret = libevdev_next_event(evdev->device, LIBEVDEV_READ_FLAG_NORMAL, &ev);

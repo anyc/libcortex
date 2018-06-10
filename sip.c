@@ -27,12 +27,12 @@ static char sip_fd_event_handler(struct crtx_event *event, void *userdata, void 
 	struct crtx_sip_listener *slist;
 	eXosip_event_t *evt;
 	struct crtx_event *nevent;
-	struct crtx_evloop_callback *el_cb;
+// 	struct crtx_evloop_callback *el_cb;
 	
-	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+// 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 // 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
-	slist = (struct crtx_sip_listener *) el_cb->data;
+	slist = (struct crtx_sip_listener *) userdata;
 	
 	while(1) {
 		evt = eXosip_event_wait(slist->ctx, 0, 0);

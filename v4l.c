@@ -170,7 +170,7 @@ static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void 
 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 // 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
-	clist = (struct crtx_v4l_listener *) el_cb->data;
+	clist = (struct crtx_v4l_listener *) userdata;
 	
 // 	int flags = payload->trigger_flags;
 // 	while (flags) {

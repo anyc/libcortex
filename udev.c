@@ -185,12 +185,12 @@ static char udev_fd_event_handler(struct crtx_event *event, void *userdata, void
 // 	struct crtx_evloop_fd *payload;
 	struct crtx_udev_listener *ulist;
 	struct udev_device *dev;
-	struct crtx_evloop_callback *el_cb;
+// 	struct crtx_evloop_callback *el_cb;
 	
-	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+// 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 // 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
-	ulist = (struct crtx_udev_listener *) el_cb->data;
+	ulist = (struct crtx_udev_listener *) userdata;
 	
 	dev = udev_monitor_receive_device(ulist->monitor);
 	if (dev) {

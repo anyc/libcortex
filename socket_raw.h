@@ -9,16 +9,16 @@
 
 #include <netinet/in.h>
 
-struct crtx_basic_fd_listener {
-	struct crtx_listener_base base;
-	
-	int fd;
-	
-	crtx_handle_task_t read_cb;
-	void *read_cb_data;
-	
-	struct crtx_socket_raw_listener *sock_lstnr;
-};
+// struct crtx_basic_fd_listener {
+// 	struct crtx_listener_base base;
+// 	
+// 	int fd;
+// 	
+// 	crtx_handle_task_t read_cb;
+// 	void *read_cb_data;
+// 	
+// 	struct crtx_socket_raw_listener *sock_lstnr;
+// };
 
 struct crtx_socket_raw_listener {
 	struct crtx_listener_base base;
@@ -34,11 +34,13 @@ struct crtx_socket_raw_listener {
 	socklen_t addrlen;
 	
 	int sockfd;
-	int server_sockfd;
+// 	int server_sockfd;
 	
 	int (*accept_cb)(struct crtx_socket_raw_listener *slist, int fd, struct sockaddr *cliaddr);
 	crtx_handle_task_t read_cb;
 	void *read_cb_data;
+	
+	struct crtx_socket_raw_listener *server_lstnr;
 };
 
 struct addrinfo *crtx_get_addrinfo(struct crtx_socket_raw_listener *listener);

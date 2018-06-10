@@ -26,7 +26,6 @@ struct crtx_evloop_callback {
 	int crtx_event_flags; // event flags set using libcortex #define's
 	char active;
 	
-	void *data; // data that can be set by the specific listener
 	void *el_data; // data that can be set by the event loop implementation
 	
 	int triggered_flags;
@@ -34,6 +33,7 @@ struct crtx_evloop_callback {
 	struct crtx_graph *graph;
 	crtx_handle_task_t event_handler;
 	char *event_handler_name;
+	void *event_handler_data; // data that can be set by the specific listener
 	
 	crtx_evloop_error_cb_t error_cb;
 	void *error_cb_data;

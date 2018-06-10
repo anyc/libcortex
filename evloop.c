@@ -47,7 +47,7 @@ void crtx_evloop_callback(struct crtx_evloop_callback *el_cb) {
 		crtx_event_set_raw_data(event, 'p', el_cb, sizeof(el_cb), CRTX_DIF_DONT_FREE_DATA);
 		
 		if (el_cb->event_handler) {
-			el_cb->event_handler(event, 0, 0);
+			el_cb->event_handler(event, el_cb->event_handler_data, 0);
 			
 			free_event(event);
 		} else {
@@ -85,7 +85,7 @@ int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd, struct crtx_ev
 	el_cb->crtx_event_flags = event_flags;
 	el_cb->graph = graph;
 	el_cb->event_handler = event_handler;
-	el_cb->data = event_handler_data;
+	el_cb->event_handler_data = event_handler_data;
 	el_cb->fd_entry = evloop_fd;
 	el_cb->error_cb = error_cb;
 	el_cb->error_cb_data = error_cb_data;

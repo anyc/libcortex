@@ -127,8 +127,9 @@ static char elw_fd_event_handler(struct crtx_event *event, void *userdata, void 
 	
 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 	
-	wrap = (struct libvirt_eventloop_wrapper*) el_cb->data;
 	epoll_event = (struct epoll_event *) el_cb->fd_entry->el_data;
+	
+	wrap = (struct libvirt_eventloop_wrapper*) userdata;
 	
 // 	printf("lv fd cb %d %p %d\n", wrap->id, wrap->event_cb, epoll_event->events);
 // 	if (epoll_event->events & EPOLLHUP) {
@@ -151,7 +152,7 @@ static void elw_fd_error_cb(struct crtx_evloop_callback *el_cb, void *data) {
 // 	struct epoll_event *epoll_event;
 	
 	
-	wrap = (struct libvirt_eventloop_wrapper*) el_cb->data;
+	wrap = (struct libvirt_eventloop_wrapper*) el_cb->event_handler_data;
 // 	epoll_event = (struct epoll_event *) evloop_fd->el_data;
 	
 	DBG("libvirt event loop error callback for fd %d\n", el_cb->fd_entry->fd);

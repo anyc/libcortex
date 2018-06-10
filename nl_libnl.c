@@ -17,11 +17,11 @@ static char libnl_fd_event_handler(struct crtx_event *event, void *userdata, voi
 // 	struct crtx_evloop_fd *payload;
 	struct crtx_libnl_listener *libnl_lstnr;
 	int r;
-	struct crtx_evloop_callback *el_cb;
+// 	struct crtx_evloop_callback *el_cb;
 	
-	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+// 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 // 	payload = (struct crtx_evloop_fd*) event->data.pointer;
-	libnl_lstnr = (struct crtx_libnl_listener *) el_cb->data;
+	libnl_lstnr = (struct crtx_libnl_listener *) userdata;
 	
 	// nl_recvmsgs_default will eventually call the registered callback
 	r = nl_recvmsgs_default(libnl_lstnr->sock);

@@ -35,7 +35,7 @@ static char netlink_el_event_handler(struct crtx_event *event, void *userdata, v
 	
 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 	
-	nl_listener = (struct crtx_netlink_raw_listener*) el_cb->data;
+	nl_listener = (struct crtx_netlink_raw_listener*) el_cb->event_handler_data;
 	
 	nl_listener->read_cb(nl_listener, nl_listener->sockfd, nl_listener->read_cb_userdata);
 	

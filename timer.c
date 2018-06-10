@@ -16,17 +16,15 @@
 #include "timer.h"
 
 static char timer_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	struct crtx_evloop_fd *payload;
 	struct crtx_timer_listener *tlist;
 	uint64_t exp;
 	ssize_t s;
 	
-	struct crtx_evloop_callback *el_cb;
+// 	struct crtx_evloop_callback *el_cb;
 	
-	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
-// 	payload = (struct crtx_evloop_fd*) event->data.pointer;
+// 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 	
-	tlist = (struct crtx_timer_listener *) el_cb->data;
+	tlist = (struct crtx_timer_listener *) userdata;
 	
 	if (tlist->oneshot_callback) {
 		tlist->oneshot_callback(0, tlist->oneshot_data, 0);
@@ -47,31 +45,12 @@ static char timer_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	}
 	
 	event = crtx_create_event(CRTX_EVT_TIMER);
-// 	event->data.uint32 = exp;
-// 	event->data.type = 'u';
 	crtx_event_set_raw_data(event, 'U', exp, sizeof(exp), 0);
-// 	event->data.flags = CRTX_DIF_DONT_FREE_DATA;
-	
-// 	if (tlist->oneshot) {
-// 		event->cb_before_release = &oneshot_event_release_cb;
-// 		event->cb_before_release_data = tlist;
-// 	}
 	
 	crtx_add_event(tlist->base.graph, event);
 	
-// 	if (tlist->newtimer->it_interval.tv_sec == 0 && tlist->newtimer->it_interval.tv_nsec == 0)
-// 		break;
-	
 	return 1;
 }
-
-void crtx_shutdown_timer_listener(struct crtx_listener_base *base) {
-// 	stop_thread(0, data);
-}
-
-// static char start_listener(struct crtx_listener_base *base) {
-// 	
-// }
 
 static char update_listener(struct crtx_listener_base *base) {
 	struct crtx_timer_listener *tlist;
@@ -92,15 +71,8 @@ static char update_listener(struct crtx_listener_base *base) {
 
 struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 	struct crtx_timer_listener *tlist;
-// 	int ret;
-// 	struct crtx_thread *t;
 	
 	tlist = (struct crtx_timer_listener *) options;
-	
-// 	if (!tlist->newtimer)
-// 		return 0;
-	
-// 	new_eventgraph(&tlist->base.graph, 0, 0);
 	
 	tlist->fd = timerfd_create(tlist->clockid, 0);
 	if (tlist->fd == -1) {
@@ -108,17 +80,6 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 		return 0;
 	}
 	
-// 	ret = timerfd_settime(tlist->fd, tlist->settime_flags, tlist->newtimer, NULL);
-// 	if (ret == -1) {
-// 		ERROR("timerfd_settime failed: %s\n", strerror(errno));
-// 		return 0;
-// 	}
-	
-// 	tlist->base.evloop_fd.fd = tlist->fd;
-// 	tlist->base.evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 	tlist->base.evloop_fd.data = tlist;
-// 	tlist->base.evloop_fd.event_handler = &timer_fd_event_handler;
-// 	tlist->base.evloop_fd.event_handler_name = "timer fd handler";
 	crtx_evloop_init_listener(&tlist->base,
 						   tlist->fd,
 					    EVLOOP_READ,
@@ -130,11 +91,6 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 	
 	tlist->base.start_listener = &update_listener;
 	tlist->base.update_listener = &update_listener;
-// 	tlist->base.thread = get_thread(timer_tmain, tlist, 0);
-// 	tlist->base.thread->do_stop = &stop_thread;
-// 	start_thread(t);
-	
-// 	tlist->base.shutdown = &crtx_shutdown_timer_listener;
 	
 	return &tlist->base;
 }
@@ -194,6 +150,11 @@ void crtx_timer_retry_listener_free(struct crtx_timer_retry_listener *retry_lstn
 	free(retry_lstnr);
 }
 
+
+/*
+ * convenience functions
+ */
+
 int crtx_timer_get_listener(struct crtx_timer_listener *tlist,
 							time_t offset_sec,
 							long offset_nsec,
@@ -223,16 +184,6 @@ int crtx_timer_get_listener(struct crtx_timer_listener *tlist,
 	return 0;
 }
 
-// static char oneshot_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	struct crtx_timer_listener *tlist;
-// 	
-// 	tlist = (struct crtx_timer_listener *) userdata;
-// 	
-// 	
-// 	
-// 	crtx_free_listener(tlist);
-// }
-
 int crtx_timer_oneshot(time_t offset_sec,
 						long offset_nsec,
 						crtx_handle_task_t callback,
@@ -258,9 +209,6 @@ int crtx_timer_oneshot(time_t offset_sec,
 		return 0;
 	}
 	
-// 	tlist->parent.default_el_cb.event_handler = oneshot_fd_event_handler;
-// 	tlist->parent.default_el_cb.data = callback_userdata;
-	
 	crtx_start_listener(lbase);
 	
 	return 0;
@@ -271,6 +219,9 @@ void crtx_timer_init() {
 
 void crtx_timer_finish() {
 }
+
+
+
 
 #ifdef CRTX_TEST
 static char timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {

@@ -538,12 +538,12 @@ static char xcb_randr_fd_event_handler(struct crtx_event *event, void *userdata,
 // 	struct crtx_evloop_fd *payload;
 	struct crtx_xcb_randr_listener *xrlist;
 	xcb_generic_event_t *ev;
-	struct crtx_evloop_callback *el_cb;
+// 	struct crtx_evloop_callback *el_cb;
 	
-	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+// 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 // 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
-	xrlist = (struct crtx_xcb_randr_listener *) el_cb->data;
+	xrlist = (struct crtx_xcb_randr_listener *) userdata;
 	
 	ev = xcb_poll_for_event(xrlist->conn);
 	

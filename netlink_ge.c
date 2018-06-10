@@ -88,11 +88,11 @@ static char genl_fd_event_handler(struct crtx_event *event, void *userdata, void
 // 	struct crtx_evloop_fd *payload;
 	struct crtx_genl_listener *genlist;
 	int r;
-	struct crtx_evloop_callback *el_cb;
+// 	struct crtx_evloop_callback *el_cb;
 	
-	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+// 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 // 	payload = (struct crtx_evloop_fd*) event->data.pointer;
-	genlist = (struct crtx_genl_listener *) el_cb->data;
+	genlist = (struct crtx_genl_listener *) userdata;
 	
 	// nl_recvmsgs_default will eventually call the registered callback
 	r = nl_recvmsgs_default(genlist->sock);

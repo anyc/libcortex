@@ -27,6 +27,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -85,13 +86,26 @@ void crtx_free_addrinfo(struct addrinfo *result) {
 	}
 }
 
-int crtx_init_basic_fd_listener(struct crtx_basic_fd_listener *lstnr) {
+static int create_sub_lstnr(struct crtx_socket_raw_listener **listener, struct crtx_socket_raw_listener *server_lstnr, int fd) {
+	struct crtx_socket_raw_listener *lstnr;
+	
+	*listener = (struct crtx_socket_raw_listener*) calloc(1, sizeof(struct crtx_socket_raw_listener));
+	lstnr = *listener;
+	
+// 	lstnr->read_cb = slist->read_cb;
+// 	lstnr->read_cb_data = slist->read_cb_data;
+// 	lstnr->fd = fd;
+// 	lstnr->sock_lstnr = slist;
+	
+	memcpy(lstnr, server_lstnr, sizeof(struct crtx_socket_raw_listener));
+	lstnr->server_lstnr = server_lstnr;
+	lstnr->sockfd = fd;
 	lstnr->base.id = "basic_fd";
 	
 	crtx_init_listener_base(&lstnr->base);
 	
 	crtx_evloop_init_listener(&lstnr->base,
-							lstnr->fd,
+							lstnr->sockfd,
 							EVLOOP_READ,
 							0,
 							lstnr->read_cb,
@@ -106,11 +120,11 @@ static char socket_raw_accept_handler(struct crtx_event *event, void *userdata, 
 	struct crtx_socket_raw_listener *slist;
 	struct sockaddr *cliaddr;
 	int fd, r;
-	struct crtx_evloop_callback *el_cb;
+// 	struct crtx_evloop_callback *el_cb;
 	
 	
-	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
-	slist = (struct crtx_socket_raw_listener *) el_cb->data;
+// 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+	slist = (struct crtx_socket_raw_listener *) userdata;
 	
 	cliaddr = malloc(slist->addrlen);
 	fd = accept(slist->sockfd, cliaddr, &slist->addrlen);
@@ -123,20 +137,14 @@ static char socket_raw_accept_handler(struct crtx_event *event, void *userdata, 
 	if (r < 0) {
 		
 	} else {
-		struct crtx_basic_fd_listener *fd_lstnr;
+		struct crtx_socket_raw_listener *sub_lstnr;
 		
-		fd_lstnr = (struct crtx_basic_fd_listener*) calloc(1, sizeof(struct crtx_basic_fd_listener));
-		fd_lstnr->read_cb = slist->read_cb;
-		fd_lstnr->read_cb_data = slist->read_cb_data;
-		fd_lstnr->fd = fd;
-		fd_lstnr->sock_lstnr = slist;
-		
-		r = crtx_init_basic_fd_listener(fd_lstnr);
+		r = create_sub_lstnr(&sub_lstnr, slist, fd);
 		if (r < 0) {
 			
 		}
 		
-		crtx_start_listener(&fd_lstnr->base);
+		crtx_start_listener(&sub_lstnr->base);
 	}
 	
 	return 0;
@@ -196,6 +204,12 @@ int crtx_init_socket_raw_server_listener(struct crtx_socket_raw_listener *sliste
 				ERROR("failed to unlink existing unix socket: %s\n", strerror(errno));
 		}
 		
+		int flags;
+		flags = fcntl(slistener->sockfd, F_GETFL, 0);
+		if (flags == -1)
+			flags = 0;
+		fcntl(slistener->sockfd, F_SETFL, flags | O_NONBLOCK);
+		
 		if (bind(slistener->sockfd, rit->ai_addr, rit->ai_addrlen) == 0)
 			break;
 		
@@ -225,15 +239,19 @@ int crtx_init_socket_raw_server_listener(struct crtx_socket_raw_listener *sliste
 						slistener,
 						0, 0
 					);
-	} else {
+	} else 
+	if (slistener->type == SOCK_DGRAM) {
 		crtx_evloop_init_listener(&slistener->base,
 						slistener->sockfd,
 						EVLOOP_READ,
 						0,
 						slistener->read_cb,
-						slistener->read_cb_data,
+						slistener,
 						0, 0
 					);
+	} else {
+		ERROR("invalid socket type %d\n", slistener->type);
+		return -EINVAL;
 	}
 	
 // 	return &slistener->base;
@@ -245,14 +263,14 @@ static char client_read_handler(struct crtx_event *event, void *userdata, void *
 // 	struct crtx_evloop_fd *evloop_fd;
 	struct crtx_socket_raw_listener *slist;
 	
-	struct crtx_evloop_callback *el_cb;
+// 	struct crtx_evloop_callback *el_cb;
 	
-	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+// 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 // 	evloop_fd = (struct crtx_evloop_fd*) event->data.pointer;
 	
-	slist = (struct crtx_socket_raw_listener *) el_cb->data;
+	slist = (struct crtx_socket_raw_listener *) userdata;
 	
-	slist->accept_cb(slist, el_cb->fd_entry->fd, 0);
+	slist->accept_cb(slist, slist->sockfd, 0);
 	
 	return 0;
 }

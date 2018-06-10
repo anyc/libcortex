@@ -222,12 +222,12 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 // 	struct crtx_evloop_fd *payload;
 	struct crtx_sdbus_listener *sdlist;
 	int r;
-	struct crtx_evloop_callback *el_cb;
+// 	struct crtx_evloop_callback *el_cb;
 	
-	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+// 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 // 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
-	sdlist = (struct crtx_sdbus_listener *) el_cb->data;
+	sdlist = (struct crtx_sdbus_listener *) userdata;
 	
 	while (1) {
 		r = sd_bus_process(sdlist->bus, NULL);
