@@ -46,6 +46,9 @@ void crtx_evloop_callback(struct crtx_evloop_callback *el_cb) {
 		
 		crtx_event_set_raw_data(event, 'p', el_cb, sizeof(el_cb), CRTX_DIF_DONT_FREE_DATA);
 		
+		if (el_cb->fd_entry->listener && el_cb->fd_entry->listener->autolock_source)
+			LOCK(el_cb->fd_entry->listener->source_lock);
+		
 		if (el_cb->event_handler) {
 			el_cb->event_handler(event, el_cb->event_handler_data, 0);
 			
@@ -64,6 +67,9 @@ void crtx_evloop_callback(struct crtx_evloop_callback *el_cb) {
 // 				crtx_process_graph_tmain(graph);
 			}
 		}
+		
+		if (el_cb->fd_entry->listener && el_cb->fd_entry->listener->autolock_source)
+			UNLOCK(el_cb->fd_entry->listener->source_lock);
 	} else {
 		ERROR("no handler for fd %d\n", el_cb->fd_entry->fd);
 		exit(1);
@@ -117,6 +123,7 @@ int crtx_evloop_init_listener(struct crtx_listener_base *listener,
 						error_cb_data
 					);
 	
+	listener->evloop_fd.listener = listener;
 	listener->default_el_cb.active = 1;
 	
 	return ret;

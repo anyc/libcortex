@@ -260,6 +260,8 @@ int crtx_init_listener_base(struct crtx_listener_base *lbase) {
 	new_eventgraph(&lbase->graph, lbase->id, 0);
 	lbase->graph->listener = lbase;
 	
+	INIT_REC_MUTEX(lbase->source_lock);
+	
 	return 0;
 }
 
@@ -1937,6 +1939,10 @@ void crtx_set_main_event_loop(const char *event_loop) {
 	crtx_root->chosen_event_loop = event_loop;
 }
 
-// void crtx_start_event_loop() {
-// 	
-// }
+void crtx_lock_listener_source(struct crtx_listener_base *lbase) {
+	LOCK(lbase->source_lock);
+}
+
+void crtx_unlock_listener_source(struct crtx_listener_base *lbase) {
+	UNLOCK(lbase->source_lock);
+}

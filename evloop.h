@@ -41,6 +41,8 @@ struct crtx_evloop_callback {
 	struct crtx_evloop_fd *fd_entry;
 };
 
+struct crtx_listener_base;
+
 struct crtx_evloop_fd {
 	struct crtx_ll ll;
 	
@@ -49,10 +51,10 @@ struct crtx_evloop_fd {
 	
 	void *el_data; // data that can be set by the event loop implementation
 	
+	struct crtx_listener_base *listener;
+	
 	struct crtx_evloop_callback *callbacks;
 };
-
-struct crtx_listener_base;
 
 struct crtx_event_loop_control_pipe {
 	struct crtx_graph *graph;

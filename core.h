@@ -140,6 +140,9 @@ struct crtx_listener_base {
 	struct crtx_evloop_fd evloop_fd;
 	struct crtx_evloop_callback default_el_cb;
 	
+	char autolock_source;
+	MUTEX_TYPE source_lock;
+	
 	struct crtx_thread_job_description thread_job;
 	struct crtx_thread *eloop_thread;
 // 	thread_fct thread_fct;
@@ -303,5 +306,8 @@ void crtx_wait_on_graph_empty(struct crtx_graph *graph);
 struct crtx_listener_repository* crtx_get_new_listener_repo_entry();
 
 void crtx_set_main_event_loop(const char *event_loop);
+
+void crtx_lock_listener_source(struct crtx_listener_base *lbase);
+void crtx_unlock_listener_source(struct crtx_listener_base *lbase);
 
 #endif
