@@ -6,6 +6,7 @@
 local_mk ?= Makefile.local
 local_mk_rules ?= Makefile.local_rules
 
+SHELL=/bin/bash
 PKG_CONFIG?=pkg-config
 INSTALL?=install
 
