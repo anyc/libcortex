@@ -8,7 +8,7 @@
 
 #include <sys/time.h>
 
-#include "intern.h"
+#include "common.h"
 
 #define EVLOOP_READ 1<<0
 #define EVLOOP_WRITE 1<<1

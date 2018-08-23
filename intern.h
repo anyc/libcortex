@@ -40,7 +40,5 @@
 
 #define POPCOUNT32(x) __builtin_popcount(x)
 
-struct crtx_event;
-typedef char (*crtx_handle_task_t)(struct crtx_event *event, void *userdata, void **sessiondata);
 
 #endif

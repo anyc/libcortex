@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "core.h"
+#include "intern.h"
 #include "evloop.h"
 
 struct crtx_event_loop *crtx_event_loops = 0;
