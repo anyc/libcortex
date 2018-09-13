@@ -199,7 +199,7 @@ int crtx_sd_bus_message_read_string(sd_bus_message *m, char **p) {
 int crtx_sdbus_get_events(sd_bus *bus) {
 	int f, result;
 	
-	result = 0;
+	result = 0; // | EVLOOP_EDGE_TRIGGERED;
 	
 	f = sd_bus_get_events(bus);
 	if (f & POLLIN) {
@@ -222,15 +222,17 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 // 	struct crtx_evloop_fd *payload;
 	struct crtx_sdbus_listener *sdlist;
 	int r;
-// 	struct crtx_evloop_callback *el_cb;
+	struct crtx_evloop_callback *el_cb;
 	
-// 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 // 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
 	sdlist = (struct crtx_sdbus_listener *) userdata;
 	
 	while (1) {
+// 		printf("sdbus process\n");
 		r = sd_bus_process(sdlist->bus, NULL);
+		
 		if (r < 0) {
 			ERROR("sd_bus_process failed: %s\n", strerror(-r));
 			break;
@@ -238,14 +240,17 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 		if (r == 0)
 			break;
 	}
+// 	printf("sdbus process stop\n");
 	
 	// TODO set epoll flags again everytime?
-// 	int new_flags;
-// 	new_flags = crtx_sd_bus_get_events(sdlist->bus);
-// 	if (payload->crtx_event_flags != new_flags) {
-// 		printf("%d != %d\n", payload->crtx_event_flags, new_flags);
-// 		payload->crtx_event_flags = new_flags;
-// 	}
+	int new_flags;
+	new_flags = crtx_sdbus_get_events(sdlist->bus);
+	
+	if (el_cb->crtx_event_flags != new_flags) {
+		printf("TODO sdbus fd_event_handler() %d != %d\n", el_cb->crtx_event_flags, new_flags);
+// 		el_cb->crtx_event_flags = new_flags;
+// 		crtx_evloop_enable_cb(el_cb->fd_entry->evloop, el_cb);
+	}
 	
 	return r;
 }

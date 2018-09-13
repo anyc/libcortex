@@ -18,13 +18,18 @@ struct crtx_event_loop *crtx_event_loops = 0;
 static char evloop_ctrl_pipe_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_evloop_callback *el_cb;
 	struct crtx_event_loop_control_pipe ecp;
-	
+	ssize_t r;
 	
 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 	
 	VDBG("received wake-up event\n");
 	
-	read(el_cb->fd_entry->fd, &ecp, sizeof(struct crtx_event_loop_control_pipe));
+	r = read(el_cb->fd_entry->fd, &ecp, sizeof(struct crtx_event_loop_control_pipe));
+	
+	if (r != sizeof(struct crtx_event_loop_control_pipe)) {
+		ERROR("unexpected number of bytes read in evloop_ctrl_pipe_handler(): %zd != %zd\n", r, sizeof(struct crtx_event_loop_control_pipe));
+		return 0;
+	}
 	
 	if (ecp.graph) {
 		crtx_process_graph_tmain(ecp.graph);
@@ -50,24 +55,33 @@ void crtx_evloop_callback(struct crtx_evloop_callback *el_cb) {
 		if (el_cb->fd_entry->listener && el_cb->fd_entry->listener->autolock_source)
 			LOCK(el_cb->fd_entry->listener->source_lock);
 		
+		/*
+		 * TODO in any case, we have to make sure that we read from the fd before
+		 * we call epoll_wait() again as it will return again immediately (in default level-triggered
+		 * mode) and we will create multiple events here for the same data in the fd	
+		 */
+		
+// 		if (el_cb->crtx_event_flags & EVLOOP_EDGE_TRIGGERED)
+		
 		if (el_cb->event_handler) {
 			el_cb->event_handler(event, el_cb->event_handler_data, 0);
 			
 			free_event(event);
-		} else {
-			enum crtx_processing_mode mode;
-			
-			mode = crtx_get_mode(el_cb->graph->mode);
-			
-			// TODO process events here directly if mode == CRTX_PREFER_ELOOP ?
-			if (mode == CRTX_PREFER_THREAD) {
-				crtx_add_event(el_cb->graph, event);
-			} else {
-				crtx_add_event(el_cb->graph, event);
-				
-// 				crtx_process_graph_tmain(graph);
-			}
 		}
+// 		} else {
+// 			enum crtx_processing_mode mode;
+// 			
+// 			mode = crtx_get_mode(el_cb->graph->mode);
+// 			
+// 			// TODO process events here directly if mode == CRTX_PREFER_ELOOP ?
+// 			if (mode == CRTX_PREFER_THREAD) {
+// 				crtx_add_event(el_cb->graph, event);
+// 			} else {
+// 				crtx_add_event(el_cb->graph, event);
+// 				
+// // 				crtx_process_graph_tmain(graph);
+// 			}
+// 		}
 		
 		if (el_cb->fd_entry->listener && el_cb->fd_entry->listener->autolock_source)
 			UNLOCK(el_cb->fd_entry->listener->source_lock);

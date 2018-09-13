@@ -11,6 +11,9 @@ struct crtx_pipe_listener {
 	
 	int fds[2];
 	char *event_type;
+	
+	crtx_handle_task_t fd_event_handler;
+	void *fd_event_handler_data;
 };
 
 struct crtx_listener_base *crtx_new_pipe_listener(void *options);

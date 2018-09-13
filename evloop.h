@@ -13,10 +13,11 @@
 #define EVLOOP_READ 1<<0
 #define EVLOOP_WRITE 1<<1
 #define EVLOOP_SPECIAL 1<<2
+#define EVLOOP_EDGE_TRIGGERED 1<<3
 
 struct crtx_evloop_fd;
 struct crtx_evloop_callback;
-
+struct crtx_event_loop;
 
 typedef void (*crtx_evloop_error_cb_t)(struct crtx_evloop_callback *el_cb, void *data);
 
@@ -54,6 +55,8 @@ struct crtx_evloop_fd {
 	struct crtx_listener_base *listener;
 	
 	struct crtx_evloop_callback *callbacks;
+	
+	struct crtx_event_loop *evloop;
 };
 
 struct crtx_event_loop_control_pipe {

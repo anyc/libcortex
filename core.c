@@ -216,6 +216,7 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 // 				&crtx_root->event_loop,
 // 				&listener->evloop_fd);
 			
+			listener->evloop_fd.evloop = &crtx_root->event_loop;
 			crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &listener->evloop_fd);
 		} else {
 			ERROR("invalid start listener mode: %d\n", mode);

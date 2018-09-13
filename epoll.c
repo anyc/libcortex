@@ -10,6 +10,10 @@
 #include <errno.h>
 #include <unistd.h>
 
+#ifdef DEBUG
+#include <sys/ioctl.h>
+#endif
+
 #include "intern.h"
 #include "core.h"
 #include "epoll.h"
@@ -72,6 +76,8 @@ static int crtx_event_flags2epoll_flags(int crtx_event_flags) {
 		ret |= EPOLLOUT;
 	if (crtx_event_flags & EVLOOP_SPECIAL)
 		ret |= EPOLLPRI;
+	if (crtx_event_flags & EVLOOP_EDGE_TRIGGERED)
+		ret |= EPOLLET;
 	
 	return ret;
 }
@@ -87,6 +93,8 @@ static int epoll_flags2crtx_event_flags(int epoll_flags) {
 		ret |= EVLOOP_WRITE;
 	if (epoll_flags & EPOLLPRI)
 		ret |= EVLOOP_SPECIAL;
+	if (epoll_flags & EPOLLET)
+		ret |= EVLOOP_EDGE_TRIGGERED;
 	
 	return ret;
 }
@@ -102,6 +110,7 @@ RETFLAG(EPOLLRDHUP);
 RETFLAG(EPOLLPRI);
 RETFLAG(EPOLLERR);
 RETFLAG(EPOLLHUP);
+RETFLAG(EPOLLET);
 
 // VDBG(" %u\n", *flags);
 return "";
@@ -207,6 +216,10 @@ static int evloop_start(struct crtx_event_loop *evloop) {
 			PRINTFLAG(EPOLLERR);
 			PRINTFLAG(EPOLLHUP);
 			VDBG("\n");
+			
+			int bytesAvailable;
+			ioctl(evloop_fd->fd, FIONREAD, &bytesAvailable);
+			VDBG("bytes %u\n", bytesAvailable);
 			#endif
 			
 			if (rec_events[i].events & EPOLLERR || rec_events[i].events & EPOLLRDHUP || rec_events[i].events & EPOLLHUP) {
