@@ -165,20 +165,62 @@ static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 	flags = rtnl_link_get_flags(clist->link);
 	rtnl_link_can_get_bitrate(clist->link, &bitrate);
 	
+	DBG("current bitrate: %u\n", bitrate);
+	
 	if (clist->ignore_if_state) {
 		clist->bitrate = bitrate;
 	} else
-	if ( !(flags & IFF_UP) || (bitrate != clist->bitrate) ) {
-// 		if (getuid() != 0 && geteuid() != 0) {
-// 			printf("warning, interface \"%s\" need to be reconfigured, you might not have the required privileges.\n", if_name);
-// 		}
-		
-		newlink = rtnl_link_alloc();
-		if (!newlink) {
-			printf("error allocating link\n");
-			goto error_linktype;
+	if (clist->try_to_keep_if_up) {
+		if ( !(flags & IFF_UP) || (bitrate != clist->bitrate) ) {
+			int caps;
+			caps = capng_get_caps_process();
+			if (caps != 0) {
+				ERROR("retrieving capabilities failed\n");
+			} else {
+				if (!capng_have_capability(CAPNG_EFFECTIVE, CAP_NET_ADMIN)) {
+					char *buf;
+					
+					ERROR("interface \"%s\" needs to be reconfigured and it looks like you do not have the required privileges (CAP_NET_ADMIN).\n", if_name);
+					buf = capng_print_caps_text(CAPNG_PRINT_BUFFER, CAPNG_EFFECTIVE);
+					DBG("effective caps: %s\n", buf);
+					free(buf);
+				}
+			}
+			
+			newlink = rtnl_link_alloc();
+			if (!newlink) {
+				printf("error allocating link\n");
+				goto error_linktype;
+			}
+			
+			rtnl_link_set_type(newlink, "can");
+			
+			if (bitrate != clist->bitrate) {
+				DBG("will change bitrate from %u to %u\n", bitrate, clist->bitrate);
+				
+				r = rtnl_link_can_set_bitrate(newlink, clist->bitrate);
+				if (r) {
+					printf("error setting bitrate\n");
+					goto error_newlink1;
+				}
+			}
+			
+			if (!(flags & IFF_UP))
+				rtnl_link_set_flags(newlink, IFF_UP);
+			
+			r = rtnl_link_change(clist->socket, clist->link, newlink, 0);
+			if (r < 0) {
+				printf("link change failed: %s\n", nl_geterror(r));
+				goto error_newlink1;
+			}
+			
+			r = 1;
+			
+		error_newlink1:
+			rtnl_link_put(newlink);
 		}
 		
+	} else {
 		int caps;
 		caps = capng_get_caps_process();
 		if (caps != 0) {
@@ -194,9 +236,39 @@ static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 			}
 		}
 		
+		if (flags & IFF_UP) {
+			newlink = rtnl_link_alloc();
+			if (!newlink) {
+				printf("error allocating link\n");
+				goto error_linktype;
+			}
+			
+			rtnl_link_set_type(newlink, "can");
+			
+			rtnl_link_unset_flags(newlink, IFF_UP);
+			
+			DBG("restarting interface\n");
+			
+			r = rtnl_link_change(clist->socket, clist->link, newlink, 0);
+			if (r < 0) {
+				printf("link change failed: %s\n", nl_geterror(r));
+				goto error_newlink;
+			}
+			
+			rtnl_link_put(newlink);
+		}
+		
+		newlink = rtnl_link_alloc();
+		if (!newlink) {
+			printf("error allocating link\n");
+			goto error_linktype;
+		}
+		
 		rtnl_link_set_type(newlink, "can");
 		
 		if (bitrate != clist->bitrate) {
+			DBG("will change bitrate from %u to %u\n", bitrate, clist->bitrate);
+			
 			r = rtnl_link_can_set_bitrate(newlink, clist->bitrate);
 			if (r) {
 				printf("error setting bitrate\n");
@@ -204,8 +276,7 @@ static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 			}
 		}
 		
-		if (!(flags & IFF_UP))
-			rtnl_link_set_flags(newlink, IFF_UP);
+		rtnl_link_set_flags(newlink, IFF_UP);
 		
 		r = rtnl_link_change(clist->socket, clist->link, newlink, 0);
 		if (r < 0) {
@@ -213,24 +284,11 @@ static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 			goto error_newlink;
 		}
 		
-		return 1;
+		r = 1;
 		
-		error_newlink:
-			rtnl_link_put(newlink);
+	error_newlink:
+		rtnl_link_put(newlink);
 	}
-	
-// 	printf("bit %u\n", bitrate);
-	
-// 	if (bitrate != clist->bitrate && (flags & IFF_UP)) {
-// 		rtnl_link_unset_flags(newlink, IFF_UP);
-// 		
-// 		r = rtnl_link_change(socket, link, newlink, 0);
-// 		if (r < 0) {
-// 			printf("link change failed: %s\n", nl_geterror(r));
-// 		}
-// 	}
-	
-
 	
 	return r;
 	
