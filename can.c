@@ -152,20 +152,35 @@ static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 			goto error_connect;
 		}
 		
-		r = rtnl_link_is_can(clist->link);
+		// rtnl_link_is_can() does not return true for vcan interfaces
+		/*r = rtnl_link_is_can(clist->link);
 		if (!r) {
 			printf("not a CAN interface\n");
 			r = -1;
 			goto error_linktype;
+		}*/
+		
+		char *type = rtnl_link_get_type(clist->link);
+		if (strcmp(type, "can") && strcmp(type, "vcan")) {
+			r = -1;
+			goto error_linktype;
 		}
+
+		if (!strcmp(type, "vcan"))
+			clist->is_virtual_can = 1;
 	}
 	
 	
 	bitrate = 0;
 	flags = rtnl_link_get_flags(clist->link);
-	rtnl_link_can_get_bitrate(clist->link, &bitrate);
-	
-	DBG("current bitrate: %u\n", bitrate);
+
+	if (!clist->is_virtual_can) {
+		rtnl_link_can_get_bitrate(clist->link, &bitrate);
+		
+		DBG("current bitrate: %u\n", bitrate);
+	} else {
+		bitrate = clist->bitrate;
+	}
 	
 	if (clist->ignore_if_state) {
 		clist->bitrate = bitrate;
@@ -359,13 +374,15 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 // 			return 0;
 // 		}
 		
-		uint32_t can_state;
-		r = rtnl_link_can_state(clist->link, &can_state);
-		if (r < 0) {
-			printf("link change failed: %s\n", nl_geterror(r));
+		if (!clist->is_virtual_can) {
+			uint32_t can_state;
+			r = rtnl_link_can_state(clist->link, &can_state);
+			if (r < 0) {
+				printf("link change failed: %s\n", nl_geterror(r));
+			}
+			
+			print_can_state(can_state);
 		}
-		
-		print_can_state(can_state);
 	}
 	
 	if (!clist->setup_if_only) {
