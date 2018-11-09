@@ -20,7 +20,7 @@
 
 #define INFO(fmt, ...) do { crtx_printf(CRTX_INFO, fmt, ##__VA_ARGS__); } while (0)
 
-#ifndef DEVDEBUG
+#ifndef CRTX_VDEBUG
 #define DBG(fmt, ...) do { crtx_printf(CRTX_DBG, fmt, ##__VA_ARGS__); } while (0)
 #define VDBG(fmt, ...) do { crtx_printf(CRTX_VDBG, fmt, ##__VA_ARGS__); } while (0)
 #else

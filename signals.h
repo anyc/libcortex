@@ -5,8 +5,10 @@
 
 struct crtx_signal_listener {
 	struct crtx_listener_base base;
+	int fd;
 	
 	int *signals; // { SIGINT, ..., 0 }
+	char no_signalfd;
 };
 
 struct crtx_listener_base *crtx_new_signals_listener(void *options);

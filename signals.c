@@ -7,6 +7,11 @@
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
+#include <errno.h>
+
+#ifndef WITHOUT_SIGNALFD
+#include <sys/signalfd.h>
+#endif
 
 #include "intern.h"
 #include "signals.h"
@@ -27,8 +32,7 @@ struct signal_map {
 
 
 static int std_signals[] = {SIGTERM, SIGINT, 0};
-struct crtx_signal_listener signal_list;
-// struct crtx_listener_base *sl_base;
+static struct crtx_signal_listener signal_list;
 
 struct signal_map *get_signal(int signum) {
 	struct signal_map *sm;
@@ -48,49 +52,141 @@ static void signal_handler(int signum) {
 	struct crtx_event *event;
 	struct signal_map *smap;
 	
-	smap = get_signal(signum);
-	
-	DBG("received signal %s (%d)\n", smap->name, signum);
+	if (crtx_verbosity > 0) {
+		smap = get_signal(signum);
+		if (smap)
+			DBG("received signal %s (%d)\n", smap->name, signum);
+		else
+			DBG("received signal %d\n", signum);
+	}
 	
 	event = crtx_create_event(smap->etype);
 	
 	crtx_add_event(signal_list.base.graph, event);
 }
 
+#ifndef WITHOUT_SIGNALFD
+static char fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_signal_listener *slistener;
+	struct signalfd_siginfo si;
+	ssize_t r;
+	
+	slistener = (struct crtx_signal_listener *) userdata;
+	
+	r = read(slistener->fd, &si, sizeof(si));
+	
+	if (r < 0) {
+		ERROR("read from signalfd %d failed: %s\n", slistener->fd, strerror(r));
+		return r;
+	}
+	if (r != sizeof(si)) {
+		ERROR("read from signalfd %d failed: %s\n", slistener->fd, strerror(r));
+		return -EBADE;
+	}
+	
+	signal_handler(si.ssi_signo);
+}
+
+static void shutdown_listener(struct crtx_listener_base *data) {
+	struct crtx_signal_listener *slistener;
+	sigset_t mask;
+	int r;
+	
+	
+	slistener = (struct crtx_signal_listener*) data;
+	
+	sigemptyset(&mask);
+	r = sigprocmask(SIG_BLOCK, &mask, NULL);
+	if (r < 0) {
+		ERROR("signals: clearing sigprocmask failed: %s\n", strerror(-r));
+		return;
+	}
+	
+	close(slistener->fd);
+}
+#endif
+
 static char start_listener(struct crtx_listener_base *listener) {
 	struct crtx_signal_listener *slistener;
-	struct sigaction new_action, old_action;
 	int *i;
+	int r;
 	
 	slistener = (struct crtx_signal_listener *) listener;
 	
-	
-	new_action.sa_handler = signal_handler;
-	sigemptyset(&new_action.sa_mask);
-	new_action.sa_flags = 0;
-	
-	i=slistener->signals;
-	while (*i) {
-		sigaction(*i, 0, &old_action);
+	if (slistener->no_signalfd) {
+		struct sigaction new_action, old_action;
 		
-		// only set actions for signals not previously set to ignore
-		if (old_action.sa_handler != SIG_IGN) {
-			struct signal_map *smap;
+		
+		new_action.sa_handler = signal_handler;
+		sigemptyset(&new_action.sa_mask);
+		new_action.sa_flags = 0;
+		
+		i=slistener->signals;
+		while (*i) {
+			sigaction(*i, 0, &old_action);
 			
-			smap = get_signal(*i);
+			// only set actions for signals not previously set to ignore
+			if (old_action.sa_handler != SIG_IGN) {
+				struct signal_map *smap;
+				
+				smap = get_signal(*i);
+				
+				DBG("new signal handler for %s (%d)\n", smap->name, *i);
+				
+				signal_list.base.graph->n_types++;
+				signal_list.base.graph->types = (char**) realloc(signal_list.base.graph->types,
+														sizeof(char*) * signal_list.base.graph->n_types);
+				
+				signal_list.base.graph->types[signal_list.base.graph->n_types-1] = smap->etype;
+				
+				sigaction(*i, &new_action, 0);
+			}
 			
-			DBG("new signal handler for %s (%d)\n", smap->name, *i);
-			
-			signal_list.base.graph->n_types++;
-			signal_list.base.graph->types = (char**) realloc(signal_list.base.graph->types,
-													 sizeof(char*) * signal_list.base.graph->n_types);
-			
-			signal_list.base.graph->types[signal_list.base.graph->n_types-1] = smap->etype;
-			
-			sigaction(*i, &new_action, 0);
+			i++;
+		}
+	} else {
+		#ifndef WITHOUT_SIGNALFD
+		sigset_t mask;
+		
+		/*
+		 * block old signal handling for signals we want to receive over the signalfd
+		 */
+		
+		sigemptyset(&mask);
+		
+		i=slistener->signals;
+		while (*i) {
+			sigaddset(&mask, *i);
+			i++;
 		}
 		
-		i++;
+		r = sigprocmask(SIG_BLOCK, &mask, NULL);
+		if (r < 0) {
+			ERROR("signals: sigprocmask failed: %s\n", strerror(-r));
+			return r;
+		}
+		
+		slistener->fd = signalfd(-1, &mask, SFD_CLOEXEC);
+		if (slistener->fd < 0) {
+			ERROR("signalfd failed: %s", strerror(errno));
+			return errno;
+		}
+		
+		DBG("new signalfd with fd %d\n", slistener->fd);
+		
+		crtx_evloop_init_listener(&slistener->base,
+							 slistener->fd,
+							 EVLOOP_READ,
+							 0,
+							 &fd_event_handler,
+							 slistener,
+							 0, 0
+							);
+		
+		slistener->base.shutdown = &shutdown_listener;
+		#else
+		ERROR("libcortex was compiled without signalfd support\n");
+		#endif
 	}
 	
 	return 1;
@@ -104,7 +200,6 @@ struct crtx_listener_base *crtx_new_signals_listener(void *options) {
 	if (!slistener->signals)
 		return 0;
 	
-// 	signal_list.base.thread = 0;
 	signal_list.base.start_listener = &start_listener;
 	
 	return &signal_list.base;
@@ -144,7 +239,6 @@ int crtx_handle_std_signals() {
 	
 	signal_list.signals = std_signals;
 	
-// 	sl_base = create_listener("signals", &signal_list);
 	err = crtx_create_listener("signals", &signal_list);
 	if (err < 0) {
 		return err;
@@ -173,7 +267,6 @@ int crtx_handle_std_signals() {
 
 void crtx_signals_init() {
 	memset(&signal_list, 0, sizeof(struct crtx_signal_listener));
-// 	crtx_create_graph(&signal_list.base.graph, "cortex.signals", 0);
 }
 
 void crtx_signals_finish() {

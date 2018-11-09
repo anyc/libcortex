@@ -141,7 +141,10 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 	
 	listener->state = CRTX_LSTNR_STARTING;
 	
-	DBG("starting listener \"%s\"\n", listener->id);
+	DBG("starting listener \"%s\"", listener->id);
+	if (listener->evloop_fd.fd >=0)
+		DBG(" (fd %d)", listener->evloop_fd.fd);
+	DBG("\n", listener->id);
 	
 // 	if (listener->state == CRTX_LSTNR_STARTED || listener == CRTX_LSTNR_PAUSED) {
 // 		DBG("will not start 
