@@ -25,19 +25,20 @@ static char pool_stop = 0;
  * signals
  */
 
-void crtx_init_signal(struct crtx_signal *signal) {
+void crtx_init_signal(struct crtx_signal *s) {
 	int ret;
 	
-	ret = pthread_mutex_init(&signal->mutex, 0); ASSERT(ret >= 0);
-	ret = pthread_cond_init(&signal->cond, NULL); ASSERT(ret >= 0);
+	ret = pthread_mutex_init(&s->mutex, 0); ASSERT(ret >= 0);
+	ret = pthread_cond_init(&s->cond, NULL); ASSERT(ret >= 0);
 	
-	signal->local_condition = 0;
-	signal->condition = &signal->local_condition;
+	s->local_condition = 0;
+	s->condition = &s->local_condition;
+	s->bitflag_idx = -1;
 	
-	ret = pthread_mutex_init(&signal->ref_mutex, 0); ASSERT(ret >= 0);
-	ret = pthread_cond_init(&signal->ref_cond, NULL); ASSERT(ret >= 0);
+	ret = pthread_mutex_init(&s->ref_mutex, 0); ASSERT(ret >= 0);
+	ret = pthread_cond_init(&s->ref_cond, NULL); ASSERT(ret >= 0);
 	
-	signal->n_refs = 0;
+	s->n_refs = 0;
 }
 
 static struct crtx_signal *new_signal() {
@@ -56,23 +57,37 @@ void crtx_reset_signal(struct crtx_signal *s) {
 		pthread_cond_wait(&s->ref_cond, &s->ref_mutex);
 	UNLOCK(s->ref_mutex);
 	
-	*s->condition = 0;
+	if (s->bitflag_idx == -1) {
+		*s->condition = 0;
+	} else {
+		*s->condition &= ~(1 << s->bitflag_idx);
+	}
 }
 
-void crtx_wait_on_signal(struct crtx_signal *signal) {
-	LOCK(signal->mutex);
+void crtx_wait_on_signal(struct crtx_signal *s) {
+	LOCK(s->mutex);
 	
-	while (!*signal->condition)
-		pthread_cond_wait(&signal->cond, &signal->mutex);
+	if (s->bitflag_idx == -1) {
+		while (!*s->condition)
+			pthread_cond_wait(&s->cond, &s->mutex);
+	} else {
+		while (*s->condition & (1 << s->bitflag_idx) == 0)
+			pthread_cond_wait(&s->cond, &s->mutex);
+	}
 	
-	UNLOCK(signal->mutex);
+	UNLOCK(s->mutex);
 }
 
 void crtx_send_signal(struct crtx_signal *s, char brdcst) {
 	LOCK(s->mutex);
 	
-	if (!*s->condition)
-		*s->condition = 1;
+	if (s->bitflag_idx == -1) {
+		if (!*s->condition)
+			*s->condition = 1;
+	} else {
+		if (*s->condition & (1 << s->bitflag_idx) == 0 )
+			*s->condition |= (1 << s->bitflag_idx);
+	}
 	
 	if (brdcst) {
 		SIGNAL_BCAST(s->cond);
@@ -116,7 +131,11 @@ void crtx_shutdown_signal(struct crtx_signal *s) {
 }
 
 char crtx_signal_is_active(struct crtx_signal *s) {
-	return *s->condition;
+	if (s->bitflag_idx == -1) {
+		return *s->condition;
+	} else {
+		return (*s->condition & (1 << s->bitflag_idx));
+	}
 }
 
 

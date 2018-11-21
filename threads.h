@@ -30,8 +30,9 @@
 typedef void *(*thread_fct)(void *data);
 
 struct crtx_signal {
-	char *condition;
-	char local_condition;
+	unsigned char *condition;
+	unsigned char local_condition;
+	char bitflag_idx;
 	
 	unsigned char n_refs;
 	pthread_mutex_t ref_mutex;
