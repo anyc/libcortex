@@ -32,7 +32,7 @@ typedef void *(*thread_fct)(void *data);
 struct crtx_signal {
 	unsigned char *condition;
 	unsigned char local_condition;
-	char bitflag_idx;
+	signed char bitflag_idx;
 	
 	unsigned char n_refs;
 	pthread_mutex_t ref_mutex;
@@ -76,7 +76,7 @@ struct crtx_thread {
 
 
 void crtx_init_signal(struct crtx_signal *signal);
-void crtx_wait_on_signal(struct crtx_signal *s);
+int crtx_wait_on_signal(struct crtx_signal *s, struct timespec *ts);
 void crtx_send_signal(struct crtx_signal *s, char brdcst);
 void crtx_shutdown_signal(struct crtx_signal *s);
 void crtx_reset_signal(struct crtx_signal *signal);

@@ -360,7 +360,7 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 	}
 	
 	if (listener->eloop_thread) {
-		crtx_wait_on_signal(&listener->eloop_thread->finished);
+		crtx_wait_on_signal(&listener->eloop_thread->finished, 0);
 		crtx_dereference_signal(&listener->eloop_thread->finished);
 		listener->eloop_thread = 0;
 	}

@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
+#include <errno.h>
 
 #include "intern.h"
 #include "core.h"
@@ -33,7 +34,7 @@ void crtx_init_signal(struct crtx_signal *s) {
 	
 	s->local_condition = 0;
 	s->condition = &s->local_condition;
-	s->bitflag_idx = -1;
+	s->bitflag_idx = 0;
 	
 	ret = pthread_mutex_init(&s->ref_mutex, 0); ASSERT(ret >= 0);
 	ret = pthread_cond_init(&s->ref_cond, NULL); ASSERT(ret >= 0);
@@ -64,18 +65,50 @@ void crtx_reset_signal(struct crtx_signal *s) {
 	}
 }
 
-void crtx_wait_on_signal(struct crtx_signal *s) {
-	LOCK(s->mutex);
+int crtx_wait_on_signal(struct crtx_signal *s, struct timespec *ts) {
+	int r, err;
 	
-	if (s->bitflag_idx == -1) {
-		while (!*s->condition)
-			pthread_cond_wait(&s->cond, &s->mutex);
-	} else {
-		while (*s->condition & (1 << s->bitflag_idx) == 0)
-			pthread_cond_wait(&s->cond, &s->mutex);
+	r = LOCK(s->mutex);
+	if (r < 0) {
+		ERROR("cannot lock mutex: %s\n", strerror(-r));
+		return r;
 	}
 	
-	UNLOCK(s->mutex);
+// 	if (s->bitflag_idx == -1) {
+// 		while (!*s->condition)
+// 			pthread_cond_wait(&s->cond, &s->mutex);
+// 	} else {
+// 		while (*s->condition & (1 << s->bitflag_idx) == 0)
+// 			pthread_cond_wait(&s->cond, &s->mutex);
+// 	}
+	while (!crtx_signal_is_active(s)) {
+		if (ts) {
+			r = pthread_cond_timedwait(&s->cond, &s->mutex, ts);
+			if (r == ETIMEDOUT) {
+				err = -ETIMEDOUT;
+				goto finish;
+			} else
+			if (r < 0) {
+				err = r;
+				goto finish;
+			}	
+		} else {
+			r = pthread_cond_wait(&s->cond, &s->mutex);
+			if (r < 0) {
+				err = r;
+				goto finish;
+			}
+		}
+	}
+	
+finish:
+	r = UNLOCK(s->mutex);
+	if (r < 0) {
+		ERROR("cannot unlock mutex: %s\n", strerror(-r));
+		return r;
+	}
+	
+	return err;
 }
 
 void crtx_send_signal(struct crtx_signal *s, char brdcst) {
@@ -85,7 +118,7 @@ void crtx_send_signal(struct crtx_signal *s, char brdcst) {
 		if (!*s->condition)
 			*s->condition = 1;
 	} else {
-		if (*s->condition & (1 << s->bitflag_idx) == 0 )
+		if ((*s->condition & (1 << s->bitflag_idx)) == 0 )
 			*s->condition |= (1 << s->bitflag_idx);
 	}
 	
@@ -155,7 +188,7 @@ static void * crtx_thread_tmain(void *data) {
 	
 	while (!thread->stop) {
 		// we wait until someone has work for us
-		crtx_wait_on_signal(&thread->start);
+		crtx_wait_on_signal(&thread->start, 0);
 		if (thread->stop) {
 			crtx_send_signal(&thread->finished, 1);
 			break;
