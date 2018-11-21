@@ -196,7 +196,7 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 		if (mode == CRTX_PREFER_THREAD) {
 			listener->eloop_thread = crtx_thread_assign_job(&listener->thread_job);
 			
-			reference_signal(&listener->eloop_thread->finished);
+			crtx_reference_signal(&listener->eloop_thread->finished);
 			
 			crtx_thread_start_job(listener->eloop_thread);
 		} else 
@@ -360,8 +360,8 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 	}
 	
 	if (listener->eloop_thread) {
-		wait_on_signal(&listener->eloop_thread->finished);
-		dereference_signal(&listener->eloop_thread->finished);
+		crtx_wait_on_signal(&listener->eloop_thread->finished);
+		crtx_dereference_signal(&listener->eloop_thread->finished);
 		listener->eloop_thread = 0;
 	}
 	
@@ -391,8 +391,8 @@ static void free_listener_intern(struct crtx_listener_base *listener) {
 		free_eventgraph(listener->graph);
 	
 // 	if (listener->eloop_thread) {
-// 		wait_on_signal(&listener->eloop_thread->finished);
-// 		dereference_signal(&listener->eloop_thread->finished);
+// 		crtx_wait_on_signal(&listener->eloop_thread->finished);
+// 		crtx_dereference_signal(&listener->eloop_thread->finished);
 // 		listener->eloop_thread = 0;
 // 	}
 	

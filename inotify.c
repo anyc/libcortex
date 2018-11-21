@@ -301,7 +301,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	// 		global_thread = get_thread(inotify_tmain, 0, 1);
 			global_thread = crtx_thread_assign_job(&thread_job);
 			
-			reference_signal(&global_thread->finished);
+			crtx_reference_signal(&global_thread->finished);
 			
 			crtx_thread_start_job(global_thread);
 	// 		global_thread->do_stop = &stop_thread;

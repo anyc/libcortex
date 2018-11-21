@@ -537,7 +537,7 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 				event->type = "done";
 				crtx_add_event(nlr_list->base.graph, event);
 			}
-// 			send_signal(&nlr_list->msg_done, 0);
+// 			crtx_send_signal(&nlr_list->msg_done, 0);
 // 			printf("DOOONEEEE\n");
 		}
 		
@@ -623,7 +623,7 @@ struct crtx_listener_base *crtx_new_nl_route_raw_listener(void *options) {
 // 	new_eventgraph(&nlr_list->base.graph, 0, 0);
 	nlr_list->base.graph = nlr_list->nl_listener.base.graph;
 	
-// 	init_signal(&nlr_list->msg_done);
+// 	crtx_init_signal(&nlr_list->msg_done);
 	
 	nlr_list->base.shutdown = &shutdown_nl_route_listener;
 	nlr_list->base.start_listener = &nl_route_start_listener;
@@ -639,7 +639,7 @@ struct crtx_listener_base *crtx_new_nl_route_raw_listener(void *options) {
 // 	nl_listener->base.evloop_fd.event_handler = &netlink_el_event_handler;
 // 	nl_listener->base.evloop_fd.event_handler_name = "netlink eventloop handler";
 	
-// 	reference_signal(&nl_listener->base.thread->finished);
+// crtx_reference_signal(&nl_listener->base.thread->finished);
 	
 	return &nlr_list->base;
 }
@@ -680,7 +680,7 @@ struct crtx_signal msg_done;
 // }
 
 void msg_done_cb(void *data) {
-	send_signal(&msg_done, 0);
+	crtx_send_signal(&msg_done, 0);
 }
 
 static uint16_t nlmsg_addr_types[] = {RTM_NEWADDR, RTM_DELADDR, 0};
@@ -759,11 +759,11 @@ char crtx_get_own_ip_addresses() {
 	addr_req.n.nlmsg_type = RTM_GETADDR;
 // 	addr_req.r.ifa_family = AF_INET; // e.g., AF_INET (IPv4-only) or AF_INET6 (IPv6-only)
 	
-	reset_signal(&msg_done);
+	crtx_reset_signal(&msg_done);
 	
 	crtx_nl_route_send_req(&nlr_list, &addr_req.n);
 	
-	wait_on_signal(&msg_done);
+	crtx_wait_on_signal(&msg_done);
 	
 // 	sleep(5);
 // 	dls_loop();
@@ -809,7 +809,7 @@ int netlink_raw_main(int argc, char **argv) {
 	// 	if_req.ifinfomsg.ifi_family = AF_UNSPEC;
 	// 
 	
-	init_signal(&msg_done);
+	crtx_init_signal(&msg_done);
 	
 // 	crtx_start_detached_event_loop();
 	crtx_root->detached_event_loop = 1;

@@ -74,14 +74,13 @@ struct crtx_thread {
 };
 
 
-struct crtx_signal *new_signal();
-void init_signal(struct crtx_signal *signal);
-void wait_on_signal(struct crtx_signal *s);
-void send_signal(struct crtx_signal *s, char brdcst);
-void free_signal(struct crtx_signal *s);
-void reset_signal(struct crtx_signal *signal);
-void reference_signal(struct crtx_signal *s);
-void dereference_signal(struct crtx_signal *s);
+void crtx_init_signal(struct crtx_signal *signal);
+void crtx_wait_on_signal(struct crtx_signal *s);
+void crtx_send_signal(struct crtx_signal *s, char brdcst);
+void crtx_shutdown_signal(struct crtx_signal *s);
+void crtx_reset_signal(struct crtx_signal *signal);
+void crtx_reference_signal(struct crtx_signal *s);
+void crtx_dereference_signal(struct crtx_signal *s);
 char crtx_signal_is_active(struct crtx_signal *s);
 
 struct crtx_thread *crtx_thread_assign_job(struct crtx_thread_job_description *job);

@@ -21,7 +21,11 @@ MUTEX_TYPE pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 unsigned int n_threads = 0;
 static char pool_stop = 0;
 
-void init_signal(struct crtx_signal *signal) {
+/*
+ * signals
+ */
+
+void crtx_init_signal(struct crtx_signal *signal) {
 	int ret;
 	
 	ret = pthread_mutex_init(&signal->mutex, 0); ASSERT(ret >= 0);
@@ -36,17 +40,17 @@ void init_signal(struct crtx_signal *signal) {
 	signal->n_refs = 0;
 }
 
-struct crtx_signal *new_signal() {
+static struct crtx_signal *new_signal() {
 	struct crtx_signal *signal;
 	
 	signal = (struct crtx_signal*) calloc(1, sizeof(struct crtx_signal));
 	
-	init_signal(signal);
+	crtx_init_signal(signal);
 	
 	return signal;
 }
 
-void reset_signal(struct crtx_signal *s) {
+void crtx_reset_signal(struct crtx_signal *s) {
 	LOCK(s->ref_mutex);
 	while (s->n_refs > 0)
 		pthread_cond_wait(&s->ref_cond, &s->ref_mutex);
@@ -55,7 +59,7 @@ void reset_signal(struct crtx_signal *s) {
 	*s->condition = 0;
 }
 
-void wait_on_signal(struct crtx_signal *signal) {
+void crtx_wait_on_signal(struct crtx_signal *signal) {
 	LOCK(signal->mutex);
 	
 	while (!*signal->condition)
@@ -64,7 +68,7 @@ void wait_on_signal(struct crtx_signal *signal) {
 	UNLOCK(signal->mutex);
 }
 
-void send_signal(struct crtx_signal *s, char brdcst) {
+void crtx_send_signal(struct crtx_signal *s, char brdcst) {
 	LOCK(s->mutex);
 	
 	if (!*s->condition)
@@ -79,7 +83,7 @@ void send_signal(struct crtx_signal *s, char brdcst) {
 	UNLOCK(s->mutex);
 }
 
-void reference_signal(struct crtx_signal *s) {
+void crtx_reference_signal(struct crtx_signal *s) {
 	LOCK(s->ref_mutex);
 	
 	s->n_refs += 1;
@@ -87,7 +91,7 @@ void reference_signal(struct crtx_signal *s) {
 	UNLOCK(s->ref_mutex);
 }
 
-void dereference_signal(struct crtx_signal *s) {
+void crtx_dereference_signal(struct crtx_signal *s) {
 	LOCK(s->ref_mutex);
 	
 	if (s->n_refs == 0)
@@ -100,7 +104,7 @@ void dereference_signal(struct crtx_signal *s) {
 	UNLOCK(s->ref_mutex);
 }
 
-void free_signal(struct crtx_signal *s) {
+void crtx_shutdown_signal(struct crtx_signal *s) {
 	LOCK(s->mutex);
 	UNLOCK(s->mutex);
 	
@@ -115,9 +119,13 @@ char crtx_signal_is_active(struct crtx_signal *s) {
 	return *s->condition;
 }
 
-// void test(int sig) {
-// 	printf("thread sign\n");
-// }
+
+
+
+
+/*
+ * threads
+ */
 
 static void * crtx_thread_tmain(void *data) {
 	struct crtx_thread *thread = (struct crtx_thread*) data;
@@ -128,24 +136,24 @@ static void * crtx_thread_tmain(void *data) {
 	
 	while (!thread->stop) {
 		// we wait until someone has work for us
-		wait_on_signal(&thread->start);
+		crtx_wait_on_signal(&thread->start);
 		if (thread->stop) {
-			send_signal(&thread->finished, 1);
+			crtx_send_signal(&thread->finished, 1);
 			break;
 		}
 		
 		// execute
 		thread->job->fct(thread->job->fct_data);
 		
-		send_signal(&thread->finished, 1);
+		crtx_send_signal(&thread->finished, 1);
 		
 		if (thread->job->on_finish)
 			thread->job->on_finish(thread, thread->job->on_finish_data);
 		
-		reset_signal(&thread->finished);
+		crtx_reset_signal(&thread->finished);
 		
 		LOCK(pool_mutex);
-		reset_signal(&thread->start);
+		crtx_reset_signal(&thread->start);
 		thread->in_use = 0;
 		thread->job = 0;
 // 		thread->fct = 0;
@@ -177,8 +185,8 @@ struct crtx_thread *spawn_thread(char create) {
 	
 	memset(t, 0, sizeof(struct crtx_thread));
 	
-	init_signal(&t->start);
-	init_signal(&t->finished);
+	crtx_init_signal(&t->start);
+	crtx_init_signal(&t->finished);
 	
 	if (create) {
 		pthread_create(&t->handle, NULL, &crtx_thread_tmain, t);
@@ -221,7 +229,7 @@ static struct crtx_thread *get_thread_intern(char main_thread) {
 // 	t->fct_data = data;
 	
 // 	if (start)
-// 		send_signal(&t->start, 0);
+// 		crtx_send_signal(&t->start, 0);
 // 		start_thread(t);
 	
 	return t;
@@ -245,7 +253,7 @@ void crtx_thread_start_job(struct crtx_thread *t) {
 // 	if (t->handle == 0)
 // 		pthread_create(&t->handle, NULL, &thread_main, t);
 	
-	send_signal(&t->start, 0);
+	crtx_send_signal(&t->start, 0);
 }
 
 void crtx_threads_init() {

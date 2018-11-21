@@ -208,7 +208,7 @@ static void crtx_free_pa_listener(struct crtx_listener_base *data, void *userdat
 	
 	pa_mainloop_wakeup(palist->mainloop);
 	
-	wait_on_signal(&palist->base.eloop_thread->finished);
+	crtx_wait_on_signal(&palist->base.eloop_thread->finished);
 	
 	pa_context_unref(palist->context);
 	pa_mainloop_free(palist->mainloop);

@@ -71,7 +71,7 @@ static char notification_signal_handler(struct crtx_event *event, void *userdata
 			else
 				it->answer = 0;
 			
-			send_signal(&it->barrier, 1);
+			crtx_send_signal(&it->barrier, 1);
 			break;
 		}
 	}
@@ -212,10 +212,10 @@ void crtx_send_notification(char *icon, char *title, char *text, char **actions,
 		
 		pthread_mutex_unlock(&notif_root->wait_list_mutex);
 		
-		init_signal(&it->barrier);
+		crtx_init_signal(&it->barrier);
 		it->id = sdbus_send_notification(icon, title, text, actions);
 		
-		wait_on_signal(&it->barrier);
+		crtx_wait_on_signal(&it->barrier);
 		
 		*chosen_action = it->answer;
 		
