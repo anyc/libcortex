@@ -6,9 +6,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <errno.h>
 #include <unistd.h>
+#include <inttypes.h>
 
 #ifdef DEBUG
 #include <sys/ioctl.h>
@@ -155,9 +155,13 @@ static int crtx_epoll_manage_fd(struct crtx_event_loop *evloop, struct crtx_evlo
 			ret = crtx_epoll_add_fd_intern(epl, evloop_fd->fd, epoll_event);
 			
 			evloop_fd->fd_added = (ret == 0);
+			
+			crtx_ll_append((struct crtx_ll**) &evloop->fds, &evloop_fd->ll);
 		}
 	} else {
 		VDBG("epoll del %d\n", evloop_fd->fd);
+		
+		crtx_ll_unlink((struct crtx_ll**) &evloop->fds, (struct crtx_ll*) &evloop_fd->ll);
 		
 		crtx_epoll_del_fd_intern(epl, evloop_fd->fd);
 		
@@ -183,6 +187,11 @@ static int evloop_start(struct crtx_event_loop *evloop) {
 	struct epoll_event *rec_events;
 	struct crtx_evloop_fd *evloop_fd;
 	struct crtx_evloop_callback *el_cb;
+	struct timespec now_ts;
+	uint64_t now;
+	uint64_t timeout;
+	int epoll_timeout_ms;
+	char timeout_set;
 	
 	
 	epl = (struct crtx_epoll_listener*) evloop->listener;
@@ -190,8 +199,65 @@ static int evloop_start(struct crtx_event_loop *evloop) {
 	rec_events = (struct epoll_event*) malloc(sizeof(struct epoll_event)*epl->max_n_events);
 	
 	while (!epl->stop) {
-		VDBG("epoll waiting...\n");
-		n_rdy_events = epoll_wait(epl->epoll_fd, rec_events, epl->max_n_events, epl->timeout);
+		clock_gettime(CRTX_DEFAULT_CLOCK, &now_ts);
+		now = CRTX_timespec2uint64(&now_ts);
+		
+		if (epl->timeout >= 0)
+			timeout = epl->timeout;
+		else
+			timeout = UINT64_MAX;
+		
+		timeout_set = 0;
+		for (evloop_fd = evloop->fds; evloop_fd; evloop_fd = (struct crtx_evloop_fd *) evloop_fd->ll.next) {
+			if (timeout == 0)
+				break;
+			
+			for (el_cb = evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
+				if (el_cb->timeout.tv_sec > 0 || el_cb->timeout.tv_nsec > 0) {
+// 					printf("%" PRIu64 " < %" PRIu64 " + %" PRIu64 " = %" PRIu64 "\n", CRTX_timespec2uint64(&el_cb->timeout), now, timeout, now + timeout);
+					
+					if (CRTX_timespec2uint64(&el_cb->timeout) <= now) {
+						timeout_set = 1;
+						timeout = 0;
+						break;
+					}
+					
+					if (CRTX_timespec2uint64(&el_cb->timeout) - now < timeout) {
+						timeout_set = 1;
+						timeout = CRTX_timespec2uint64(&el_cb->timeout) - now;
+					}
+					
+// 					if (CRTX_timespec2uint64(&el_cb->timeout) < now + timeout) {
+// 						timeout_set = 1;
+// 						
+// 						if (CRTX_timespec2uint64(&el_cb->timeout) <= now) {
+// 							timeout = 0;
+// 							break;
+// 						} else {
+// 							timeout = CRTX_timespec2uint64(&el_cb->timeout) - now;
+// 						}
+// 					}
+				}
+			}
+		}
+		
+		if (timeout_set) {
+// 			if (timeout == UINT64_MAX) {
+// 				timeout = -1;
+// 			} else {
+			if (timeout > INT32_MAX) {
+				epoll_timeout_ms = INT32_MAX;
+			} else {
+				epoll_timeout_ms = timeout / 1000000;
+			}
+// 			}
+		} else {
+			epoll_timeout_ms = epl->timeout;
+		}
+		printf("epoll waiting (TO: %d %d)...\n", epoll_timeout_ms, epl->timeout);
+		
+		VDBG("epoll waiting (TO: %d)...\n", epoll_timeout_ms);
+		n_rdy_events = epoll_wait(epl->epoll_fd, rec_events, epl->max_n_events, epoll_timeout_ms);
 		if (n_rdy_events < 0 && errno == EINTR)
 			continue;
 		
@@ -241,6 +307,27 @@ static int evloop_start(struct crtx_event_loop *evloop) {
 					el_cb->triggered_flags = epoll_flags2crtx_event_flags(rec_events[i].events);
 					
 					crtx_evloop_callback(el_cb);
+				}
+			}
+		}
+		
+		
+		clock_gettime(CRTX_DEFAULT_CLOCK, &now_ts);
+		now = CRTX_timespec2uint64(&now_ts);
+		
+		for (evloop_fd = evloop->fds; evloop_fd; evloop_fd = (struct crtx_evloop_fd *) evloop_fd->ll.next) {
+			for (el_cb = evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
+				if (el_cb->timeout.tv_sec > 0 || el_cb->timeout.tv_nsec > 0) {
+					if (CRTX_timespec2uint64(&el_cb->timeout) < now) {
+						printf("epoll timeout #%d %d %u\n", i, evloop_fd->fd, CRTX_timespec2uint64(&el_cb->timeout));
+						
+						if (!el_cb->active)
+							continue;
+						
+						el_cb->triggered_flags = EVLOOP_TIMEOUT;
+						
+						crtx_evloop_callback(el_cb);
+					}
 				}
 			}
 		}
@@ -357,19 +444,20 @@ static int evloop_release(struct crtx_event_loop *evloop) {
 }
 
 struct crtx_event_loop epoll_loop = {
-	{ 0 },
-	"epoll",
-	{ 0 },
-	{ {0} },
-	{ {0} },
-	0,
+	.ll = { 0 },
+	.id = "epoll",
+	.ctrl_pipe = { 0 },
+	.ctrl_pipe_evloop_handler = { {0} },
+	.default_el_cb = { {0} },
+	.listener = 0,
+	.fds = 0,
 	
-	&evloop_create,
-	&evloop_release,
-	&evloop_start,
-	&evloop_stop,
+	.create = &evloop_create,
+	.release = &evloop_release,
+	.start = &evloop_start,
+	.stop = &evloop_stop,
 	
-	&crtx_epoll_mod_fd,
+	.mod_fd = &crtx_epoll_mod_fd,
 };
 
 void crtx_epoll_init() {

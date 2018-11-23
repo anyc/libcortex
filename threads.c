@@ -42,15 +42,15 @@ void crtx_init_signal(struct crtx_signal *s) {
 	s->n_refs = 0;
 }
 
-static struct crtx_signal *new_signal() {
-	struct crtx_signal *signal;
-	
-	signal = (struct crtx_signal*) calloc(1, sizeof(struct crtx_signal));
-	
-	crtx_init_signal(signal);
-	
-	return signal;
-}
+// static struct crtx_signal *new_signal() {
+// 	struct crtx_signal *signal;
+// 	
+// 	signal = (struct crtx_signal*) calloc(1, sizeof(struct crtx_signal));
+// 	
+// 	crtx_init_signal(signal);
+// 	
+// 	return signal;
+// }
 
 void crtx_reset_signal(struct crtx_signal *s) {
 	LOCK(s->ref_mutex);

@@ -8,12 +8,98 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <inttypes.h>
 
 #include "core.h"
 #include "intern.h"
 #include "evloop.h"
 
+#ifndef TIME_T_MAX
+// #define TIME_T_MAX_ASSERT (sizeof(time_t) == sizeof(int32_t) || (sizeof(time_t) == sizeof(int64_t)))
+_Static_assert( (sizeof(time_t) == sizeof(int32_t) || (sizeof(time_t) == sizeof(int64_t))), "unexpected time_t size");
+#define TIME_T_MAX (sizeof(time_t) == sizeof(int32_t) ? INT32_MAX : (sizeof(time_t) == sizeof(int64_t)) ? INT64_MAX : 0)
+#endif
+
 struct crtx_event_loop *crtx_event_loops = 0;
+
+void crtx_evloop_set_timeout(struct crtx_evloop_callback *el_cb, struct timespec *timeout) {
+	memcpy(&el_cb->timeout, timeout, sizeof(struct timespec));
+}
+
+void crtx_evloop_set_timeout_abs(struct crtx_evloop_callback *el_cb, clockid_t clockid, uint64_t timeout_us) {
+	if (clockid != CRTX_DEFAULT_CLOCK) {
+		struct timespec ts;
+		uint64_t now_us;
+		
+		clock_gettime(clockid, &ts);
+		now_us = CRTX_timespec2uint64(&ts) / 1000;
+		if (now_us < timeout_us) {
+			printf("rel %" PRId64 "\n", timeout_us - now_us);
+			crtx_evloop_set_timeout_rel(el_cb, timeout_us - now_us);
+		} else {
+			crtx_evloop_set_timeout_rel(el_cb, 0);
+		}
+		
+		return;
+	}
+	
+	if ((timeout_us / 1000000) >= TIME_T_MAX)
+		el_cb->timeout.tv_sec = TIME_T_MAX;
+	else
+		el_cb->timeout.tv_sec = timeout_us / 1000000;
+	
+	el_cb->timeout.tv_nsec = (timeout_us % 1000000) * 1000;
+	
+	#ifdef DEBUG
+	struct timespec ts;
+	uint64_t now_us;
+	clock_gettime(clockid, &ts);
+	now_us = (ts.tv_sec * 1000000000ULL + ts.tv_nsec) / 1000;
+// 	printf("timeout in %lld.%ld\n", (long long) (el_cb->timeout.tv_sec - ts.tv_sec), (el_cb->timeout.tv_nsec - ts.tv_nsec));
+// 	printf("timeout in %lld.%ld\n", (long long) ts.tv_sec, ts.tv_nsec);
+	printf("timeout in %" PRIu64 " (now %" PRIu64 ")\n", timeout_us >= now_us ? timeout_us - now_us : 0, now_us);
+	#endif
+}
+
+void crtx_evloop_set_timeout_rel(struct crtx_evloop_callback *el_cb, uint64_t timeout_us) {
+	#ifdef DEBUG
+	printf("timeout in %" PRIu64 "\n", timeout_us);
+	#endif
+	
+	clock_gettime(CRTX_DEFAULT_CLOCK, &el_cb->timeout);
+// 	#ifdef DEBUG
+// 	printf("now         %" PRIu64 "\n", CRTX_timespec2uint64(&el_cb->timeout));
+// 	#endif
+	
+	if ((timeout_us / 1000000) >= TIME_T_MAX) {
+		el_cb->timeout.tv_sec = TIME_T_MAX;
+	} else {
+		if (el_cb->timeout.tv_sec > (TIME_T_MAX) - (timeout_us / 1000000)) {
+			el_cb->timeout.tv_sec = TIME_T_MAX;
+		} else {
+			el_cb->timeout.tv_sec += (timeout_us / 1000000);
+		}
+	}
+	
+	el_cb->timeout.tv_nsec += (timeout_us % 1000000) * 1000;
+// 	printf("now         %" PRIu64 "\n", (uint64_t) el_cb->timeout.tv_nsec);
+// 	printf("now         %" PRIu64 "\n", (uint64_t) el_cb->timeout.tv_sec);
+	if (el_cb->timeout.tv_nsec >= 1000000000) {
+		el_cb->timeout.tv_nsec -= 1000000000;
+		if (el_cb->timeout.tv_sec < TIME_T_MAX)
+			el_cb->timeout.tv_sec += 1;
+	}
+	
+	#ifdef DEBUG
+	printf("timeout inN %" PRIu64 "\n", CRTX_timespec2uint64(&el_cb->timeout));
+	#endif
+	
+// 	if (el_cb->timeout.tv_nsec > 1000000000 - (timeout_us % 1000000) * 1000) {
+// 		el_cb->timeout.tv_nsec = 
+// 	} else {
+// 		el_cb->timeout.tv_nsec += (timeout_us % 1000000) * 1000;
+// 	}
+}
 
 static char evloop_ctrl_pipe_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_evloop_callback *el_cb;
@@ -34,6 +120,10 @@ static char evloop_ctrl_pipe_handler(struct crtx_event *event, void *userdata, v
 	if (ecp.graph) {
 		crtx_process_graph_tmain(ecp.graph);
 		ecp.graph = 0;
+	}
+	
+	if (ecp.el_cb) {
+		crtx_evloop_callback(ecp.el_cb);
 	}
 	
 	return 0;
@@ -254,7 +344,20 @@ struct crtx_event_loop* crtx_get_main_event_loop() {
 int crtx_evloop_queue_graph(struct crtx_event_loop *evloop, struct crtx_graph *graph) {
 	struct crtx_event_loop_control_pipe ecp;
 	
+	memset(&ecp, 0, sizeof(struct crtx_event_loop_control_pipe));
+	
 	ecp.graph = graph;
+	write(evloop->ctrl_pipe[1], &ecp, sizeof(struct crtx_event_loop_control_pipe));
+	
+	return 0;
+}
+
+int crtx_evloop_trigger_callback(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb) {
+	struct crtx_event_loop_control_pipe ecp;
+	
+	memset(&ecp, 0, sizeof(struct crtx_event_loop_control_pipe));
+	
+	ecp.el_cb = el_cb;
 	write(evloop->ctrl_pipe[1], &ecp, sizeof(struct crtx_event_loop_control_pipe));
 	
 	return 0;

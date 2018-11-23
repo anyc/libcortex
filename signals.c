@@ -8,6 +8,7 @@
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 
 #ifndef WITHOUT_SIGNALFD
 #include <sys/signalfd.h>
@@ -85,6 +86,8 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 	}
 	
 	signal_handler(si.ssi_signo);
+	
+	return 0;
 }
 
 static void shutdown_listener(struct crtx_listener_base *data) {

@@ -111,19 +111,20 @@ static int evloop_release(struct crtx_event_loop *evloop) {
 }
 
 static struct crtx_event_loop qt_loop = {
-	{ 0 },
-	"qt",
-	{ 0 },
-	{ {0} },
-	{ {0} },
-	0,
+	.ll = { 0 },
+	.id = "qt",
+	.ctrl_pipe = { 0 },
+	.ctrl_pipe_evloop_handler = { {0} },
+	.default_el_cb = { {0} },
+	.listener = 0,
+	.fds = 0,
 	
-	&evloop_create,
-	&evloop_release,
-	&evloop_start,
-	&evloop_stop,
+	.create = &evloop_create,
+	.release = &evloop_release,
+	.start = &evloop_start,
+	.stop = &evloop_stop,
 	
-	&crtx_evloop_qt_mod_fd,
+	.mod_fd = &crtx_evloop_qt_mod_fd,
 };
 
 extern "C" {

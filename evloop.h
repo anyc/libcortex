@@ -10,10 +10,17 @@
 
 #include "common.h"
 
+#ifndef CRTX_DEFAULT_CLOCK
+#define CRTX_DEFAULT_CLOCK CLOCK_BOOTTIME
+#endif
+
+#define CRTX_timespec2uint64(ts) ((uint64_t)(ts)->tv_sec * 1000000000ULL + (ts)->tv_nsec)
+
 #define EVLOOP_READ 1<<0
 #define EVLOOP_WRITE 1<<1
 #define EVLOOP_SPECIAL 1<<2
 #define EVLOOP_EDGE_TRIGGERED 1<<3
+#define EVLOOP_TIMEOUT 1<<4
 
 struct crtx_evloop_fd;
 struct crtx_evloop_callback;
@@ -26,6 +33,7 @@ struct crtx_evloop_callback {
 	
 	int crtx_event_flags; // event flags set using libcortex #define's
 	char active;
+	struct timespec timeout;
 	
 	void *el_data; // data that can be set by the event loop implementation
 	
@@ -61,6 +69,7 @@ struct crtx_evloop_fd {
 
 struct crtx_event_loop_control_pipe {
 	struct crtx_graph *graph;
+	struct crtx_evloop_callback *el_cb;
 };
 
 struct crtx_event_loop {
@@ -73,6 +82,8 @@ struct crtx_event_loop {
 	struct crtx_evloop_callback default_el_cb;
 	
 	struct crtx_listener_base *listener;
+	
+	struct crtx_evloop_fd *fds;
 	
 	int (*create)(struct crtx_event_loop *evloop);
 	int (*release)(struct crtx_event_loop *evloop);
@@ -113,4 +124,10 @@ int crtx_evloop_init_listener(struct crtx_listener_base *listener,
 int crtx_evloop_enable_cb(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
 int crtx_evloop_disable_cb(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
 int crtx_evloop_remove_cb(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
+
+void crtx_evloop_set_timeout(struct crtx_evloop_callback *el_cb, struct timespec *timeout);
+void crtx_evloop_set_timeout_abs(struct crtx_evloop_callback *el_cb, clockid_t clockid, uint64_t timeout_us);
+void crtx_evloop_set_timeout_rel(struct crtx_evloop_callback *el_cb, uint64_t timeout_us);
+int crtx_evloop_trigger_callback(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
+
 #endif
