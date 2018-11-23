@@ -235,7 +235,7 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 	sdlist = (struct crtx_sdbus_listener *) userdata;
 	
 	while (1) {
-		printf("sdbus process\n");
+// 		printf("sdbus process\n");
 		r = sd_bus_process(sdlist->bus, NULL);
 		
 		if (r < 0) {
@@ -245,7 +245,7 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 		if (r == 0)
 			break;
 	}
-	printf("sdbus process stop\n");
+// 	printf("sdbus process stop\n");
 	
 	// TODO set epoll flags again everytime?
 	int new_flags;
@@ -263,7 +263,7 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 		return r;
 	}
 	
-	printf("sdbus to %llu\n", timeout_us);
+// 	printf("sdbus to %llu\n", timeout_us);
 // 	crtx_evloop_set_timeout(el_cb, timeout_us);
 	crtx_evloop_set_timeout_abs(el_cb, CLOCK_MONOTONIC, timeout_us);
 	

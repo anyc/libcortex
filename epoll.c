@@ -214,8 +214,6 @@ static int evloop_start(struct crtx_event_loop *evloop) {
 			
 			for (el_cb = evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
 				if (el_cb->timeout.tv_sec > 0 || el_cb->timeout.tv_nsec > 0) {
-// 					printf("%" PRIu64 " < %" PRIu64 " + %" PRIu64 " = %" PRIu64 "\n", CRTX_timespec2uint64(&el_cb->timeout), now, timeout, now + timeout);
-					
 					if (CRTX_timespec2uint64(&el_cb->timeout) <= now) {
 						timeout_set = 1;
 						timeout = 0;
@@ -226,35 +224,19 @@ static int evloop_start(struct crtx_event_loop *evloop) {
 						timeout_set = 1;
 						timeout = CRTX_timespec2uint64(&el_cb->timeout) - now;
 					}
-					
-// 					if (CRTX_timespec2uint64(&el_cb->timeout) < now + timeout) {
-// 						timeout_set = 1;
-// 						
-// 						if (CRTX_timespec2uint64(&el_cb->timeout) <= now) {
-// 							timeout = 0;
-// 							break;
-// 						} else {
-// 							timeout = CRTX_timespec2uint64(&el_cb->timeout) - now;
-// 						}
-// 					}
 				}
 			}
 		}
 		
 		if (timeout_set) {
-// 			if (timeout == UINT64_MAX) {
-// 				timeout = -1;
-// 			} else {
 			if (timeout > INT32_MAX) {
 				epoll_timeout_ms = INT32_MAX;
 			} else {
 				epoll_timeout_ms = timeout / 1000000;
 			}
-// 			}
 		} else {
 			epoll_timeout_ms = epl->timeout;
 		}
-		printf("epoll waiting (TO: %d %d)...\n", epoll_timeout_ms, epl->timeout);
 		
 		VDBG("epoll waiting (TO: %d)...\n", epoll_timeout_ms);
 		n_rdy_events = epoll_wait(epl->epoll_fd, rec_events, epl->max_n_events, epoll_timeout_ms);

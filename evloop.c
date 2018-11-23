@@ -15,7 +15,6 @@
 #include "evloop.h"
 
 #ifndef TIME_T_MAX
-// #define TIME_T_MAX_ASSERT (sizeof(time_t) == sizeof(int32_t) || (sizeof(time_t) == sizeof(int64_t)))
 _Static_assert( (sizeof(time_t) == sizeof(int32_t) || (sizeof(time_t) == sizeof(int64_t))), "unexpected time_t size");
 #define TIME_T_MAX (sizeof(time_t) == sizeof(int32_t) ? INT32_MAX : (sizeof(time_t) == sizeof(int64_t)) ? INT64_MAX : 0)
 #endif
@@ -34,7 +33,6 @@ void crtx_evloop_set_timeout_abs(struct crtx_evloop_callback *el_cb, clockid_t c
 		clock_gettime(clockid, &ts);
 		now_us = CRTX_timespec2uint64(&ts) / 1000;
 		if (now_us < timeout_us) {
-			printf("rel %" PRId64 "\n", timeout_us - now_us);
 			crtx_evloop_set_timeout_rel(el_cb, timeout_us - now_us);
 		} else {
 			crtx_evloop_set_timeout_rel(el_cb, 0);
@@ -53,23 +51,19 @@ void crtx_evloop_set_timeout_abs(struct crtx_evloop_callback *el_cb, clockid_t c
 	#ifdef DEBUG
 	struct timespec ts;
 	uint64_t now_us;
+	
 	clock_gettime(clockid, &ts);
 	now_us = (ts.tv_sec * 1000000000ULL + ts.tv_nsec) / 1000;
-// 	printf("timeout in %lld.%ld\n", (long long) (el_cb->timeout.tv_sec - ts.tv_sec), (el_cb->timeout.tv_nsec - ts.tv_nsec));
-// 	printf("timeout in %lld.%ld\n", (long long) ts.tv_sec, ts.tv_nsec);
-	printf("timeout in %" PRIu64 " (now %" PRIu64 ")\n", timeout_us >= now_us ? timeout_us - now_us : 0, now_us);
+	VDBG("timeout in %" PRIu64 " (now %" PRIu64 ")\n", timeout_us >= now_us ? timeout_us - now_us : 0, now_us);
 	#endif
 }
 
 void crtx_evloop_set_timeout_rel(struct crtx_evloop_callback *el_cb, uint64_t timeout_us) {
 	#ifdef DEBUG
-	printf("timeout in %" PRIu64 "\n", timeout_us);
+	VDBG("timeout in %" PRIu64 " us\n", timeout_us);
 	#endif
 	
 	clock_gettime(CRTX_DEFAULT_CLOCK, &el_cb->timeout);
-// 	#ifdef DEBUG
-// 	printf("now         %" PRIu64 "\n", CRTX_timespec2uint64(&el_cb->timeout));
-// 	#endif
 	
 	if ((timeout_us / 1000000) >= TIME_T_MAX) {
 		el_cb->timeout.tv_sec = TIME_T_MAX;
@@ -82,23 +76,11 @@ void crtx_evloop_set_timeout_rel(struct crtx_evloop_callback *el_cb, uint64_t ti
 	}
 	
 	el_cb->timeout.tv_nsec += (timeout_us % 1000000) * 1000;
-// 	printf("now         %" PRIu64 "\n", (uint64_t) el_cb->timeout.tv_nsec);
-// 	printf("now         %" PRIu64 "\n", (uint64_t) el_cb->timeout.tv_sec);
 	if (el_cb->timeout.tv_nsec >= 1000000000) {
 		el_cb->timeout.tv_nsec -= 1000000000;
 		if (el_cb->timeout.tv_sec < TIME_T_MAX)
 			el_cb->timeout.tv_sec += 1;
 	}
-	
-	#ifdef DEBUG
-	printf("timeout inN %" PRIu64 "\n", CRTX_timespec2uint64(&el_cb->timeout));
-	#endif
-	
-// 	if (el_cb->timeout.tv_nsec > 1000000000 - (timeout_us % 1000000) * 1000) {
-// 		el_cb->timeout.tv_nsec = 
-// 	} else {
-// 		el_cb->timeout.tv_nsec += (timeout_us % 1000000) * 1000;
-// 	}
 }
 
 static char evloop_ctrl_pipe_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
