@@ -301,7 +301,7 @@ static int evloop_start(struct crtx_event_loop *evloop) {
 			for (el_cb = evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
 				if (el_cb->timeout.tv_sec > 0 || el_cb->timeout.tv_nsec > 0) {
 					if (CRTX_timespec2uint64(&el_cb->timeout) < now) {
-						printf("epoll timeout #%d %d %u\n", i, evloop_fd->fd, CRTX_timespec2uint64(&el_cb->timeout));
+						VDBG("epoll timeout #%d %d\n", i, evloop_fd->fd);
 						
 						if (!el_cb->active)
 							continue;

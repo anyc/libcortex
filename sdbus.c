@@ -37,6 +37,71 @@ void crtx_sdbus_trigger_event_processing(struct crtx_sdbus_listener *lstnr) {
 	crtx_evloop_trigger_callback(lstnr->base.evloop_fd.evloop, &lstnr->base.default_el_cb);
 }
 
+struct async_callback {
+	struct crtx_signal signal;
+	
+	sd_bus_message **reply;
+};
+
+static int async_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
+	struct async_callback *async_cb_data;
+	
+// 	printf("async cb response\n");
+	
+	async_cb_data = (struct async_callback*) userdata;
+	
+	*async_cb_data->reply = m;
+	
+	sd_bus_message_ref(m);
+	
+// 	printf("%p\n", ret_error);
+// 	error = sd_bus_message_get_error(ret_error);
+// 	if (ret_error) {
+// 		ERROR("DBus error: %s %s\n", ret_error->name, ret_error->message);
+// 	}
+	
+	crtx_send_signal(&async_cb_data->signal, 1);
+	
+	return 0;
+}
+
+/*
+ * In applications which have a separate event loop thread, use crtx_sdbus_call()
+ * in the worker threads instead of sd_bus_call.
+ * 
+ * crtx_sdbus_call acts like a synchronous function but, internally, makes an
+ * asynchronous DBus call and waits for a signal from the event loop thread afterwards.
+ * 
+ * This way, only the event loop thread will handle incoming messages and not one of
+ * the worker threads.
+ */
+int crtx_sdbus_call(struct crtx_sdbus_listener *lstnr, sd_bus_message *msg, sd_bus_message **reply, uint64_t timeout_us) {
+	struct async_callback async_cb_data;
+	int err;
+	
+	async_cb_data.reply = reply;
+	crtx_init_signal(&async_cb_data.signal);
+	
+	crtx_lock_listener_source(&lstnr->base);
+	err = sd_bus_call_async(lstnr->bus, 0, msg, async_cb, &async_cb_data, timeout_us);
+	crtx_unlock_listener_source(&lstnr->base);
+	
+	if (err < 0) {
+		// just pass the error code to the caller
+		goto finish;
+	}
+	
+	crtx_sdbus_trigger_event_processing(lstnr);
+	
+// 	printf("wait %llu\n", timeout_us);
+	crtx_wait_on_signal(&async_cb_data.signal, 0);
+// 	printf("endwait\n");
+finish:
+	crtx_shutdown_signal(&async_cb_data.signal);
+	
+	return err;
+}
+
 static void match_event_release(struct crtx_event *event, void *userdata) {
 	sd_bus_message_unref(event->data.pointer);
 }
@@ -257,6 +322,7 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 // 		crtx_evloop_enable_cb(el_cb->fd_entry->evloop, el_cb);
 	}
 	
+	// NOTE sd_bus_get_timeout() provides an absolute timeout timestamp!
 	r = sd_bus_get_timeout(sdlist->bus, &timeout_us);
 	if (r < 0) {
 		ERROR("sd_bus_get_timeout failed: %s\n", strerror(-r));

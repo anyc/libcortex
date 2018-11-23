@@ -105,6 +105,7 @@ static char evloop_ctrl_pipe_handler(struct crtx_event *event, void *userdata, v
 	}
 	
 	if (ecp.el_cb) {
+		ecp.el_cb->triggered_flags = ecp.el_cb->crtx_event_flags;
 		crtx_evloop_callback(ecp.el_cb);
 	}
 	
