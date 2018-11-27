@@ -11,6 +11,8 @@ struct crtx_signal_listener {
 	char no_signalfd;
 };
 
+int crtx_signals_handle_std_signals(struct crtx_signal_listener **signal_lstnr);
+
 struct crtx_listener_base *crtx_new_signals_listener(void *options);
 void crtx_signals_init();
 void crtx_signals_finish();

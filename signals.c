@@ -62,6 +62,7 @@ static void signal_handler(int signum) {
 	}
 	
 	event = crtx_create_event(smap->etype);
+	crtx_event_set_raw_data(event, 'i', (int32_t) signum, sizeof(signum));
 	
 	crtx_add_event(signal_list.base.graph, event);
 }
@@ -159,7 +160,11 @@ static char start_listener(struct crtx_listener_base *listener) {
 		
 		i=slistener->signals;
 		while (*i) {
-			sigaddset(&mask, *i);
+			r = sigaddset(&mask, *i);
+			if (r < 0) {
+				ERROR("signals: sigaddset %d failed: %s\n", *i, strerror(-r));
+				return r;
+			}
 			i++;
 		}
 		
@@ -235,7 +240,7 @@ static char sigint_handler(struct crtx_event *event, void *userdata, void **sess
 }
 
 
-int crtx_handle_std_signals() {
+int crtx_signals_handle_std_signals(struct crtx_signal_listener **signal_lstnr) {
 	struct crtx_task *t;
 	int err;
 	
@@ -264,6 +269,9 @@ int crtx_handle_std_signals() {
 	signal(SIGPIPE, SIG_IGN);
 	
 	crtx_start_listener(&signal_list.base);
+	
+	if (signal_lstnr)
+		*signal_lstnr = &signal_list;
 	
 	return 0;
 }

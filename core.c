@@ -1950,3 +1950,7 @@ void crtx_lock_listener_source(struct crtx_listener_base *lbase) {
 void crtx_unlock_listener_source(struct crtx_listener_base *lbase) {
 	UNLOCK(lbase->source_lock);
 }
+
+int crtx_handle_std_signals() {
+	return crtx_signals_handle_std_signals(0);
+}
