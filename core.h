@@ -124,6 +124,9 @@ struct crtx_listener_repository {
 
 enum crtx_listener_state { CRTX_LSTNR_UNKNOWN=0, CRTX_LSTNR_STARTING, CRTX_LSTNR_STARTED, CRTX_LSTNR_PAUSED, CRTX_LSTNR_STOPPING, CRTX_LSTNR_STOPPED, CRTX_LSTNR_SHUTDOWN }; //CRTX_LSTNR_ABORTED, 
 
+// immediately schedule a call of the fd event handler (e.g., to query flags/timeouts/...)
+#define CRTX_LSTNR_STARTUP_TRIGGER (1<<0)
+
 struct crtx_listener_base {
 	const char *id;
 	
@@ -154,6 +157,8 @@ struct crtx_listener_base {
 	char (*update_listener)(struct crtx_listener_base *listener);
 	
 	struct crtx_graph *graph;
+	
+	unsigned int flags;
 };
 
 struct crtx_module {
@@ -309,5 +314,6 @@ void crtx_set_main_event_loop(const char *event_loop);
 
 void crtx_lock_listener_source(struct crtx_listener_base *lbase);
 void crtx_unlock_listener_source(struct crtx_listener_base *lbase);
+void crtx_trigger_event_processing(struct crtx_listener_base *lstnr);
 
 #endif

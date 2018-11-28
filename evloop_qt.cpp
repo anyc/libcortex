@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/timerfd.h>
 
 #include <QSocketNotifier>
 
@@ -14,6 +15,7 @@ extern "C" {
 #include "core.h"
 #include "evloop.h"
 #include "evloop_qt.h"
+#include "timer.h"
 }
 
 static int qt_flags2crtx_event_flags(enum QSocketNotifier::Type qt_flags);
@@ -35,8 +37,11 @@ class MyQSocketNotifier : public QSocketNotifier {
 static enum MyQSocketNotifier::Type crtx_event_flags2qt_flags(int crtx_event_flags) {
 	enum MyQSocketNotifier::Type ret;
 	
-	if (POPCOUNT32(crtx_event_flags) > 1) {
-		ERROR("evloop_qt: %u\n", POPCOUNT32(crtx_event_flags));
+	if (crtx_event_flags & EVLOOP_TIMEOUT)
+		crtx_event_flags = crtx_event_flags & (~EVLOOP_TIMEOUT);
+	
+	if (POPCOUNT32(crtx_event_flags) != 1) {
+		ERROR("evloop_qt: invalid amount of event flags %u != 1 (%d)\n", POPCOUNT32(crtx_event_flags), crtx_event_flags);
 	}
 	
 	if (crtx_event_flags & EVLOOP_READ)
@@ -52,18 +57,33 @@ static enum MyQSocketNotifier::Type crtx_event_flags2qt_flags(int crtx_event_fla
 static int qt_flags2crtx_event_flags(enum QSocketNotifier::Type qt_flags) {
 	int ret;
 	
-	if (POPCOUNT32(qt_flags) > 1) {
-		ERROR("evloop_qt: %u\n", POPCOUNT32(qt_flags));
-	}
-	
+	ret = 0;
 	if (qt_flags == MyQSocketNotifier::Read)
 		ret = EVLOOP_READ;
 	else if (qt_flags == MyQSocketNotifier::Write)
 		ret = EVLOOP_WRITE;
 	else if (qt_flags == MyQSocketNotifier::Exception)
 		ret = EVLOOP_SPECIAL;
+	else
+		ERROR("evloop_qt: unknown Qt socketnotifier type: %d\n", qt_flags);
 	
 	return ret;
+}
+
+static char timeout_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_evloop_callback *el_cb;
+	
+	el_cb = (struct crtx_evloop_callback*) userdata;
+	
+	event = crtx_create_event(0);
+	
+	crtx_event_set_raw_data(event, 'p', userdata, sizeof(struct crtx_evloop_callback), CRTX_DIF_DONT_FREE_DATA);
+	
+	el_cb->event_handler(event, el_cb->event_handler_data, 0);
+	
+	free_event(event);
+	
+	return 0;
 }
 
 static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd) {
@@ -78,6 +98,40 @@ static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evl
 			el_cb->el_data = 0;
 			
 			continue;
+		}
+		
+		if (el_cb->el_data)
+			continue;
+		
+// 		DBG("el-qt mod %d\n", evloop_fd->fd);
+// 		crtx_event_flags2str(stdout, el_cb->crtx_event_flags);
+		
+		if (el_cb->crtx_event_flags & EVLOOP_TIMEOUT) {
+			struct crtx_listener_base *lbase;
+			struct crtx_timer_listener *tlist;
+			
+			tlist = (struct crtx_timer_listener*) malloc(sizeof(struct crtx_timer_listener));
+			
+			memset(tlist, 0, sizeof(struct crtx_timer_listener));
+			
+			tlist->newtimer.it_value.tv_sec = el_cb->timeout.tv_sec;
+			tlist->newtimer.it_value.tv_nsec = el_cb->timeout.tv_nsec;
+			
+			VDBG("setup evloop timeout: %ld %ld\n", el_cb->timeout.tv_sec,el_cb->timeout.tv_nsec );
+			
+			tlist->clockid = CRTX_DEFAULT_CLOCK;
+// 			tlist->settime_flags = TFD_TIMER_ABSTIME;
+			
+			tlist->oneshot_callback = timeout_event_handler;
+			tlist->oneshot_data = el_cb;
+			
+			lbase = create_listener("timer", tlist);
+			if (!lbase) {
+				ERROR("create_listener(timer) failed\n");
+				return 0;
+			}
+			
+			crtx_start_listener(lbase);
 		}
 		
 		notifier = new MyQSocketNotifier(evloop_fd->fd, crtx_event_flags2qt_flags(el_cb->crtx_event_flags));

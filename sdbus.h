@@ -52,6 +52,9 @@ struct crtx_sdbus_listener {
 				// either CRTX_SDBUS_TYPE_SYSTEM_REMOTE or CRTX_SDBUS_TYPE_SYSTEM_MACHINE
 	sd_bus *bus;
 	int connection_signals;
+	struct crtx_sdbus_match connected_match;
+	sd_bus_message_handler_t connected_cb;
+	void *connected_cb_data;
 	
 	const char *unique_name;
 	

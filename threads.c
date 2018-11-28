@@ -28,9 +28,15 @@ static char pool_stop = 0;
 
 void crtx_init_signal(struct crtx_signal *s) {
 	int ret;
+// 	pthread_condattr_t attr;
 	
 	ret = pthread_mutex_init(&s->mutex, 0); ASSERT(ret >= 0);
-	ret = pthread_cond_init(&s->cond, NULL); ASSERT(ret >= 0);
+	ret = pthread_cond_init(&s->cond, 0); ASSERT(ret >= 0);
+	
+// 	ret = pthread_condattr_init(&attr); ASSERT(ret >= 0);
+// 	ret = pthread_condattr_setclock(&attr, s->clockid);
+// 	ret = pthread_cond_init(&s->cond, &attr); ASSERT(ret >= 0);
+// 	pthread_condattr_destroy(&attr);
 	
 	s->local_condition = 0;
 	s->condition = &s->local_condition;

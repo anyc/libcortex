@@ -27,10 +27,16 @@ void crtx_sdbus_print_msg(sd_bus_message *m) {
 		  sig
 	);
 	
-	if (sig[0] == 's') {
-		sd_bus_message_read_basic(m, 's', &val);
-		printf("\tval %s\n", val);
+	while (*sig != 0) {
+		if (*sig == 's') {
+			sd_bus_message_read_basic(m, 's', &val);
+			printf("\tval \"%s\"\n", val);
+		}
+		
+		sig++;
 	}
+	
+	sd_bus_message_rewind(m, 1);
 }
 
 void crtx_sdbus_trigger_event_processing(struct crtx_sdbus_listener *lstnr) {
@@ -91,11 +97,10 @@ int crtx_sdbus_call(struct crtx_sdbus_listener *lstnr, sd_bus_message *msg, sd_b
 		goto finish;
 	}
 	
+	// this triggers a call to sdbus_process() which sets timeout/flags/etc
 	crtx_sdbus_trigger_event_processing(lstnr);
 	
-// 	printf("wait %llu\n", timeout_us);
 	crtx_wait_on_signal(&async_cb_data.signal, 0);
-// 	printf("endwait\n");
 finish:
 	crtx_shutdown_signal(&async_cb_data.signal);
 	
@@ -268,7 +273,7 @@ int crtx_sd_bus_message_read_string(sd_bus_message *m, char **p) {
 int crtx_sdbus_get_events(sd_bus *bus) {
 	int f, result;
 	
-	result = EVLOOP_TIMEOUT; // | EVLOOP_EDGE_TRIGGERED;
+	result = 0; // | EVLOOP_EDGE_TRIGGERED;
 	
 	f = sd_bus_get_events(bus);
 	if (f & POLLIN) {
@@ -287,37 +292,19 @@ int crtx_sdbus_get_events(sd_bus *bus) {
 	return result;
 }
 
-static char fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	struct crtx_evloop_fd *payload;
-	struct crtx_sdbus_listener *sdlist;
-	int r;
-	struct crtx_evloop_callback *el_cb;
+static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct crtx_evloop_callback *el_cb) {
+	int new_flags, r;
 	uint64_t timeout_us;
 	
-	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
-// 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
-	sdlist = (struct crtx_sdbus_listener *) userdata;
-	
-	while (1) {
-// 		printf("sdbus process\n");
-		r = sd_bus_process(sdlist->bus, NULL);
-		
-		if (r < 0) {
-			ERROR("sd_bus_process failed: %s\n", strerror(-r));
-			break;
-		}
-		if (r == 0)
-			break;
-	}
-// 	printf("sdbus process stop\n");
-	
-	// TODO set epoll flags again everytime?
-	int new_flags;
 	new_flags = crtx_sdbus_get_events(sdlist->bus);
+	
+	el_cb->crtx_event_flags |= EVLOOP_TIMEOUT;
+	new_flags |= EVLOOP_TIMEOUT;
 	
 	if (el_cb->crtx_event_flags != new_flags) {
 		printf("TODO sdbus fd_event_handler() %d != %d\n", el_cb->crtx_event_flags, new_flags);
+		// TODO set epoll flags again everytime?
 // 		el_cb->crtx_event_flags = new_flags;
 // 		crtx_evloop_enable_cb(el_cb->fd_entry->evloop, el_cb);
 	}
@@ -329,14 +316,38 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 		return r;
 	}
 	
-// 	printf("sdbus to %llu\n", timeout_us);
-// 	crtx_evloop_set_timeout(el_cb, timeout_us);
+	VDBG("sdbus timeout: %llu\n", timeout_us);
 	crtx_evloop_set_timeout_abs(el_cb, CLOCK_MONOTONIC, timeout_us);
+	
+	return 0;
+}
+
+static char fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_sdbus_listener *sdlist;
+	int r;
+	struct crtx_evloop_callback *el_cb;
+	
+	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
+	
+	sdlist = (struct crtx_sdbus_listener *) userdata;
+	
+	while (1) {
+		r = sd_bus_process(sdlist->bus, NULL);
+		
+		if (r < 0) {
+			ERROR("sd_bus_process failed: %s\n", strerror(-r));
+			break;
+		}
+		if (r == 0)
+			break;
+	}
+	
+	update_evloop_settings(sdlist, el_cb);
 	
 	return r;
 }
 
-void crtx_sdbus_shutdown_listener(struct crtx_listener_base *data) {
+static void shutdown_listener(struct crtx_listener_base *data) {
 	struct crtx_sdbus_listener *sdlist;
 	
 	sdlist = (struct crtx_sdbus_listener*) data;
@@ -395,6 +406,27 @@ char crtx_sdbus_open_bus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name
 	return 0;
 }
 
+
+static int connected_match_handler(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
+	const char *sig;
+	char *val;
+	struct crtx_sdbus_listener *sdlist;
+	
+	crtx_sdbus_print_msg(m);
+	sig = sd_bus_message_get_signature(m, 1);
+	
+	if (!strcmp(sd_bus_message_get_member(m), "NameAcquired") && sig[0] == 's') {
+		sd_bus_message_read_basic(m, 's', &val);
+		
+		sdlist = (struct crtx_sdbus_listener *) userdata;
+		
+		if (!strcmp(val, sdlist->unique_name))
+			sdlist->connected_cb(m, sdlist->connected_cb_data, 0);
+	}
+	
+	return 0;
+}
+
 struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 	struct crtx_sdbus_listener *sdlist;
 	int r;
@@ -413,11 +445,6 @@ struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 		return 0;
 	}
 	
-// 	sdlist->base.evloop_fd.fd = sd_bus_get_fd(sdlist->bus);
-// 	sdlist->base.evloop_fd.crtx_event_flags = crtx_sdbus_get_events(sdlist->bus);
-// 	sdlist->base.evloop_fd.data = sdlist;
-// 	sdlist->base.evloop_fd.event_handler = &fd_event_handler;
-// 	sdlist->base.evloop_fd.event_handler_name = "sdbus event handler";
 	crtx_evloop_init_listener(&sdlist->base,
 						sd_bus_get_fd(sdlist->bus),
 						crtx_sdbus_get_events(sdlist->bus),
@@ -427,7 +454,11 @@ struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 						0, 0
 					);
 	
-	sdlist->base.shutdown = &crtx_sdbus_shutdown_listener;
+	update_evloop_settings(sdlist, &sdlist->base.default_el_cb);
+	
+	sdlist->base.shutdown = &shutdown_listener;
+	// immediately call sdbus_process() once after the event loop starts
+	sdlist->base.flags |= CRTX_LSTNR_STARTUP_TRIGGER;
 	
 	if (sdlist->connection_signals) {
 #if 0 // starting with version 237/238
@@ -436,9 +467,17 @@ struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 			ERROR("sd_bus_set_connected_signal returned: %s\n", strerror(-r));
 			return 0;
 		}
+#else
+		// adding ",member='NameAcquired'" to the match string will result in no match for some reason
+		sdlist->connected_match.match_str = "type='signal',sender='org.freedesktop.DBus',"
+				"path='/org/freedesktop/DBus',interface='org.freedesktop.DBus'";
+// 		sdlist->connected_match.match_str = "type='signal'";
+		sdlist->connected_match.callback = connected_match_handler;
+		sdlist->connected_match.callback_data = sdlist;
+		
+		crtx_sdbus_match_add(sdlist, &sdlist->connected_match);
 #endif
 	}
-	
 	
 	return &sdlist->base;
 }

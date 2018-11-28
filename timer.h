@@ -46,6 +46,7 @@ int crtx_timer_get_listener(struct crtx_timer_listener *tlist,
 
 int crtx_timer_oneshot(time_t offset_sec,
 					   long offset_nsec,
+					   int clockid,
 					   crtx_handle_task_t callback,
 					   void *callback_userdata
 					);

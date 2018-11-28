@@ -237,6 +237,9 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 		crtx_add_event(listener->state_graph, event);
 	}
 	
+	if (listener->flags & CRTX_LSTNR_STARTUP_TRIGGER)
+		crtx_trigger_event_processing(listener);
+	
 	UNLOCK(listener->state_mutex);
 	
 	return 0;
@@ -1953,4 +1956,8 @@ void crtx_unlock_listener_source(struct crtx_listener_base *lbase) {
 
 int crtx_handle_std_signals() {
 	return crtx_signals_handle_std_signals(0);
+}
+
+void crtx_trigger_event_processing(struct crtx_listener_base *lstnr) {
+	crtx_evloop_trigger_callback(lstnr->evloop_fd.evloop, &lstnr->default_el_cb);
 }

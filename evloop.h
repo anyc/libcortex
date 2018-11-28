@@ -16,11 +16,11 @@
 
 #define CRTX_timespec2uint64(ts) ((uint64_t)(ts)->tv_sec * 1000000000ULL + (ts)->tv_nsec)
 
-#define EVLOOP_READ 1<<0
-#define EVLOOP_WRITE 1<<1
-#define EVLOOP_SPECIAL 1<<2
-#define EVLOOP_EDGE_TRIGGERED 1<<3
-#define EVLOOP_TIMEOUT 1<<4
+#define EVLOOP_READ (1<<0)
+#define EVLOOP_WRITE (1<<1)
+#define EVLOOP_SPECIAL (1<<2)
+#define EVLOOP_EDGE_TRIGGERED (1<<3)
+#define EVLOOP_TIMEOUT (1<<4)
 
 struct crtx_evloop_fd;
 struct crtx_evloop_callback;
@@ -129,5 +129,7 @@ void crtx_evloop_set_timeout(struct crtx_evloop_callback *el_cb, struct timespec
 void crtx_evloop_set_timeout_abs(struct crtx_evloop_callback *el_cb, clockid_t clockid, uint64_t timeout_us);
 void crtx_evloop_set_timeout_rel(struct crtx_evloop_callback *el_cb, uint64_t timeout_us);
 int crtx_evloop_trigger_callback(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
+
+void crtx_event_flags2str(FILE *fd, unsigned int flags);
 
 #endif

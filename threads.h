@@ -40,6 +40,7 @@ struct crtx_signal {
 	
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
+	int clockid;
 };
 
 struct crtx_thread;

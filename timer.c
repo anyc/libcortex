@@ -58,7 +58,7 @@ static char update_listener(struct crtx_listener_base *base) {
 	
 	tlist = (struct crtx_timer_listener *) base;
 	
-	DBG("timer: update %d (%lds %lds)\n", tlist->fd, tlist->newtimer.it_value.tv_sec, tlist->newtimer.it_interval.tv_sec);
+	DBG("timer: update fd %d (%lds %lds clock %d)\n", tlist->fd, tlist->newtimer.it_value.tv_sec, tlist->newtimer.it_interval.tv_nsec, tlist->clockid);
 	
 	ret = timerfd_settime(tlist->fd, tlist->settime_flags, &tlist->newtimer, NULL);
 	if (ret == -1) {
@@ -186,6 +186,7 @@ int crtx_timer_get_listener(struct crtx_timer_listener *tlist,
 
 int crtx_timer_oneshot(time_t offset_sec,
 						long offset_nsec,
+						int clockid,
 						crtx_handle_task_t callback,
 						void *callback_userdata
 						)
@@ -198,8 +199,12 @@ int crtx_timer_oneshot(time_t offset_sec,
 	memset(tlist, 0, sizeof(struct crtx_timer_listener));
 	
 	tlist->newtimer.it_value.tv_sec = offset_sec;
+	tlist->newtimer.it_value.tv_nsec = offset_nsec;
 	
-	tlist->clockid = CLOCK_REALTIME;
+	if (clockid < 0)
+		tlist->clockid = CLOCK_REALTIME;
+	else
+		tlist->clockid = clockid;
 	tlist->oneshot_callback = callback;
 	tlist->oneshot_data = callback_userdata;
 	

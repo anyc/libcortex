@@ -21,6 +21,16 @@ _Static_assert( (sizeof(time_t) == sizeof(int32_t) || (sizeof(time_t) == sizeof(
 
 struct crtx_event_loop *crtx_event_loops = 0;
 
+void crtx_event_flags2str(FILE *f, unsigned int flags) {
+	#define RETFLAG(flag) { if (flags & flag) fprintf(f, "%s ", #flag); }
+	
+	RETFLAG(EVLOOP_READ);
+	RETFLAG(EVLOOP_WRITE);
+	RETFLAG(EVLOOP_SPECIAL);
+	RETFLAG(EVLOOP_EDGE_TRIGGERED);
+	RETFLAG(EVLOOP_TIMEOUT);
+}
+
 void crtx_evloop_set_timeout(struct crtx_evloop_callback *el_cb, struct timespec *timeout) {
 	memcpy(&el_cb->timeout, timeout, sizeof(struct timespec));
 }
