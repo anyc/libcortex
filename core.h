@@ -240,6 +240,7 @@ void free_event(struct crtx_event *event);
 int crtx_init();
 int crtx_finish();
 void crtx_loop();
+void crtx_loop_onetime();
 void free_eventgraph(struct crtx_graph *egraph);
 void crtx_init_graph(struct crtx_graph *crtx_graph, const char *name);
 void crtx_shutdown_graph(struct crtx_graph *egraph);

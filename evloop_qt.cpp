@@ -177,6 +177,7 @@ static struct crtx_event_loop qt_loop = {
 	.release = &evloop_release,
 	.start = &evloop_start,
 	.stop = &evloop_stop,
+	0,
 	
 	.mod_fd = &crtx_evloop_qt_mod_fd,
 };

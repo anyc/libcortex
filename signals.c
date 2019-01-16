@@ -68,7 +68,7 @@ static void signal_handler(int signum) {
 }
 
 #ifndef WITHOUT_SIGNALFD
-static char fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static char signalfd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_signal_listener *slistener;
 	struct signalfd_siginfo si;
 	ssize_t r;
@@ -110,6 +110,56 @@ static void shutdown_listener(struct crtx_listener_base *data) {
 }
 #endif
 
+#ifndef WITHOUT_SELFPIPE
+static char selfpipe_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_signal_listener *slistener;
+	int32_t signal_num;
+	ssize_t r;
+	
+	slistener = (struct crtx_signal_listener *) userdata;
+	
+	r = read(slistener->pipe_lstnr.fds[0], &signal_num, sizeof(signal_num));
+	if (r < 0) {
+		ERROR("read from signal selfpipe %d failed: %s\n", slistener->pipe_lstnr.fds[0], strerror(r));
+		return r;
+	}
+	if (r != sizeof(signal_num)) {
+		ERROR("read from signal selfpipe %d failed: %s\n", slistener->pipe_lstnr.fds[0], strerror(r));
+		return -EBADE;
+	}
+	
+	
+	struct crtx_event *new_event;
+	struct signal_map *smap;
+	
+	smap = get_signal(signal_num);
+	
+	if (smap)
+		new_event = crtx_create_event(smap->etype);
+	else
+		new_event = crtx_create_event("");
+	
+	crtx_event_set_raw_data(new_event, 'i', signal_num, sizeof(signal_num));
+	crtx_add_event(slistener->base.graph, new_event);
+	
+	return 0;
+}
+
+static void selfpipe_signal_handler(int signum) {
+	struct signal_map *smap;
+	
+	if (crtx_verbosity > 0) {
+		smap = get_signal(signum);
+		if (smap)
+			DBG("received signal %s (%d)\n", smap->name, signum);
+		else
+			DBG("received signal %d\n", signum);
+	}
+	
+	write(signal_list.pipe_lstnr.fds[1], &signum, sizeof(int));
+}
+#endif
+
 static char start_listener(struct crtx_listener_base *listener) {
 	struct crtx_signal_listener *slistener;
 	int *i;
@@ -117,11 +167,14 @@ static char start_listener(struct crtx_listener_base *listener) {
 	
 	slistener = (struct crtx_signal_listener *) listener;
 	
-	if (slistener->no_signalfd) {
+	if (slistener->type == CRTX_SIGNAL_SIGACTION) {
 		struct sigaction new_action, old_action;
 		
+		if (!slistener->signal_handler)
+			new_action.sa_handler = signal_handler;
+		else
+			new_action.sa_handler = slistener->signal_handler;
 		
-		new_action.sa_handler = signal_handler;
 		sigemptyset(&new_action.sa_mask);
 		new_action.sa_flags = 0;
 		
@@ -148,7 +201,8 @@ static char start_listener(struct crtx_listener_base *listener) {
 			
 			i++;
 		}
-	} else {
+	} else
+	if (slistener->type == CRTX_SIGNAL_SIGNALFD) {
 		#ifndef WITHOUT_SIGNALFD
 		sigset_t mask;
 		
@@ -186,7 +240,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 							 slistener->fd,
 							 EVLOOP_READ,
 							 0,
-							 &fd_event_handler,
+							 &signalfd_event_handler,
 							 slistener,
 							 0, 0
 							);
@@ -195,6 +249,33 @@ static char start_listener(struct crtx_listener_base *listener) {
 		#else
 		ERROR("libcortex was compiled without signalfd support\n");
 		#endif
+	} else
+	if (slistener->type == CRTX_SIGNAL_SELFPIPE || slistener->type == CRTX_SIGNAL_DEFAULT) {
+		slistener->pipe_lstnr.fd_event_handler = selfpipe_event_handler;
+		slistener->pipe_lstnr.fd_event_handler_data = slistener;
+		
+		r = crtx_create_listener("pipe", &slistener->pipe_lstnr);
+		if (r < 0) {
+			ERROR("create_listener(pipe) failed: %s\n", strerror(-r));
+			return r;
+		}
+		
+		slistener->sub_lstnr = (struct crtx_signal_listener *) calloc(1, sizeof(struct crtx_signal_listener));
+// 		slistener->sub_lstnr = &signal_list;
+		slistener->sub_lstnr->signals = slistener->signals;
+		slistener->sub_lstnr->type = CRTX_SIGNAL_SIGACTION;
+		slistener->sub_lstnr->signal_handler = selfpipe_signal_handler;
+		
+		r = crtx_create_listener("signals", slistener->sub_lstnr);
+		if (r < 0) {
+			ERROR("create_listener(signals) failed: %s\n", strerror(-r));
+			return r;
+		}
+		
+		crtx_start_listener(&slistener->pipe_lstnr.base);
+		crtx_start_listener(&slistener->sub_lstnr->base);
+	} else {
+		ERROR("invalid type of signal listener: %d\n", slistener->type);
 	}
 	
 	return 1;
@@ -208,9 +289,9 @@ struct crtx_listener_base *crtx_new_signals_listener(void *options) {
 	if (!slistener->signals)
 		return 0;
 	
-	signal_list.base.start_listener = &start_listener;
+	slistener->base.start_listener = &start_listener;
 	
-	return &signal_list.base;
+	return &slistener->base;
 }
 
 static char sigterm_handler(struct crtx_event *event, void *userdata, void **sessiondata) {

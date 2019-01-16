@@ -1525,6 +1525,10 @@ void crtx_loop() {
 	}
 }
 
+void crtx_loop_onetime() {
+	crtx_root->event_loop.onetime(&crtx_root->event_loop);
+}
+
 // static void *event_loop_tmain(void *data) {
 // 	crtx_epoll_main(crtx_root->event_loop.listener);
 // 	

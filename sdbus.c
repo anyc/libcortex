@@ -100,7 +100,13 @@ int crtx_sdbus_call(struct crtx_sdbus_listener *lstnr, sd_bus_message *msg, sd_b
 	// this triggers a call to sdbus_process() which sets timeout/flags/etc
 	crtx_sdbus_trigger_event_processing(lstnr);
 	
-	crtx_wait_on_signal(&async_cb_data.signal, 0);
+	if (lstnr->single_threaded) {
+		while (!crtx_signal_is_active(&async_cb_data.signal)) {
+			crtx_loop_onetime();
+		}
+	} else {
+		crtx_wait_on_signal(&async_cb_data.signal, 0);
+	}
 finish:
 	crtx_shutdown_signal(&async_cb_data.signal);
 	
@@ -412,7 +418,7 @@ static int connected_match_handler(sd_bus_message *m, void *userdata, sd_bus_err
 	char *val;
 	struct crtx_sdbus_listener *sdlist;
 	
-	crtx_sdbus_print_msg(m);
+// 	crtx_sdbus_print_msg(m);
 	sig = sd_bus_message_get_signature(m, 1);
 	
 	if (!strcmp(sd_bus_message_get_member(m), "NameAcquired") && sig[0] == 's') {

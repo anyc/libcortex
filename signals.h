@@ -2,13 +2,25 @@
 #define _CRTX_SIGNALS_H
 
 #include "core.h"
+#include "pipe.h"
+
+#define CRTX_SIGNAL_DEFAULT 0
+#define CRTX_SIGNAL_SIGACTION 1
+#define CRTX_SIGNAL_SIGNALFD 2
+#define CRTX_SIGNAL_SELFPIPE 3
 
 struct crtx_signal_listener {
 	struct crtx_listener_base base;
-	int fd;
 	
 	int *signals; // { SIGINT, ..., 0 }
-	char no_signalfd;
+	char type;
+	
+	int fd;
+	
+	void (*signal_handler)(int sig_num);
+	
+	struct crtx_pipe_listener pipe_lstnr;
+	struct crtx_signal_listener *sub_lstnr;
 };
 
 int crtx_signals_handle_std_signals(struct crtx_signal_listener **signal_lstnr);

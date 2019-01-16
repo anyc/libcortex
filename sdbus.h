@@ -56,6 +56,8 @@ struct crtx_sdbus_listener {
 	sd_bus_message_handler_t connected_cb;
 	void *connected_cb_data;
 	
+	char single_threaded;
+	
 	const char *unique_name;
 	
 	struct crtx_dll *matches;

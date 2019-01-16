@@ -89,6 +89,7 @@ struct crtx_event_loop {
 	int (*release)(struct crtx_event_loop *evloop);
 	int (*start)(struct crtx_event_loop *evloop);
 	int (*stop)(struct crtx_event_loop *evloop);
+	int (*onetime)(struct crtx_event_loop *evloop);
 	
 	int (*mod_fd)(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd);
 };
