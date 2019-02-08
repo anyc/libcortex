@@ -270,7 +270,7 @@ void crtx_process_event(struct crtx_graph *graph, struct crtx_dll *queue_entry);
 void crtx_init_shutdown();
 
 int crtx_start_listener(struct crtx_listener_base *listener);
-char crtx_update_listener(struct crtx_listener_base *listener);
+int crtx_update_listener(struct crtx_listener_base *listener);
 void crtx_stop_listener(struct crtx_listener_base *listener);
 void print_tasks(struct crtx_graph *graph);
 void hexdump(unsigned char *buffer, size_t index);

@@ -316,6 +316,7 @@ static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct cr
 	}
 	
 	// NOTE sd_bus_get_timeout() provides an absolute timeout timestamp!
+	// 18446744073709551615 == UINT64_MAX
 	r = sd_bus_get_timeout(sdlist->bus, &timeout_us);
 	if (r < 0) {
 		ERROR("sd_bus_get_timeout failed: %s\n", strerror(-r));

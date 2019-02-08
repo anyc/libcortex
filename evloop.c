@@ -42,6 +42,7 @@ void crtx_evloop_set_timeout_abs(struct crtx_evloop_callback *el_cb, clockid_t c
 		
 		clock_gettime(clockid, &ts);
 		now_us = CRTX_timespec2uint64(&ts) / 1000;
+		
 		if (now_us < timeout_us) {
 			crtx_evloop_set_timeout_rel(el_cb, timeout_us - now_us);
 		} else {

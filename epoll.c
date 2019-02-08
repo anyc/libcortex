@@ -189,10 +189,23 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 	uint64_t now;
 	uint64_t timeout;
 	int epoll_timeout_ms;
-	char timeout_set, loop;
+	char timeout_set, loop, events_processed;
 	
 	
 	epl = (struct crtx_epoll_listener*) evloop->listener;
+	
+	/*
+	 * In this loop, we first process events that may have been left unprocessed
+	 * from a previous call of epoll_wait(). This can happen if calls of this
+	 * function are nested, i.e. if an event handler enters this event loop
+	 * again. Afterwards, we call timeout handlers, if necessary, and then
+	 * finally call epoll_wait().
+	 * 
+	 * If $onetime == 1, we process events only one time. If events or timeouts
+	 * are left from a previous epoll_wait() call, we only process them and then
+	 * return. If no events or timeouts are left, we call epoll_wait(), process
+	 * the returned events and timeout and then return.
+	 */
 	
 	// onetime will decrease $loop after every loop
 	if (onetime)
@@ -204,6 +217,11 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 		/*
 		 * process (outstanding) events
 		 */
+		
+		if (epl->cur_event_idx < epl->n_rdy_events)
+			events_processed = 1;
+		else
+			events_processed = 0;
 		
 		while (epl->cur_event_idx < epl->n_rdy_events) {
 			i = epl->cur_event_idx;
@@ -226,7 +244,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 			
 			int bytesAvailable;
 			ioctl(evloop_fd->fd, FIONREAD, &bytesAvailable);
-			VDBG("bytes %u\n", bytesAvailable);
+			VDBG("available data: %u bytes\n", bytesAvailable);
 			#endif
 			
 			if (epl->events[i].events & EPOLLERR || epl->events[i].events & EPOLLRDHUP || epl->events[i].events & EPOLLHUP) {
@@ -248,7 +266,6 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 					crtx_evloop_callback(el_cb);
 				}
 			}
-			
 		}
 		
 		/*
@@ -270,11 +287,17 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 						el_cb->triggered_flags = EVLOOP_TIMEOUT;
 						
 						crtx_evloop_callback(el_cb);
+						
+						events_processed = 1;
 					}
 				}
 			}
 		}
 		
+		if (onetime && events_processed)
+			break;
+		if (onetime && loop == 1)
+			break;
 		
 		/*
 		 * calculate the next timeout for the epoll_wait() call
@@ -323,7 +346,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 		 * wait on events
 		 */
 		
-		VDBG("epoll waiting (TO: %d)...\n", epoll_timeout_ms);
+		VDBG("epoll waiting (timeout: %d ms)...\n", epoll_timeout_ms);
 		
 		epl->cur_event_idx = 0;
 		while (1) {

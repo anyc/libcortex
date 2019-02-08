@@ -245,12 +245,16 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
-char crtx_update_listener(struct crtx_listener_base *listener) {
-	if (listener->update_listener) {
-		listener->update_listener(listener);
+int crtx_update_listener(struct crtx_listener_base *listener) {
+	if (listener->state != CRTX_LSTNR_STARTED) {
+		return crtx_start_listener(listener);
 	}
 	
-	return 1;
+	if (listener->update_listener) {
+		return listener->update_listener(listener);
+	}
+	
+	return 0;
 }
 
 // static void listener_thread_on_finish(struct crtx_thread *thread, void *userdata) {
