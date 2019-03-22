@@ -342,6 +342,11 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 		return 0;
 	}
 	
+	r = setsockopt(clist->sockfd, SOL_SOCKET, SO_SNDBUF,  &clist->send_buffer_size, sizeof(clist->send_buffer_size));
+	if (r != 0) {
+		ERROR("unable to change send buffer size\n");
+	}
+	
 	if (clist->interface_name) {
 		struct ifreq ifr;
 		

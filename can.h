@@ -21,6 +21,7 @@ struct crtx_can_listener {
 	char is_virtual_can;
 	unsigned int bitrate;
 	int protocol;
+	int send_buffer_size;
 	
 	struct nl_sock *socket;
 	struct rtnl_link *link;
