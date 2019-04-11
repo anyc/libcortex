@@ -72,7 +72,7 @@ static char can_fd_event_handler(struct crtx_event *event, void *userdata, void 
 	return 0;
 }
 
-void crtx_shutdown_can_listener(struct crtx_listener_base *data) {
+static void shutdown_listener(struct crtx_listener_base *data) {
 	struct crtx_can_listener *clist;
 	
 	clist = (struct crtx_can_listener*) data;
@@ -421,7 +421,7 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 // 		clist->base.evloop_fd.subsystems->error_cb = &on_error_cb;
 // 		clist->base.evloop_fd.subsystems->error_cb_data = clist;
 		
-		clist->base.shutdown = &crtx_shutdown_can_listener;
+		clist->base.shutdown = &shutdown_listener;
 	}
 	
 // 	new_eventgraph(&clist->base.graph, "can", can_msg_etype);

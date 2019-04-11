@@ -73,10 +73,10 @@ static char update_listener(struct crtx_listener_base *base) {
 	ret = timerfd_settime(tlist->fd, tlist->settime_flags, &tlist->newtimer, NULL);
 	if (ret == -1) {
 		ERROR("timerfd_settime failed: %s\n", strerror(errno));
-		return 0;
+		return ret;
 	}
 	
-	return 1;
+	return 0;
 }
 
 struct crtx_listener_base *crtx_new_timer_listener(void *options) {

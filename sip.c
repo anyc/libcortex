@@ -76,7 +76,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	if (slist->rid < 0) {
 		ERROR("eXosip_register_build_initial_register failed: %d %s\n", slist->rid, osip_strerror(slist->rid));
 		eXosip_unlock(slist->ctx);
-		return 1;
+		return slist->rid;
 	}
 	
 	osip_message_set_supported(reg, "100rel");
@@ -85,7 +85,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	if (r) {
 		ERROR("eXosip_register_send_register failed: %d\n", r);
 		eXosip_unlock(slist->ctx);
-		return 1;
+		return r;
 	}
 	eXosip_unlock (slist->ctx);
 	
@@ -115,7 +115,7 @@ static char stop_listener(struct crtx_listener_base *listener) {
 	if (r < 0) {
 		ERROR("eXosip_register_build_register failed: %d\n", r);
 		eXosip_unlock(slist->ctx);
-		return 1;
+		return r;
 	}
 	
 	eXosip_register_send_register(slist->ctx, slist->rid, reg);

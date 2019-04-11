@@ -247,7 +247,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 		}
 	}
 	
-	return 1;
+	return 0;
 }
 
 static void enumerate_menu(struct crtx_v4l_listener *lstnr, struct v4l2_queryctrl *qctrl) {

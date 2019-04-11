@@ -248,7 +248,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 		udev_enumerate_unref(enumerate);
 	}
 	
-	return 1;
+	return 0;
 }
 
 struct crtx_listener_base *crtx_new_udev_listener(void *options) {

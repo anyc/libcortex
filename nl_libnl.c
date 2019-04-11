@@ -32,7 +32,7 @@ static char libnl_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	return 0;
 }
 
-static char libnl_start_listener(struct crtx_listener_base *listener) {
+static char start_listener(struct crtx_listener_base *listener) {
 	struct crtx_libnl_listener *libnl_lstnr;
 	int ret;
 	
@@ -85,7 +85,7 @@ struct crtx_listener_base *crtx_new_nl_libnl_listener(void *options) {
 		cb++;
 	}
 	
-	libnl_lstnr->base.start_listener = &libnl_start_listener;
+	libnl_lstnr->base.start_listener = &start_listener;
 	
 // 	libnl_lstnr->base.evloop_fd.data = libnl_lstnr;
 // 	libnl_lstnr->base.evloop_fd.crtx_event_flags = EVLOOP_READ;

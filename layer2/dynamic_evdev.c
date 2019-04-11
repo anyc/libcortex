@@ -156,10 +156,10 @@ static char start_listener(struct crtx_listener_base *listener) {
 	ret = crtx_start_listener(&dyn_evdev->udev_lstnr.base);
 	if (ret) {
 		ERROR("starting udev listener failed\n");
-		return 0;
+		return ret;
 	}
 	
-	return 1;
+	return 0;
 }
 
 static void shutdown_listener(struct crtx_listener_base *data) {

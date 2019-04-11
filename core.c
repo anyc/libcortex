@@ -392,7 +392,7 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 		struct crtx_event *event;
 		
 		ret = crtx_create_event(&event);
-		if (ret) {
+		if (ret < 0) {
 			ERROR("crtx_create_event failed: %s\n", strerror(ret));
 		} else {
 			event->description = "listener_state";

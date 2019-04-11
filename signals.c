@@ -282,7 +282,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 		ERROR("invalid type of signal listener: %d\n", slistener->type);
 	}
 	
-	return 1;
+	return 0;
 }
 
 struct crtx_listener_base *crtx_new_signals_listener(void *options) {

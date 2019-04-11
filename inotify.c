@@ -289,7 +289,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 		inotify_fd = inotify_init();
 		if (inotify_fd == -1) {
 			printf("inotify initialization failed\n");
-			return 0;
+			return -1;
 		}
 		
 		INIT_MUTEX(mutex);
@@ -338,10 +338,10 @@ static char start_listener(struct crtx_listener_base *listener) {
 	inlist->wd = inotify_add_watch(inotify_fd, inlist->path, inlist->mask);
 	if (inlist->wd == -1) {
 		printf("inotify_add_watch(\"%s\") failed with %d: %s\n", inlist->path, errno, strerror(errno));
-		return 0;
+		return -errno;
 	}
 	
-	return 1;
+	return 0;
 }
 
 struct crtx_listener_base *crtx_new_inotify_listener(void *options) {

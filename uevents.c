@@ -132,7 +132,7 @@ static void shutdown_uevents_listener(struct crtx_listener_base *lbase) {
 }
 
 
-static char uevents_start_listener(struct crtx_listener_base *listener) {
+static char start_listener(struct crtx_listener_base *listener) {
 	struct crtx_uevents_listener *ulist;
 	int ret;
 	
@@ -169,7 +169,7 @@ struct crtx_listener_base *crtx_new_uevents_listener(void *options) {
 	
 	ulist->base.graph = ulist->nl_listener.base.graph;
 	ulist->base.shutdown = &shutdown_uevents_listener;
-	ulist->base.start_listener = &uevents_start_listener;
+	ulist->base.start_listener = &start_listener;
 	
 	return &ulist->base;
 }

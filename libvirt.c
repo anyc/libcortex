@@ -784,7 +784,7 @@ static char start_listener(struct crtx_listener_base *base) {
 	lvlist->conn = virConnectOpen(lvlist->hypervisor);
 	if (lvlist->conn == 0) {
 		ERROR("Failed to connect to hypervisor\n");
-		return 0;
+		return ret;
 	}
 	
 	ret = virConnectRegisterCloseCallback(lvlist->conn, conn_evt_cb, lvlist, NULL);
@@ -792,7 +792,7 @@ static char start_listener(struct crtx_listener_base *base) {
 		ERROR("virConnectRegisterCloseCallback failed: %s\n", virGetLastErrorMessage());
 		virConnectClose(lvlist->conn);
 		lvlist->conn = 0;
-		return 0;
+		return ret;
 	}
 	
 	ret = virConnectDomainEventRegisterAny(lvlist->conn,
@@ -804,7 +804,7 @@ static char start_listener(struct crtx_listener_base *base) {
 		ERROR("virConnectDomainEventRegisterAny failed: %s\n", virGetLastErrorMessage());
 		virConnectClose(lvlist->conn);
 		lvlist->conn = 0;
-		return 0;
+		return ret;
 	} else {
 		lvlist->domain_event_id = ret;
 	}
@@ -814,7 +814,7 @@ static char start_listener(struct crtx_listener_base *base) {
 		ERROR("Failed to start keepalive protocol: %s\n", virGetLastErrorMessage());
 		virConnectClose(lvlist->conn);
 		lvlist->conn = 0;
-		return 0;
+		return ret;
 	}
 	
 // 	while (1) {
@@ -824,7 +824,7 @@ static char start_listener(struct crtx_listener_base *base) {
 // 		}
 // 	}
 	
-	return 1;
+	return 0;
 }
 
 struct crtx_listener_base *crtx_new_libvirt_listener(void *options) {
