@@ -1918,7 +1918,7 @@ void crtx_event_get_payload(struct crtx_event *event, char *id, void **raw_point
 	}
 }
 
-struct crtx_dict_item *crtx_event_get_value_by_key(struct crtx_event *event, char *id, char *key) {
+struct crtx_dict_item *crtx_event_get_item_by_key(struct crtx_event *event, char *id, char *key) {
 	struct crtx_dict *dict;
 	
 	crtx_event_get_payload(event, id, 0, &dict);
@@ -1927,6 +1927,24 @@ struct crtx_dict_item *crtx_event_get_value_by_key(struct crtx_event *event, cha
 		return 0;
 	
 	return crtx_get_item(dict, key);
+}
+
+int crtx_event_get_value_by_key(struct crtx_event *event, char *key, char type, void *buffer, size_t buffer_size) {
+	struct crtx_dict *dict;
+	int r;
+	
+	crtx_event_get_payload(event, 0, 0, &dict);
+	
+	if (!dict) {
+		return -1;
+	}
+	
+	r = crtx_get_value(dict, key, type, buffer, buffer_size);
+	if (r < 0) {
+		return r;
+	}
+	
+	return 0;
 }
 
 void *crtx_event_get_ptr(struct crtx_event *event) {
