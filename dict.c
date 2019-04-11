@@ -1054,9 +1054,8 @@ char crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void 
 	struct crtx_dict *dict, *orig_dict;
 	struct crtx_event *new_event;
 	struct crtx_transform_dict_handler *trans;
+	int r;
 	
-// 	if (!event->data.dict)
-// 		event->data.to_dict(&event->data);
 	
 	crtx_event_get_payload(event, 0, 0, &orig_dict);
 	
@@ -1069,8 +1068,13 @@ char crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void 
 	
 	dict = crtx_dict_transform(orig_dict, trans->signature, trans->transformation);
 	
-	new_event = crtx_create_event(trans->type);
-// 	new_event->data.dict = dict;
+	r = crtx_create_event(&new_event);
+	if (r) {
+		ERROR("crtx_create_event failed: %s\n", strerror(r));
+		return r;
+	}
+	
+	new_event->description = trans->type;
 	crtx_event_set_dict_data(new_event, dict, 0);
 	
 	if (trans->graph)

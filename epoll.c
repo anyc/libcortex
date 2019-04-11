@@ -403,6 +403,7 @@ static int evloop_stop(struct crtx_event_loop *evloop) {
 	epl->stop = 1;
 	
 	ecp.graph = 0;
+	ecp.el_cb = 0;
 	
 	ret = write(evloop->ctrl_pipe[1], &ecp, sizeof(struct crtx_event_loop_control_pipe));
 	if (ret < sizeof(struct crtx_event_loop_control_pipe)) {

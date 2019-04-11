@@ -138,7 +138,7 @@ void crtx_evloop_callback(struct crtx_evloop_callback *el_cb) {
 	VDBG("received wakeup for fd %d\n", el_cb->fd_entry->fd);
 	
 	if (el_cb->graph || el_cb->event_handler) {
-		event = crtx_create_event(0);
+		crtx_create_event(&event);
 		
 		crtx_event_set_raw_data(event, 'p', el_cb, sizeof(el_cb), CRTX_DIF_DONT_FREE_DATA);
 		

@@ -154,21 +154,26 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 // 	printf("send started1 %p\n", listener);
 	if (listener->start_listener) {
 		ret = listener->start_listener(listener);
-		if (ret && listener->state_graph) {
+		if (ret < 0 && listener->state_graph) {
 			ERROR("start_listener failed\n");
 			
 			listener->state = CRTX_LSTNR_STOPPED;
 			
-			event = crtx_create_event("listener_state");
-			
-			event->data.type = 'u';
-			event->data.uint32 = CRTX_LSTNR_STOPPED;
-			
-			crtx_add_event(listener->state_graph, event);
+// 			event = crtx_create_event("listener_state");
+			ret = crtx_create_event(&event);
+			if (ret) {
+				ERROR("crtx_create_event failed: %s\n", strerror(ret));
+			} else {
+				event->description = "listener_state";
+				event->data.type = 'u';
+				event->data.uint32 = CRTX_LSTNR_STOPPED;
+				
+				crtx_add_event(listener->state_graph, event);
+			}
 			
 			UNLOCK(listener->state_mutex);
 			
-			return -ret;
+			return ret;
 		}
 	}
 	
@@ -233,10 +238,16 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 	listener->state = CRTX_LSTNR_STARTED;
 	
 	if (listener->state_graph) {
-		event = crtx_create_event("listener_state");
-		event->data.type = 'u';
-		event->data.uint32 = CRTX_LSTNR_STARTED;
-		crtx_add_event(listener->state_graph, event);
+// 		event = crtx_create_event("listener_state");
+		ret = crtx_create_event(&event);
+		if (ret) {
+			ERROR("crtx_create_event failed: %s\n", strerror(ret));
+		} else {
+			event->description = "listener_state";
+			event->data.type = 'u';
+			event->data.uint32 = CRTX_LSTNR_STARTED;
+			crtx_add_event(listener->state_graph, event);
+		}
 	}
 	
 	if (listener->flags & CRTX_LSTNR_STARTUP_TRIGGER)
@@ -377,11 +388,18 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 	listener->state = CRTX_LSTNR_STOPPED;
 	
 	if (listener->state_graph) {
+		int ret;
 		struct crtx_event *event;
-		event = crtx_create_event("listener_state");
-		event->data.type = 'u';
-		event->data.uint32 = CRTX_LSTNR_STOPPED;
-		crtx_add_event(listener->state_graph, event);
+		
+		ret = crtx_create_event(&event);
+		if (ret) {
+			ERROR("crtx_create_event failed: %s\n", strerror(ret));
+		} else {
+			event->description = "listener_state";
+			event->data.type = 'u';
+			event->data.uint32 = CRTX_LSTNR_STOPPED;
+			crtx_add_event(listener->state_graph, event);
+		}
 	}
 	
 	UNLOCK(listener->state_mutex);
@@ -453,8 +471,8 @@ void traverse_graph_r(struct crtx_graph *graph, struct crtx_task *ti, struct crt
 	void *sessiondata[3];
 	char keep_going=1;
 	
-	if (ti->handle && (!ti->event_type_match || !strcmp(ti->event_type_match, event->type))) {
-		DBG("execute task %s with event %s (%p)\n", ti->id, event->type, event);
+	if (ti->handle && (!ti->event_type_match || !strcmp(ti->event_type_match, event->description))) {
+		DBG("execute task %s with event %d \"%s\" (%p)\n", ti->id, event->type, event->description, event);
 		
 		keep_going = ti->handle(event, ti->userdata, sessiondata);
 	}
@@ -469,7 +487,7 @@ void traverse_graph_r(struct crtx_graph *graph, struct crtx_task *ti, struct crt
 	}
 	
 	if (ti->cleanup) {
-		DBG("execute task %s with event %s (%p) cleanup\n", ti->id, event->type, event);
+		DBG("execute task %s with event %d \"%s\" (%p) cleanup\n", ti->id, event->type, event->description, event);
 		
 		ti->cleanup(event, ti->userdata, sessiondata);
 	}
@@ -689,7 +707,7 @@ void crtx_add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	
 	// we do not accept new events if shutdown has begun
 	if (crtx_root->shutdown) {
-		DBG("ignoring new events (%s) after shutdown signal\n", event->type);
+		DBG("ignoring new events (%s) after shutdown signal\n", event->description);
 		free_event(event);
 		return;
 	}
@@ -700,13 +718,13 @@ void crtx_add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	pthread_mutex_lock(&graph->mutex);
 	
 	if (!graph->tasks) {
-		INFO("dropping event %s (%p) as graph \"%s\" (%p) is empty\n", event->type, event, graph->name?graph->name:"", graph);
+		INFO("dropping event %s (%p) as graph \"%s\" (%p) is empty\n", event->description, event, graph->name?graph->name:"", graph);
 		
 		pthread_mutex_unlock(&graph->mutex);
 		return;
 	}
 	
-	DBG("adding event %s (%p) to graph \"%s\" (%p)\n", event->type, event, graph->name?graph->name:"", graph);
+	DBG("adding event %s (%p) to graph \"%s\" (%p)\n", event->description, event, graph->name?graph->name:"", graph);
 	
 	LOCK(graph->queue_mutex);
 	
@@ -778,35 +796,29 @@ void crtx_add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	pthread_mutex_unlock(&graph->mutex);
 }
 
-struct crtx_event *crtx_create_event(char *type) { // , void *data, size_t data_size, unsigned char flags) {
-	struct crtx_event *event;
+int crtx_create_event(struct crtx_event **event) {
 	int ret;
 	
-	event = (struct crtx_event*) calloc(1, sizeof(struct crtx_event));
+	if (!event)
+		return -EINVAL;
 	
-	ret = pthread_mutex_init(&event->mutex, 0); ASSERT(ret >= 0);
-	ret = pthread_cond_init(&event->response_cond, NULL); ASSERT(ret >= 0);
-	ret = pthread_cond_init(&event->release_cond, NULL); ASSERT(ret >= 0);
+	*event = (struct crtx_event*) calloc(1, sizeof(struct crtx_event));
 	
-	event->type = type;
+	if (!*event)
+		return -ENOMEM;
 	
-// 	event->data.pointer = data;
-// 	event->data.type = 'p';
-// 	crtx_event_set_raw_data(event, data, data_size, 0);
-// 	event->data.size = data_size;
+	ret = pthread_mutex_init(&(*event)->mutex, 0); ASSERT(ret >= 0);
+	ret = pthread_cond_init(&(*event)->response_cond, NULL); ASSERT(ret >= 0);
+	ret = pthread_cond_init(&(*event)->release_cond, NULL); ASSERT(ret >= 0);
 	
-// 	if (complex_data_layout) {
-// 		crtx_dict_upgrade_event_data(event, 0);
-// 	}
-	
-	return event;
+	return 0;
 }
 
 void reference_event_release(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
 	event->refs_before_release++;
-	VDBG("ref release of event %s (%p) (now %d)\n", event->type, event, event->refs_before_release);
+	VDBG("ref release of event %s (%p) (now %d)\n", event->description, event, event->refs_before_release);
 	
 	pthread_mutex_unlock(&event->mutex);
 }
@@ -814,7 +826,7 @@ void reference_event_release(struct crtx_event *event) {
 void dereference_event_release(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
-	VDBG("deref release of event %s (%p) (remaining %d)\n", event->type, event, event->refs_before_release);
+	VDBG("deref release of event %s (%p) (remaining %d)\n", event->description, event, event->refs_before_release);
 	
 	if (event->refs_before_release > 0)
 		event->refs_before_release--;
@@ -833,7 +845,7 @@ void reference_event_response(struct crtx_event *event) {
 	
 	if (!event->error) {
 		event->refs_before_response++;
-		VDBG("ref response of event %s (%p) (now %d)\n", event->type, event, event->refs_before_response);
+		VDBG("ref response of event %s (%p) (now %d)\n", event->description, event, event->refs_before_response);
 	}
 	
 	pthread_mutex_unlock(&event->mutex);
@@ -842,7 +854,7 @@ void reference_event_response(struct crtx_event *event) {
 void dereference_event_response(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
-	VDBG("ref response of event %s (%p) (remaining %d)\n", event->type, event, event->refs_before_response);
+	VDBG("ref response of event %s (%p) (remaining %d)\n", event->description, event, event->refs_before_response);
 	
 	if (event->refs_before_response > 0)
 		event->refs_before_response--;
@@ -925,12 +937,26 @@ void free_event(struct crtx_event *event) {
 	free(event);
 }
 
-struct crtx_graph *find_graph_for_event_type(char *event_type) {
+struct crtx_graph *crtx_find_graph_for_event_description(char *event_description) {
+	unsigned int i, j;
+	
+	for (i=0; i < crtx_root->n_graphs; i++) {
+		for (j=0; j < crtx_root->graphs[i]->n_descriptions; j++) {
+			if (!strcmp(crtx_root->graphs[i]->descriptions[j], event_description)) {
+				return crtx_root->graphs[i];
+			}
+		}
+	}
+	
+	return 0;
+}
+
+struct crtx_graph *crtx_find_graph_for_event_type(CRTX_EVENT_TYPE_VARTYPE event_type) {
 	unsigned int i, j;
 	
 	for (i=0; i < crtx_root->n_graphs; i++) {
 		for (j=0; j < crtx_root->graphs[i]->n_types; j++) {
-			if (!strcmp(crtx_root->graphs[i]->types[j], event_type)) {
+			if (crtx_root->graphs[i]->types[j] == event_type) {
 				return crtx_root->graphs[i];
 			}
 		}
@@ -951,10 +977,10 @@ struct crtx_graph *find_graph_by_name(char *name) {
 	return 0;
 }
 
-struct crtx_graph *get_graph_for_event_type(char *event_type, char **new_event_types) {
+struct crtx_graph *crtx_get_graph_for_event_description(char *event_description, char **new_event_types) {
 	struct crtx_graph *graph;
 	
-	graph = find_graph_for_event_type(event_type);
+	graph = crtx_find_graph_for_event_description(event_description);
 	if (!graph) {
 		new_eventgraph(&graph, 0, new_event_types);
 	}
@@ -965,7 +991,13 @@ struct crtx_graph *get_graph_for_event_type(char *event_type, char **new_event_t
 void add_raw_event(struct crtx_event *event) {
 	struct crtx_graph *graph;
 	
-	graph = find_graph_for_event_type(event->type);
+	graph = 0;
+	
+	if (event->description)
+		graph = crtx_find_graph_for_event_description(event->description);
+	
+	if (!graph)
+		graph = crtx_find_graph_for_event_type(event->type);
 	
 // 	if (!graph && !strcmp(event->type, CRTX_EVT_NOTIFICATION)) {
 // 		crtx_init_notification_listeners(&crtx_root->notification_listeners_handle);
@@ -974,7 +1006,7 @@ void add_raw_event(struct crtx_event *event) {
 // 	}
 	
 	if (!graph) {
-		ERROR("did not find graph for event type %s\n", event->type);
+		ERROR("did not find graph for event type \"%s\"\n", event->description);
 		return;
 	}
 	
@@ -1007,7 +1039,7 @@ void crtx_init_graph(struct crtx_graph *graph, const char *name) {
 	UNLOCK(crtx_root->graphs_mutex);
 }
 
-static void new_eventgraph(struct crtx_graph **crtx_graph, const char *name, char **event_types) {
+static void new_eventgraph(struct crtx_graph **crtx_graph, const char *name, char **event_descriptions) {
 	struct crtx_graph *graph;
 // 	int i, ret;
 	
@@ -1031,13 +1063,13 @@ static void new_eventgraph(struct crtx_graph **crtx_graph, const char *name, cha
 // 	graph->name = name;
 // 	INFO("new eventgraph %s ", graph->name);
 	
-	if (event_types) {
-		while (event_types[graph->n_types]) {
-// 			INFO("%s ", event_types[graph->n_types]);
+	if (event_descriptions) {
+		while (event_descriptions[graph->n_types]) {
+// 			INFO("%s ", event_descriptions[graph->n_types]);
 			graph->n_types++;
 		}
 		
-		graph->types = event_types;
+		graph->descriptions = event_descriptions;
 	}
 // 	INFO("\n");
 // 	

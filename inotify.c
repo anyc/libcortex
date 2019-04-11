@@ -209,7 +209,8 @@ static char inotify_eloop() {
 			ev_data = (struct inotify_event *) malloc(sizeof(struct inotify_event) + in_event->len);
 			memcpy(ev_data, in_event, sizeof(struct inotify_event) + in_event->len);
 			
-			event = crtx_create_event(fal->base.graph->types[0]); // ev_data, sizeof(struct inotify_event) + in_event->len);
+			crtx_create_event(&event); // ev_data, sizeof(struct inotify_event) + in_event->len);
+			event->description = fal->base.graph->descriptions[0];
 			// 				event->data.to_dict = &inotify_to_dict;
 			// 				crtx_dict_upgrade_event_data(event, 0, 1);
 			

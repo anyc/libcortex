@@ -54,10 +54,15 @@ static char can_fd_event_handler(struct crtx_event *event, void *userdata, void 
 			return 1;
 		}
 		
-		nevent = crtx_create_event("can");
-		crtx_event_set_raw_data(nevent, 'p', frame, sizeof(frame), 0);
-		
-		crtx_add_event(clist->base.graph, nevent);
+		r = crtx_create_event(&nevent);
+		if (r) {
+			ERROR("crtx_create_event failed: %s\n", strerror(r));
+		} else {
+			nevent->description = "can";
+			crtx_event_set_raw_data(nevent, 'p', frame, sizeof(frame), 0);
+			
+			crtx_add_event(clist->base.graph, nevent);
+		}
 	} else {
 		// consume and discard the data
 		struct can_frame static_frame;

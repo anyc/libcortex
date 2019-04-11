@@ -101,7 +101,9 @@ static void setup_response_event_cb(struct crtx_event *event, void *userdata) {
 	slist = (struct crtx_socket_listener*) event->cb_before_release_data;
 	
 	// copy the data from the original event
-	resp_event = crtx_create_event("cortex.socket.response");
+	crtx_create_event(&resp_event);
+	resp_event->description = "cortex.socket.response";
+	
 	crtx_event_set_dict_data(resp_event, event->response.dict, 0);
 	crtx_event_set_raw_data(resp_event, 'p', event->response.pointer, event->response.size, 0);
 // 	resp_event->data.dict = event->response.dict;
@@ -120,7 +122,7 @@ static char outbound_event_handler(struct crtx_event *event, void *userdata, voi
 	slistener = (struct crtx_socket_listener *) userdata;
 	
 	if (!slistener->crtx_outbox)
-		slistener->crtx_outbox = get_graph_for_event_type(CRTX_EVT_OUTBOX, crtx_evt_outbox);
+		slistener->crtx_outbox = crtx_get_graph_for_event_description(CRTX_EVT_OUTBOX, crtx_evt_outbox);
 	
 	// write every outbound event through the main outbox graph
 	crtx_traverse_graph(slistener->crtx_outbox, event);
@@ -136,7 +138,7 @@ static char inbound_event_handler(struct crtx_event *event, void *userdata, void
 	slistener = (struct crtx_socket_listener *) userdata;
 	
 	if (!slistener->crtx_inbox)
-		slistener->crtx_inbox = get_graph_for_event_type(CRTX_EVT_INBOX, crtx_evt_inbox);
+		slistener->crtx_inbox = crtx_get_graph_for_event_description(CRTX_EVT_INBOX, crtx_evt_inbox);
 	
 	// write inbound event to the main inbox graph
 	crtx_add_event(slistener->crtx_inbox, event);

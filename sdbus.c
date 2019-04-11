@@ -124,7 +124,8 @@ static int match_event_cb_generic(sd_bus_message *m, void *userdata, sd_bus_erro
 	
 	match = (struct crtx_sdbus_match*) userdata;
 	
-	event = crtx_create_event(match->event_type);
+	crtx_create_event(&event);
+	event->description = match->event_type;
 	
 	crtx_event_set_raw_data(event, 'p', m, sizeof(m), CRTX_DIF_DONT_FREE_DATA);
 	event->cb_before_release = &match_event_release;

@@ -493,7 +493,7 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 			
 			if (nlh->nlmsg_type == *it) {
 				char *ptr;
-				event = crtx_create_event(0);
+				crtx_create_event(&event);
 				
 // 				if (!nlr_list->raw2dict) {
 					// we don't know the size of data, hence we cannot copy it
@@ -533,8 +533,8 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 			if (nlr_list->msg_done_cb) {
 				nlr_list->msg_done_cb(nlr_list->msg_done_cb_data);
 			} else {
-				event = crtx_create_event(0);
-				event->type = "done";
+				crtx_create_event(&event);
+				event->description = "done";
 				crtx_add_event(nlr_list->base.graph, event);
 			}
 // 			crtx_send_signal(&nlr_list->msg_done, 0);

@@ -98,7 +98,7 @@ static int uevents_read_cb(struct crtx_netlink_raw_listener *nl_listener, int fd
 // 		i += strlen(buf+i)+1;
 // 	}
 	
-	event = crtx_create_event(0);
+	crtx_create_event(&event);
 	
 // 	event->data.string = crtx_stracpy(buf, &ulen);
 // 	event->data.string = (char *) malloc(ulen+1);

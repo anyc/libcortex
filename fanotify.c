@@ -72,7 +72,9 @@ void *fanotify_tmain(void *data) {
 				continue;
 			}
 			
-			event = crtx_create_event(fal->base.graph->types[0]);
+			crtx_create_event(&event);
+			event->description = fal->base.graph->descriptions[0];
+			
 // 			metadata, sizeof(struct fanotify_event_metadata));
 // 			event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
 			crtx_event_set_raw_data(event, 'p', metadata, sizeof(struct fanotify_event_metadata), CRTX_DIF_DONT_FREE_DATA);

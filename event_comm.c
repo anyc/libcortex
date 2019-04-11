@@ -34,16 +34,10 @@ void write_event_as_dict(struct crtx_event *event, write_fct write, void *conn_i
 	int ret;
 	
 	if (!event->data.dict) {
-// 		if (!event->data.to_dict) {
-// 			printf("cannot prepare this event of type \"%s\" for transmission\n", event->type);
-// 			return;
-// 		}
-		
-// 		event->data.to_dict(&event->data);
 		ret = crtx_event_raw2dict(event, 0);
 		
 		if (ret != CRTX_SUCCESS) {
-			printf("cannot prepare this event of type \"%s\" for transmission\n", event->type);
+			printf("cannot prepare this event of type \"%s\" for transmission\n", event->description);
 			return;
 		}
 	}
@@ -54,7 +48,7 @@ void write_event_as_dict(struct crtx_event *event, write_fct write, void *conn_i
 	#endif
 	
 	sev.version = 0;
-	sev.type_length = strlen(event->type);
+	sev.type_length = strlen(event->description);
 	sev.flags = 0;
 	sev.id = 0;
 	
@@ -66,7 +60,7 @@ void write_event_as_dict(struct crtx_event *event, write_fct write, void *conn_i
 			sev.id = event->original_event_id;
 	}
 	
-	printf("serializing event %s %d %" PRIu64 "\n", event->type, sev.flags, sev.id);
+	printf("serializing event %s %d %" PRIu64 "\n", event->description, sev.flags, sev.id);
 	
 	ret = write(conn_id, &sev, sizeof(struct serialized_event));
 	if (ret < 0) {
@@ -74,7 +68,7 @@ void write_event_as_dict(struct crtx_event *event, write_fct write, void *conn_i
 		return;
 	}
 	
-	ret = write(conn_id, event->type, sev.type_length);
+	ret = write(conn_id, event->description, sev.type_length);
 	if (ret < 0) {
 		printf("writeing event failed: %s\n", strerror(errno));
 		return;
@@ -83,7 +77,7 @@ void write_event_as_dict(struct crtx_event *event, write_fct write, void *conn_i
 	crtx_write_dict(write, conn_id, event->data.dict);
 }
 
-#define FREE_EVENT(event) { free((event)->type); free(event); }
+#define FREE_EVENT(event) { free((event)->description); free(event); }
 
 struct crtx_event *read_event_as_dict(read_fct read, void *conn_id) {
 	struct serialized_event sev;
@@ -103,21 +97,24 @@ struct crtx_event *read_event_as_dict(read_fct read, void *conn_id) {
 		return 0;
 	}
 	
-	event = crtx_create_event(0);
+	ret = crtx_create_event(&event);
+	if (ret) {
+		return 0;
+	}
 	event->original_event_id = sev.id;
 	
 	if ((sev.flags & CRTX_SEREV_FLAG_EXPECT_RESPONSE) != 0)
 		event->response_expected = 1;
 	
-	event->type = (char*) malloc(sev.type_length+1);
-	ret = crtx_read(read, conn_id, event->type, sev.type_length);
+	event->description = (char*) malloc(sev.type_length+1);
+	ret = crtx_read(read, conn_id, event->description, sev.type_length);
 	if (!ret) {
 		FREE_EVENT(event);
 		return 0;
 	}
-	event->type[sev.type_length] = 0;
+	event->description[sev.type_length] = 0;
 	
-	printf("deserializing event %s %d %" PRIu64 "\n", event->type, sev.flags, sev.id);
+	printf("deserializing event %s %d %" PRIu64 "\n", event->description, sev.flags, sev.id);
 	
 // 	event->data.dict
 	dict = crtx_read_dict(read, conn_id);
@@ -225,7 +222,7 @@ static char in_cache_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *k
 	struct crtx_event *orig_event;
 	
 	printf("in_cache_on_hit\n");
-	if (!strcmp(event->type, "cortex.socket.response")) {
+	if (!strcmp(event->description, "cortex.socket.response")) {
 		// find entry, pass/drop
 		orig_event = (struct crtx_event*) c_entry->pointer;
 		
@@ -239,7 +236,7 @@ static char in_cache_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *k
 }
 
 static void in_cache_on_miss(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
-	if (!strcmp(event->type, "cortex.socket.response")) {
+	if (!strcmp(event->description, "cortex.socket.response")) {
 		// drop response
 	}printf("in_cache_on_miss\n");
 }
@@ -254,7 +251,7 @@ void create_in_out_box() {
 // 	dc->signature = "zp";
 	
 	
-	graph = get_graph_for_event_type(CRTX_EVT_INBOX, crtx_evt_inbox);
+	graph = crtx_get_graph_for_event_description(CRTX_EVT_INBOX, crtx_evt_inbox);
 	
 	ct_in = (struct crtx_cache_task*) calloc(1, sizeof(struct crtx_cache_task));
 	ct_in->cache = dc;
@@ -268,7 +265,7 @@ void create_in_out_box() {
 	crtx_create_task(graph, 200, "inbox_dispatch_handler", &inbox_dispatch_handler, 0);
 	
 	
-	graph = get_graph_for_event_type(CRTX_EVT_OUTBOX, crtx_evt_outbox);
+	graph = crtx_get_graph_for_event_description(CRTX_EVT_OUTBOX, crtx_evt_outbox);
 	
 	ct_out = (struct crtx_cache_task*) calloc(1, sizeof(struct crtx_cache_task));
 	ct_out->cache = dc;

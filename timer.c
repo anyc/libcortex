@@ -44,7 +44,13 @@ static char timer_fd_event_handler(struct crtx_event *event, void *userdata, voi
 		return 0;
 	}
 	
-	event = crtx_create_event(CRTX_EVT_TIMER);
+	s = crtx_create_event(&event);
+	if (s) {
+		ERROR("crtx_create_event failed: %s\n", strerror(s));
+		return 1;
+	}
+	
+	event->description = CRTX_EVT_TIMER;
 	crtx_event_set_raw_data(event, 'U', exp, sizeof(exp), 0);
 	
 	crtx_add_event(tlist->base.graph, event);

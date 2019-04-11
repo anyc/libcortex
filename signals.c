@@ -61,7 +61,10 @@ static void signal_handler(int signum) {
 			DBG("received signal %d\n", signum);
 	}
 	
-	event = crtx_create_event(smap->etype);
+	crtx_create_event(&event);
+	
+	event->description = smap->etype;
+	
 	crtx_event_set_raw_data(event, 'i', (int32_t) signum, sizeof(signum));
 	
 	crtx_add_event(signal_list.base.graph, event);
@@ -134,10 +137,11 @@ static char selfpipe_event_handler(struct crtx_event *event, void *userdata, voi
 	
 	smap = get_signal(signal_num);
 	
+	crtx_create_event(&new_event);
 	if (smap)
-		new_event = crtx_create_event(smap->etype);
+		new_event->description = smap->etype;
 	else
-		new_event = crtx_create_event("");
+		new_event->description = "";
 	
 	crtx_event_set_raw_data(new_event, 'i', signal_num, sizeof(signal_num));
 	crtx_add_event(slistener->base.graph, new_event);
@@ -190,11 +194,11 @@ static char start_listener(struct crtx_listener_base *listener) {
 				
 				DBG("new signal handler for %s (%d)\n", smap->name, *i);
 				
-				signal_list.base.graph->n_types++;
-				signal_list.base.graph->types = (char**) realloc(signal_list.base.graph->types,
-														sizeof(char*) * signal_list.base.graph->n_types);
+				signal_list.base.graph->n_descriptions++;
+				signal_list.base.graph->descriptions = (char**) realloc(signal_list.base.graph->descriptions,
+													    sizeof(char*) * signal_list.base.graph->n_descriptions);
 				
-				signal_list.base.graph->types[signal_list.base.graph->n_types-1] = smap->etype;
+				signal_list.base.graph->descriptions[signal_list.base.graph->n_descriptions-1] = smap->etype;
 				
 				sigaction(*i, &new_action, 0);
 			}
@@ -303,7 +307,8 @@ static char sigterm_handler(struct crtx_event *event, void *userdata, void **ses
 // 	new_action.sa_flags = 0;
 // 	sigaction(SIGTERM, &new_action, 0);
 	
-	newe = crtx_create_event(CRTX_EVT_SHUTDOWN);
+	crtx_create_event(&newe);
+	newe->description = CRTX_EVT_SHUTDOWN;
 	
 	crtx_add_event(crtx_root->crtx_ctrl_graph, newe);
 	
@@ -313,7 +318,8 @@ static char sigterm_handler(struct crtx_event *event, void *userdata, void **ses
 static char sigint_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event *newe;
 	
-	newe = crtx_create_event(CRTX_EVT_SHUTDOWN);
+	crtx_create_event(&newe);
+	newe->description = CRTX_EVT_SHUTDOWN;
 	
 	crtx_add_event(crtx_root->crtx_ctrl_graph, newe);
 	

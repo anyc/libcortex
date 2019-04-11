@@ -72,16 +72,21 @@ static int qt_flags2crtx_event_flags(enum QSocketNotifier::Type qt_flags) {
 
 static char timeout_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_evloop_callback *el_cb;
+	int r;
+	
 	
 	el_cb = (struct crtx_evloop_callback*) userdata;
 	
-	event = crtx_create_event(0);
-	
-	crtx_event_set_raw_data(event, 'p', userdata, sizeof(struct crtx_evloop_callback), CRTX_DIF_DONT_FREE_DATA);
-	
-	el_cb->event_handler(event, el_cb->event_handler_data, 0);
-	
-	free_event(event);
+	r = crtx_create_event(&event);
+	if (r) {
+		ERROR("crtx_create_event failed: %s\n", strerror(r));
+	} else {
+		crtx_event_set_raw_data(event, 'p', userdata, sizeof(struct crtx_evloop_callback), CRTX_DIF_DONT_FREE_DATA);
+		
+		el_cb->event_handler(event, el_cb->event_handler_data, 0);
+		
+		free_event(event);
+	}
 	
 	return 0;
 }

@@ -59,7 +59,7 @@ int crtx_libnl_msg2dict(struct nl_msg *msg, void *arg) {
 	
 	dict = crtx_nl_route_raw2dict_interface(nlmsg_hdr(msg), 1);
 	
-	event = crtx_create_event(0);
+	crtx_create_event(&event);
 	
 	crtx_event_set_dict_data(event, dict, 0);
 	
