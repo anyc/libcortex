@@ -213,14 +213,16 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 // 				&crtx_root->event_loop.listener->base,
 // 				&listener->evloop_fd);
 			
-			crtx_get_main_event_loop();
-			
-// 			crtx_root->event_loop.add_fd(
-// 				&crtx_root->event_loop,
-// 				&listener->evloop_fd);
-			
-			listener->evloop_fd.evloop = &crtx_root->event_loop;
-			crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &listener->evloop_fd);
+// 			crtx_get_main_event_loop();
+// 			
+// // 			crtx_root->event_loop.add_fd(
+// // 				&crtx_root->event_loop,
+// // 				&listener->evloop_fd);
+// 			
+// 			listener->evloop_fd.evloop = &crtx_root->event_loop;
+// 			crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &listener->evloop_fd);
+
+			crtx_evloop_add_el_fd(&listener->evloop_fd);
 		} else {
 			ERROR("invalid start listener mode: %d\n", mode);
 			UNLOCK(listener->state_mutex);

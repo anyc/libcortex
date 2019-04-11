@@ -52,6 +52,7 @@ void crtx_evloop_set_timeout_abs(struct crtx_evloop_callback *el_cb, clockid_t c
 		return;
 	}
 	
+	el_cb->timeout_enabled = 1;
 	if ((timeout_us / 1000000) >= TIME_T_MAX)
 		el_cb->timeout.tv_sec = TIME_T_MAX;
 	else
@@ -76,6 +77,7 @@ void crtx_evloop_set_timeout_rel(struct crtx_evloop_callback *el_cb, uint64_t ti
 	
 	clock_gettime(CRTX_DEFAULT_CLOCK, &el_cb->timeout);
 	
+	el_cb->timeout_enabled = 1;
 	if ((timeout_us / 1000000) >= TIME_T_MAX) {
 		el_cb->timeout.tv_sec = TIME_T_MAX;
 	} else {
@@ -92,6 +94,10 @@ void crtx_evloop_set_timeout_rel(struct crtx_evloop_callback *el_cb, uint64_t ti
 		if (el_cb->timeout.tv_sec < TIME_T_MAX)
 			el_cb->timeout.tv_sec += 1;
 	}
+}
+
+void crtx_evloop_disable_timeout(struct crtx_evloop_callback *el_cb) {
+	el_cb->timeout_enabled = 0;
 }
 
 static char evloop_ctrl_pipe_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -334,6 +340,23 @@ struct crtx_event_loop* crtx_get_main_event_loop() {
 	
 	return &crtx_root->event_loop;
 }
+
+int crtx_evloop_add_el_fd(struct crtx_evloop_fd *el_fd) {
+	crtx_get_main_event_loop();
+
+	el_fd->evloop = &crtx_root->event_loop;
+	
+	crtx_root->event_loop.mod_fd(&crtx_root->event_loop, el_fd);
+	
+	return 0;
+}
+
+int crtx_evloop_set_el_fd(struct crtx_evloop_fd *el_fd) {
+	el_fd->evloop->mod_fd(el_fd->evloop, el_fd);
+	
+	return 0;
+}
+
 
 int crtx_evloop_queue_graph(struct crtx_event_loop *evloop, struct crtx_graph *graph) {
 	struct crtx_event_loop_control_pipe ecp;

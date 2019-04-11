@@ -763,7 +763,7 @@ char crtx_get_own_ip_addresses() {
 	
 	crtx_nl_route_send_req(&nlr_list, &addr_req.n);
 	
-	crtx_wait_on_signal(&msg_done);
+	crtx_wait_on_signal(&msg_done, 0);
 	
 // 	sleep(5);
 // 	dls_loop();

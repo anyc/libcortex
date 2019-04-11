@@ -317,7 +317,8 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 				break;
 			
 			for (el_cb = evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
-				if (el_cb->timeout.tv_sec > 0 || el_cb->timeout.tv_nsec > 0) {
+// 				if (el_cb->timeout.tv_sec > 0 || el_cb->timeout.tv_nsec > 0) {
+				if (el_cb->timeout_enabled) {
 					if (CRTX_timespec2uint64(&el_cb->timeout) <= now) {
 						timeout_set = 1;
 						timeout = 0;

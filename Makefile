@@ -22,7 +22,8 @@ OBJS+=core.o \
 	dict.o \
 	llist.o dllist.o evloop.o
 
-AVAILABLE_TESTS=avahi can epoll evdev evloop_qt libvirt nl_libnl netlink_ge nl_route_raw pulseaudio sdbus sip timer udev uevents v4l xcb_randr writequeue
+AVAILABLE_TESTS=avahi can curl epoll evdev evloop_qt libvirt nl_libnl netlink_ge \
+	nl_route_raw pulseaudio sdbus sip timer udev uevents v4l xcb_randr writequeue
 
 CFLAGS+=$(DEBUG_FLAGS) -D_FILE_OFFSET_BITS=64 -fPIC -DCRTX_PLUGIN_DIR=\"$(plugindir)\"
 CXXFLAGS+=$(DEBUG_FLAGS)
@@ -47,7 +48,7 @@ BUILTIN_MODULES=signals epoll
 STATIC_TOOLS+=cache dict_inout dict_inout_json event_comm socket threads
 STATIC_MODULES+=fanotify inotify netlink_raw nl_route_raw uevents socket_raw \
 	timer writequeue pipe
-DYN_MODULES+=avahi can evdev evloop_qt libvirt netlink_ge nl_libnl nf_queue \
+DYN_MODULES+=avahi can curl evdev evloop_qt libvirt netlink_ge nl_libnl nf_queue \
 	pulseaudio readline sdbus sip udev v4l xcb_randr sdbus_notifications
 
 LAYER2_MODULES?=dynamic_evdev netif
@@ -139,7 +140,7 @@ $(SHAREDLIB): $(OBJS)
 # libcrtx_%.so: $(OBJS_$(patsubst libcrtx_%.so,%,$@))
 libcrtx_%.so: LDLIBS+=$(LDLIBS_$(patsubst libcrtx_%.so,%,$@)) $(foreach d,$(DEPS_$(patsubst libcrtx_%.so,%,$@)),$(if $(findstring $(d),$(DYN_MODULES)),$(LDLIBS_$(d))) )
 libcrtx_%.so: %.o $(SHAREDLIB)
-	$(CC) -shared $(LDFLAGS) $< -o $@ $(LDLIBS) -L. -lcrtx
+	$(CC) -shared $(LDFLAGS) $< -o $@ -L. $(LDLIBS) -lcrtx
 
 plugins: $(SHAREDLIB) $(DYN_MODULES_LIST)
 
@@ -150,12 +151,12 @@ tests: $(SHAREDLIB) $(TESTS) layer2_tests
 %.test: CFLAGS+=-DCRTX_TEST -g -g3 -gdwarf-2 -DDEBUG -Wall $(CFLAGS_${@:.test=})
 %.test: LDLIBS+=$(LDLIBS_${@:.test=}) $(foreach d,${@:.test=} $(DEPS_${@:.test=}),$(if $(findstring $(d),$(DYN_MODULES)),-lcrtx_$(d)))
 %.test: %.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) $< -o $@ $(LDFLAGS) $(LDLIBS) -L. -lcrtx
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< -o $@ -L. $(LDFLAGS) $(LDLIBS) -lcrtx
 
 %.test: CXXFLAGS+=-DCRTX_TEST -g -g3 -gdwarf-2 -DDEBUG -Wall $(CXXFLAGS_${@:.test=})
 %.test: LDLIBS+=$(LDLIBS_${@:.test=}) $(foreach d,${@:.test=} $(DEPS_${@:.test=}),$(if $(findstring $(d),$(DYN_MODULES)),-lcrtx_$(d)))
 %.test: %.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< -o $@ $(LDFLAGS) $(LDLIBS) -L. -lcrtx
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< -o $@ -L. $(LDFLAGS) $(LDLIBS) -lcrtx
 	
 examples/libcrtx_%.so: examples/control_%.c
 	$(CC) -shared -o $@ -fPIC $< $(LDFLAGS) $(CFLAGS) -I. $(LDLIBS)

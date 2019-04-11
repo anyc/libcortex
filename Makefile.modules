@@ -8,6 +8,9 @@ CFLAGS_core+=$(patsubst %,-DSTATIC_%,$(STATIC_MODULES))
 CFLAGS_can+=$(shell $(PKG_CONFIG) --cflags libnl-3.0 libnl-route-3.0 libcap-ng)
 LDLIBS_can+=$(shell $(PKG_CONFIG) --libs libnl-3.0 libnl-route-3.0 libcap-ng)
 
+CFLAGS_curl+=$(shell $(PKG_CONFIG) --cflags libcurl)
+LDLIBS_curl+=$(shell $(PKG_CONFIG) --libs libcurl)
+
 CFLAGS_dict_inout_json+=$(shell $(PKG_CONFIG) --cflags json-c)
 LDLIBS_dict_inout_json+=$(shell $(PKG_CONFIG) --libs json-c)
 

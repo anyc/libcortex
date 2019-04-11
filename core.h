@@ -42,8 +42,13 @@ struct crtx_listener_base;
 
 typedef void (*crtx_raw_to_dict_t)(struct crtx_event *event, struct crtx_dict_item *item, void *user_data);
 
+#ifndef CRTX_EVENT_TYPE_VARTYPE
+#define CRTX_EVENT_TYPE_VARTYPE unsigned int
+#endif
+
 struct crtx_event {
 	char *type;
+	CRTX_EVENT_TYPE_VARTYPE num_type;
 	
 	struct crtx_dict_item data;
 	
