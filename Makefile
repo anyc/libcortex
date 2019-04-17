@@ -98,6 +98,7 @@ debug:
 
 crtx_include_dir:
 	mkdir -p include/cortex include/cortex/layer2/
+	[ -e include/crtx ] || ln -s cortex include/crtx
 	for h in *.h; do [ -e include/cortex/$$h ] || ln -s ../../$$h include/cortex/; done
 	for h in layer2/*.h; do [ -e include/cortex/$$h ] || ln -s ../../../$$h include/cortex/layer2/; done
 

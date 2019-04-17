@@ -1716,13 +1716,13 @@ void crtx_event_set_raw_data(struct crtx_event *event, unsigned char type, ...) 
 	if (event->data.type == 'D') {
 		if (event->data.key && !strcmp(event->data.key, "crtx_raw_data")) {
 			di = crtx_get_item_by_idx(event->data.dict, 0);
-			crtx_fill_data_item_va2(di, type, "crtx_raw_data", va);
+			crtx_fill_data_item_va2(di, type, "crtx_raw_data", &va);
 		} else {
 			upgraded_dict = crtx_init_dict(0, 2, 0);
 			
 			di = crtx_get_item_by_idx(upgraded_dict, 0);
 			
-			crtx_fill_data_item_va2(di, type, "crtx_raw_data", va);
+			crtx_fill_data_item_va2(di, type, "crtx_raw_data", &va);
 			
 			di = crtx_get_item_by_idx(upgraded_dict, 1);
 // 			di->key = event->data.key;
@@ -1739,7 +1739,7 @@ void crtx_event_set_raw_data(struct crtx_event *event, unsigned char type, ...) 
 			event->data.dict = upgraded_dict;
 		}
 	} else {
-		crtx_fill_data_item_va2(&event->data, type, "crtx_raw_data", va);
+		crtx_fill_data_item_va2(&event->data, type, "crtx_raw_data", &va);
 	}
 	
 	va_end(va);
@@ -1934,7 +1934,6 @@ int crtx_event_get_value_by_key(struct crtx_event *event, char *key, char type, 
 	int r;
 	
 	crtx_event_get_payload(event, 0, 0, &dict);
-	
 	if (!dict) {
 		return -1;
 	}

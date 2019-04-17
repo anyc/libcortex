@@ -241,7 +241,7 @@ extern struct crtx_module static_modules[];
 extern struct crtx_root *crtx_root;
 
 
-void crtx_printf(char level, char const *format, ...);
+void crtx_printf(char level, char const *format, ...) __attribute__ ((format (printf, 2, 3)));
 char *crtx_stracpy(const char *str, size_t *str_length);
 struct crtx_event *new_event();
 void free_event(struct crtx_event *event);
