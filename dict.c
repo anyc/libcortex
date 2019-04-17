@@ -77,7 +77,11 @@ char crtx_fill_data_item_va2(struct crtx_dict_item *di, unsigned char type, char
 		case 's':
 			di->string = va_arg(*va, char*);
 			
-			di->size = va_arg(*va, size_t) + 1; // add space for \0 delimiter
+			di->size = va_arg(*va, size_t); // + 1; // add space for \0 delimiter
+			
+			// check if $size is the strlen and, if yes, increment $size
+			if (di->string[di->size-1] != 0 && di->string[di->size] == 0)
+				di->size += 1;
 			break;
 		case 'p':
 			di->pointer = va_arg(*va, void*);
@@ -163,7 +167,11 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, unsigned char type, va_li
 		case 's':
 			di->string = va_arg(*va, char*);
 			
-			di->size = va_arg(*va, size_t) + 1; // add space for \0 delimiter
+			di->size = va_arg(*va, size_t); // + 1; // add space for \0 delimiter
+			
+			// check if $size is the strlen and, if yes, increment $size
+			if (di->string[di->size-1] != 0 && di->string[di->size] == 0)
+				di->size += 1;
 			break;
 		case 'p':
 			di->pointer = va_arg(*va, void*);
