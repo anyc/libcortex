@@ -326,11 +326,12 @@ static char start_listener(struct crtx_listener_base *listener) {
 							0, 0
 						);
 			
-			crtx_get_main_event_loop();
-			crtx_root->event_loop.mod_fd(
-// 				&crtx_root->event_loop.listener->base,
-				&crtx_root->event_loop,
-				&evloop_fd);
+// 			crtx_get_main_event_loop();
+// 			crtx_root->event_loop.mod_fd(
+// // 				&crtx_root->event_loop.listener->base,
+// 				&crtx_root->event_loop,
+// 				&evloop_fd);
+			crtx_evloop_add_el_fd(&evloop_fd);
 		}
 		
 	}

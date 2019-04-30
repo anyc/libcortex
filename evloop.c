@@ -302,7 +302,7 @@ int crtx_get_event_loop(struct crtx_event_loop *evloop, const char *id) {
 	}
 	if (!ll) {
 		ERROR("no event loop implementation found\n");
-		return 0;
+		return -1;
 	}
 	
 	crtx_evloop_create(evloop);
@@ -327,7 +327,10 @@ struct crtx_event_loop* crtx_get_main_event_loop() {
 		
 		DBG("setup event loop %s\n", chosen_evloop);
 		
-		crtx_get_event_loop(&crtx_root->event_loop, chosen_evloop);
+		ret = crtx_get_event_loop(&crtx_root->event_loop, chosen_evloop);
+		if (ret != 0) {
+			return 0;
+		}
 		
 		if (crtx_root->detached_event_loop) {
 			ret = crtx_evloop_start(&crtx_root->event_loop);
@@ -336,17 +339,24 @@ struct crtx_event_loop* crtx_get_main_event_loop() {
 				return 0;
 			}
 		}
-	} 
+	}
 	
 	return &crtx_root->event_loop;
 }
 
 int crtx_evloop_add_el_fd(struct crtx_evloop_fd *el_fd) {
-	crtx_get_main_event_loop();
-
-	el_fd->evloop = &crtx_root->event_loop;
+	struct crtx_event_loop *event_loop;
 	
-	crtx_root->event_loop.mod_fd(&crtx_root->event_loop, el_fd);
+	event_loop = crtx_get_main_event_loop();
+
+	if (!event_loop) {
+		ERROR("no event loop for fd %d\n", el_fd->fd);
+		return -1;
+	}
+	
+	el_fd->evloop = event_loop;
+	
+	crtx_root->event_loop.mod_fd(event_loop, el_fd);
 	
 	return 0;
 }

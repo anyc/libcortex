@@ -788,7 +788,7 @@ void crtx_add_event(struct crtx_graph *graph, struct crtx_event *event) {
 // 			crtx_get_event_loop();
 // 		crtx_epoll_queue_graph(crtx_root->event_loop.listener, graph);
 		
-		crtx_get_main_event_loop();
+// 		crtx_get_main_event_loop();
 		
 		crtx_evloop_queue_graph(&crtx_root->event_loop, graph);
 	}
