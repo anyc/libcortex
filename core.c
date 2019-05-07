@@ -144,7 +144,7 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 	DBG("starting listener \"%s\"", listener->id);
 	if (listener->evloop_fd.fd >=0)
 		DBG(" (fd %d)", listener->evloop_fd.fd);
-	DBG("\n", listener->id);
+	DBG("\n");
 	
 // 	if (listener->state == CRTX_LSTNR_STARTED || listener == CRTX_LSTNR_PAUSED) {
 // 		DBG("will not start 
@@ -540,10 +540,17 @@ void crtx_claim_next_event_of_graph(struct crtx_graph *graph, struct crtx_dll **
 
 
 void crtx_process_event(struct crtx_graph *graph, struct crtx_dll *queue_entry) {
-	if (graph->tasks)
+	if (graph->tasks) {
 		traverse_graph_r(graph, graph->tasks, queue_entry->event);
-	else
-		INFO("no task in graph %s\n", graph->types[0]);
+	} else {
+		if (graph->descriptions && graph->n_descriptions > 0)
+			INFO("no task in graph type[0] = %s\n", graph->descriptions[0]);
+		else
+		if (graph->types && graph->types > 0)	
+			INFO("no task in graph %d\n", graph->types[0]);
+		else
+			INFO("no task in graph\n");
+	}
 	
 	dereference_event_response(queue_entry->event);
 	
@@ -1097,7 +1104,7 @@ void crtx_shutdown_graph_intern(struct crtx_graph *egraph, char crtx_shutdown) {
 	struct crtx_task *t, *tnext;
 	struct crtx_dll *qe, *qe_next;
 	
-	DBG("free graph %s t[0]: %s\n", egraph->name, egraph->types?egraph->types[0]:0);
+	DBG("free graph %s t[0]: %d\n", egraph->name, egraph->types?egraph->types[0]:0);
 	
 	if (!crtx_shutdown) {
 		LOCK(crtx_root->graphs_mutex);

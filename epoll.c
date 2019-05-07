@@ -146,11 +146,11 @@ static int crtx_epoll_manage_fd(struct crtx_event_loop *evloop, struct crtx_evlo
 	
 	if (epoll_event->events) {
 		if (evloop_fd->fd_added) {
-			VDBG("epoll mod %d %d\n", evloop_fd->fd, epoll_flags2str(&epoll_event->events));
+			VDBG("epoll mod %d %s\n", evloop_fd->fd, epoll_flags2str(&epoll_event->events));
 			
 			crtx_epoll_mod_fd_intern(epl, evloop_fd->fd, epoll_event);
 		} else {
-			VDBG("epoll add %d %d\n", evloop_fd->fd, epoll_flags2str(&epoll_event->events));
+			VDBG("epoll add %d %s\n", evloop_fd->fd, epoll_flags2str(&epoll_event->events));
 			
 			ret = crtx_epoll_add_fd_intern(epl, evloop_fd->fd, epoll_event);
 			

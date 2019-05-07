@@ -149,7 +149,10 @@ char response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 	
 	ret = ct->create_key(event, &sd->key);
 	if (ret) {
-		DBG("no key created for \"%s\", ignoring\n", event->type);
+		if (event->description)
+			DBG("no key created for \"%s\", ignoring\n", event->description);
+		else
+			DBG("no key created for \"%d\", ignoring\n", event->type);
 		sd->key.string = 0;
 		return 1;
 	}
@@ -583,7 +586,10 @@ static char presence_cache_task(struct crtx_event *event, void *userdata, void *
 	memset(&key, 0, sizeof(struct crtx_dict_item));
 	ret = ct->create_key_action(event, &key, &add);
 	if (ret) {
-		DBG("no key created for \"%s\", ignoring\n", event->type);
+		if (event->description)
+			DBG("no key created for \"%s\", ignoring\n", event->description);
+		else
+			DBG("no key created for \"%d\", ignoring\n", event->type);
 		crtx_free_dict_item(&key);
 		return 1;
 	}

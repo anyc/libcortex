@@ -237,7 +237,8 @@ char crtx_resize_dict(struct crtx_dict *dict, size_t n_items) {
 // 	printf("resize %d -> %d\n", dict->signature_length, n_items);
 	
 	if (dict->size && dict->size != sizeof(struct crtx_dict)+dict->signature_length*sizeof(struct crtx_dict_item)) {
-		ERROR("TODO handle payload in crtx_resize_dict (%zu != %zu)\n", dict->size, sizeof(struct crtx_dict)+dict->signature_length*sizeof(struct crtx_dict_item));
+		ERROR("TODO handle payload in crtx_resize_dict (%lu != %zu)\n", dict->size,
+			 sizeof(struct crtx_dict) + dict->signature_length * sizeof(struct crtx_dict_item) );
 	}
 	
 	dict->items = (struct crtx_dict_item*) realloc(dict->items, n_items*sizeof(struct crtx_dict_item));
@@ -1068,7 +1069,10 @@ char crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void 
 	crtx_event_get_payload(event, 0, 0, &orig_dict);
 	
 	if (!orig_dict) {
-		ERROR("cannot convert %s to dict", event->type);
+		if (event->description)
+			ERROR("cannot convert event %s to dict", event->description);
+		else
+			ERROR("cannot convert event %d to dict", event->type);
 		return 1;
 	}
 	
