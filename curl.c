@@ -180,18 +180,21 @@ struct crtx_listener_base *crtx_new_curl_listener(void *options) {
 static int timer_callback(CURLM *multi, long timeout_ms, CURLM *curlm) {
 	int err;
 	
-	if (timeout_ms == 0) {
-		timeout_handler(0, 0, 0);
-	}
+	// WARNING, explicitly discouraged by upstream, see https://curl.haxx.se/libcurl/c/CURLMOPT_TIMERFUNCTION.html
+// 	if (timeout_ms == 0) {
+// 		timeout_handler(0, 0, 0);
+// 	}
 	
 	if (timeout_ms == -1) {
 		// disable the timer
 		timeout_ms = 0;
 	}
 	
+	DBG("curl set timeout %ld ms\n", timeout_ms);
+	
 	// set time for (first) alarm
 	timer_list.newtimer.it_value.tv_sec = timeout_ms / 1000;
-	timer_list.newtimer.it_value.tv_nsec = timeout_ms * 1000 % 1000000000;
+	timer_list.newtimer.it_value.tv_nsec = timeout_ms * 1000000 % 1000000000;
 	
 	// set inteerr for repeating alarm, set to 0 to disable repetition
 	timer_list.newtimer.it_interval.tv_sec = 0;
