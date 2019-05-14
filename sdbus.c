@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <poll.h>
+#include <inttypes.h>
 
 #include "intern.h"
 #include "core.h"
@@ -324,7 +325,7 @@ static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct cr
 		return r;
 	}
 	
-	VDBG("sdbus timeout: %llu\n", timeout_us);
+	VDBG("sdbus timeout: %"PRId64"\n", timeout_us);
 	crtx_evloop_set_timeout_abs(el_cb, CLOCK_MONOTONIC, timeout_us);
 	
 	return 0;

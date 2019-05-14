@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 #include "intern.h"
 #include "core.h"
