@@ -231,13 +231,26 @@ static void process_curl_infos() {
 		
 		if (msg->msg == CURLMSG_DONE) {
 			long response_code, error_code;
+			curl_off_t dltotal;
+			
 			
 			curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE, &clist);
 			curl_easy_getinfo(msg->easy_handle, CURLINFO_EFFECTIVE_URL, &eff_url);
 			curl_easy_getinfo(msg->easy_handle, CURLINFO_RESPONSE_CODE, &response_code);
 			curl_easy_getinfo(msg->easy_handle, CURLINFO_OS_ERRNO, &error_code);
 			
-			DBG("curl done: %s (response: %ld, errno: %ld, result %d, error \"%s\")\n", eff_url, response_code, error_code, msg->data.result, clist->error);
+			#if (LIBCURL_VERSION_NUM < 0x073700)
+			double total;
+			
+			curl_easy_getinfo(msg->easy_handle, CURLINFO_SIZE_DOWNLOAD, &total);
+			dltotal = total;
+			#else
+			curl_easy_getinfo(msg->easy_handle, CURLINFO_SIZE_DOWNLOAD_T, &dltotal);
+			#endif
+			
+			
+			DBG("curl done: %s (response: %ld, errno: %ld, result %d, error \"%s\", size %"CURL_FORMAT_CURL_OFF_T" bytes)\n",
+					eff_url, response_code, error_code, msg->data.result, clist->error, dltotal);
 			
 			if (clist->done_callback) {
 				clist->done_callback(clist, msg, response_code, error_code);
