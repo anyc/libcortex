@@ -120,6 +120,9 @@ static char start_listener(struct crtx_listener_base *base) {
 		return 0;
 	}
 	
+	// we have no fd or thread to monitor
+	clist->base.mode = CRTX_NO_PROCESSING_MODE;
+	
 	return 1;
 }
 
@@ -226,21 +229,32 @@ static void process_curl_infos() {
 		if (!msg)
 			break;
 		
-		if(msg->msg == CURLMSG_DONE) {
+		if (msg->msg == CURLMSG_DONE) {
+			long response_code, error_code;
+			
 			curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE, &clist);
 			curl_easy_getinfo(msg->easy_handle, CURLINFO_EFFECTIVE_URL, &eff_url);
+			curl_easy_getinfo(msg->easy_handle, CURLINFO_RESPONSE_CODE, &response_code);
+			curl_easy_getinfo(msg->easy_handle, CURLINFO_OS_ERRNO, &error_code);
 			
-			DBG("curl done: %s (result %d, error \"%s\")\n", eff_url, msg->data.result, clist->error);
+			DBG("curl done: %s (response: %ld, errno: %ld, result %d, error \"%s\")\n", eff_url, response_code, error_code, msg->data.result, clist->error);
+			
+			if (clist->done_callback) {
+				clist->done_callback(clist, msg, response_code, error_code);
+			}
 			
 			curl_multi_remove_handle(crtx_curlm, msg->easy_handle);
 			curl_easy_cleanup(msg->easy_handle);
 			
+			clist->easy = 0;
 			
-			crtx_create_event(&user_event);
-			user_event->type = CRTX_CURL_ET_FINISHED;
-			crtx_event_set_raw_data(user_event, 'p', clist, sizeof(clist), CRTX_DIF_DONT_FREE_DATA);
-			
-			crtx_add_event(clist->base.graph, user_event);
+			if (!clist->done_callback) {
+				crtx_create_event(&user_event);
+				user_event->type = CRTX_CURL_ET_FINISHED;
+				crtx_event_set_raw_data(user_event, 'p', clist, sizeof(clist), CRTX_DIF_DONT_FREE_DATA);
+				
+				crtx_add_event(clist->base.graph, user_event);
+			}
 		}
 	}
 }

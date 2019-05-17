@@ -92,12 +92,10 @@ void crtx_printf(char level, char const *format, ...) {
 enum crtx_processing_mode crtx_get_mode(enum crtx_processing_mode local_mode) {
 	enum crtx_processing_mode mode;
 	
-	mode = CRTX_PREFER_NONE;
+	mode = local_mode;
 	if (crtx_root->force_mode == CRTX_PREFER_NONE) {
 		if (local_mode == CRTX_PREFER_NONE) {
 			mode = crtx_root->default_mode;
-		} else {
-			mode = local_mode;
 		}
 	} else
 	if (crtx_root->force_mode == CRTX_PREFER_THREAD) {
@@ -133,7 +131,7 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 	}
 	
 	if (listener->evloop_fd.fd < 0 && !listener->thread_job.fct && !listener->start_listener) {
-		DBG("no method to start listener \"%s\" provided\n", listener->id);
+		DBG("no method to start listener \"%s\" provided (%d, %p, %p)\n", listener->id, listener->evloop_fd.fd, listener->thread_job.fct, listener->start_listener);
 		
 		UNLOCK(listener->state_mutex);
 		return -EINVAL;
@@ -146,12 +144,6 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 		DBG(" (fd %d)", listener->evloop_fd.fd);
 	DBG("\n");
 	
-// 	if (listener->state == CRTX_LSTNR_STARTED || listener == CRTX_LSTNR_PAUSED) {
-// 		DBG("will not start 
-// 	}
-// 	
-// 	listener->state = CRTX_LSTNR_STARTED;
-// 	printf("send started1 %p\n", listener);
 	if (listener->start_listener) {
 		ret = listener->start_listener(listener);
 		if (ret < 0 && listener->state_graph) {
@@ -159,7 +151,6 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 			
 			listener->state = CRTX_LSTNR_STOPPED;
 			
-// 			event = crtx_create_event("listener_state");
 			ret = crtx_create_event(&event);
 			if (ret) {
 				ERROR("crtx_create_event failed: %s\n", strerror(ret));
@@ -177,12 +168,6 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 		}
 	}
 	
-// 	if (!listener->evloop_fd.fd && !listener->thread) {
-// 		DBG("no implicit method to start listener \"%s\" provided\n", listener->id);
-		
-// // 		UNLOCK(listener->state_mutex);
-// // 		return -1;
-// 	} else {
 	if (listener->evloop_fd.fd || listener->thread_job.fct) {
 		mode = crtx_get_mode(listener->mode);
 		
@@ -206,28 +191,15 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 			crtx_thread_start_job(listener->eloop_thread);
 		} else 
 		if (mode == CRTX_PREFER_ELOOP) {
-// 			if (!crtx_root->event_loop.listener)
-// 			crtx_get_main_event_loop();
-			
 			if (listener->evloop_fd.callbacks->error_cb == 0) {
 				listener->evloop_fd.callbacks->error_cb = crtx_default_el_error_cb;
 				listener->evloop_fd.callbacks->error_cb_data = listener;
 			}
 			
-// 			crtx_root->event_loop.add_fd(
-// 				&crtx_root->event_loop.listener->base,
-// 				&listener->evloop_fd);
-			
-// 			crtx_get_main_event_loop();
-// 			
-// // 			crtx_root->event_loop.add_fd(
-// // 				&crtx_root->event_loop,
-// // 				&listener->evloop_fd);
-// 			
-// 			listener->evloop_fd.evloop = &crtx_root->event_loop;
-// 			crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &listener->evloop_fd);
-
 			crtx_evloop_add_el_fd(&listener->evloop_fd);
+		} else
+		if (mode == CRTX_NO_PROCESSING_MODE) {
+			// do nothing
 		} else {
 			ERROR("invalid start listener mode: %d\n", mode);
 			UNLOCK(listener->state_mutex);
@@ -238,7 +210,6 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 	listener->state = CRTX_LSTNR_STARTED;
 	
 	if (listener->state_graph) {
-// 		event = crtx_create_event("listener_state");
 		ret = crtx_create_event(&event);
 		if (ret) {
 			ERROR("crtx_create_event failed: %s\n", strerror(ret));
@@ -286,6 +257,8 @@ int crtx_init_listener_base(struct crtx_listener_base *lbase) {
 	
 	INIT_REC_MUTEX(lbase->source_lock);
 	
+	lbase->evloop_fd.fd = -1;
+	
 	return 0;
 }
 
@@ -302,6 +275,8 @@ struct crtx_listener_base *create_listener(const char *id, void *options) {
 	while (l && l->id) {
 		while (l->id) {
 			if (!strcmp(l->id, id)) {
+				crtx_init_listener_base( (struct crtx_listener_base *) options );
+				
 				lbase = l->create(options);
 				
 				if (!lbase) {
@@ -327,7 +302,7 @@ struct crtx_listener_base *create_listener(const char *id, void *options) {
 		return 0;
 	}
 	
-	crtx_init_listener_base(lbase);
+	lbase->id = id;
 	
 	return lbase;
 }

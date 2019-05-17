@@ -70,6 +70,12 @@ static void signal_handler(int signum) {
 	crtx_add_event(signal_list.base.graph, event);
 }
 
+static char start_sigaction_signal_handler(struct crtx_listener_base *listener) {
+	// no-op function to silence the event loop warnings as we do not use the event loop
+	
+	return 0;
+}
+
 #ifndef WITHOUT_SIGNALFD
 static char signalfd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_signal_listener *slistener;
@@ -174,10 +180,16 @@ static char start_listener(struct crtx_listener_base *listener) {
 	if (slistener->type == CRTX_SIGNAL_SIGACTION) {
 		struct sigaction new_action, old_action;
 		
+		
+		DBG("signal mode sigaction\n");
+		
 		if (!slistener->signal_handler)
 			new_action.sa_handler = signal_handler;
 		else
 			new_action.sa_handler = slistener->signal_handler;
+		
+		// we have no fd or thread to monitor
+		slistener->base.mode = CRTX_NO_PROCESSING_MODE;
 		
 		sigemptyset(&new_action.sa_mask);
 		new_action.sa_flags = 0;
@@ -209,6 +221,8 @@ static char start_listener(struct crtx_listener_base *listener) {
 	if (slistener->type == CRTX_SIGNAL_SIGNALFD) {
 		#ifndef WITHOUT_SIGNALFD
 		sigset_t mask;
+		
+		DBG("signal mode signalfd\n");
 		
 		/*
 		 * block old signal handling for signals we want to receive over the signalfd
@@ -255,6 +269,17 @@ static char start_listener(struct crtx_listener_base *listener) {
 		#endif
 	} else
 	if (slistener->type == CRTX_SIGNAL_SELFPIPE || slistener->type == CRTX_SIGNAL_DEFAULT) {
+		/*
+		 * in this mode, we install a regular sigaction signal handler but this handler
+		 * only writes into our "self-pipe" to call the actual signal handler through our
+		 * event loop
+		 */
+		
+		DBG("signal mode selfpipe\n");
+		
+		// this lstnr is just a container for the sigaction and pipe listeners
+		slistener->base.mode = CRTX_NO_PROCESSING_MODE;
+		
 		slistener->pipe_lstnr.fd_event_handler = selfpipe_event_handler;
 		slistener->pipe_lstnr.fd_event_handler_data = slistener;
 		

@@ -15,6 +15,7 @@ struct crtx_curl_listener;
 typedef int crtx_CURLOPT_XFERINFOFUNCTION(void *userdata, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
 typedef size_t crtx_CURLOPT_WRITEFUNCTION(char *ptr, size_t size, size_t nmemb, void *userdata);
 typedef size_t crtx_CURLOPT_HEADERFUNCTION(char *buffer, size_t size, size_t nitems, void *userdata);
+typedef int crtx_curl_done_cb(struct crtx_curl_listener *lstnr, struct CURLMsg *msg, long response_code, long error_code);
 
 struct crtx_curl_listener {
 	struct crtx_listener_base base;
@@ -30,6 +31,8 @@ struct crtx_curl_listener {
 	crtx_CURLOPT_WRITEFUNCTION *write_callback;
 	void *write_cb_data;
 	FILE *write_fd;
+	
+	crtx_curl_done_cb *done_callback;
 };
 
 #define CRTX_CURL_ET_FINISHED (1)

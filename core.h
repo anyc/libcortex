@@ -34,7 +34,7 @@ extern char *crtx_evt_inbox[];
 extern char *crtx_evt_outbox[];
 
 
-enum crtx_processing_mode {CRTX_PREFER_NONE=0, CRTX_PREFER_THREAD, CRTX_PREFER_ELOOP};
+enum crtx_processing_mode {CRTX_PREFER_NONE=0, CRTX_PREFER_THREAD, CRTX_PREFER_ELOOP, CRTX_NO_PROCESSING_MODE};
 
 
 struct crtx_event;
