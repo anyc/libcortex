@@ -422,6 +422,9 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 // 		clist->base.evloop_fd.subsystems->error_cb_data = clist;
 		
 		clist->base.shutdown = &shutdown_listener;
+	} else {
+		// we have no fd or thread to monitor
+		clist->base.mode = CRTX_NO_PROCESSING_MODE;
 	}
 	
 // 	new_eventgraph(&clist->base.graph, "can", can_msg_etype);

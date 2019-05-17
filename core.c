@@ -130,12 +130,12 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 		return -EEXIST;
 	}
 	
-	if (listener->evloop_fd.fd < 0 && !listener->thread_job.fct && !listener->start_listener) {
-		DBG("no method to start listener \"%s\" provided (%d, %p, %p)\n", listener->id, listener->evloop_fd.fd, listener->thread_job.fct, listener->start_listener);
-		
-		UNLOCK(listener->state_mutex);
-		return -EINVAL;
-	}
+// 	if (listener->evloop_fd.fd < 0 && !listener->thread_job.fct && !listener->start_listener) {
+// 		DBG("no method to start listener \"%s\" provided (%d, %p, %p, %d)\n", listener->id, listener->evloop_fd.fd, listener->thread_job.fct, listener->start_listener, listener->mode);
+// 		
+// 		UNLOCK(listener->state_mutex);
+// 		return -EINVAL;
+// 	}
 	
 	listener->state = CRTX_LSTNR_STARTING;
 	
@@ -168,9 +168,17 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 		}
 	}
 	
-	if (listener->evloop_fd.fd || listener->thread_job.fct) {
-		mode = crtx_get_mode(listener->mode);
+	// start_listener() might modify listener->mode
+	mode = crtx_get_mode(listener->mode);
+	
+	if (listener->evloop_fd.fd < 0 && !listener->thread_job.fct && !listener->start_listener && mode != CRTX_NO_PROCESSING_MODE) {
+		DBG("no method to start listener \"%s\" provided (%d, %p, %p, %d)\n", listener->id, listener->evloop_fd.fd, listener->thread_job.fct, listener->start_listener, listener->mode);
 		
+		UNLOCK(listener->state_mutex);
+		return -EINVAL;
+	}
+	
+	if (listener->evloop_fd.fd || listener->thread_job.fct) {
 		if (mode == CRTX_PREFER_ELOOP && listener->evloop_fd.fd <= 0) {
 			ERROR("listener mode set to \"event loop\" but no event loop data available (fd = %d)\n", listener->evloop_fd.fd);
 			mode = CRTX_PREFER_THREAD;

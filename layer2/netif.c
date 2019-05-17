@@ -98,6 +98,9 @@ static char netif_start_listener(struct crtx_listener_base *listener) {
 		return ret;
 	}
 	
+	// we have no fd or thread to monitor
+	netif_lstnr->base.mode = CRTX_NO_PROCESSING_MODE;
+	
 	return 0;
 }
 
