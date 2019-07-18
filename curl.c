@@ -200,6 +200,10 @@ static int timer_callback(CURLM *multi, long timeout_ms, CURLM *curlm) {
 	timer_list.newtimer.it_value.tv_sec = timeout_ms / 1000;
 	timer_list.newtimer.it_value.tv_nsec = timeout_ms * 1000000 % 1000000000;
 	
+	// workaround - as setting both fields to 0 would deactivate the timer
+	if (timeout_ms == 0)
+		timer_list.newtimer.it_value.tv_nsec = 1;
+	
 	// set inteerr for repeating alarm, set to 0 to disable repetition
 	timer_list.newtimer.it_interval.tv_sec = 0;
 	timer_list.newtimer.it_interval.tv_nsec = 0;
@@ -253,7 +257,7 @@ static void process_curl_infos() {
 					eff_url, response_code, error_code, msg->data.result, clist->error, dltotal);
 			
 			if (clist->done_callback) {
-				clist->done_callback(clist, msg, response_code, error_code);
+				clist->done_callback(clist->done_cb_data, msg, response_code, error_code);
 			}
 			
 			curl_multi_remove_handle(crtx_curlm, msg->easy_handle);
