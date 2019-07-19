@@ -101,8 +101,12 @@ static char stop_listener(struct crtx_listener_base *data) {
 	
 	// TODO test
 	
-	curl_multi_remove_handle(crtx_curlm, clist->easy);
-	curl_easy_cleanup(clist->easy);
+	if (clist->easy) {
+		curl_multi_remove_handle(crtx_curlm, clist->easy);
+		curl_easy_cleanup(clist->easy);
+		
+		clist->easy = 0;
+	}
 	
 	return 1;
 }
@@ -260,10 +264,12 @@ static void process_curl_infos() {
 				clist->done_callback(clist->done_cb_data, msg, response_code, error_code);
 			}
 			
-			curl_multi_remove_handle(crtx_curlm, msg->easy_handle);
-			curl_easy_cleanup(msg->easy_handle);
-			
-			clist->easy = 0;
+			if (clist->easy) {
+				curl_multi_remove_handle(crtx_curlm, clist->easy);
+				curl_easy_cleanup(clist->easy);
+				
+				clist->easy = 0;
+			}
 			
 			if (!clist->done_callback) {
 				crtx_create_event(&user_event);
@@ -425,7 +431,8 @@ void crtx_curl_init() {
 }
 
 void crtx_curl_finish() {
-	curl_multi_cleanup(crtx_curlm);
+	if (crtx_curlm)
+		curl_multi_cleanup(crtx_curlm);
 }
 
 #else /* CRTX_TEST */

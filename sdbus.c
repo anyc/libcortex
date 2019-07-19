@@ -341,7 +341,9 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 	sdlist = (struct crtx_sdbus_listener *) userdata;
 	
 	while (1) {
+		crtx_lock_listener_source(&sdlist->base);
 		r = sd_bus_process(sdlist->bus, NULL);
+		crtx_unlock_listener_source(&sdlist->base);
 		
 		if (r < 0) {
 			ERROR("sd_bus_process failed: %s\n", strerror(-r));
