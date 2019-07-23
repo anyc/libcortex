@@ -89,3 +89,41 @@ CRTX_DLL_TYPE * CRTX_DLL_FCT(append_new)(CRTX_DLL_TYPE **head, void *data) {
 	
 	return it;
 }
+
+#ifdef CRTX_DLL
+char CRTX_DLL_FCT(insert)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item, CRTX_DLL_TYPE *before) {
+	CRTX_DLL_TYPE *it;
+	
+	if (!head)
+		return 0;
+	
+	if (!before->prev) {
+		*head = item;
+		item->prev = 0;
+		item->next = before;
+		before->prev = item;
+	} else {
+		before->prev->next = item;
+		item->prev = before->prev;
+		before->prev = item;
+		item->next = before;
+	}
+	
+	return 1;
+}
+
+
+CRTX_DLL_TYPE * CRTX_DLL_FCT(insert_new)(CRTX_DLL_TYPE **head, void *data, CRTX_DLL_TYPE *before) {
+	CRTX_DLL_TYPE *it;
+	
+	it = (CRTX_DLL_TYPE*) malloc(sizeof(CRTX_DLL_TYPE));
+	it->data = data;
+	
+	if (!CRTX_DLL_FCT(insert)(head, it, before)) {
+		free(it);
+		return 0;
+	}
+	
+	return it;
+}
+#endif

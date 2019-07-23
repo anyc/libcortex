@@ -426,6 +426,8 @@ static void init_curl() {
 }
 
 void crtx_curl_init() {
+	curl_global_init(CURL_GLOBAL_ALL);
+	
 	sockets = 0;
 	crtx_curlm = 0;
 }
@@ -433,6 +435,8 @@ void crtx_curl_init() {
 void crtx_curl_finish() {
 	if (crtx_curlm)
 		curl_multi_cleanup(crtx_curlm);
+	
+	curl_global_cleanup();
 }
 
 #else /* CRTX_TEST */
