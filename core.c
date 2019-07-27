@@ -1228,7 +1228,7 @@ static void load_plugin(char *path, char *basename) {
 	struct crtx_lstnr_plugin *p;
 	struct crtx_listener_repository *lrepo;
 	char buf[1024];
-	char plugin_name[1024];
+	char plugin_name[900];
 	size_t len;
 	
 	DBG("load plugin \"%s\"\n", path);
@@ -1394,6 +1394,7 @@ int crtx_init() {
 	
 // 	crtx_root->no_threads = 1;
 	crtx_root->default_mode = CRTX_PREFER_ELOOP;
+	crtx_root->global_fd_flags = O_CLOEXEC;
 	
 	INIT_MUTEX(crtx_root->graphs_mutex);
 	

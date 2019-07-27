@@ -231,7 +231,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 			evloop_fd = (struct crtx_evloop_fd* ) epl->events[i].data.ptr;
 			
 			#ifdef DEBUG
-			VDBG("epoll #%d %d ", i, evloop_fd->fd);
+			VDBG("epoll #%zu %d ", i, evloop_fd->fd);
 			#define PRINTFLAG(flag) if (epl->events[i].events & flag) VDBG(#flag " ");
 			
 			PRINTFLAG(EPOLLIN);

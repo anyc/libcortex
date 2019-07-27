@@ -208,6 +208,7 @@ struct crtx_root {
 	MUTEX_TYPE graph_queue_mutex;
 	
 	char shutdown;
+	int global_fd_flags;
 	
 	const char *chosen_event_loop;
 	char detached_event_loop;

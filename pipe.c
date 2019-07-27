@@ -1,9 +1,11 @@
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "core.h"
 #include "intern.h"
@@ -43,7 +45,7 @@ struct crtx_listener_base *crtx_new_pipe_listener(void *options) {
 	
 	lstnr = (struct crtx_pipe_listener *) options;
 	
-	r = pipe(lstnr->fds); // 0 read, 1 write
+	r = pipe2(lstnr->fds, crtx_root->global_fd_flags); // 0 read, 1 write
 	if (r < 0) {
 		ERROR("creating pipe failed: %s\n", strerror(errno));
 		return 0;
