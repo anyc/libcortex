@@ -84,23 +84,27 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 	
 	tlist = (struct crtx_timer_listener *) options;
 	
-	tlist->fd = timerfd_create(tlist->clockid, 0);
-	if (tlist->fd == -1) {
-		ERROR("timerfd_create failed: %s\n", strerror(errno));
-		return 0;
+	if (tlist->base.start_listener != &update_listener) {
+		tlist->fd = timerfd_create(tlist->clockid, 0);
+		if (tlist->fd == -1) {
+			ERROR("timerfd_create failed: %s\n", strerror(errno));
+			return 0;
+		}
+		
+		crtx_evloop_init_listener(&tlist->base,
+							tlist->fd,
+						EVLOOP_READ,
+						0,
+						&timer_fd_event_handler,
+						tlist,
+						0, 0
+						);
+		
+		tlist->base.start_listener = &update_listener;
+		tlist->base.update_listener = &update_listener;
+	} else {
+		update_listener(&tlist->base);
 	}
-	
-	crtx_evloop_init_listener(&tlist->base,
-						   tlist->fd,
-					    EVLOOP_READ,
-					    0,
-					    &timer_fd_event_handler,
-					    tlist,
-					    0, 0
-					);
-	
-	tlist->base.start_listener = &update_listener;
-	tlist->base.update_listener = &update_listener;
 	
 	return &tlist->base;
 }

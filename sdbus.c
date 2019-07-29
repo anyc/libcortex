@@ -445,9 +445,11 @@ struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 	
 	sdlist = (struct crtx_sdbus_listener *) options;
 	
-	if (!sdlist->bus) {
-		if (crtx_sdbus_open_bus(&sdlist->bus, sdlist->bus_type, sdlist->name) < 0)
+	if (!sdlist->bus || !sd_bus_is_open(sdlist->bus)) {
+		r = crtx_sdbus_open_bus(&sdlist->bus, sdlist->bus_type, sdlist->name);
+		if (r < 0) {
 			return 0;
+		}
 	}
 	
 	r = sd_bus_get_unique_name(sdlist->bus, &sdlist->unique_name);
