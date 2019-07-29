@@ -61,6 +61,8 @@ struct crtx_sdbus_listener {
 	const char *unique_name;
 	
 	struct crtx_dll *matches;
+	
+	void (*error_cb)(void *connected_cb_data);
 };
 
 void crtx_sdbus_trigger_event_processing(struct crtx_sdbus_listener *lstnr);

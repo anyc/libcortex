@@ -284,6 +284,10 @@ int crtx_sdbus_get_events(sd_bus *bus) {
 	result = 0; // | EVLOOP_EDGE_TRIGGERED;
 	
 	f = sd_bus_get_events(bus);
+	if (f < 0) {
+		ERROR("sd_bus_get_events() failed: %d\n", f);
+		return f;
+	}
 	if (f & POLLIN) {
 		result |= EVLOOP_READ;
 		f = f & (~POLLIN);
@@ -291,6 +295,10 @@ int crtx_sdbus_get_events(sd_bus *bus) {
 	if (f & POLLOUT) {
 		result |= EVLOOP_WRITE;
 		f = f & (~POLLOUT);
+	}
+	if (f & POLLERR) {
+		DBG("error flags from sd_bus_get_events()\n");
+		f = f & (~POLLERR);
 	}
 	
 	if (f) {
@@ -306,12 +314,16 @@ static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct cr
 	
 	
 	new_flags = crtx_sdbus_get_events(sdlist->bus);
+	if (new_flags < 0) {
+		ERROR("TODO update_evloop_settings()\n");
+		return new_flags;
+	}
 	
 	el_cb->crtx_event_flags |= EVLOOP_TIMEOUT;
 	new_flags |= EVLOOP_TIMEOUT;
 	
 	if (el_cb->crtx_event_flags != new_flags) {
-		printf("TODO sdbus fd_event_handler() %d != %d\n", el_cb->crtx_event_flags, new_flags);
+		printf("TODO sdbus update_evloop_settings() %d != %d\n", el_cb->crtx_event_flags, new_flags);
 		// TODO set epoll flags again everytime?
 // 		el_cb->crtx_event_flags = new_flags;
 // 		crtx_evloop_enable_cb(el_cb->fd_entry->evloop, el_cb);
@@ -356,6 +368,34 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 	update_evloop_settings(sdlist, el_cb);
 	
 	return r;
+}
+
+static void fd_error_handler(struct crtx_evloop_callback *el_cb, void *userdata) {
+	struct crtx_sdbus_listener *sdlist;
+	int r;
+	
+	
+	ERROR("error from sdbus fd\n");
+	
+	sdlist = (struct crtx_sdbus_listener *) userdata;
+	
+	while (1) {
+		crtx_lock_listener_source(&sdlist->base);
+		r = sd_bus_process(sdlist->bus, NULL);
+		crtx_unlock_listener_source(&sdlist->base);
+		
+		if (r < 0) {
+			ERROR("sd_bus_process failed: %s\n", strerror(-r));
+			break;
+		}
+		if (r == 0)
+			break;
+	}
+	
+	// TODO remove fd, etc.
+	if (sdlist->error_cb) {
+		sdlist->error_cb(sdlist->connected_cb_data);
+	}
 }
 
 static void shutdown_listener(struct crtx_listener_base *data) {
@@ -464,7 +504,8 @@ struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 						0,
 						&fd_event_handler,
 						sdlist,
-						0, 0
+						&fd_error_handler,
+						sdlist
 					);
 	
 	update_evloop_settings(sdlist, &sdlist->base.default_el_cb);

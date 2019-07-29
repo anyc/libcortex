@@ -16,6 +16,8 @@
 #include <unistd.h>
 #include <pwd.h>
 
+#include <fcntl.h>
+
 #include "intern.h"
 #include "core.h"
 #include "dict.h"
