@@ -24,6 +24,7 @@
 #define CRTX_DIF_IS_LAST(di) ( ((di)->flags & CRTX_DIF_LAST_ITEM) != 0 )
 
 #include <stdint.h>
+#include <stdarg.h>
 
 #include "threads.h"
 

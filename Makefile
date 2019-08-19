@@ -17,6 +17,7 @@ includedir?=$(prefix)/include
 
 APP=cortexd
 SHAREDLIB=libcrtx.so
+SO_VERSION=0.1
 
 OBJS+=core.o \
 	dict.o \
@@ -136,12 +137,12 @@ dllist.o: llist.c
 
 $(SHAREDLIB): LDLIBS+=$(foreach o,$(STATIC_TOOLS) $(STATIC_MODULES), $(LDLIBS_$(o)) )
 $(SHAREDLIB): $(OBJS)
-	$(CC) -shared -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS)
+	$(CC) -shared -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS) -Wl,-soname,$@.$(SO_VERSION)
 
 # libcrtx_%.so: $(OBJS_$(patsubst libcrtx_%.so,%,$@))
 libcrtx_%.so: LDLIBS+=$(LDLIBS_$(patsubst libcrtx_%.so,%,$@)) $(foreach d,$(DEPS_$(patsubst libcrtx_%.so,%,$@)),$(if $(findstring $(d),$(DYN_MODULES)),$(LDLIBS_$(d))) )
 libcrtx_%.so: %.o $(SHAREDLIB)
-	$(CC) -shared $(LDFLAGS) $< -o $@ -L. $(LDLIBS) -lcrtx
+	$(CC) -shared $(LDFLAGS) $< -o $@ -L. $(LDLIBS) -lcrtx -Wl,-soname,$@.$(SO_VERSION)
 
 plugins: $(SHAREDLIB) $(DYN_MODULES_LIST)
 

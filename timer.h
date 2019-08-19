@@ -8,6 +8,9 @@
 
 #define CRTX_EVT_TIMER "cortex.timer"
 
+// for settime_flags
+// #include <sys/timerfd.h>
+
 struct crtx_timer_listener {
 	struct crtx_listener_base base;
 	
