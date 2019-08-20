@@ -200,7 +200,7 @@ static void selfpipe_signal_handler(int signum) {
 		else
 			DBG("received signal %d\n", signum);
 	}
-	
+	CRTX_DBG("sigpipe %d\n", main_lstnr.pipe_lstnr.fds[1]);
 // 	write(default_signal_lstnr.pipe_lstnr.fds[1], &signum, sizeof(int));
 	write(main_lstnr.pipe_lstnr.fds[1], &signum, sizeof(int));
 }

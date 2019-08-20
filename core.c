@@ -37,7 +37,7 @@ char * crtx_evt_control[] = { CRTX_EVT_MOD_INIT, CRTX_EVT_SHUTDOWN, 0 };
 char *crtx_evt_inbox[] = { CRTX_EVT_INBOX, 0 };
 char *crtx_evt_outbox[] = { CRTX_EVT_OUTBOX, 0 };
 
-char crtx_verbosity = CRTX_INFO;
+char crtx_verbosity = CRTX_VLEVEL_INFO;
 
 static void new_eventgraph(struct crtx_graph **crtx_graph, const char *name, char **event_types);
 
@@ -71,10 +71,12 @@ char *crtx_stracpy(const char *str, size_t *str_length) {
 }
 
 void crtx_printf_va(char level, char const *format, va_list va) {
-	if (level == CRTX_ERR) {
+	if (level == CRTX_VLEVEL_ERR) {
+		fprintf(stderr, "[%d] ", getpid());
 		vfprintf(stderr, format, va);
 	} else {
 		if (level <= crtx_verbosity) {
+			fprintf(stdout, "[%d] ", getpid());
 			vfprintf(stdout, format, va);
 			fflush(stdout);
 		}
@@ -314,6 +316,11 @@ struct crtx_listener_base *create_listener(const char *id, void *options) {
 	
 	lbase->id = id;
 	
+	LOCK(crtx_root->listeners_mutex);
+	lbase->ll.data = lbase;
+	crtx_ll_append(&crtx_root->listeners, &lbase->ll);
+	UNLOCK(crtx_root->listeners_mutex);
+	
 	return lbase;
 }
 
@@ -332,22 +339,51 @@ int crtx_create_listener(const char *id, void *options) {
 	return (lbase == 0);
 }
 
-void crtx_stop_listener(struct crtx_listener_base *listener) {
+int crtx_stop_listener(struct crtx_listener_base *listener) {
 // 	if (listener->state != CRTX_LSTNR_STARTED && listener != CRTX_LSTNR_PAUSED) {
 // 		DBG("will not stop unstarted listener\n");
 // 		return;
 // 	}
-// 	
+	
+	CRTX_DBG("stopping listener %s\n", listener->id);
+	
 	LOCK(listener->state_mutex);
 	
-	if (listener->state == CRTX_LSTNR_STOPPING || listener->state == CRTX_LSTNR_STOPPED || listener->state == CRTX_LSTNR_SHUTDOWN) {
+// 	if (listener->state == CRTX_LSTNR_STOPPING || listener->state == CRTX_LSTNR_STOPPED || listener->state == CRTX_LSTNR_SHUTDOWN) {
+	if (listener->state == CRTX_LSTNR_STOPPED || listener->state == CRTX_LSTNR_SHUTDOWN) {
 		UNLOCK(listener->state_mutex);
-		return;
+		return EALREADY;
 	}
 	
 	listener->state = CRTX_LSTNR_STOPPING;
 	
-	if (listener->evloop_fd.fd > 0) {
+	LOCK(listener->dependencies_lock);
+	if (listener->rev_dependencies) {
+		struct crtx_ll *ll;
+		struct crtx_listener_base *dep;
+		int ready;
+		
+		ready = 1;
+		for (ll = listener->rev_dependencies; ll; ll = ll->next) {
+			dep = (struct crtx_listener_base *) ll->data;
+			if ( dep->state != CRTX_LSTNR_STOPPED && dep->state != CRTX_LSTNR_SHUTDOWN) {
+				ready = 0;
+				break;
+			}
+		}
+		
+		if (!ready) {
+			UNLOCK(listener->state_mutex);
+			UNLOCK(listener->dependencies_lock);
+			
+			CRTX_DBG("delayed stop of lstnr %s due to %s\n", listener->id, dep->id);
+			
+			return 1;
+		}
+	}
+	UNLOCK(listener->dependencies_lock);
+	
+	if (listener->evloop_fd.fd >= 0) {
 // 		crtx_root->event_loop.del_fd(
 // 			&crtx_root->event_loop,
 // 			&listener->evloop_fd);
@@ -389,7 +425,7 @@ void crtx_stop_listener(struct crtx_listener_base *listener) {
 	
 	UNLOCK(listener->state_mutex);
 	
-	return;
+	return 0;
 }
 
 static void free_listener_intern(struct crtx_listener_base *listener) {
@@ -414,12 +450,23 @@ static void free_listener_intern(struct crtx_listener_base *listener) {
 }
 
 void crtx_free_listener(struct crtx_listener_base *listener) {
+// 	struct crtx_ll *ll;
+// 	
+// 	
+// 	LOCK(listener->rev_dependencies_lock);
+// 	for (ll=listener->rev_dependencies; ll; ll=ll->next) {
+// 		
+// 	}
+// 	UNLOCK(listener->rev_dependencies_lock);
+	
 	crtx_stop_listener(listener);
 	
 	LOCK(listener->state_mutex);
 	
 	if (listener->state < CRTX_LSTNR_STOPPED) {
-		ERROR("listener is not stopped\n");
+		DBG("listener is not stopped\n");
+		UNLOCK(listener->state_mutex);
+		return;
 	}
 	
 	if (listener->state == CRTX_LSTNR_SHUTDOWN) {
@@ -427,25 +474,46 @@ void crtx_free_listener(struct crtx_listener_base *listener) {
 		return;
 	}
 	
+	CRTX_DBG("shutdown listener %s (%p)\n", listener->id, listener);
+	
 	listener->state = CRTX_LSTNR_SHUTDOWN;
 	
 	UNLOCK(listener->state_mutex);
 	
-	if (listener->shutdown)
+	if (listener->evloop_fd.fd >= 0) {
+		struct crtx_evloop_callback *cit, *citn;
+		
+		for (cit = listener->evloop_fd.callbacks; cit; cit=citn) {
+			citn = (struct crtx_evloop_callback *) cit->ll.next;
+			
+			crtx_evloop_remove_cb(listener->evloop_fd.evloop, cit);
+			crtx_ll_unlink((struct crtx_ll**) &listener->evloop_fd.callbacks, &cit->ll);
+		}
+	}
+	
+	if (listener->shutdown) {
 		listener->shutdown(listener);
+	} else {
+		if (listener->evloop_fd.fd >= 0)
+			close(listener->evloop_fd.fd);
+	}
 	
 	// the graph can already be freed here, e.g., if the graph is shared with
 	// another listener
-	if (listener->graph) {
-		LOCK(listener->graph->queue_mutex);
-		if (listener->graph->equeue) {
-			DBG("delaying listener shutdown due to pending events\n");
-			UNLOCK(listener->graph->queue_mutex);
-			UNLOCK(listener->state_mutex);
-			return;
-		}
-		UNLOCK(listener->graph->queue_mutex);
-	}
+// 	if (listener->graph) {
+// 		LOCK(listener->graph->queue_mutex);
+// 		if (listener->graph->equeue) {
+// 			DBG("delaying listener shutdown due to pending events\n");
+// 			UNLOCK(listener->graph->queue_mutex);
+// 			UNLOCK(listener->state_mutex);
+// 			return;
+// 		}
+// 		UNLOCK(listener->graph->queue_mutex);
+// 	}
+	
+	LOCK(crtx_root->listeners_mutex);
+	crtx_ll_unlink(&crtx_root->listeners, &listener->ll);
+	UNLOCK(crtx_root->listeners_mutex);
 	
 	free_listener_intern(listener);
 	
@@ -1186,6 +1254,29 @@ void crtx_flush_events() {
 	}
 }
 
+static char shutdown_event_callback(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_ll *ll, *ll_next;
+// 	int all_stopped, r;
+	
+	VDBG("stopping listeners\n");
+	
+// 	all_stopped = 1;
+	for (ll=crtx_root->listeners; ll; ll=ll_next) {
+		ll_next = ll->next;
+		
+		crtx_free_listener((struct crtx_listener_base *) ll->data);
+// 		r = crtx_stop_listener((struct crtx_listener_base *) ll->data);
+// 		if (r != EALREADY)
+// 			all_stopped = 0;
+	}
+	
+// 	if (crtx_root->event_loop.listener) {
+// 		crtx_evloop_stop(&crtx_root->event_loop);
+// 	}
+	
+	return 0;
+}
+
 void crtx_init_shutdown() {
 	if (crtx_root->shutdown)
 		return;
@@ -1194,14 +1285,39 @@ void crtx_init_shutdown() {
 	
 	crtx_root->shutdown = 1;
 	
-	if (crtx_root->event_loop.listener) {
-// 		crtx_epoll_stop(crtx_root->event_loop.listener);
-		crtx_evloop_stop(&crtx_root->event_loop);
-	}
+// 	for (ll=crtx_root->listeners; ll; ll=ll->next) {
+// 	while (crtx_root->listeners) {
+		struct crtx_ll *ll, *ll_next;
+// 		int all_stopped, r;
+		
+// 		all_stopped = 1;
+		for (ll=crtx_root->listeners; ll; ll=ll_next) {
+			ll_next = ll->next;
+			
+// 			if (crtx_root->event_loop.listener == ll->data)
+// 				continue;
+			
+			crtx_free_listener((struct crtx_listener_base *) ll->data);
+// 			r = crtx_stop_listener((struct crtx_listener_base *) ll->data);
+// 			if (r != EALREADY)
+// 				all_stopped = 0;
+		}
+		
+// 		if (all_stopped)
+// 			break;
+// 	}
 	
-// 	crtx_finish();
-	crtx_threads_stop_all();
-	crtx_flush_events();
+	crtx_root->shutdown_el_cb.event_handler = &shutdown_event_callback;
+	crtx_evloop_trigger_callback(&crtx_root->event_loop, &crtx_root->shutdown_el_cb);
+	
+// 	if (crtx_root->event_loop.listener) {
+// // 		crtx_epoll_stop(crtx_root->event_loop.listener);
+// 		crtx_evloop_stop(&crtx_root->event_loop);
+// 	}
+	
+// // 	crtx_finish();
+// 	crtx_threads_stop_all();
+// 	crtx_flush_events();
 }
 
 static char handle_shutdown(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -1398,6 +1514,8 @@ int crtx_init() {
 	crtx_root->default_mode = CRTX_PREFER_ELOOP;
 	crtx_root->global_fd_flags = O_CLOEXEC;
 	
+	crtx_root->event_loop.after_fork_close = 0;
+	
 	INIT_MUTEX(crtx_root->graphs_mutex);
 	
 	new_eventgraph(&crtx_root->crtx_ctrl_graph, "cortexd.control", crtx_evt_control);
@@ -1429,6 +1547,12 @@ int crtx_finish() {
 	unsigned int i;
 	
 	crtx_init_shutdown();
+	
+	crtx_threads_stop_all();
+	crtx_flush_events();
+	
+	crtx_evloop_stop(&crtx_root->event_loop);
+	crtx_evloop_finish(&crtx_root->event_loop);
 	
 	i=0;
 	while (static_modules[i].id) { i++; }
@@ -1465,6 +1589,8 @@ int crtx_finish() {
 			free_eventgraph_intern(crtx_root->graphs[i], 1);
 	}
 	free(crtx_root->graphs);
+	crtx_root->graphs = 0;
+	crtx_root->n_graphs = 0;
 	UNLOCK(crtx_root->graphs_mutex);
 	
 	DBG("finished shutdown\n");
@@ -1840,15 +1966,15 @@ char crtx_event_raw2dict(struct crtx_event *event, void *user_data) {
 	crtx_raw_to_dict_t raw2dict_fct;
 	
 	if (event->data.type != 'D')
-		return CRTX_ERROR;
+		return -1;
 	
 	raw2dict = crtx_get_item(event->data.dict, "raw2dict");
 	
 	if (!raw2dict)
-		return CRTX_ERROR;
+		return -1;
 	
 	if (raw2dict->type != 'p')
-		return CRTX_ERROR;
+		return -1;
 	
 	raw2dict_fct = (crtx_raw_to_dict_t) raw2dict->pointer;
 	

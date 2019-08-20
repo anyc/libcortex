@@ -38,6 +38,15 @@ static void on_error_cb(struct crtx_evloop_callback *el_cb, void *data) {
 	crtx_stop_listener(&lstnr->base);
 }
 
+static void shutdown_listener(struct crtx_listener_base *lbase) {
+	struct crtx_pipe_listener *lstnr;
+	
+	lstnr = (struct crtx_pipe_listener *) lbase;
+	
+	close(lstnr->fds[0]);
+	close(lstnr->fds[1]);
+}
+
 struct crtx_listener_base *crtx_new_pipe_listener(void *options) {
 	struct crtx_pipe_listener *lstnr;
 	int r;
@@ -61,6 +70,8 @@ struct crtx_listener_base *crtx_new_pipe_listener(void *options) {
 // 						lstnr->fd_event_handler, lstnr->fd_event_handler_data,
 						&on_error_cb, lstnr
 					);
+	
+	lstnr->base.shutdown = &shutdown_listener;
 	
 	return &lstnr->base;
 }

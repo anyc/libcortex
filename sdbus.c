@@ -536,7 +536,7 @@ struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 	return &sdlist->base;
 }
 
-static struct crtx_sdbus_listener default_listeners[CRTX_SDBUS_TYPE_MAX] = { { { 0 } } };
+static struct crtx_sdbus_listener default_listeners[CRTX_SDBUS_TYPE_MAX] = { { { { 0 } } } };
 
 struct crtx_sdbus_listener *crtx_sdbus_get_default_listener(enum crtx_sdbus_type sdbus_type) {
 	if (!default_listeners[sdbus_type].bus) {

@@ -94,6 +94,8 @@ struct crtx_event_loop {
 	int (*onetime)(struct crtx_event_loop *evloop);
 	
 	int (*mod_fd)(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd);
+	
+	char after_fork_close;
 };
 
 extern struct crtx_event_loop *crtx_event_loops;
@@ -137,5 +139,7 @@ void crtx_evloop_disable_timeout(struct crtx_evloop_callback *el_cb);
 int crtx_evloop_trigger_callback(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
 
 void crtx_event_flags2str(FILE *fd, unsigned int flags);
+
+int crtx_evloop_finish(struct crtx_event_loop *evloop);
 
 #endif

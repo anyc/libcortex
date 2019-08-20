@@ -136,11 +136,9 @@ enum crtx_listener_state { CRTX_LSTNR_UNKNOWN=0, CRTX_LSTNR_STARTING, CRTX_LSTNR
 #define CRTX_LSTNR_STARTUP_TRIGGER (1<<0)
 
 struct crtx_listener_base {
-	const char *id;
+	struct crtx_ll ll;
 	
-	void (*shutdown)(struct crtx_listener_base *base);
-	void (*free)(struct crtx_listener_base *base, void *userdata);
-	void *free_userdata;
+	const char *id;
 	
 	MUTEX_TYPE state_mutex;
 	enum crtx_listener_state state;
@@ -154,6 +152,10 @@ struct crtx_listener_base {
 	char autolock_source;
 	MUTEX_TYPE source_lock;
 	
+	struct crtx_ll *dependencies;
+	struct crtx_ll *rev_dependencies;
+	MUTEX_TYPE dependencies_lock;
+	
 	struct crtx_thread_job_description thread_job;
 	struct crtx_thread *eloop_thread;
 // 	thread_fct thread_fct;
@@ -163,6 +165,10 @@ struct crtx_listener_base {
 	char (*start_listener)(struct crtx_listener_base *listener);
 	char (*stop_listener)(struct crtx_listener_base *listener);
 	char (*update_listener)(struct crtx_listener_base *listener);
+	
+	void (*shutdown)(struct crtx_listener_base *base);
+	void (*free)(struct crtx_listener_base *base, void *userdata);
+	void *free_userdata;
 	
 	struct crtx_graph *graph;
 	
@@ -204,10 +210,14 @@ struct crtx_root {
 	unsigned int n_graphs;
 	MUTEX_TYPE graphs_mutex;
 	
+	struct crtx_ll *listeners;
+	MUTEX_TYPE listeners_mutex;
+	
 	struct crtx_dll *graph_queue;
 	MUTEX_TYPE graph_queue_mutex;
 	
 	char shutdown;
+	struct crtx_evloop_callback shutdown_el_cb;
 	
 	const char *chosen_event_loop;
 	char detached_event_loop;
@@ -282,7 +292,7 @@ void crtx_init_shutdown();
 
 int crtx_start_listener(struct crtx_listener_base *listener);
 int crtx_update_listener(struct crtx_listener_base *listener);
-void crtx_stop_listener(struct crtx_listener_base *listener);
+int crtx_stop_listener(struct crtx_listener_base *listener);
 void print_tasks(struct crtx_graph *graph);
 void hexdump(unsigned char *buffer, size_t index);
 

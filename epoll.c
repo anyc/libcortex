@@ -101,19 +101,19 @@ static int epoll_flags2crtx_event_flags(int epoll_flags) {
 
 #if 1
 static char *epoll_flags2str(unsigned int *flags) {
-// #define RETFLAG(flag) if (*flags & flag) { *flags = (*flags) & (~flag); return #flag; }
-#define RETFLAG(flag) if (*flags & flag) VDBG(#flag " ");
-	
-RETFLAG(EPOLLIN);
-RETFLAG(EPOLLOUT);
-RETFLAG(EPOLLRDHUP);
-RETFLAG(EPOLLPRI);
-RETFLAG(EPOLLERR);
-RETFLAG(EPOLLHUP);
-RETFLAG(EPOLLET);
+	// #define RETFLAG(flag) if (*flags & flag) { *flags = (*flags) & (~flag); return #flag; }
+	#define RETFLAG(flag) if (*flags & flag) VDBG(#flag " ");
+		
+	RETFLAG(EPOLLIN);
+	RETFLAG(EPOLLOUT);
+	RETFLAG(EPOLLRDHUP);
+	RETFLAG(EPOLLPRI);
+	RETFLAG(EPOLLERR);
+	RETFLAG(EPOLLHUP);
+	RETFLAG(EPOLLET);
 
-// VDBG(" %u\n", *flags);
-return "";
+	// VDBG(" %u\n", *flags);
+	return "";
 }
 #endif
 
@@ -163,7 +163,11 @@ static int crtx_epoll_manage_fd(struct crtx_event_loop *evloop, struct crtx_evlo
 		
 		crtx_ll_unlink((struct crtx_ll**) &evloop->fds, (struct crtx_ll*) &evloop_fd->ll);
 		
-		crtx_epoll_del_fd_intern(epl, evloop_fd->fd);
+		// after a fork, we close all file handles but we don't want to remove
+		// them from an epoll instance as it would remove the file handle for
+		// the parent process as well.
+		if (!evloop->after_fork_close)
+			crtx_epoll_del_fd_intern(epl, evloop_fd->fd);
 		
 		free(evloop_fd->el_data);
 		evloop_fd->el_data = 0;
@@ -242,7 +246,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 			PRINTFLAG(EPOLLHUP);
 			VDBG("\n");
 			
-			int bytesAvailable;
+			int bytesAvailable = 0;
 			ioctl(evloop_fd->fd, FIONREAD, &bytesAvailable);
 			VDBG("available data: %u bytes\n", bytesAvailable);
 			#endif
@@ -343,6 +347,9 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 			epoll_timeout_ms = epl->timeout;
 		}
 		
+		if (epl->stop)
+			break;
+		
 		/*
 		 * wait on events
 		 */
@@ -437,6 +444,16 @@ static void shutdown_epoll_listener(struct crtx_listener_base *lbase) {
 	close(epl->epoll_fd);
 }
 
+static char stop_epoll_listener(struct crtx_listener_base *lbase) {
+	struct crtx_epoll_listener *epl;
+	
+	epl = (struct crtx_epoll_listener*) lbase;
+	
+	evloop_stop(epl->evloop);
+	
+	return 0;
+}
+
 struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	struct crtx_epoll_listener *epl;
 	
@@ -450,6 +467,7 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	}
 	
 	epl->base.shutdown = &shutdown_epoll_listener;
+	epl->base.stop_listener = &stop_epoll_listener;
 	
 	epl->base.thread_job.fct = &crtx_epoll_main;
 	epl->base.thread_job.fct_data = epl->evloop;

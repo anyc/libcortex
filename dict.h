@@ -12,7 +12,7 @@
 	(dict_item)->type == 'U' ? (dict_item)->uint64 : \
 	(dict_item)->type == 'I' ? (dict_item)->int64 : \
 	(dict_item)->type == 'd' ? (dict_item)->double_fp : \
-	( crtx_printf(CRTX_ERR, "invalid type %c for get_int32\n", (dict_item)->type), 0) \
+	( crtx_printf(CRTX_VLEVEL_ERR, "invalid type %c for get_int32\n", (dict_item)->type), 0) \
 	)
 
 #define CRTX_DIF_ALLOCATED_KEY 1<<0 // key was allocated for this dict_item
