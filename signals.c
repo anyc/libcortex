@@ -200,7 +200,6 @@ static void selfpipe_signal_handler(int signum) {
 		else
 			DBG("received signal %d\n", signum);
 	}
-	CRTX_DBG("sigpipe %d\n", main_lstnr.pipe_lstnr.fds[1]);
 	
 	write(main_lstnr.pipe_lstnr.fds[1], &signum, sizeof(int));
 }
@@ -237,13 +236,13 @@ static int update_signals(struct crtx_signal_listener *signal_lstnr) {
 				
 				DBG("new signal handler for %s (%d)\n", smap?smap->name:"", *i);
 				
-				if (smap) {
-					default_signal_lstnr.base.graph->n_descriptions++;
-					default_signal_lstnr.base.graph->descriptions = (char**) realloc(default_signal_lstnr.base.graph->descriptions,
-																					 sizeof(char*) * default_signal_lstnr.base.graph->n_descriptions);
-					
-					default_signal_lstnr.base.graph->descriptions[default_signal_lstnr.base.graph->n_descriptions-1] = smap->etype;
-				}
+// 				if (smap) {
+// 					default_signal_lstnr.base.graph->n_descriptions++;
+// 					default_signal_lstnr.base.graph->descriptions = (char**) realloc(default_signal_lstnr.base.graph->descriptions,
+// 																					 sizeof(char*) * default_signal_lstnr.base.graph->n_descriptions);
+// 					
+// 					default_signal_lstnr.base.graph->descriptions[default_signal_lstnr.base.graph->n_descriptions-1] = smap->etype;
+// 				}
 				
 				sigaction(*i, &new_action, 0);
 			}
@@ -399,7 +398,7 @@ static char start_main_listener(struct crtx_listener_base *listener) {
 		}
 		
 		slistener->sub_lstnr = (struct crtx_signal_listener *) calloc(1, sizeof(struct crtx_signal_listener));
-		// 		slistener->sub_lstnr = &default_signal_lstnr;
+// 		slistener->sub_lstnr = &default_signal_lstnr;
 		slistener->sub_lstnr->signals = slistener->signals;
 		slistener->sub_lstnr->type = CRTX_SIGNAL_SIGACTION;
 		slistener->sub_lstnr->signal_handler = selfpipe_signal_handler;
@@ -420,6 +419,12 @@ static char start_main_listener(struct crtx_listener_base *listener) {
 	return update_signals(slistener);
 }
 
+static void shutdown_main_listener(struct crtx_listener_base *listener) {
+	main_initialized = 0;
+	// TODO stop_listener
+	main_started = 0;
+}
+
 struct crtx_listener_base *crtx_new_signals_listener(void *options) {
 	struct crtx_signal_listener *slistener;
 	
@@ -437,6 +442,7 @@ struct crtx_listener_base *crtx_new_signals_listener(void *options) {
 			}
 			
 			main_lstnr.base.start_listener = &start_main_listener;
+			main_lstnr.base.shutdown = &shutdown_main_listener;
 		}
 		
 		// We only have one listener that can receive signals. If multiple
@@ -523,6 +529,7 @@ int crtx_signals_handle_std_signals(struct crtx_signal_listener **signal_lstnr) 
 
 void crtx_signals_init() {
 	memset(&default_signal_lstnr, 0, sizeof(struct crtx_signal_listener));
+	memset(&main_lstnr, 0, sizeof(struct crtx_signal_listener));
 }
 
 void crtx_signals_finish() {
@@ -530,14 +537,14 @@ void crtx_signals_finish() {
 		crtx_free_listener(&main_lstnr.base);
 	}
 	
-	if (default_signal_lstnr.base.graph && default_signal_lstnr.base.graph->types) {
-		free(default_signal_lstnr.base.graph->types);
-		default_signal_lstnr.base.graph->types = 0;
-	}
-	
-	if (default_signal_lstnr.base.graph && default_signal_lstnr.base.graph->descriptions) {
-		free(default_signal_lstnr.base.graph->descriptions);
-		default_signal_lstnr.base.graph->descriptions = 0;
-	}
+// 	if (default_signal_lstnr.base.graph && default_signal_lstnr.base.graph->types) {
+// 		free(default_signal_lstnr.base.graph->types);
+// 		default_signal_lstnr.base.graph->types = 0;
+// 	}
+// 	
+// 	if (default_signal_lstnr.base.graph && default_signal_lstnr.base.graph->descriptions) {
+// 		free(default_signal_lstnr.base.graph->descriptions);
+// 		default_signal_lstnr.base.graph->descriptions = 0;
+// 	}
 }
 

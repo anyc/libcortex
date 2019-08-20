@@ -79,6 +79,13 @@ static char update_listener(struct crtx_listener_base *base) {
 	return 0;
 }
 
+static void shutdown_listener(struct crtx_listener_base *base) {
+	base->start_listener = 0;
+	
+	close(base->evloop_fd.fd);
+	base->evloop_fd.fd = 0;
+}
+
 struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 	struct crtx_timer_listener *tlist;
 	
@@ -102,6 +109,7 @@ struct crtx_listener_base *crtx_new_timer_listener(void *options) {
 		
 		tlist->base.start_listener = &update_listener;
 		tlist->base.update_listener = &update_listener;
+		tlist->base.shutdown = &shutdown_listener;
 	} else {
 		update_listener(&tlist->base);
 	}

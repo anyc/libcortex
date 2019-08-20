@@ -25,7 +25,7 @@ static int crtx_epoll_add_fd_intern(struct crtx_epoll_listener *epl, int fd, str
 	
 	ret = epoll_ctl(epl->epoll_fd, EPOLL_CTL_ADD, fd, event);
 	if (ret < 0) {
-		ERROR("epoll_ctl add failed for fd %d: %s\n", fd, strerror(errno));
+		ERROR("epoll_ctl add failed for fd %d (add to %d): %s\n", fd, epl->epoll_fd, strerror(errno));
 		
 		return ret;
 	}
@@ -146,11 +146,11 @@ static int crtx_epoll_manage_fd(struct crtx_event_loop *evloop, struct crtx_evlo
 	
 	if (epoll_event->events) {
 		if (evloop_fd->fd_added) {
-			VDBG("epoll mod %d %s\n", evloop_fd->fd, epoll_flags2str(&epoll_event->events));
+			VDBG("epoll mod %d %s (%p)\n", evloop_fd->fd, epoll_flags2str(&epoll_event->events), evloop);
 			
 			crtx_epoll_mod_fd_intern(epl, evloop_fd->fd, epoll_event);
 		} else {
-			VDBG("epoll add %d %s\n", evloop_fd->fd, epoll_flags2str(&epoll_event->events));
+			VDBG("epoll add %d %s (%p)\n", evloop_fd->fd, epoll_flags2str(&epoll_event->events), evloop);
 			
 			ret = crtx_epoll_add_fd_intern(epl, evloop_fd->fd, epoll_event);
 			
@@ -159,7 +159,7 @@ static int crtx_epoll_manage_fd(struct crtx_event_loop *evloop, struct crtx_evlo
 			crtx_ll_append((struct crtx_ll**) &evloop->fds, &evloop_fd->ll);
 		}
 	} else {
-		VDBG("epoll del %d\n", evloop_fd->fd);
+		VDBG("epoll del %d (%p)\n", evloop_fd->fd, evloop);
 		
 		crtx_ll_unlink((struct crtx_ll**) &evloop->fds, (struct crtx_ll*) &evloop_fd->ll);
 		
@@ -439,7 +439,7 @@ static void shutdown_epoll_listener(struct crtx_listener_base *lbase) {
 	
 	free(epl->events);
 	
-// 	printf("close epoll fd\n");
+	VDBG("close epoll fd %d\n", epl->epoll_fd);
 	
 	close(epl->epoll_fd);
 }
@@ -487,6 +487,8 @@ struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	epl->events = (struct epoll_event*) malloc(sizeof(struct epoll_event) * epl->max_n_events);
 	epl->n_rdy_events = 0;
 	epl->cur_event_idx = 0;
+	
+	VDBG("new epoll fd %d\n", epl->epoll_fd);
 	
 	return &epl->base;
 }

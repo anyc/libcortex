@@ -103,7 +103,7 @@ extern struct crtx_event_loop *crtx_event_loops;
 int crtx_evloop_add_el_fd(struct crtx_evloop_fd *el_fd);
 int crtx_evloop_set_el_fd(struct crtx_evloop_fd *el_fd);
 struct crtx_event_loop* crtx_get_main_event_loop();
-int crtx_get_event_loop(struct crtx_event_loop *evloop, const char *id);
+int crtx_get_event_loop(struct crtx_event_loop **evloop, const char *id);
 
 void crtx_evloop_callback(struct crtx_evloop_callback *el_cb);
 int crtx_evloop_queue_graph(struct crtx_event_loop *evloop, struct crtx_graph *graph);
@@ -140,6 +140,6 @@ int crtx_evloop_trigger_callback(struct crtx_event_loop *evloop, struct crtx_evl
 
 void crtx_event_flags2str(FILE *fd, unsigned int flags);
 
-int crtx_evloop_finish(struct crtx_event_loop *evloop);
+// int crtx_evloop_finish(struct crtx_event_loop *evloop);
 
 #endif

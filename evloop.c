@@ -107,7 +107,7 @@ static char evloop_ctrl_pipe_handler(struct crtx_event *event, void *userdata, v
 	
 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 	
-	VDBG("received wake-up event\n");
+	VDBG("received ctrl pipe event\n");
 	
 	r = read(el_cb->fd_entry->fd, &ecp, sizeof(struct crtx_event_loop_control_pipe));
 	
@@ -117,11 +117,24 @@ static char evloop_ctrl_pipe_handler(struct crtx_event *event, void *userdata, v
 	}
 	
 	if (ecp.graph) {
-		crtx_process_graph_tmain(ecp.graph);
-		ecp.graph = 0;
+		unsigned int i;
+		
+		for (i=0; i<crtx_root->n_graphs; i++) {
+			if (crtx_root->graphs[i] == ecp.graph) {
+// 				DBG("processing graph\n");
+				crtx_process_graph_tmain(ecp.graph);
+				ecp.graph = 0;
+				break;
+			}
+		}
+		if (ecp.graph) {
+			DBG("ignoring ctrl pipe request for graph %p\n", ecp.graph);
+		}
 	}
 	
 	if (ecp.el_cb) {
+// 		DBG("executing el_cb %p %d\n", ecp.el_cb, ecp.el_cb->crtx_event_flags);
+		
 		ecp.el_cb->triggered_flags = ecp.el_cb->crtx_event_flags;
 		crtx_evloop_callback(ecp.el_cb);
 	}
@@ -135,14 +148,17 @@ void crtx_evloop_callback(struct crtx_evloop_callback *el_cb) {
 	if ((el_cb->crtx_event_flags & el_cb->triggered_flags) == 0)
 		return;
 	
-	VDBG("received wakeup for fd %d\n", el_cb->fd_entry->fd);
+	if (el_cb->fd_entry)
+		VDBG("exec callback for fd %d\n", el_cb->fd_entry->fd);
+	else
+		VDBG("exec callback without fd\n");
 	
 	if (el_cb->graph || el_cb->event_handler) {
 		crtx_create_event(&event);
 		
 		crtx_event_set_raw_data(event, 'p', el_cb, sizeof(el_cb), CRTX_DIF_DONT_FREE_DATA);
 		
-		if (el_cb->fd_entry->listener && el_cb->fd_entry->listener->autolock_source)
+		if (el_cb->fd_entry && el_cb->fd_entry->listener && el_cb->fd_entry->listener->autolock_source)
 			LOCK(el_cb->fd_entry->listener->source_lock);
 		
 		/*
@@ -173,10 +189,13 @@ void crtx_evloop_callback(struct crtx_evloop_callback *el_cb) {
 // 			}
 // 		}
 		
-		if (el_cb->fd_entry->listener && el_cb->fd_entry->listener->autolock_source)
+		if (el_cb->fd_entry && el_cb->fd_entry->listener && el_cb->fd_entry->listener->autolock_source)
 			UNLOCK(el_cb->fd_entry->listener->source_lock);
 	} else {
-		ERROR("no handler for fd %d\n", el_cb->fd_entry->fd);
+		if (el_cb->fd_entry)
+			ERROR("no handler for fd %d\n", el_cb->fd_entry->fd);
+		else
+			ERROR("no callback handler\n");
 		exit(1);
 	}
 }
@@ -304,22 +323,24 @@ int crtx_evloop_create(struct crtx_event_loop *evloop) {
 	return 0;
 }
 
-int crtx_evloop_finish(struct crtx_event_loop *evloop) {
-	evloop->stop(evloop);
-	
-	crtx_free_listener(evloop->listener);
-	
-	close(evloop->ctrl_pipe[1]);
-	
-	return 0;
-}
+// int crtx_evloop_finish(struct crtx_event_loop *evloop) {
+// 	evloop->stop(evloop);
+// 	
+// 	crtx_free_listener(evloop->listener);
+// 	
+// 	close(evloop->ctrl_pipe[1]);
+// 	
+// 	return 0;
+// }
 
-int crtx_get_event_loop(struct crtx_event_loop *evloop, const char *id) {
+int crtx_get_event_loop(struct crtx_event_loop **evloop, const char *id) {
 	struct crtx_ll *ll;
+	
+	*evloop = (struct crtx_event_loop *) calloc(1, sizeof(struct crtx_event_loop));
 	
 	for (ll=&crtx_event_loops->ll; ll; ll = ll->next) {
 		if (!strcmp(((struct crtx_event_loop*)ll->data)->id, id)) {
-			memcpy(evloop, ll->data, sizeof(struct crtx_event_loop));
+			memcpy(*evloop, ll->data, sizeof(struct crtx_event_loop));
 			
 			break;
 		}
@@ -329,13 +350,13 @@ int crtx_get_event_loop(struct crtx_event_loop *evloop, const char *id) {
 		return -1;
 	}
 	
-	crtx_evloop_create(evloop);
+	crtx_evloop_create(*evloop);
 	
 	return 0;
 }
 
 struct crtx_event_loop* crtx_get_main_event_loop() {
-	if (!crtx_root->event_loop.id) {
+	if (!crtx_root->event_loop) {
 		int ret;
 		const char *chosen_evloop;
 		
@@ -349,15 +370,15 @@ struct crtx_event_loop* crtx_get_main_event_loop() {
 			chosen_evloop = DEFAULT_EVLOOP;
 		}
 		
-		DBG("setup event loop %s\n", chosen_evloop);
-		
 		ret = crtx_get_event_loop(&crtx_root->event_loop, chosen_evloop);
 		if (ret != 0) {
 			return 0;
 		}
 		
+		DBG("setup event loop %s (%p)\n", chosen_evloop, crtx_root->event_loop);
+		
 		if (crtx_root->detached_event_loop) {
-			ret = crtx_evloop_start(&crtx_root->event_loop);
+			ret = crtx_evloop_start(crtx_root->event_loop);
 			if (ret) {
 				ERROR("starting epoll listener failed\n");
 				return 0;
@@ -365,7 +386,7 @@ struct crtx_event_loop* crtx_get_main_event_loop() {
 		}
 	}
 	
-	return &crtx_root->event_loop;
+	return crtx_root->event_loop;
 }
 
 int crtx_evloop_add_el_fd(struct crtx_evloop_fd *el_fd) {
@@ -386,7 +407,7 @@ int crtx_evloop_add_el_fd(struct crtx_evloop_fd *el_fd) {
 	crtx_ll_append_new(&event_loop->listener->rev_dependencies, el_fd->listener);
 	crtx_ll_append_new(&el_fd->listener->dependencies, event_loop->listener);
 	
-	crtx_root->event_loop.mod_fd(event_loop, el_fd);
+	crtx_root->event_loop->mod_fd(event_loop, el_fd);
 	
 	UNLOCK(el_fd->listener->dependencies_lock);
 	UNLOCK(event_loop->listener->dependencies_lock);
@@ -437,7 +458,7 @@ int crtx_evloop_release(struct crtx_event_loop *evloop) {
 	evloop->stop(evloop);
 	evloop->release(evloop);
 	
-// 	printf("release ctrl pipe\n");
+	printf("release ctrl pipe\n");
 	
 	close(evloop->ctrl_pipe[1]);
 	close(evloop->ctrl_pipe[0]);

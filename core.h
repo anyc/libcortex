@@ -221,7 +221,7 @@ struct crtx_root {
 	
 	const char *chosen_event_loop;
 	char detached_event_loop;
-	struct crtx_event_loop event_loop;
+	struct crtx_event_loop *event_loop;
 	
 	enum crtx_processing_mode default_mode;
 	enum crtx_processing_mode force_mode;
@@ -338,5 +338,7 @@ void crtx_set_main_event_loop(const char *event_loop);
 void crtx_lock_listener_source(struct crtx_listener_base *lbase);
 void crtx_unlock_listener_source(struct crtx_listener_base *lbase);
 void crtx_trigger_event_processing(struct crtx_listener_base *lstnr);
+
+void crtx_reinit_after_fork();
 
 #endif
