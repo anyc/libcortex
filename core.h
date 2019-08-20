@@ -167,7 +167,7 @@ struct crtx_listener_base {
 	char (*update_listener)(struct crtx_listener_base *listener);
 	
 	void (*shutdown)(struct crtx_listener_base *base);
-	void (*free)(struct crtx_listener_base *base, void *userdata);
+	void (*free_cb)(struct crtx_listener_base *base, void *userdata);
 	void *free_userdata;
 	
 	struct crtx_graph *graph;

@@ -428,6 +428,8 @@ int crtx_stop_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
+// if the listener shutdown is delayed due to pending events, this function will
+// be called after the last event was processed
 static void free_listener_intern(struct crtx_listener_base *listener) {
 // 	crtx_stop_listener(listener);
 	
@@ -444,8 +446,8 @@ static void free_listener_intern(struct crtx_listener_base *listener) {
 // 		listener->eloop_thread = 0;
 // 	}
 	
-	if (listener->free) {
-		listener->free(listener, listener->free_userdata);
+	if (listener->free_cb) {
+		listener->free_cb(listener, listener->free_userdata);
 	}
 }
 
@@ -498,6 +500,16 @@ void crtx_free_listener(struct crtx_listener_base *listener) {
 			close(listener->evloop_fd.fd);
 	}
 	
+	LOCK(crtx_root->listeners_mutex);
+	crtx_ll_unlink(&crtx_root->listeners, &listener->ll);
+	UNLOCK(crtx_root->listeners_mutex);
+	
+	/*
+	 * TODO the event loop might be shutdown already
+	 * Should we process remaining events? Then the event loop should be the last one.
+	 * If not - if the shutdown signal is received, we do not care about remaining events
+	 */
+	
 	// the graph can already be freed here, e.g., if the graph is shared with
 	// another listener
 // 	if (listener->graph) {
@@ -510,10 +522,6 @@ void crtx_free_listener(struct crtx_listener_base *listener) {
 // 		}
 // 		UNLOCK(listener->graph->queue_mutex);
 // 	}
-	
-	LOCK(crtx_root->listeners_mutex);
-	crtx_ll_unlink(&crtx_root->listeners, &listener->ll);
-	UNLOCK(crtx_root->listeners_mutex);
 	
 	free_listener_intern(listener);
 	
@@ -1567,7 +1575,7 @@ int crtx_finish() {
 	// stop controls second
 // 	static_modules[1].finish();
 	
-	while (i > 1) {
+	while (i > 0) {
 		DBG("finish \"%s\"\n", static_modules[i].id);
 		
 		static_modules[i].finish();

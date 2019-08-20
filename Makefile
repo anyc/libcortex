@@ -106,20 +106,26 @@ crtx_include_dir:
 core_modules.h: $(local_mk)
 	echo -n "" > $@
 	for m in $(BUILTIN_MODULES); do echo -e "#include \"$${m}.h\"" >> $@; done
-	for m in $(STATIC_TOOLS); do echo -e "#ifdef STATIC_$${m}\n#include \"$${m}.h\"\n#endif" >> $@; done
-	for m in $(STATIC_MODULES); do echo -e "#ifdef STATIC_$${m}\n#include \"$${m}.h\"\n#endif" >> $@; done
+# 	for m in $(STATIC_TOOLS); do echo -e "#ifdef STATIC_$${m}\n#include \"$${m}.h\"\n#endif" >> $@; done
+# 	for m in $(STATIC_MODULES); do echo -e "#ifdef STATIC_$${m}\n#include \"$${m}.h\"\n#endif" >> $@; done
+	for m in $(STATIC_TOOLS); do echo -e "#include \"$${m}.h\"" >> $@; done
+	for m in $(STATIC_MODULES); do echo -e "#include \"$${m}.h\"" >> $@; done
 	
 	echo "" >> $@
 	echo "struct crtx_module static_modules[] = {" >> $@
+	m=threads; echo -e "\t{\"$${m}\", &crtx_$${m}_init, &crtx_$${m}_finish}," >> $@
 	for m in $(BUILTIN_MODULES); do echo -e "\t{\"$${m}\", &crtx_$${m}_init, &crtx_$${m}_finish}," >> $@; done
-	for m in $(STATIC_MODULES); do echo -e "#ifdef STATIC_$${m}\n\t{\"$${m}\", &crtx_$${m}_init, &crtx_$${m}_finish},\n#endif" >> $@; done
+# 	for m in $(STATIC_MODULES); do echo -e "#ifdef STATIC_$${m}\n\t{\"$${m}\", &crtx_$${m}_init, &crtx_$${m}_finish},\n#endif" >> $@; done
+# 	for m in $(STATIC_TOOLS); do echo -e "#ifdef STATIC_$${m}\n\t{\"$${m}\", &crtx_$${m}_init, &crtx_$${m}_finish},\n#endif" >> $@; done
+	for m in $(STATIC_MODULES); do echo -e "\t{\"$${m}\", &crtx_$${m}_init, &crtx_$${m}_finish}," >> $@; done
 	echo -e "\t{0, 0, 0}," >> $@
 	echo "};" >> $@
 	
 	echo "" >> $@
 	echo "struct crtx_listener_repository static_listener_repository[] = {" >> $@
 	for m in $(BUILTIN_MODULES); do echo -e "\t{\"$${m}\", &crtx_new_$${m}_listener}," >> $@; done
-	for m in $(STATIC_MODULES); do echo -e "#ifdef STATIC_$${m}\n\t{\"$${m}\", &crtx_new_$${m}_listener},\n#endif" >> $@; done
+# 	for m in $(STATIC_MODULES); do echo -e "#ifdef STATIC_$${m}\n\t{\"$${m}\", &crtx_new_$${m}_listener},\n#endif" >> $@; done
+	for m in $(STATIC_MODULES); do echo -e "\t{\"$${m}\", &crtx_new_$${m}_listener}," >> $@; done
 	echo -e "\t{0, 0}," >> $@
 	echo "};" >> $@
 
