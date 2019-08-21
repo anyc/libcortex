@@ -270,6 +270,9 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 					crtx_evloop_callback(el_cb);
 				}
 			}
+			
+			if (evloop->after_fork_close)
+				break;
 		}
 		
 		/*
@@ -295,12 +298,20 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 						events_processed = 1;
 					}
 				}
+				
+				if (evloop->after_fork_close)
+					break;
 			}
+			
+			if (evloop->after_fork_close)
+				break;
 		}
 		
 		if (onetime && events_processed)
 			break;
 		if (onetime && loop == 1)
+			break;
+		if (evloop->after_fork_close)
 			break;
 		
 		/*
@@ -433,7 +444,9 @@ static void shutdown_epoll_listener(struct crtx_listener_base *lbase) {
 	
 	epl = (struct crtx_epoll_listener*) lbase;
 	
-	crtx_evloop_release(epl->evloop);
+// 	crtx_evloop_release(epl->evloop);
+	
+// 	epl->evloop->listener = 0;
 	
 	stop_thread(0, epl->evloop);
 	
@@ -513,6 +526,7 @@ static int evloop_create(struct crtx_event_loop *evloop) {
 
 static int evloop_release(struct crtx_event_loop *evloop) {
 	crtx_free_listener(evloop->listener);
+	free(evloop->listener);
 	
 	return 0;
 }

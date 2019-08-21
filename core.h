@@ -216,12 +216,14 @@ struct crtx_root {
 	struct crtx_dll *graph_queue;
 	MUTEX_TYPE graph_queue_mutex;
 	
+	char after_fork_close;
 	char shutdown;
 	struct crtx_evloop_callback shutdown_el_cb;
 	
 	const char *chosen_event_loop;
 	char detached_event_loop;
 	struct crtx_event_loop *event_loop;
+	struct crtx_ll *event_loops;
 	
 	enum crtx_processing_mode default_mode;
 	enum crtx_processing_mode force_mode;

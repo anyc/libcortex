@@ -1285,37 +1285,37 @@ void crtx_flush_events() {
 	}
 }
 
-static char shutdown_event_callback(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_ll *ll, *ll_next;
-	int all_stopped, r;
-	
-	VDBG("releasing listeners\n");
-	
-	all_stopped = 1;
-	for (ll=crtx_root->listeners; ll; ll=ll_next) {
-		ll_next = ll->next;
-		
-		if (crtx_root->event_loop->listener == ll->data)
-			continue;
-		
-		crtx_free_listener((struct crtx_listener_base *) ll->data);
-		
-		all_stopped = 0;
-		
-// 		r = crtx_stop_listener((struct crtx_listener_base *) ll->data);
-// 		if (r != EALREADY)
-// 			all_stopped = 0;
-	}
-	
-	printf("all stopped %d\n", all_stopped);
-	if (all_stopped) {
-		if (crtx_root->event_loop->listener) {
-			crtx_evloop_stop(crtx_root->event_loop);
-		}
-	}
-	
-	return 0;
-}
+// static char shutdown_event_callback(struct crtx_event *event, void *userdata, void **sessiondata) {
+// 	struct crtx_ll *ll, *ll_next;
+// // 	int all_stopped, r;
+// 	
+// 	VDBG("releasing listeners\n");
+// 	
+// // 	all_stopped = 1;
+// 	for (ll=crtx_root->listeners; ll; ll=ll_next) {
+// 		ll_next = ll->next;
+// 		
+// 		if (crtx_root->event_loop->listener == ll->data)
+// 			continue;
+// 		
+// 		crtx_free_listener((struct crtx_listener_base *) ll->data);
+// 		
+// // 		all_stopped = 0;
+// 		
+// // 		r = crtx_stop_listener((struct crtx_listener_base *) ll->data);
+// // 		if (r != EALREADY)
+// // 			all_stopped = 0;
+// 	}
+// 	
+// // 	printf("all stopped %d\n", all_stopped);
+// // 	if (all_stopped) {
+// 		if (crtx_root->event_loop->listener) {
+// 			crtx_evloop_stop(crtx_root->event_loop);
+// 		}
+// // 	}
+// 	
+// 	return 0;
+// }
 
 void crtx_init_shutdown() {
 	if (crtx_root->shutdown)
@@ -1328,18 +1328,19 @@ void crtx_init_shutdown() {
 // 	for (ll=crtx_root->listeners; ll; ll=ll->next) {
 // 	while (crtx_root->listeners) {
 		struct crtx_ll *ll, *ll_next;
-// 		int all_stopped, r;
+// 		int all_stopped; //, r;
 		
 // 		all_stopped = 1;
 		for (ll=crtx_root->listeners; ll; ll=ll_next) {
 			ll_next = ll->next;
 			
-			if (crtx_root->event_loop->listener == ll->data) {
+			if (crtx_root->event_loop && crtx_root->event_loop->listener == ll->data) {
 				VDBG("skip eloop listener\n");
 				continue;
 			}
 			
-			crtx_free_listener((struct crtx_listener_base *) ll->data);
+// 			crtx_free_listener((struct crtx_listener_base *) ll->data);
+			crtx_stop_listener((struct crtx_listener_base *) ll->data);
 // 			r = crtx_stop_listener((struct crtx_listener_base *) ll->data);
 // 			if (r != EALREADY)
 // 				all_stopped = 0;
@@ -1348,9 +1349,10 @@ void crtx_init_shutdown() {
 // 		if (all_stopped)
 // 			break;
 // 	}
-	crtx_root->shutdown_el_cb.event_handler = &shutdown_event_callback;
-	crtx_root->shutdown_el_cb.crtx_event_flags = EVLOOP_SPECIAL;
-	crtx_evloop_trigger_callback(crtx_root->event_loop, &crtx_root->shutdown_el_cb);
+	
+// 	crtx_root->shutdown_el_cb.event_handler = &shutdown_event_callback;
+// 	crtx_root->shutdown_el_cb.crtx_event_flags = EVLOOP_SPECIAL;
+// 	crtx_evloop_trigger_callback(crtx_root->event_loop, &crtx_root->shutdown_el_cb);
 	
 // 	VDBG("asd %p %d\n",&crtx_root->shutdown_el_cb, crtx_root->shutdown_el_cb.crtx_event_flags);
 // 	if (crtx_root->event_loop.listener) {
@@ -1364,16 +1366,24 @@ void crtx_init_shutdown() {
 }
 
 void crtx_reinit_after_fork() {
+// 	struct crtx_event_loop *evloop;
+	
+	crtx_root->after_fork_close = 1;
 	crtx_root->event_loop->after_fork_close = 1;
 	
-// 	crtx_evloop_stop(crtx_root->event_loop);
+	crtx_flush_events();
+	
+	crtx_evloop_stop(crtx_root->event_loop);
+// 	evloop = crtx_root->event_loop;
 // 	crtx_evloop_release(crtx_root->event_loop);
 	
 	crtx_root->event_loop = 0;
 	
-// 	crtx_get_main_event_loop();
+	crtx_get_main_event_loop();
 	
 	crtx_init_shutdown();
+	
+// 	crtx_evloop_release(evloop);
 }
 
 static char handle_shutdown(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -1384,6 +1394,10 @@ static char handle_shutdown(struct crtx_event *event, void *userdata, void **ses
 	t->handle = 0;
 	
 	crtx_init_shutdown();
+	
+	if (crtx_root->event_loop && crtx_root->event_loop->listener) {
+		crtx_evloop_stop(crtx_root->event_loop);
+	}
 	
 	return 1;
 }
@@ -1603,6 +1617,7 @@ int crtx_init() {
 
 int crtx_finish() {
 	unsigned int i;
+// 	struct crtx_ll *it, *itn;
 	
 	crtx_init_shutdown();
 	
@@ -1611,8 +1626,28 @@ int crtx_finish() {
 	crtx_threads_stop_all();
 	crtx_flush_events();
 	
-	crtx_evloop_stop(crtx_root->event_loop);
-	crtx_evloop_release(crtx_root->event_loop);
+	while (crtx_root->listeners) {
+		crtx_free_listener((struct crtx_listener_base*) crtx_root->listeners->data);
+	}
+	
+// 	if (crtx_root->event_loop) {
+// 		crtx_evloop_stop(crtx_root->event_loop);
+// 		crtx_evloop_release(crtx_root->event_loop);
+// 	}
+// 	for (it=crtx_root->event_loops; it; it=itn) {
+// 		itn = it->next;
+// 		
+// 		crtx_ll_unlink(&crtx_root->event_loops, it);
+// 		
+// 		crtx_evloop_stop((struct crtx_event_loop*) it->data);
+// 		crtx_evloop_release((struct crtx_event_loop*) it->data);
+// 		
+// 		free(it);
+// 	}
+	while (crtx_root->event_loops) {
+		crtx_evloop_release((struct crtx_event_loop*) crtx_root->event_loops);
+	}
+	crtx_root->event_loop = 0;
 	
 	i=0;
 	while (static_modules[i].id) { i++; }
@@ -1634,13 +1669,14 @@ int crtx_finish() {
 		i--;
 	}
 	
-	if (crtx_root->event_loop->listener) {
-		crtx_free_listener((struct crtx_listener_base *) crtx_root->event_loop->listener);
-// 		free(crtx_root->event_loop.listener);
-	}
+// 	if (crtx_root->event_loop && crtx_root->event_loop->listener) {
+// 		crtx_free_listener((struct crtx_listener_base *) crtx_root->event_loop->listener);
+// // 		free(crtx_root->event_loop.listener);
+// 	}
 	
-	free(crtx_root->event_loop);
-	crtx_root->event_loop = 0;
+// 	if (crtx_root->event_loop)
+// 		free(crtx_root->event_loop);
+// 	crtx_root->event_loop = 0;
 	
 	// finish threads module
 // 	static_modules[0].finish();

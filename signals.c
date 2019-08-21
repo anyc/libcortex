@@ -537,6 +537,9 @@ void crtx_signals_finish() {
 		crtx_free_listener(&main_lstnr.base);
 	}
 	
+	if (main_lstnr.signals)
+		free(main_lstnr.signals);
+	
 // 	if (default_signal_lstnr.base.graph && default_signal_lstnr.base.graph->types) {
 // 		free(default_signal_lstnr.base.graph->types);
 // 		default_signal_lstnr.base.graph->types = 0;

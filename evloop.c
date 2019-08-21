@@ -275,19 +275,19 @@ int crtx_evloop_remove_cb(struct crtx_event_loop *evloop, struct crtx_evloop_cal
 	
 	crtx_ll_unlink((struct crtx_ll**) &el_cb->fd_entry->callbacks, &el_cb->ll);
 	
-	if (!el_cb->fd_entry->callbacks) {
-		// if the file descriptor has no more callbacks, remove the dependency between the
-		// the corresponding listener and the event loop
-		
-		LOCK(evloop->listener->dependencies_lock);
-		LOCK(el_cb->fd_entry->listener->dependencies_lock);
-		
-		crtx_ll_unlink(&evloop->listener->rev_dependencies, &el_cb->fd_entry->listener->ll);
-		crtx_ll_unlink(&el_cb->fd_entry->listener->dependencies, &evloop->listener->ll);
-		
-		UNLOCK(el_cb->fd_entry->listener->dependencies_lock);
-		UNLOCK(evloop->listener->dependencies_lock);
-	}
+// 	if (!el_cb->fd_entry->callbacks) {
+// 		// if the file descriptor has no more callbacks, remove the dependency between the
+// 		// the corresponding listener and the event loop
+// 		
+// 		LOCK(evloop->listener->dependencies_lock);
+// 		LOCK(el_cb->fd_entry->listener->dependencies_lock);
+// 		
+// 		crtx_ll_unlink(&evloop->listener->rev_dependencies, &el_cb->fd_entry->listener->ll);
+// 		crtx_ll_unlink(&el_cb->fd_entry->listener->dependencies, &evloop->listener->ll);
+// 		
+// 		UNLOCK(el_cb->fd_entry->listener->dependencies_lock);
+// 		UNLOCK(evloop->listener->dependencies_lock);
+// 	}
 	
 	return 0;
 }
@@ -319,6 +319,9 @@ int crtx_evloop_create(struct crtx_event_loop *evloop) {
 		
 		crtx_evloop_enable_cb(evloop, &evloop->default_el_cb);
 	}
+	
+	crtx_ll_append(&crtx_root->event_loops, &evloop->ll);
+	evloop->ll.data = evloop;
 	
 	return 0;
 }
@@ -404,8 +407,8 @@ int crtx_evloop_add_el_fd(struct crtx_evloop_fd *el_fd) {
 	LOCK(event_loop->listener->dependencies_lock);
 	LOCK(el_fd->listener->dependencies_lock);
 	
-	crtx_ll_append_new(&event_loop->listener->rev_dependencies, el_fd->listener);
-	crtx_ll_append_new(&el_fd->listener->dependencies, event_loop->listener);
+// 	crtx_ll_append_new(&event_loop->listener->rev_dependencies, el_fd->listener);
+// 	crtx_ll_append_new(&el_fd->listener->dependencies, event_loop->listener);
 	
 	crtx_root->event_loop->mod_fd(event_loop, el_fd);
 	
@@ -455,6 +458,8 @@ int crtx_evloop_stop(struct crtx_event_loop *evloop) {
 }
 
 int crtx_evloop_release(struct crtx_event_loop *evloop) {
+	crtx_evloop_remove_cb(evloop, &evloop->default_el_cb);
+	
 	evloop->stop(evloop);
 	evloop->release(evloop);
 	
@@ -462,6 +467,10 @@ int crtx_evloop_release(struct crtx_event_loop *evloop) {
 	
 	close(evloop->ctrl_pipe[1]);
 	close(evloop->ctrl_pipe[0]);
+	
+	crtx_ll_unlink(&crtx_root->event_loops, &evloop->ll);
+	
+	free(evloop);
 	
 	return 0;
 }
