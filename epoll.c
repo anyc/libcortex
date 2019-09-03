@@ -9,6 +9,8 @@
 #include <errno.h>
 #include <unistd.h>
 #include <inttypes.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #ifdef DEBUG
 #include <sys/ioctl.h>
@@ -469,11 +471,17 @@ static char stop_epoll_listener(struct crtx_listener_base *lbase) {
 
 struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
 	struct crtx_epoll_listener *epl;
+	int flags;
 	
 	
 	epl = (struct crtx_epoll_listener*) options;
 	
-	epl->epoll_fd = epoll_create1(0);
+	if (crtx_root->global_fd_flags & FD_CLOEXEC)
+		flags = EPOLL_CLOEXEC;
+	else
+		flags = 0;
+	
+	epl->epoll_fd = epoll_create1(flags);
 	if (epl->epoll_fd < 0) {
 		ERROR("epoll_create1 failed: %s\n", strerror(errno));
 		return 0;

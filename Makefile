@@ -24,7 +24,8 @@ OBJS+=core.o \
 	llist.o dllist.o evloop.o
 
 AVAILABLE_TESTS=avahi can curl epoll evdev evloop_qt libvirt nl_libnl netlink_ge \
-	nl_route_raw pulseaudio sdbus sip timer udev uevents v4l xcb_randr writequeue
+	nl_route_raw popen pulseaudio sdbus sip timer udev uevents v4l xcb_randr \
+	writequeue
 
 CFLAGS+=$(DEBUG_FLAGS) -D_FILE_OFFSET_BITS=64 -fPIC -DCRTX_PLUGIN_DIR=\"$(plugindir)\"
 CXXFLAGS+=$(DEBUG_FLAGS)
@@ -48,7 +49,7 @@ include Makefile.modules
 BUILTIN_MODULES=signals epoll
 STATIC_TOOLS+=cache dict_inout dict_inout_json event_comm socket threads
 STATIC_MODULES+=fanotify inotify netlink_raw nl_route_raw uevents socket_raw \
-	timer writequeue pipe
+	timer writequeue pipe popen
 DYN_MODULES+=avahi can curl evdev evloop_qt libvirt netlink_ge nl_libnl nf_queue \
 	pulseaudio readline sdbus sip udev v4l xcb_randr sdbus_notifications
 
