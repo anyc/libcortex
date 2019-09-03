@@ -1365,7 +1365,7 @@ void crtx_init_shutdown() {
 // 	crtx_flush_events();
 }
 
-void crtx_reinit_after_fork() {
+void crtx_shutdown_after_fork() {
 // 	struct crtx_event_loop *evloop;
 	
 	crtx_root->after_fork_close = 1;

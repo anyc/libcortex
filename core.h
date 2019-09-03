@@ -341,6 +341,6 @@ void crtx_lock_listener_source(struct crtx_listener_base *lbase);
 void crtx_unlock_listener_source(struct crtx_listener_base *lbase);
 void crtx_trigger_event_processing(struct crtx_listener_base *lstnr);
 
-void crtx_reinit_after_fork();
+void crtx_shutdown_after_fork();
 
 #endif
