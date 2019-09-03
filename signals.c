@@ -195,12 +195,8 @@ static void selfpipe_signal_handler(int signum) {
 }
 #endif
 
-static int update_signals(struct crtx_signal_listener *signal_lstnr) {
-	struct crtx_signal_listener *slistener;
-// 	int *i;
+static int update_signals(struct crtx_signal_listener *slistener) {
 	int r;
-	
-	slistener = (struct crtx_signal_listener *) listener;
 	
 	if (slistener->type == CRTX_SIGNAL_SIGACTION) {
 		DBG("signal mode sigaction\n");

@@ -468,7 +468,7 @@ static void free_listener_intern(struct crtx_listener_base *listener) {
 // 	}
 	
 	if (listener->free_cb) {
-		listener->free_cb(listener, listener->free_userdata);
+		listener->free_cb(listener, listener->free_cb_userdata);
 	}
 }
 

@@ -79,8 +79,8 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 	el = (struct crtx_evdev_listener *) dll->data;
 	
 	el->device_path = crtx_stracpy(devpath, 0);
-	el->base.free = on_free_evdev_listener_data;
-	el->base.free_userdata = dyn_evdev;
+	el->base.free_cb = on_free_evdev_listener_data;
+	el->base.free_cb_userdata = dyn_evdev;
 	
 // 	lbase = create_listener("evdev", el);
 	ret = crtx_create_listener("evdev", el);
