@@ -53,7 +53,7 @@ static struct crtx_dll *sigchld_cbs = 0;
 struct crtx_signal_listener sigchld_lstnr;
 static int sigchld_signals[] = {SIGCHLD, 0};
 
-static int lstnr_enable_signals(struct crtx_signal_listener *signal_lstnr);
+// static int lstnr_enable_signals(struct crtx_signal_listener *signal_lstnr);
 
 
 struct signal_map *crtx_get_signal_info(int signum) {
@@ -195,60 +195,60 @@ static void selfpipe_signal_handler(int signum) {
 }
 #endif
 
-static int update_signals(struct crtx_signal_listener *slistener) {
-	int r;
-	
-	if (slistener->type == CRTX_SIGNAL_SIGACTION) {
-		DBG("signal mode sigaction\n");
-		
-		// we have no fd or thread to monitor
-		slistener->base.mode = CRTX_NO_PROCESSING_MODE;
-	} else
-	if (slistener->type == CRTX_SIGNAL_SIGNALFD) {
-		DBG("signal mode signalfd\n");
-	} else
-	if (slistener->type == CRTX_SIGNAL_SELFPIPE || slistener->type == CRTX_SIGNAL_DEFAULT) {
-		/*
-		 * in this mode, we install a regular sigaction signal handler but this handler
-		 * only writes into our "self-pipe" to call the actual signal handler through our
-		 * event loop
-		 */
-		
-		DBG("signal mode selfpipe\n");
-		
-		// this lstnr is just a container for the sigaction and pipe listeners
-		slistener->base.mode = CRTX_NO_PROCESSING_MODE;
-		
-		slistener->pipe_lstnr.fd_event_handler = selfpipe_event_handler;
-		slistener->pipe_lstnr.fd_event_handler_data = slistener;
-		
-		r = crtx_create_listener("pipe", &slistener->pipe_lstnr);
-		if (r < 0) {
-			ERROR("create_listener(pipe) failed: %s\n", strerror(-r));
-			return r;
-		}
-		
-		slistener->sub_lstnr = (struct crtx_signal_listener *) calloc(1, sizeof(struct crtx_signal_listener));
-		slistener->sub_lstnr->signals = slistener->signals;
-		slistener->sub_lstnr->type = CRTX_SIGNAL_SIGACTION;
-		slistener->sub_lstnr->signal_handler = selfpipe_signal_handler;
-		
-		r = crtx_create_listener("signals", slistener->sub_lstnr);
-		if (r < 0) {
-			ERROR("create_listener(signals) failed: %s\n", strerror(-r));
-			return r;
-		}
-		
-		crtx_start_listener(&slistener->pipe_lstnr.base);
-		crtx_start_listener(&slistener->sub_lstnr->base);
-	} else {
-		ERROR("invalid type of signal listener: %d\n", slistener->type);
-	}
-	
-	return lstnr_enable_signals(slistener);
-}
+// static int update_signals(struct crtx_signal_listener *slistener) {
+// 	int r;
+// 	
+// 	if (slistener->type == CRTX_SIGNAL_SIGACTION) {
+// 		DBG("signal mode sigaction\n");
+// 		
+// 		// we have no fd or thread to monitor
+// 		slistener->base.mode = CRTX_NO_PROCESSING_MODE;
+// 	} else
+// 	if (slistener->type == CRTX_SIGNAL_SIGNALFD) {
+// 		DBG("signal mode signalfd\n");
+// 	} else
+// 	if (slistener->type == CRTX_SIGNAL_SELFPIPE || slistener->type == CRTX_SIGNAL_DEFAULT) {
+// 		/*
+// 		 * in this mode, we install a regular sigaction signal handler but this handler
+// 		 * only writes into our "self-pipe" to call the actual signal handler through our
+// 		 * event loop
+// 		 */
+// 		
+// 		DBG("signal mode selfpipe\n");
+// 		
+// 		// this lstnr is just a container for the sigaction and pipe listeners
+// 		slistener->base.mode = CRTX_NO_PROCESSING_MODE;
+// 		
+// 		slistener->pipe_lstnr.fd_event_handler = selfpipe_event_handler;
+// 		slistener->pipe_lstnr.fd_event_handler_data = slistener;
+// 		
+// 		r = crtx_create_listener("pipe", &slistener->pipe_lstnr);
+// 		if (r < 0) {
+// 			ERROR("create_listener(pipe) failed: %s\n", strerror(-r));
+// 			return r;
+// 		}
+// 		
+// 		slistener->sub_lstnr = (struct crtx_signal_listener *) calloc(1, sizeof(struct crtx_signal_listener));
+// 		slistener->sub_lstnr->signals = slistener->signals;
+// 		slistener->sub_lstnr->type = CRTX_SIGNAL_SIGACTION;
+// 		slistener->sub_lstnr->signal_handler = selfpipe_signal_handler;
+// 		
+// 		r = crtx_create_listener("signals", slistener->sub_lstnr);
+// 		if (r < 0) {
+// 			ERROR("create_listener(signals) failed: %s\n", strerror(-r));
+// 			return r;
+// 		}
+// 		
+// 		crtx_start_listener(&slistener->pipe_lstnr.base);
+// 		crtx_start_listener(&slistener->sub_lstnr->base);
+// 	} else {
+// 		ERROR("invalid type of signal listener: %d\n", slistener->type);
+// 	}
+// 	
+// 	return lstnr_enable_signals(slistener);
+// }
 
-static int lstnr_enable_signals(struct crtx_signal_listener *signal_lstnr) {
+static int update_signals(struct crtx_signal_listener *signal_lstnr) {
 	if (!signal_lstnr->signals) {
 		DBG("no signals, will not enable handler\n");
 		return 0;

@@ -3,6 +3,7 @@
  *
  */
 
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -92,13 +93,13 @@ int main(int argc, char **argv) {
 	free(s);
 	
 	if (my_pid == 0) {
-// 		crtx_init();
-// 		
-// 		crtx_handle_std_signals();
-// 		
-// 		i = timer_main(argc, argv);
-// 		
-// // 		crtx_finish();
+		crtx_init();
+		
+		crtx_handle_std_signals();
+		
+		i = timer_main(argc, argv);
+		
+// 		crtx_finish();
 		
 		printf("CHILD TERM\n");
 	} else {

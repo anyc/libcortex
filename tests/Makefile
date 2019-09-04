@@ -1,5 +1,5 @@
 
-include ../Makefile.common
+# include ../Makefile.common
 
 libcrtx_dir=../
 
