@@ -263,10 +263,12 @@ int crtx_init();
 int crtx_finish();
 void crtx_loop();
 void crtx_loop_onetime();
-void free_eventgraph(struct crtx_graph *egraph);
-void crtx_init_graph(struct crtx_graph *crtx_graph, const char *name);
-void crtx_shutdown_graph(struct crtx_graph *egraph);
-void crtx_create_graph(struct crtx_graph **crtx_graph, const char *name);
+
+int crtx_create_graph(struct crtx_graph **crtx_graph, const char *name);
+int crtx_init_graph(struct crtx_graph *crtx_graph, const char *name);
+int crtx_shutdown_graph(struct crtx_graph *egraph);
+int crtx_free_graph(struct crtx_graph *egraph);
+
 // void get_eventgraph(struct crtx_graph **crtx_graph, char **event_types, unsigned int n_event_types);
 void add_task(struct crtx_graph *graph, struct crtx_task *task);
 void add_event_type(char *event_type);
