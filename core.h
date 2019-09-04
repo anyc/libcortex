@@ -216,9 +216,12 @@ struct crtx_root {
 	struct crtx_dll *graph_queue;
 	MUTEX_TYPE graph_queue_mutex;
 	
-	char after_fork_close;
+// 	char after_fork_close;
 	char shutdown;
+	char reinit_after_shutdown;
 	struct crtx_evloop_callback shutdown_el_cb;
+	void (*reinit_cb)(void *cb_data);
+	void *reinit_cb_data;
 	
 	const char *chosen_event_loop;
 	char detached_event_loop;

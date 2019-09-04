@@ -360,6 +360,9 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 			epoll_timeout_ms = epl->timeout;
 		}
 		
+// 		if (evloop->phase_out)
+// 			epoll_timeout_ms = 0;
+		
 		if (epl->stop)
 			break;
 		
@@ -385,6 +388,9 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 		}
 		
 		VDBG("epoll returned with %d events\n", epl->n_rdy_events);
+		
+// 		if (epl->n_rdy_events == 0 && evloop->phase_out)
+// 			break;
 		
 		if (epl->stop)
 			break;
@@ -662,14 +668,14 @@ int epoll_main(int argc, char **argv) {
 						0, 0
 					);
 	
-	crtx_evloop_enable_cb(&crtx_root->event_loop, &default_el_cb);
+	crtx_evloop_enable_cb(crtx_root->event_loop, &default_el_cb);
 	
 	if (argc > 1) {
 		start_timer();
 		
 		crtx_loop();
 	} else {
-		ret = crtx_start_listener(crtx_root->event_loop.listener);
+		ret = crtx_start_listener(crtx_root->event_loop->listener);
 		if (ret) {
 			ERROR("starting epoll listener failed\n");
 			return 1;

@@ -165,7 +165,7 @@ void push_new_udev_event(struct crtx_udev_listener *ulist, struct udev_device *d
 	struct crtx_event *nevent;
 	
 	// size of struct udev_device is unknown
-	nevent = crtx_create_event(0); //, dev, sizeof(struct udev_device*));
+	crtx_create_event(&nevent); //, dev, sizeof(struct udev_device*));
 // 	nevent->data.flags |= CRTX_DIF_DONT_FREE_DATA;
 	crtx_event_set_raw_data(nevent, 'p', dev, sizeof(struct udev_device*), CRTX_DIF_DONT_FREE_DATA);
 

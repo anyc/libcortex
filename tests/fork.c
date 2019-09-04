@@ -30,6 +30,7 @@ static char timertest_handler(struct crtx_event *event, void *userdata, void **s
 		if (my_pid == 0) {
 			printf("child ready\n");
 			
+			crtx_root->reinit_after_shutdown = 1;
 			crtx_shutdown_after_fork();
 		} else
 		if (my_pid > 0) {
@@ -41,7 +42,6 @@ static char timertest_handler(struct crtx_event *event, void *userdata, void **s
 
 int timer_main(int argc, char **argv) {
 	struct crtx_timer_listener tlist;
-	// 	struct itimerspec newtimer;
 	struct crtx_listener_base *blist;
 	
 	memset(&tlist, 0, sizeof(struct crtx_timer_listener));
@@ -93,11 +93,11 @@ int main(int argc, char **argv) {
 	free(s);
 	
 	if (my_pid == 0) {
-		crtx_init();
-		
-		crtx_handle_std_signals();
-		
-		i = timer_main(argc, argv);
+// 		crtx_init();
+// 		
+// 		crtx_handle_std_signals();
+// 		
+// 		i = timer_main(argc, argv);
 		
 // 		crtx_finish();
 		

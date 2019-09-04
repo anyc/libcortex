@@ -32,7 +32,7 @@ static void send_event(struct crtx_evdev_listener *el, struct input_event *ev, c
 	new_ev = (struct input_event *) malloc(sizeof(struct input_event));
 	memcpy(new_ev, ev, sizeof(struct input_event));
 	
-	event = crtx_create_event(0);
+	crtx_create_event(&event);
 	crtx_event_set_raw_data(event, 'p', new_ev, sizeof(struct input_event), 0);
 // 	event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
 	event->cb_before_release = &evdev_event_before_release_cb;

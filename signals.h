@@ -38,7 +38,7 @@ struct crtx_listener_base *crtx_new_signals_listener(void *options);
 void crtx_signals_init();
 void crtx_signals_finish();
 
-typedef void (*sigchld_cb)(pid_t pid, void *userdata);
+typedef void (*sigchld_cb)(pid_t pid, int status, void *userdata);
 int crtx_signals_add_child_handler(sigchld_cb cb, void *userdata);
 
 struct signal_map *crtx_get_signal_info(int signum);

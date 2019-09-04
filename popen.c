@@ -21,7 +21,7 @@
 
 #ifndef CRTX_TEST
 
-static void local_sigchld_cb(pid_t pid, void *userdata) {
+static void local_sigchld_cb(pid_t pid, int status, void *userdata) {
 	struct crtx_popen_listener *plstnr;
 	
 	plstnr = (struct crtx_popen_listener *) userdata;

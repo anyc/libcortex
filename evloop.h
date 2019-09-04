@@ -96,6 +96,7 @@ struct crtx_event_loop {
 	int (*mod_fd)(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd);
 	
 	char after_fork_close;
+// 	char phase_out;
 };
 
 extern struct crtx_event_loop *crtx_event_loops;

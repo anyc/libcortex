@@ -525,13 +525,10 @@ static char sigchild_event_handler(struct crtx_event *event, void *userdata, voi
 		
 		DBG("child %u finished with %d\n", pid, status);
 		
-		// 		for (i=0; i < n_sigchld_cb; i++) {
-		// 			sigchld_cb[i](pid);
-		// 		}
 		for (it=sigchld_cbs; it; it=it->next) {
 			data = (struct sigchld_cb_data *) it->data;
 			
-			data->cb(pid, data->userdata);
+			data->cb(pid, status, data->userdata);
 		}
 	}
 	

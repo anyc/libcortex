@@ -458,7 +458,7 @@ static void free_listener_intern(struct crtx_listener_base *listener) {
 // 	listener->state = CRTX_LSTNR_SHUTDOWN;
 // 	UNLOCK(listener->state_mutex);
 	
-	if (listener->graph)
+	if (listener->graph && listener->graph->listener == listener)
 		crtx_free_graph(listener->graph);
 	
 // 	if (listener->eloop_thread) {
@@ -1325,7 +1325,12 @@ void crtx_init_shutdown() {
 // 			if (r != EALREADY)
 // 				all_stopped = 0;
 		}
-		
+	
+// 	crtx_root->event_loop->phase_out = 1;
+	
+	// just wake-up the event loop
+// 	crtx_evloop_trigger_callback(crtx_get_main_event_loop(), 0);
+	
 // 		if (all_stopped)
 // 			break;
 // 	}
@@ -1346,24 +1351,25 @@ void crtx_init_shutdown() {
 }
 
 void crtx_shutdown_after_fork() {
-// 	struct crtx_event_loop *evloop;
+	// after a fork, we close all file handles but we don't want to remove
+	// them from an epoll instance as it would remove the file handle for
+	// the parent process as well.
+	//
+	// this also causes the child eventloop to stop processing further events
 	
-	crtx_root->after_fork_close = 1;
+// 	crtx_root->after_fork_close = 1;
 	crtx_root->event_loop->after_fork_close = 1;
 	
+	// we do not process the events in the queue
 	crtx_flush_events();
 	
 	crtx_evloop_stop(crtx_root->event_loop);
-// 	evloop = crtx_root->event_loop;
-// 	crtx_evloop_release(crtx_root->event_loop);
 	
+	// create a new event loop that handles shutdown
 	crtx_root->event_loop = 0;
-	
 	crtx_get_main_event_loop();
 	
 	crtx_init_shutdown();
-	
-// 	crtx_evloop_release(evloop);
 }
 
 static char handle_shutdown(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -1567,6 +1573,7 @@ int crtx_init() {
 	
 	if (crtx_root->event_loop)
 		crtx_root->event_loop->after_fork_close = 0;
+	crtx_root->reinit_after_shutdown = 0;
 	
 	INIT_MUTEX(crtx_root->graphs_mutex);
 	
@@ -1758,6 +1765,9 @@ char *get_username() {
 // }
 
 void crtx_loop() {
+	if (!crtx_root->event_loop)
+		return;
+	
 	// the thread calling this either executes the event loop or becomes one of
 	// the worker threads in the thread pool
 	if (crtx_root->event_loop->listener) {
@@ -1765,6 +1775,21 @@ void crtx_loop() {
 		crtx_evloop_start(crtx_root->event_loop);
 	} else {
 		spawn_thread(0);
+	}
+	
+	DBG("crtx_loop() end\n");
+	
+	if (crtx_root->reinit_after_shutdown) {
+		crtx_finish();
+		
+		crtx_init();
+		
+		if (crtx_root->reinit_cb) {
+			crtx_root->reinit_cb(crtx_root->reinit_cb_data);
+			crtx_root->reinit_cb = 0;
+		}
+		
+		crtx_loop();
 	}
 }
 
