@@ -345,8 +345,6 @@ int crtx_stop_listener(struct crtx_listener_base *listener) {
 // 		return;
 // 	}
 	
-	CRTX_DBG("stopping listener %s\n", listener->id);
-	
 	LOCK(listener->state_mutex);
 	
 // 	if (listener->state == CRTX_LSTNR_STOPPING || listener->state == CRTX_LSTNR_STOPPED || listener->state == CRTX_LSTNR_SHUTDOWN) {
@@ -356,6 +354,8 @@ int crtx_stop_listener(struct crtx_listener_base *listener) {
 	}
 	
 	listener->state = CRTX_LSTNR_STOPPING;
+	
+	CRTX_DBG("stopping listener %s\n", listener->id);
 	
 	LOCK(listener->dependencies_lock);
 	if (listener->rev_dependencies) {

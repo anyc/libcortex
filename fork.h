@@ -15,7 +15,7 @@ struct crtx_fork_listener {
 	struct crtx_listener_base base;
 	
 // 	struct crtx_signal_listener signal_lstnr;
-	sigchld_cb sigchld_cb;
+// 	sigchld_cb sigchld_cb;
 	
 	pid_t pid;
 	

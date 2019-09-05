@@ -97,15 +97,31 @@ static char stop_listener(struct crtx_listener_base *listener) {
 	
 	flstnr = (struct crtx_fork_listener *) listener;
 	
-	printf("sendkill %d\n", flstnr->pid);
-	
-// 	r = kill(flstnr->pid, SIGTERM);
-// 	if (r != 0) {
-// 		ERROR("killing pid %d failed: %s\n", flstnr->pid, strerror(errno));
-// 		return 1;
-// 	}
+	if (flstnr->pid > 0) {
+		printf("sendkill %d\n", flstnr->pid);
+
+		r = kill(flstnr->pid, SIGTERM);
+		if (r != 0) {
+			ERROR("killing pid %d failed: %s\n", flstnr->pid, strerror(errno));
+			return 1;
+		}
+	}
 	
 	return 0;
+}
+
+static void fork_sigchld_cb(pid_t pid, int status, void *userdata) {
+	struct crtx_fork_listener *lstnr;
+	
+	
+	lstnr = (struct crtx_fork_listener *) userdata;
+	
+	if (pid == lstnr->pid) {
+		lstnr->pid = 0;
+		crtx_stop_listener(&lstnr->base);
+	} else {
+		ERROR("received unexpected pid: %d != %d\n", pid, lstnr->pid);
+	}
 }
 
 struct crtx_listener_base *crtx_new_fork_listener(void *options) {
@@ -127,7 +143,7 @@ struct crtx_listener_base *crtx_new_fork_listener(void *options) {
 // 		return 0;
 // 	}
 	
-	crtx_signals_add_child_handler(lstnr->sigchld_cb, lstnr);
+	crtx_signals_add_child_handler(&fork_sigchld_cb, lstnr);
 	
 // 	crtx_create_task(lstnr->signal_lstnr.base.graph, 0, "sigchld_handler", &sigchild_event_handler, 0);
 	
@@ -150,12 +166,16 @@ int forked = 0;
 void reinit_cb(void *reinit_cb_data) {
 	printf("child reinit_cb\n");
 	
-	crtx_init_shutdown();
+// 	crtx_init_shutdown();
+	
+	crtx_handle_std_signals();
+	
+	start_timer();
 }
 
-void fork_sigchld_cb(pid_t pid, int status, void *userdata) {
-	printf("child %d result: %d\n", pid, status);
-}
+// void fork_sigchld_cb(pid_t pid, int status, void *userdata) {
+// 	printf("child %d result: %d\n", pid, status);
+// }
 
 static char timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	printf("[%d] received timer event: %u\n", getpid(), event->data.uint32);
@@ -167,7 +187,7 @@ static char timertest_handler(struct crtx_event *event, void *userdata, void **s
 		
 		fork_lstnr.reinit_cb = &reinit_cb;
 		fork_lstnr.reinit_cb_data = 0;
-		fork_lstnr.sigchld_cb = &fork_sigchld_cb;
+// 		fork_lstnr.sigchld_cb = &fork_sigchld_cb;
 		
 		rv = crtx_create_listener("fork", &fork_lstnr);
 		if (rv) {
