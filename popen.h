@@ -7,13 +7,19 @@
  */
 
 #include "core.h"
-
-struct crtx_popen_listener;
+#include "fork.h"
+#include "pipe.h"
+#include "writequeue.h"
 
 struct crtx_popen_listener {
 	struct crtx_listener_base base;
 	
-	pid_t pid;
+	struct crtx_fork_listener fork_lstnr;
+	
+	struct crtx_writequeue stdin_wq_lstnr;
+	struct crtx_pipe_listener stdin_lstnr;
+	struct crtx_pipe_listener stdout_lstnr;
+	struct crtx_pipe_listener stderr_lstnr;
 	
 	char *cmd;
 };

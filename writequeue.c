@@ -81,14 +81,25 @@ struct crtx_listener_base *crtx_new_writequeue_listener(void *options) {
 // 	wqueue->base.evloop_fd.crtx_event_flags = 0;
 // 	wqueue->base.evloop_fd.data = wqueue;
 // 	wqueue->base.evloop_fd.event_handler = fd_event_handler;
-	crtx_evloop_create_fd_entry(&wqueue->read_listener->evloop_fd, &wqueue->evloop_cb,
-						wqueue->write_fd,
-						EVLOOP_WRITE,
-						0,
-						&fd_event_handler,
-						wqueue,
-						0, 0
-					);
+	
+	if (wqueue->read_listener) {
+		crtx_evloop_create_fd_entry(&wqueue->read_listener->evloop_fd, &wqueue->evloop_cb,
+							wqueue->write_fd,
+							EVLOOP_WRITE,
+							0,
+							&fd_event_handler,
+							wqueue,
+							0, 0
+						);
+	} else {
+		crtx_evloop_init_listener(&wqueue->base,
+							wqueue->write_fd,
+							EVLOOP_WRITE,
+							0,
+							&fd_event_handler, wqueue,
+							0, 0
+			);
+	}
 	
 // 	wqueue->evloop_cb->active = 0;
 	

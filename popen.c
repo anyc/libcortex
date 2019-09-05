@@ -15,81 +15,134 @@
 #include "intern.h"
 #include "core.h"
 #include "popen.h"
-#include "signals.h"
-
-#include "timer.h"
+#include "fork.h"
 
 #ifndef CRTX_TEST
 
-static void local_sigchld_cb(pid_t pid, int status, void *userdata) {
+void reinit_cb(void *reinit_cb_data) {
 	struct crtx_popen_listener *plstnr;
+	int rv;
 	
-	plstnr = (struct crtx_popen_listener *) userdata;
 	
-	if (pid == plstnr->pid) {
-		printf("sigchld\n");
+	plstnr = (struct crtx_popen_listener *) reinit_cb_data;
+	
+	printf("exec %s\n", plstnr->cmd);
+	
+	dup2(plstnr->stdin_lstnr.fds[0], STDIN_FILENO);
+// 	close(plstnr->stdin_lstnr.fds[0]);
+// 	close(plstnr->stdin_lstnr.fds[1]);
+	
+	dup2(plstnr->stdout_lstnr.fds[1], STDOUT_FILENO);
+// 	close(plstnr->stdout_lstnr.fds[0]);
+// 	close(plstnr->stdout_lstnr.fds[1]);
+	
+	dup2(plstnr->stderr_lstnr.fds[1], STDERR_FILENO);
+// 	close(plstnr->stderr_lstnr.fds[0]);
+// 	close(plstnr->stderr_lstnr.fds[1]);
+	
+	rv = execlp(plstnr->cmd, plstnr->cmd, (char*) 0);
+	if (rv) {
+		ERROR("execlp() failed: %s\n", strerror(errno));
 	}
+	
+	crtx_init_shutdown();
 }
 
 static char start_listener(struct crtx_listener_base *listener) {
-	pid_t pid;
 	struct crtx_popen_listener *plstnr;
+	int rv;
 	
 	
 	plstnr = (struct crtx_popen_listener *) listener;
 	
-	crtx_signals_add_child_handler(&local_sigchld_cb, listener);
+	plstnr->base.mode = CRTX_NO_PROCESSING_MODE;
 	
-	pid = fork();
-	if (pid < 0 ) {
-		printf("error\n");
-	} else
-	if ( pid == 0 ) {
-		printf("child: %d parent: %d\n", getpid(), getppid());
-		
-		if (plstnr->cmd) {
-			char *argv[3] = {"Command-line", NULL};
-			
-			execvp(plstnr->cmd, argv);
-		}
-	} else {
-		printf("parent: %d child: %d\n", getpid(), pid);
-		
-		plstnr->pid = pid;
-		
-// 		waitpid(pid, NULL, 0);
-
-// 		printf("child finihsed\n");
+	rv = crtx_start_listener(&plstnr->stdin_lstnr.base);
+	if (rv) {
+		ERROR("starting writequeue listener failed\n");
+		return rv;
 	}
 	
-	plstnr->base.mode = CRTX_NO_PROCESSING_MODE;
+	plstnr->stdin_wq_lstnr.write_fd = plstnr->stdin_lstnr.fds[1];
+// 	plstnr->stdin_wq_lstnr.write = &wq_write;
+	rv = crtx_start_listener(&plstnr->stdin_wq_lstnr.base);
+	if (rv) {
+		ERROR("starting writequeue listener failed\n");
+		return rv;
+	}
+	
+	rv = crtx_start_listener(&plstnr->stdout_lstnr.base);
+	if (rv) {
+		ERROR("starting writequeue listener failed\n");
+		return rv;
+	}
+	
+	rv = crtx_start_listener(&plstnr->stderr_lstnr.base);
+	if (rv) {
+		ERROR("starting writequeue listener failed\n");
+		return rv;
+	}
+	
+	rv = crtx_start_listener(&plstnr->fork_lstnr.base);
+	if (rv) {
+		ERROR("starting fork listener failed\n");
+		return rv;
+	}
 	
 	return 0;
 }
 
 static char stop_listener(struct crtx_listener_base *listener) {
-	int r;
-	struct crtx_popen_listener *plstnr;
+// 	int rv;
 	
-	
-	plstnr = (struct crtx_popen_listener *) listener;
-	printf("sendkill %d\n", plstnr->pid);
-	r = kill(plstnr->pid, SIGTERM);
-	if (r != 0) {
-		ERROR("stop popen failed: %s\n", strerror(errno));
-		return 1;
-	}
+// 	rv = crtx_stop_listener(&plstnr->fork_lstnr.base);
+// 	if (rv) {
+// 		ERROR("stopping fork listener failed\n");
+// 		return rv;
+// 	}
 	
 	return 0;
 }
 
 struct crtx_listener_base *crtx_new_popen_listener(void *options) {
 	struct crtx_popen_listener *plstnr;
+	int rv;
+	
 	
 	plstnr = (struct crtx_popen_listener *) options;
 	
 	plstnr->base.start_listener = &start_listener;
 	plstnr->base.stop_listener = &stop_listener;
+	
+	
+	plstnr->fork_lstnr.reinit_cb = &reinit_cb;
+	plstnr->fork_lstnr.reinit_cb_data = plstnr;
+	
+	rv = crtx_create_listener("fork", &plstnr->fork_lstnr);
+	if (rv) {
+		ERROR("create_listener(fork) failed\n");
+		return 0;
+	}
+	
+	rv = crtx_create_listener("writequeue", &plstnr->stdin_lstnr);
+	if (rv) {
+		ERROR("create_listener(writequeue) failed\n");
+		return 0;
+	}
+	
+	rv = crtx_create_listener("pipe", &plstnr->stdout_lstnr);
+	if (rv) {
+		ERROR("create_listener(pipe) failed\n");
+		return 0;
+	}
+	
+	rv = crtx_create_listener("pipe", &plstnr->stderr_lstnr);
+	if (rv) {
+		ERROR("create_listener(pipe) failed\n");
+		return 0;
+	}
+	
+// 	crtx_create_task(fork_lstnr.base.graph, 0, "fork_event_handler", fork_event_handler, 0);
 	
 	return &plstnr->base;
 }
@@ -103,65 +156,50 @@ void crtx_popen_finish() {
 
 #else /* CRTX_TEST */
 
-struct crtx_popen_listener plist;
-static int std_signals[] = {SIGTERM, SIGINT, 0};
+#define BUF_SIZE 1024
+char buffer[BUF_SIZE];
 
-static char timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	printf("timer %d\n", getpid());
-	
-	return 0;
-}
+// static char signal_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+// 	
+// 	return 0;
+// }
 
-static char signal_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct signal_map *s;
+static int wq_write(struct crtx_writequeue *wqueue, void *userdata) {
+	ssize_t n_bytes;
 	
-	s = crtx_get_signal_info(event->data.uint32);
-	
-	printf("signal %s\n", s->name);
-	
-	if (plist.pid > 0)
-		crtx_stop_listener(&plist.base);
-	else
-		crtx_init_shutdown();
-	
-	return 0;
+	while (1) {
+		n_bytes = write(wqueue->write_fd, buffer, BUF_SIZE);
+		if (n_bytes < 0) {
+			if (errno == EAGAIN || errno == ENOBUFS) {
+				printf("received EAGAIN\n");
+				
+				crtx_writequeue_start(wqueue);
+				
+				return EAGAIN;
+			} else {
+				printf("error %s\n", strerror(errno));
+				exit(1);
+			}
+		} else {
+		}
+	}
 }
 
 
 int popen_main(int argc, char **argv) {
-// 	struct crtx_popen_listener clist;
+	struct crtx_popen_listener plist;
 	int ret;
-// 	pid_t pid;
-	struct crtx_timer_listener tlist;
 	
 	
 	crtx_init();
 	crtx_handle_std_signals();
 	
-	struct crtx_signal_listener slist;
-	
-	memset(&slist, 0, sizeof(struct crtx_signal_listener));
 	memset(&plist, 0, sizeof(struct crtx_popen_listener));
 	
-	slist.signals = std_signals;
+	plist.cmd = "whoami";
 	
-	ret = crtx_create_listener("signals", &slist);
-	if (ret) {
-		ERROR("create_listener(signal) failed\n");
-		return 0;
-	}
-	
-	crtx_create_task(slist.base.graph, 0, "signal_test", &signal_event_handler, 0);
-	
-	ret = crtx_start_listener(&slist.base);
-	if (ret) {
-		ERROR("starting signal listener failed\n");
-		return 0;
-	}
-	
-	
-	
-// 	plist.cmd = "whoami";
+	plist.stdin_wq_lstnr.write = &wq_write;
+	plist.stdin_wq_lstnr.write_userdata = 0;
 	
 	ret = crtx_create_listener("popen", &plist);
 	if (ret) {
@@ -176,69 +214,6 @@ int popen_main(int argc, char **argv) {
 		ERROR("starting popen listener failed\n");
 		return 0;
 	}
-
-	
-	{
-		memset(&tlist, 0, sizeof(struct crtx_timer_listener));
-		
-		// set time for (first) alarm
-		tlist.newtimer.it_value.tv_sec = 1;
-		tlist.newtimer.it_value.tv_nsec = 0;
-		
-		// set interval for repeating alarm, set to 0 to disable repetition
-		tlist.newtimer.it_interval.tv_sec = 1;
-		tlist.newtimer.it_interval.tv_nsec = 0;
-		
-		tlist.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
-		tlist.settime_flags = 0; // absolute (TFD_TIMER_ABSTIME), or relative (0) time, see: man timerfd_settime()
-		// 	tlist.newtimer = &newtimer;
-		
-		ret = crtx_create_listener("timer", &tlist);
-		if (ret != 0) {
-			ERROR("create_listener(timer) failed\n");
-			exit(1);
-		}
-		
-		crtx_create_task(tlist.base.graph, 0, "timertest", timertest_handler, 0);
-		
-		crtx_start_listener(&tlist.base);
-	}
-	
-/*	
-	pid = fork();
-	if (pid < 0 ) {
-		printf("error\n");
-	} else
-	if ( pid == 0 ) {
-		printf("child: %d parent: %d\n", getpid(), getppid());
-		
-// 		char *argv[3] = {"Command-line", NULL};
-		
-// 		execvp( "whoami", argv);
-	} else {
-		printf("parent: %d child: %d\n", getpid(), pid);
-		
-// 		waitpid(pid, NULL, 0);
-		
-// 		printf("child finihsed\n");
-	}*/
-	
-// 	memset(&clist, 0, sizeof(struct crtx_popen_listener));
-	
-	
-// 	ret = crtx_create_listener("popen", &clist);
-// 	if (ret) {
-// 		ERROR("create_listener(popen) failed\n");
-// 		return 0;
-// 	}
-// 	
-// 	crtx_create_task(clist.base.graph, 0, "popen_test", &popen_event_handler, 0);
-// 	
-// 	ret = crtx_start_listener(&clist.base);
-// 	if (ret) {
-// 		ERROR("starting popen listener failed\n");
-// 		return 0;
-// 	}
 	
 	crtx_loop();
 	
