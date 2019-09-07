@@ -253,25 +253,52 @@ int crtx_evloop_init_listener(struct crtx_listener_base *listener,
 	return ret;
 }
 
-int crtx_evloop_enable_cb(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb) {
+int crtx_evloop_enable_cb(struct crtx_evloop_callback *el_cb) {
+	struct crtx_evloop_fd *el_fd;
+	
+	
+	el_fd = el_cb->fd_entry;
+	
 	el_cb->active = 1;
-	evloop->mod_fd(evloop, el_cb->fd_entry);
+	
+	if (el_fd->evloop == 0) {
+		el_fd->evloop = crtx_get_main_event_loop();
+		if (!el_fd->evloop) {
+			ERROR("no event loop for fd %d\n", el_fd->fd);
+			return -1;
+		}
+	}
+	
+	if (el_fd->fd_added == 0) {
+// 		LOCK(el_fd->evloop->listener->dependencies_lock);
+// 		LOCK(el_fd->listener->dependencies_lock);
+		
+// 		crtx_ll_append_new(&el_fd->evloop->listener->rev_dependencies, el_fd->listener);
+// 		crtx_ll_append_new(&el_fd->listener->dependencies, el_fd->evloop->listener);
+		
+		el_fd->evloop->mod_fd(el_fd->evloop, el_cb->fd_entry);
+		
+// 		UNLOCK(el_fd->listener->dependencies_lock);
+// 		UNLOCK(el_fd->evloop->listener->dependencies_lock);
+	} else {
+		el_fd->evloop->mod_fd(el_fd->evloop, el_cb->fd_entry);
+	}
 	
 	return 0;
 }
 
-int crtx_evloop_disable_cb(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb) {
+int crtx_evloop_disable_cb(struct crtx_evloop_callback *el_cb) {
 	if (!el_cb->active)
 		return 0;
 	
 	el_cb->active = 0;
-	evloop->mod_fd(evloop, el_cb->fd_entry);
+	el_cb->fd_entry->evloop->mod_fd(el_cb->fd_entry->evloop, el_cb->fd_entry);
 	
 	return 0;
 }
 
-int crtx_evloop_remove_cb(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb) {
-	crtx_evloop_disable_cb(evloop, el_cb);
+int crtx_evloop_remove_cb(struct crtx_evloop_callback *el_cb) {
+	crtx_evloop_disable_cb(el_cb);
 	
 	crtx_ll_unlink((struct crtx_ll**) &el_cb->fd_entry->callbacks, &el_cb->ll);
 	
@@ -317,7 +344,7 @@ int crtx_evloop_create(struct crtx_event_loop *evloop) {
 								0
 							);
 		
-		crtx_evloop_enable_cb(evloop, &evloop->default_el_cb);
+		crtx_evloop_enable_cb(&evloop->default_el_cb);
 	}
 	
 	crtx_ll_append(&crtx_root->event_loops, &evloop->ll);
@@ -392,37 +419,37 @@ struct crtx_event_loop* crtx_get_main_event_loop() {
 	return crtx_root->event_loop;
 }
 
-int crtx_evloop_add_el_fd(struct crtx_evloop_fd *el_fd) {
-	struct crtx_event_loop *event_loop;
-	
-	event_loop = crtx_get_main_event_loop();
-
-	if (!event_loop) {
-		ERROR("no event loop for fd %d\n", el_fd->fd);
-		return -1;
-	}
-	
-	el_fd->evloop = event_loop;
-	
-	LOCK(event_loop->listener->dependencies_lock);
-	LOCK(el_fd->listener->dependencies_lock);
-	
-// 	crtx_ll_append_new(&event_loop->listener->rev_dependencies, el_fd->listener);
-// 	crtx_ll_append_new(&el_fd->listener->dependencies, event_loop->listener);
-	
-	crtx_root->event_loop->mod_fd(event_loop, el_fd);
-	
-	UNLOCK(el_fd->listener->dependencies_lock);
-	UNLOCK(event_loop->listener->dependencies_lock);
-	
-	return 0;
-}
-
-int crtx_evloop_set_el_fd(struct crtx_evloop_fd *el_fd) {
-	el_fd->evloop->mod_fd(el_fd->evloop, el_fd);
-	
-	return 0;
-}
+// int crtx_evloop_add_el_fd(struct crtx_evloop_fd *el_fd) {
+// 	struct crtx_event_loop *event_loop;
+// 	
+// 	event_loop = crtx_get_main_event_loop();
+// 
+// 	if (!event_loop) {
+// 		ERROR("no event loop for fd %d\n", el_fd->fd);
+// 		return -1;
+// 	}
+// 	
+// 	el_fd->evloop = event_loop;
+// 	
+// 	LOCK(event_loop->listener->dependencies_lock);
+// 	LOCK(el_fd->listener->dependencies_lock);
+// 	
+// // 	crtx_ll_append_new(&event_loop->listener->rev_dependencies, el_fd->listener);
+// // 	crtx_ll_append_new(&el_fd->listener->dependencies, event_loop->listener);
+// 	
+// 	event_loop->mod_fd(event_loop, el_fd);
+// 	
+// 	UNLOCK(el_fd->listener->dependencies_lock);
+// 	UNLOCK(event_loop->listener->dependencies_lock);
+// 	
+// 	return 0;
+// }
+// 
+// int crtx_evloop_set_el_fd(struct crtx_evloop_fd *el_fd) {
+// 	el_fd->evloop->mod_fd(el_fd->evloop, el_fd);
+// 	
+// 	return 0;
+// }
 
 
 int crtx_evloop_queue_graph(struct crtx_event_loop *evloop, struct crtx_graph *graph) {
@@ -458,7 +485,7 @@ int crtx_evloop_stop(struct crtx_event_loop *evloop) {
 }
 
 int crtx_evloop_release(struct crtx_event_loop *evloop) {
-	crtx_evloop_remove_cb(evloop, &evloop->default_el_cb);
+	crtx_evloop_remove_cb(&evloop->default_el_cb);
 	
 	evloop->stop(evloop);
 	evloop->release(evloop);

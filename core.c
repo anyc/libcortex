@@ -206,7 +206,9 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 				listener->evloop_fd.callbacks->error_cb_data = listener;
 			}
 			
-			crtx_evloop_add_el_fd(&listener->evloop_fd);
+// 			crtx_evloop_add_el_fd(&listener->evloop_fd);
+			
+			crtx_evloop_enable_cb(&listener->default_el_cb);
 		} else
 		if (mode == CRTX_NO_PROCESSING_MODE) {
 			// do nothing
@@ -409,7 +411,7 @@ int crtx_stop_listener(struct crtx_listener_base *listener) {
 // 			&crtx_root->event_loop,
 // 			&listener->evloop_fd);
 		
-		crtx_evloop_disable_cb(listener->evloop_fd.evloop, &listener->default_el_cb);
+		crtx_evloop_disable_cb(&listener->default_el_cb);
 	}
 	
 	if (listener->eloop_thread) {
@@ -509,7 +511,7 @@ void crtx_free_listener(struct crtx_listener_base *listener) {
 		for (cit = listener->evloop_fd.callbacks; cit; cit=citn) {
 			citn = (struct crtx_evloop_callback *) cit->ll.next;
 			
-			crtx_evloop_remove_cb(listener->evloop_fd.evloop, cit);
+			crtx_evloop_remove_cb(cit);
 			crtx_ll_unlink((struct crtx_ll**) &listener->evloop_fd.callbacks, &cit->ll);
 		}
 	}
@@ -1326,7 +1328,7 @@ void crtx_init_shutdown() {
 // 				all_stopped = 0;
 		}
 	
-// 	crtx_root->event_loop->phase_out = 1;
+	crtx_root->event_loop->phase_out = 1;
 	
 	// just wake-up the event loop
 // 	crtx_evloop_trigger_callback(crtx_get_main_event_loop(), 0);

@@ -55,7 +55,7 @@ void crtx_writequeue_start(struct crtx_writequeue *wqueue) {
 // // 	crtx_epoll_mod_fd(&eloop->listener->base, &wqueue->base.evloop_fd);
 // 	crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &wqueue->base.evloop_fd);
 	
-	crtx_evloop_enable_cb(crtx_root->event_loop, &wqueue->evloop_cb);
+	crtx_evloop_enable_cb(&wqueue->evloop_cb);
 }
 
 void crtx_writequeue_stop(struct crtx_writequeue *wqueue) {
@@ -68,7 +68,7 @@ void crtx_writequeue_stop(struct crtx_writequeue *wqueue) {
 // // 	crtx_epoll_mod_fd(&eloop->listener->base, &wqueue->base.evloop_fd);
 // 	crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &wqueue->base.evloop_fd);
 	
-	crtx_evloop_disable_cb(crtx_root->event_loop, &wqueue->evloop_cb);
+	crtx_evloop_disable_cb(&wqueue->evloop_cb);
 }
 
 struct crtx_listener_base *crtx_new_writequeue_listener(void *options) {

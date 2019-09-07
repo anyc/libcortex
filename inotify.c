@@ -308,15 +308,6 @@ static char start_listener(struct crtx_listener_base *listener) {
 	// 		global_thread->do_stop = &stop_thread;
 		} else
 		if (mode == CRTX_PREFER_ELOOP) {
-// 			if (!crtx_root->event_loop.listener)
-// 				crtx_get_event_loop();
-			
-// 			evloop_fd.fd = inotify_fd;
-// 			evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 			evloop_fd.data = 0;
-// 			evloop_fd.event_handler = &inotify_fd_event_handler;
-// 			evloop_fd.event_handler_name = "inotify fd handler";
-			
 			crtx_evloop_create_fd_entry(&evloop_fd, &el_cb,
 							inotify_fd,
 							EVLOOP_READ,
@@ -326,12 +317,8 @@ static char start_listener(struct crtx_listener_base *listener) {
 							0, 0
 						);
 			
-// 			crtx_get_main_event_loop();
-// 			crtx_root->event_loop.mod_fd(
-// // 				&crtx_root->event_loop.listener->base,
-// 				&crtx_root->event_loop,
-// 				&evloop_fd);
-			crtx_evloop_add_el_fd(&evloop_fd);
+// 			crtx_evloop_add_el_fd(&evloop_fd);
+			crtx_evloop_enable_cb(&el_cb);
 		}
 		
 	}

@@ -19,7 +19,9 @@
 		int i; \
 		crtx_init(); \
 		crtx_handle_std_signals(); \
+		DBG("entering test function\n"); \
 		i = mainfct(argc, argv); \
+		DBG("left test function\n"); \
 		crtx_finish(); \
 		return i; \
 	}

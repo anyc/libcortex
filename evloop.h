@@ -96,13 +96,15 @@ struct crtx_event_loop {
 	int (*mod_fd)(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd);
 	
 	char after_fork_close;
-// 	char phase_out;
+	
+	// if set, keep processing events but shutdown if no more events available
+	char phase_out;
 };
 
 extern struct crtx_event_loop *crtx_event_loops;
 
-int crtx_evloop_add_el_fd(struct crtx_evloop_fd *el_fd);
-int crtx_evloop_set_el_fd(struct crtx_evloop_fd *el_fd);
+// int crtx_evloop_add_el_fd(struct crtx_evloop_fd *el_fd);
+// int crtx_evloop_set_el_fd(struct crtx_evloop_fd *el_fd);
 struct crtx_event_loop* crtx_get_main_event_loop();
 int crtx_get_event_loop(struct crtx_event_loop **evloop, const char *id);
 
@@ -129,9 +131,9 @@ int crtx_evloop_init_listener(struct crtx_listener_base *listener,
 						crtx_evloop_error_cb_t error_cb,
 						void *error_cb_data
 					);
-int crtx_evloop_enable_cb(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
-int crtx_evloop_disable_cb(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
-int crtx_evloop_remove_cb(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
+int crtx_evloop_enable_cb(struct crtx_evloop_callback *el_cb);
+int crtx_evloop_disable_cb(struct crtx_evloop_callback *el_cb);
+int crtx_evloop_remove_cb(struct crtx_evloop_callback *el_cb);
 
 void crtx_evloop_set_timeout(struct crtx_evloop_callback *el_cb, struct timespec *timeout);
 void crtx_evloop_set_timeout_abs(struct crtx_evloop_callback *el_cb, clockid_t clockid, uint64_t timeout_us);

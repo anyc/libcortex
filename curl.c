@@ -358,7 +358,8 @@ static int socket_callback(CURL *easy, curl_socket_t curl_socket, int what, CURL
 	if (what == CURL_POLL_REMOVE) {
 		socketp->el_cb.crtx_event_flags = 0;
 		
-		crtx_evloop_set_el_fd(&socketp->el_fd);
+// 		crtx_evloop_set_el_fd(&socketp->el_fd);
+		crtx_evloop_disable_cb(&socketp->el_cb);
 	} else {
 		if(!socketp) {
 			socketp = (struct crtx_curl_socket*) calloc(1, sizeof(struct crtx_curl_socket));
@@ -380,7 +381,8 @@ static int socket_callback(CURL *easy, curl_socket_t curl_socket, int what, CURL
 			
 			update_socket_fd(socketp, what);
 			
-			crtx_evloop_add_el_fd(&socketp->el_fd);
+// 			crtx_evloop_add_el_fd(&socketp->el_fd);
+			crtx_evloop_enable_cb(&socketp->el_cb);
 			
 			crtx_ll_append((struct crtx_ll **) &sockets, &socketp->next);
 			
@@ -388,7 +390,8 @@ static int socket_callback(CURL *easy, curl_socket_t curl_socket, int what, CURL
 		} else {
 			update_socket_fd(socketp, what);
 			
-			crtx_evloop_set_el_fd(&socketp->el_fd);
+// 			crtx_evloop_set_el_fd(&socketp->el_fd);
+			crtx_evloop_enable_cb(&socketp->el_cb);
 		}
 	}
 	
@@ -442,10 +445,14 @@ void crtx_curl_finish() {
 #else /* CRTX_TEST */
 
 size_t last_dlnow = 0;
+struct crtx_curl_listener clist;
 
 static char curl_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	if (event->type == CRTX_CURL_ET_FINISHED)
+	if (event->type == CRTX_CURL_ET_FINISHED) {
+		printf("curl finished, shutdown now\n");
+		
 		crtx_init_shutdown();
+	}
 	
 	if (event->type == CRTX_CURL_ET_PROGRESS) {
 		int r;
@@ -485,7 +492,6 @@ static char curl_event_handler(struct crtx_event *event, void *userdata, void **
 }
 
 int curl_main(int argc, char **argv) {
-	struct crtx_curl_listener clist;
 	int ret;
 	
 	
