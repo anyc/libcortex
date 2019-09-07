@@ -25,7 +25,13 @@ struct crtx_popen_listener {
 	int stdout;
 	int stderr;
 	
-	char *cmd;
+	char *filepath;
+	char *filename;
+	char **argv;
+	char **envp;
+	
+	char *user;
+	char *group;
 };
 
 struct crtx_listener_base *crtx_new_popen_listener(void *options);

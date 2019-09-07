@@ -119,6 +119,15 @@ static void fork_sigchld_cb(pid_t pid, int status, void *userdata) {
 	if (pid == lstnr->pid) {
 		lstnr->pid = 0;
 		crtx_stop_listener(&lstnr->base);
+		
+		struct crtx_event *new_event;
+		
+		crtx_create_event(&new_event);
+		
+		new_event->type = CRTX_FORK_EVT_CHILD_STOPPED;
+		crtx_event_set_raw_data(new_event, 'i', pid, sizeof(pid));
+		
+		crtx_add_event(lstnr->base.graph, new_event);
 	} else {
 		ERROR("received unexpected pid: %d != %d\n", pid, lstnr->pid);
 	}

@@ -10,6 +10,7 @@
 #include "signals.h"
 
 #define CRTX_FORK_EVT_FORK_DONE_PARENT (1)
+#define CRTX_FORK_EVT_CHILD_STOPPED (2)
 
 struct crtx_fork_listener {
 	struct crtx_listener_base base;
