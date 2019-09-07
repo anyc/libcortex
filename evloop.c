@@ -292,7 +292,8 @@ int crtx_evloop_disable_cb(struct crtx_evloop_callback *el_cb) {
 		return 0;
 	
 	el_cb->active = 0;
-	el_cb->fd_entry->evloop->mod_fd(el_cb->fd_entry->evloop, el_cb->fd_entry);
+	if (el_cb->fd_entry->evloop)
+		el_cb->fd_entry->evloop->mod_fd(el_cb->fd_entry->evloop, el_cb->fd_entry);
 	
 	return 0;
 }

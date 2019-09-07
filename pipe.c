@@ -43,6 +43,8 @@ static void shutdown_listener(struct crtx_listener_base *lbase) {
 	
 	lstnr = (struct crtx_pipe_listener *) lbase;
 	
+	VDBG("closing %d %d\n", lstnr->fds[0], lstnr->fds[1]);
+	
 	close(lstnr->fds[0]);
 	close(lstnr->fds[1]);
 }

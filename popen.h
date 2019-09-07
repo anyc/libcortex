@@ -21,6 +21,10 @@ struct crtx_popen_listener {
 	struct crtx_pipe_listener stdout_lstnr;
 	struct crtx_pipe_listener stderr_lstnr;
 	
+	int stdin;
+	int stdout;
+	int stderr;
+	
 	char *cmd;
 };
 

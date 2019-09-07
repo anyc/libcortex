@@ -26,17 +26,29 @@ void reinit_cb(void *reinit_cb_data) {
 	
 	plstnr = (struct crtx_popen_listener *) reinit_cb_data;
 	
-	printf("exec %s\n", plstnr->cmd);
+	printf("exec %s (%d %d %d)\n", plstnr->cmd, plstnr->stdin, plstnr->stdout, plstnr->stderr);
 	
-	dup2(plstnr->stdin_lstnr.fds[0], STDIN_FILENO);
+	rv = dup2(plstnr->stdin, STDIN_FILENO);
+	if (rv == -1) {
+		ERROR("dup2(stdin) failed: %s\n", strerror(errno));
+		exit(1);
+	}
 // 	close(plstnr->stdin_lstnr.fds[0]);
 // 	close(plstnr->stdin_lstnr.fds[1]);
 	
-	dup2(plstnr->stdout_lstnr.fds[1], STDOUT_FILENO);
+	rv = dup2(plstnr->stdout, STDOUT_FILENO);
+	if (rv == -1) {
+		ERROR("dup2(stdout) failed: %s\n", strerror(errno));
+		exit(1);
+	}
 // 	close(plstnr->stdout_lstnr.fds[0]);
 // 	close(plstnr->stdout_lstnr.fds[1]);
 	
-	dup2(plstnr->stderr_lstnr.fds[1], STDERR_FILENO);
+	rv = dup2(plstnr->stderr, STDERR_FILENO);
+	if (rv == -1) {
+		ERROR("dup2(stderr) failed: %s\n", strerror(errno));
+		exit(1);
+	}
 // 	close(plstnr->stderr_lstnr.fds[0]);
 // 	close(plstnr->stderr_lstnr.fds[1]);
 	
@@ -46,6 +58,22 @@ void reinit_cb(void *reinit_cb_data) {
 	}
 	
 	crtx_init_shutdown();
+}
+
+static char pipe_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_pipe_listener *lstnr;
+	ssize_t r;
+	char buf[256];
+	
+	lstnr = (struct crtx_pipe_listener *) userdata;
+	
+	r = read(lstnr->fds[0], buf, sizeof(buf)-1);
+	if (r < 0) {
+		ERROR("read from signal selfpipe %d failed: %s\n", lstnr->fds[0], strerror(r));
+		return r;
+	}
+	buf[r] = 0;
+	printf("PIPE: %s\n", buf);
 }
 
 static char start_listener(struct crtx_listener_base *listener) {
@@ -62,6 +90,9 @@ static char start_listener(struct crtx_listener_base *listener) {
 		ERROR("starting writequeue listener failed\n");
 		return rv;
 	}
+	// preserve fd as it would be closed by the after_fork_shutdown otherwise
+	plstnr->stdin = plstnr->stdin_lstnr.fds[0];
+	plstnr->stdin_lstnr.fds[0] = 0;
 	
 	plstnr->stdin_wq_lstnr.write_fd = plstnr->stdin_lstnr.fds[1];
 // 	plstnr->stdin_wq_lstnr.write = &wq_write;
@@ -76,12 +107,16 @@ static char start_listener(struct crtx_listener_base *listener) {
 		ERROR("starting writequeue listener failed\n");
 		return rv;
 	}
+	plstnr->stdout = plstnr->stdout_lstnr.fds[1];
+	plstnr->stdout_lstnr.fds[1] = 0;
 	
 	rv = crtx_start_listener(&plstnr->stderr_lstnr.base);
 	if (rv) {
 		ERROR("starting writequeue listener failed\n");
 		return rv;
 	}
+	plstnr->stderr = plstnr->stderr_lstnr.fds[1];
+	plstnr->stderr_lstnr.fds[1] = 0;
 	
 	rv = crtx_start_listener(&plstnr->fork_lstnr.base);
 	if (rv) {
@@ -124,17 +159,32 @@ struct crtx_listener_base *crtx_new_popen_listener(void *options) {
 		return 0;
 	}
 	
-	rv = crtx_create_listener("writequeue", &plstnr->stdin_lstnr);
+	plstnr->stdin_lstnr.fd_event_handler = pipe_event_handler;
+	plstnr->stdin_lstnr.fd_event_handler_data = &plstnr->stdin_lstnr;
+	
+	rv = crtx_create_listener("pipe", &plstnr->stdin_lstnr);
+	if (rv) {
+		ERROR("create_listener(pipe) failed\n");
+		return 0;
+	}
+	
+	rv = crtx_create_listener("writequeue", &plstnr->stdin_wq_lstnr);
 	if (rv) {
 		ERROR("create_listener(writequeue) failed\n");
 		return 0;
 	}
+	
+	plstnr->stdout_lstnr.fd_event_handler = pipe_event_handler;
+	plstnr->stdout_lstnr.fd_event_handler_data = &plstnr->stdout_lstnr;
 	
 	rv = crtx_create_listener("pipe", &plstnr->stdout_lstnr);
 	if (rv) {
 		ERROR("create_listener(pipe) failed\n");
 		return 0;
 	}
+	
+	plstnr->stderr_lstnr.fd_event_handler = pipe_event_handler;
+	plstnr->stderr_lstnr.fd_event_handler_data = &plstnr->stderr_lstnr;
 	
 	rv = crtx_create_listener("pipe", &plstnr->stderr_lstnr);
 	if (rv) {
@@ -217,16 +267,18 @@ int popen_main(int argc, char **argv) {
 	
 	crtx_loop();
 	
+	crtx_finish();
+	
 	return 0;
 }
 
 // CRTX_TEST_MAIN(popen_main);
 int main(int argc, char **argv) {
 	int i;
-	crtx_init();
+// 	crtx_init();
 // 	crtx_handle_std_signals();
 	i = popen_main(argc, argv);
-	crtx_finish();
+// 	crtx_finish();
 	return i;
 }
 #endif

@@ -45,7 +45,7 @@ static char do_fork(struct crtx_event *event, void *userdata, void **sessiondata
 		exit(1);
 	} else 
 	if (flstnr->pid == 0) {
-		DBG("child shutting down\n");
+		DBG("child shutdown after fork\n");
 		
 		crtx_root->reinit_after_shutdown = 1;
 		crtx_root->reinit_cb = &reinit_cb;

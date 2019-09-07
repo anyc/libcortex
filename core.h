@@ -141,6 +141,7 @@ struct crtx_listener_base {
 	struct crtx_ll ll;
 	
 	const char *id;
+	char *name;
 	
 	MUTEX_TYPE state_mutex;
 	enum crtx_listener_state state;
