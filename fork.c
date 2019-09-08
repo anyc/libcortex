@@ -12,6 +12,11 @@
 // #include <sys/types.h>
 #include <sys/wait.h>
 
+// getpwname
+#include <sys/types.h>
+#include <pwd.h>
+#include <grp.h>
+
 #include "intern.h"
 #include "core.h"
 #include "fork.h"
@@ -24,10 +29,78 @@
 
 static void reinit_cb(void *reinit_cb_data) {
 	struct crtx_fork_listener *flstnr;
+	int rv;
+	
 	
 	flstnr = (struct crtx_fork_listener *) reinit_cb_data;
 	
 	DBG("calling reinit_cb()\n");
+	
+	if (flstnr->group) {
+		struct group grp;
+		struct group *p_grp;
+		char *buf;
+		long bufsize;
+		
+		bufsize = sysconf(_SC_GETGR_R_SIZE_MAX);
+		if (bufsize == -1)
+			bufsize = 1024;
+		
+		buf = calloc(1, bufsize);
+		
+		rv = getgrnam_r(flstnr->group, &grp, buf, bufsize, &p_grp);
+		if (rv != 0 || p_grp == 0) {
+			ERROR("getgrpnam_r(%s) failed: %s\n", flstnr->group, strerror(errno));
+			exit(1);
+		}
+		
+		DBG("change group to %s (%d)\n", flstnr->group, grp.gr_gid);
+		
+		rv = setgid(grp.gr_gid);
+		if (rv == -1) {
+			ERROR("setgid(%d) failed: %s\n", grp.gr_gid, strerror(errno));
+			exit(1);
+		}
+		
+		free(buf);
+	}
+	
+	if (flstnr->user) {
+		struct passwd pw;
+		struct passwd *p_pw;
+		char *buf;
+		long bufsize;
+		
+		bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
+		if (bufsize == -1)
+			bufsize = 1024;
+		
+		buf = calloc(1, bufsize);
+		
+		rv = getpwnam_r(flstnr->user, &pw, buf, bufsize, &p_pw);
+		if (rv != 0 || p_pw == 0) {
+			ERROR("getpwnam_r(%s) failed: %s\n", flstnr->user, strerror(errno));
+			exit(1);
+		}
+		
+		DBG("change user to %s (%d %d)\n", flstnr->user, pw.pw_uid, pw.pw_gid);
+		
+		rv = setuid(pw.pw_uid);
+		if (rv == -1) {
+			ERROR("setuid(%d) failed: %s\n", pw.pw_uid, strerror(errno));
+			exit(1);
+		}
+		
+		if (!flstnr->group) {
+			rv = setgid(pw.pw_gid);
+			if (rv == -1) {
+				ERROR("setgid(%d) failed: %s\n", pw.pw_gid, strerror(errno));
+				exit(1);
+			}
+		}
+		
+		free(buf);
+	}
 	
 	flstnr->reinit_cb(flstnr->reinit_cb_data);
 }

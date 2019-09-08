@@ -6,6 +6,9 @@
  *
  */
 
+#define CRTX_READ_END (0)
+#define CRTX_WRITE_END (1)
+
 struct crtx_pipe_listener {
 	struct crtx_listener_base base;
 	

@@ -25,16 +25,25 @@ struct crtx_popen_listener {
 	int stdout;
 	int stderr;
 	
+	void (*stdin_cb)(int fd, void *userdata);
+	void (*stdout_cb)(int fd, void *userdata);
+	void (*stderr_cb)(int fd, void *userdata);
+	
+	void *stdin_cb_data;
+	void *stdout_cb_data;
+	void *stderr_cb_data;
+	
 	char *filepath;
 	char *filename;
 	char **argv;
 	char **envp;
 	
-	char *user;
-	char *group;
+	void (*pre_exec)(struct crtx_popen_listener *plstnr, void *pre_exec_userdata);
+	void *pre_exec_userdata;
 };
 
 struct crtx_listener_base *crtx_new_popen_listener(void *options);
+void crtx_popen_clear_lstnr(struct crtx_popen_listener *lstnr);
 
 void crtx_popen_init();
 void crtx_popen_finish();

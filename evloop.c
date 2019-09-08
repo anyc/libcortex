@@ -156,6 +156,9 @@ void crtx_evloop_callback(struct crtx_evloop_callback *el_cb) {
 	if (el_cb->graph || el_cb->event_handler) {
 		crtx_create_event(&event);
 		
+		if (el_cb->fd_entry)
+			event->origin = el_cb->fd_entry->listener;
+		
 		crtx_event_set_raw_data(event, 'p', el_cb, sizeof(el_cb), CRTX_DIF_DONT_FREE_DATA);
 		
 		if (el_cb->fd_entry && el_cb->fd_entry->listener && el_cb->fd_entry->listener->autolock_source)

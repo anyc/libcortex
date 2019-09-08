@@ -20,6 +20,9 @@ struct crtx_fork_listener {
 	
 	pid_t pid;
 	
+	char *user;
+	char *group;
+	
 	void (*reinit_cb)(void *cb_data);
 	void *reinit_cb_data;
 };

@@ -22,7 +22,7 @@ static char pipe_fd_event_handler(struct crtx_event *event, void *userdata, void
 // 	printf("fd %d %d\n", el_cb->fd_entry->fd, lstnr->fds[0]);
 	
 // 	nevent = crtx_create_event(lstnr->event_type);
-	crtx_event_set_raw_data(event, 'i', lstnr->fds[0], sizeof(int), 0);
+	crtx_event_set_raw_data(event, 'i', lstnr->fds[CRTX_READ_END], sizeof(int), 0);
 	return lstnr->fd_event_handler(event, lstnr->fd_event_handler_data, 0);
 	
 // 	crtx_add_event(lstnr->base.graph, nevent);
@@ -43,10 +43,12 @@ static void shutdown_listener(struct crtx_listener_base *lbase) {
 	
 	lstnr = (struct crtx_pipe_listener *) lbase;
 	
-	VDBG("closing %d %d\n", lstnr->fds[0], lstnr->fds[1]);
+	DBG("closing %d %d\n", lstnr->fds[CRTX_READ_END], lstnr->fds[CRTX_WRITE_END]);
 	
-	close(lstnr->fds[0]);
-	close(lstnr->fds[1]);
+	if (lstnr->fds[CRTX_READ_END] >= 0)
+		close(lstnr->fds[CRTX_READ_END]);
+	if (lstnr->fds[CRTX_WRITE_END] >= 0)
+		close(lstnr->fds[CRTX_WRITE_END]);
 }
 
 struct crtx_listener_base *crtx_new_pipe_listener(void *options) {
@@ -62,10 +64,10 @@ struct crtx_listener_base *crtx_new_pipe_listener(void *options) {
 		return 0;
 	}
 	
-	VDBG("pipe fds: %d %d\n", lstnr->fds[0], lstnr->fds[1]);
+	VDBG("pipe fds: %d %d\n", lstnr->fds[CRTX_READ_END], lstnr->fds[CRTX_WRITE_END]);
 	
 	crtx_evloop_init_listener(&lstnr->base,
-						lstnr->fds[0],
+							  lstnr->fds[CRTX_READ_END],
 						EVLOOP_READ,
 						0,
 						&pipe_fd_event_handler, lstnr,
