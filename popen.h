@@ -37,6 +37,7 @@ struct crtx_popen_listener {
 	char *filename;
 	char **argv;
 	char **envp;
+	char *chdir;
 	
 	void (*pre_exec)(struct crtx_popen_listener *plstnr, void *pre_exec_userdata);
 	void *pre_exec_userdata;

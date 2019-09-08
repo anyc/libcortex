@@ -16,6 +16,8 @@ include $(libcrtx_dir)/Makefile.modules
 # LDLIBS_dynamic_evdev=$(shell pkg-config --libs ncurses librrd)
 DEPS_dynamic_evdev=evdev udev
 
+DEPS_forked_curl=curl
+
 CFLAGS_netif=
 LDLIBS_netif=
 DEPS_netif=nl_libnl

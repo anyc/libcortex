@@ -67,6 +67,13 @@ void reinit_cb(void *reinit_cb_data) {
 		}
 	}
 	
+	if (plstnr->chdir) {
+		rv = chdir(plstnr->chdir);
+		if (rv < 0) {
+			ERROR("chdir to \"%s\" failed: %s\n", plstnr->chdir, strerror(errno));
+		}
+	}
+	
 	if (plstnr->pre_exec)
 		plstnr->pre_exec(plstnr, plstnr->pre_exec_userdata);
 	
@@ -267,6 +274,8 @@ void crtx_popen_clear_lstnr(struct crtx_popen_listener *lstnr) {
 	lstnr->stdin = -1;
 	lstnr->stdout = -1;
 	lstnr->stderr = -1;
+	
+	lstnr->chdir = "/";
 }
 
 void crtx_popen_init() {
@@ -357,7 +366,7 @@ int popen_main(int argc, char **argv) {
 	plist.stderr = STDERR_FILENO;
 	
 	plist.filepath = "/bin/sh";
-	plist.argv = (char*[]) {plist.filepath, "-c", "id; echo stdout_test; echo stderr_test >&2;", 0};
+	plist.argv = (char*[]) {plist.filepath, "-c", "id; echo stdout_test; echo stderr_test >&2; pwd;", 0};
 // 	plist.filename = "id";
 	if (getuid() == 0) {
 		plist.fork_lstnr.user = "nobody";

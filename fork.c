@@ -34,8 +34,6 @@ static void reinit_cb(void *reinit_cb_data) {
 	
 	flstnr = (struct crtx_fork_listener *) reinit_cb_data;
 	
-	DBG("calling reinit_cb()\n");
-	
 	if (flstnr->group) {
 		struct group grp;
 		struct group *p_grp;
@@ -101,6 +99,8 @@ static void reinit_cb(void *reinit_cb_data) {
 		
 		free(buf);
 	}
+	
+	DBG("calling reinit_cb()\n");
 	
 	flstnr->reinit_cb(flstnr->reinit_cb_data);
 }

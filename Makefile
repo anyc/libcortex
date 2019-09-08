@@ -53,7 +53,7 @@ STATIC_MODULES+=fanotify fork inotify netlink_raw nl_route_raw uevents socket_ra
 DYN_MODULES+=avahi can curl evdev evloop_qt libvirt netlink_ge nl_libnl nf_queue \
 	pulseaudio readline sdbus sip udev v4l xcb_randr sdbus_notifications
 
-LAYER2_MODULES?=dynamic_evdev netif
+LAYER2_MODULES?=dynamic_evdev forked_curl netif
 
 DEFAULT_EVLOOP=epoll
 
