@@ -9,8 +9,9 @@
 #include "core.h"
 #include "signals.h"
 
-#define CRTX_FORK_EVT_FORK_DONE_PARENT (1)
-#define CRTX_FORK_EVT_CHILD_STOPPED (2)
+#define CRTX_EVENT_TYPE_FAMILY_FORK (600)
+#define CRTX_FORK_ET_FORK_DONE_PARENT (CRTX_EVENT_TYPE_FAMILY_FORK + 1)
+#define CRTX_FORK_ET_CHILD_STOPPED (CRTX_EVENT_TYPE_FAMILY_FORK + 2)
 
 struct crtx_fork_listener {
 	struct crtx_listener_base base;

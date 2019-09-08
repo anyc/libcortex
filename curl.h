@@ -30,20 +30,22 @@ struct crtx_curl_listener {
 	void *header_cb_data;
 	crtx_CURLOPT_WRITEFUNCTION *write_callback;
 	void *write_cb_data;
-	FILE *write_fd;
+	FILE *write_file_ptr;
+	int write_fd;
 	
 	crtx_curl_done_cb *done_callback;
 	void *done_cb_data;
 };
 
-#define CRTX_CURL_ET_FINISHED (1)
-#define CRTX_CURL_ET_PROGRESS (2)
-#define CRTX_CURL_ET_HEADER (3)
+#define CRTX_EVENT_TYPE_FAMILY_CURL (500)
+#define CRTX_CURL_ET_FINISHED (CRTX_EVENT_TYPE_FAMILY_CURL + 1)
+#define CRTX_CURL_ET_PROGRESS (CRTX_EVENT_TYPE_FAMILY_CURL + 2)
+#define CRTX_CURL_ET_HEADER (CRTX_EVENT_TYPE_FAMILY_CURL + 3)
 
 struct crtx_listener_base *crtx_new_curl_listener(void *options);
 
-int crtx_curl_progress_callback(struct crtx_curl_listener *clist, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
-size_t crtx_curl_header_callback(char *buffer, size_t size, size_t nitems, struct crtx_curl_listener *clist);
+int crtx_curl_progress_callback(void *userdata, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
+size_t crtx_curl_header_callback(char *buffer, size_t size, size_t nitems, void *userdata);
 
 void crtx_curl_init();
 void crtx_curl_finish();

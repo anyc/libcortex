@@ -48,6 +48,8 @@ typedef void (*crtx_raw_to_dict_t)(struct crtx_event *event, struct crtx_dict_it
 #define CRTX_EVENT_TYPE_VARTYPE unsigned int
 #endif
 
+#define CRTX_EVENT_TYPE_FAMILY_MAX (2)
+
 struct crtx_event {
 	CRTX_EVENT_TYPE_VARTYPE type;
 	char *description;

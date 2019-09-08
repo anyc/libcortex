@@ -91,7 +91,7 @@ $(local_mk):
 	cp Makefile.local.skel $(local_mk)
 
 clean:
-	$(MAKE) -C layer2 clean
+	$(MAKE) -C layer2 clean LAYER2_MODULES="$(LAYER2_MODULES)"
 	rm -rf *.o $(APP) core_modules.h $(TESTS) $(SHAREDLIB) libcrtx*.so*
 
 debug:

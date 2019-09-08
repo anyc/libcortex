@@ -28,7 +28,8 @@ static void reinit_cb(void *reinit_cb_data) {
 		return;
 	}
 	
-	fc_lstnr->reinit_cb(fc_lstnr->reinit_cb_data);
+	if (fc_lstnr->reinit_cb)
+		fc_lstnr->reinit_cb(fc_lstnr->reinit_cb_data);
 	
 	ret = crtx_start_listener(&fc_lstnr->curl_lstnr.base);
 	if (ret) {
@@ -65,13 +66,13 @@ struct crtx_listener_base *crtx_new_forked_curl_listener(void *options) {
 	fc_lstnr->fork_lstnr.reinit_cb = &reinit_cb;
 	fc_lstnr->fork_lstnr.reinit_cb_data = fc_lstnr;
 	
+	fc_lstnr->fork_lstnr.base.graph = fc_lstnr->base.graph;
+	
 	ret = crtx_create_listener("fork", &fc_lstnr->fork_lstnr);
 	if (ret) {
 		ERROR("create_listener(fork) failed\n");
 		return 0;
 	}
-	
-// 	crtx_create_task(fc_lstnr->base.graph, 0, "udev_test", udev_test_handler, fc_lstnr);
 	
 // 	fc_lstnr->base.shutdown = &shutdown_listener;
 	fc_lstnr->base.start_listener = &start_listener;
@@ -93,64 +94,30 @@ void crtx_forked_curl_finish() {
 struct crtx_forked_curl_listener fc_lstnr;
 size_t last_dlnow = 0;
 
-static char curl_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	if (event->type == CRTX_CURL_ET_FINISHED) {
-		printf("curl finished, shutdown now\n");
+static char fork_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	if (event->type == CRTX_FORK_ET_CHILD_STOPPED) {
+		printf("child done with rv %d, shutdown parent\n", event->data.int32);
 		
 		crtx_init_shutdown();
+		
+		return 0;
 	}
 	
-	if (event->type == CRTX_CURL_ET_PROGRESS) {
-		int r;
-		int64_t dlnow, dltotal;
+	if (event->type == CRTX_CURL_ET_FINISHED) {
+		printf("curl finished, shutdown child now\n");
 		
-		r = crtx_event_get_value_by_key(event, "dlnow", 'I', &dlnow, sizeof(dlnow));
-		if (r < 0) {
-			fprintf(stderr, "crtx_event_get_value_by_key() failed: %d\n", r);
-			return r;
-		}
-		r = crtx_event_get_value_by_key(event, "dltotal", 'I', &dltotal, sizeof(dltotal));
-		if (r < 0) {
-			fprintf(stderr, "crtx_event_get_value_by_key() failed: %d\n", r);
-			return r;
-		}
+		crtx_init_shutdown();
 		
-		if (last_dlnow != dlnow) {
-			fprintf(stderr, "progress: %"PRId64" / %"PRId64"\n", dlnow, dltotal);
-			last_dlnow = dlnow;
-		}
+		return 0;
 	}
 	
-	if (event->type == CRTX_CURL_ET_HEADER) {
-		int r;
-		char *s;
-		
-		r = crtx_event_get_value_by_key(event, "line", 's', &s, sizeof(s));
-		if (r < 0) {
-			fprintf(stderr, "crtx_event_get_value_by_key() failed: %d\n", r);
-			return r;
-		}
-		
-		printf("H: %s\n", s);
-	}
+	ERROR("unexpected event: %d\n", event->type);
 	
 	return 0;
 }
 
 static void reinit_cb(void *reinit_cb_data) {
-	crtx_create_task(fc_lstnr.curl_lstnr.base.graph, 0, "curl_test", &curl_event_handler, 0);
-}
-
-static char fork_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	if (event->type == CRTX_FORK_EVT_CHILD_STOPPED) {
-		printf("child done, shutdown parent\n");
-		
-		crtx_init_shutdown();
-	} else {
-		printf("unexpected event\n");
-	}
-	
-	return 0;
+	crtx_create_task(fc_lstnr.curl_lstnr.base.graph, 0, "fork_event_handler", &fork_event_handler, 0);
 }
 
 int fcurl_main(int argc, char **argv) {
@@ -159,19 +126,11 @@ int fcurl_main(int argc, char **argv) {
 	
 	memset(&fc_lstnr, 0, sizeof(struct crtx_forked_curl_listener));
 	
-// 	clist.url = argv[1];
-// 	clist.write_fd = stdout;
-// 	clist.progress_callback = &crtx_curl_progress_callback;
-// 	clist.progress_cb_data = &clist;
-// 	
-// 	clist.header_callback = &crtx_curl_header_callback;
-// 	clist.header_cb_data = &clist;
-	
 	fc_lstnr.reinit_cb = &reinit_cb;
 	fc_lstnr.reinit_cb_data = &fc_lstnr;
 	
 	fc_lstnr.curl_lstnr.url = argv[1];
-	fc_lstnr.curl_lstnr.write_fd = stdout;
+	fc_lstnr.curl_lstnr.write_file_ptr = stdout;
 	
 	ret = crtx_create_listener("forked_curl", &fc_lstnr);
 	if (ret) {
@@ -179,10 +138,7 @@ int fcurl_main(int argc, char **argv) {
 		return 0;
 	}
 	
-// 	curl_easy_setopt(clist.easy, CURLOPT_NOBODY, 1);
-// 	curl_easy_setopt(clist.easy, CURLOPT_VERBOSE, 1L);
-	
-	crtx_create_task(fc_lstnr.fork_lstnr.base.graph, 0, "fork_event_handler", &fork_event_handler, 0);
+	crtx_create_task(fc_lstnr.base.graph, 0, "fork_event_handler", &fork_event_handler, 0);
 	
 	ret = crtx_start_listener(&fc_lstnr.base);
 	if (ret) {

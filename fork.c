@@ -131,7 +131,7 @@ static char do_fork(struct crtx_event *event, void *userdata, void **sessiondata
 		DBG("fork done\n");
 		
 // 		crtx_create_event(&event);
-// 		event.type = CRTX_FORK_EVT_FORK_DONE_PARENT;
+// 		event.type = CRTX_FORK_ET_FORK_DONE_PARENT;
 // 		
 // 		crtx_add_event(fork_lstnr.base.graph, event);
 	}
@@ -197,8 +197,8 @@ static void fork_sigchld_cb(pid_t pid, int status, void *userdata) {
 		
 		crtx_create_event(&new_event);
 		
-		new_event->type = CRTX_FORK_EVT_CHILD_STOPPED;
-		crtx_event_set_raw_data(new_event, 'i', pid, sizeof(pid));
+		new_event->type = CRTX_FORK_ET_CHILD_STOPPED;
+		crtx_event_set_raw_data(new_event, 'i', status, sizeof(status));
 		
 		crtx_add_event(lstnr->base.graph, new_event);
 	} else {
@@ -244,6 +244,8 @@ struct crtx_fork_listener fork_lstnr;
 struct crtx_timer_listener tlist;
 struct crtx_listener_base *blist;
 int forked = 0;
+
+int start_timer();
 
 void reinit_cb(void *reinit_cb_data) {
 	printf("child reinit_cb\n");

@@ -291,7 +291,7 @@ void crtx_popen_finish() {
 char buffer[BUF_SIZE];
 
 static char popen_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	if (event->type == CRTX_FORK_EVT_CHILD_STOPPED) {
+	if (event->type == CRTX_FORK_ET_CHILD_STOPPED) {
 		printf("child done, shutdown parent\n");
 		crtx_init_shutdown();
 	} else {

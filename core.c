@@ -2115,11 +2115,11 @@ void crtx_event_get_payload(struct crtx_event *event, char *id, void **raw_point
 				di = crtx_get_item_by_idx(event->data.dict, 0);
 				*raw_pointer = di->pointer;
 			} else {
-				ERROR("unknown event dict %p\n", event->data.dict);
+				ERROR("unexpected event dict %p\n", event->data.dict);
 				*raw_pointer = 0;
 			}
 		} else {
-			ERROR("unknown event data type %d\n", event->data.type);
+			ERROR("unexpected event data type %d\n", event->data.type);
 			*raw_pointer = 0;
 		}
 	}

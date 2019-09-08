@@ -41,16 +41,21 @@ static void init_curl();
 
 
 static size_t write_callback(char *ptr, size_t size, size_t nmemb, struct crtx_curl_listener *clist) {
+	if (clist->write_file_ptr)
+		return fwrite(ptr, size, nmemb, clist->write_file_ptr);
 	if (clist->write_fd)
-		return fwrite(ptr, size, nmemb, clist->write_fd);
+		return write(clist->write_fd, ptr, size * nmemb);
 	
 	return size * nmemb;
 }
 
-int crtx_curl_progress_callback(struct crtx_curl_listener *clist, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
+int crtx_curl_progress_callback(void *userdata, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
 	struct crtx_event *user_event;
 	struct crtx_dict *dict;
+	struct crtx_curl_listener *clist;
 	
+	
+	clist = (struct crtx_curl_listener *) userdata;
 	
 	crtx_create_event(&user_event);
 	user_event->type = CRTX_CURL_ET_PROGRESS;
@@ -71,10 +76,14 @@ int crtx_curl_progress_callback(struct crtx_curl_listener *clist, curl_off_t dlt
 	return 0;
 }
 
-size_t crtx_curl_header_callback(char *buffer, size_t size, size_t nitems, struct crtx_curl_listener *clist) {
+size_t crtx_curl_header_callback(char *buffer, size_t size, size_t nitems, void *userdata) {
 	struct crtx_event *user_event;
 	struct crtx_dict *dict;
 	char *string;
+	struct crtx_curl_listener *clist;
+	
+	
+	clist = (struct crtx_curl_listener *) userdata;
 	
 	crtx_create_event(&user_event);
 	user_event->type = CRTX_CURL_ET_HEADER;
@@ -498,7 +507,7 @@ int curl_main(int argc, char **argv) {
 	memset(&clist, 0, sizeof(struct crtx_curl_listener));
 	
 	clist.url = argv[1];
-	clist.write_fd = stdout;
+	clist.write_file_ptr = stdout;
 	clist.progress_callback = &crtx_curl_progress_callback;
 	clist.progress_cb_data = &clist;
 	
