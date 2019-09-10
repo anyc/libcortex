@@ -69,10 +69,12 @@ char CRTX_DLL_FCT(unlink_data)(CRTX_DLL_TYPE **head, void *data) {
 	
 	for (i=*head; i && i->data != data; i = i->next) {}
 	if (i) {
-		return (CRTX_DLL_FCT(unlink)(head, i) == 0);
+// 		return (CRTX_DLL_FCT(unlink)(head, i) == 0);
+		CRTX_DLL_FCT(unlink)(head, i);
+		return i;
 	} else {
 // 		printf("unlink_data called with an unknown item\n");
-		return 1;
+		return 0;
 	}
 }
 
