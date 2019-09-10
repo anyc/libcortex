@@ -183,9 +183,15 @@ layer2_tests: $(SHAREDLIB)
 
 install:
 	$(INSTALL) -m 755 -d $(DESTDIR)$(libdir)
+	$(INSTALL) -m 755 -d $(DESTDIR)$(plugindir)
+	
+	$(INSTALL) -m 755 libcrtx.so* $(DESTDIR)$(libdir)
+	$(INSTALL) -m 755 libcrtx_*.so* $(DESTDIR)$(plugindir)
+	
+	# devel
+	
 	$(INSTALL) -m 755 -d $(DESTDIR)$(includedir)/cortex/
 	$(INSTALL) -m 755 -d $(DESTDIR)$(includedir)/cortex/layer2/
-	$(INSTALL) -m 755 -d $(DESTDIR)$(plugindir)
 	
 	$(INSTALL) -m 755 libcrtx.so $(DESTDIR)$(libdir)
 	$(INSTALL) -m 755 libcrtx_*.so $(DESTDIR)$(plugindir)
@@ -193,5 +199,7 @@ install:
 	$(INSTALL) -m 644 *.h $(DESTDIR)$(includedir)/cortex/
 	ln -s cortex $(DESTDIR)$(includedir)/crtx
 	$(INSTALL) -m 644 layer2/*.h $(DESTDIR)$(includedir)/cortex/layer2/
+	
+
 
 -include $(local_mk_rules)
