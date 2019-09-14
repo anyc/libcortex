@@ -411,13 +411,13 @@ struct crtx_event_loop* crtx_get_main_event_loop() {
 		
 		DBG("setup event loop %s (%p)\n", chosen_evloop, crtx_root->event_loop);
 		
-		if (crtx_root->detached_event_loop) {
-			ret = crtx_evloop_start(crtx_root->event_loop);
-			if (ret) {
-				ERROR("starting epoll listener failed\n");
-				return 0;
-			}
-		}
+// 		if (crtx_root->detached_event_loop) {
+// 			ret = crtx_evloop_start(crtx_root->event_loop);
+// 			if (ret) {
+// 				ERROR("starting epoll listener failed\n");
+// 				return 0;
+// 			}
+// 		}
 	}
 	
 	return crtx_root->event_loop;

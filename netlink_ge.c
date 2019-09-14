@@ -265,7 +265,7 @@ int netlink_main(int argc, char **argv) {
 	
 	r = crtx_start_listener(lbase);
 	if (r) {
-		ERROR("starting netlink_raw listener failed\n");
+		ERROR("starting genl listener failed\n");
 		return 1;
 	}
 	

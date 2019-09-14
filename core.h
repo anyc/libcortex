@@ -229,9 +229,12 @@ struct crtx_root {
 	void *reinit_cb_data;
 	
 	const char *chosen_event_loop;
-	char detached_event_loop;
+// 	char detached_event_loop;
 	struct crtx_event_loop *event_loop;
 	struct crtx_ll *event_loops;
+	
+	struct crtx_thread_job_description evloop_job;
+	struct crtx_thread *evloop_thread;
 	
 	enum crtx_processing_mode default_mode;
 	enum crtx_processing_mode force_mode;
@@ -352,5 +355,7 @@ void crtx_unlock_listener_source(struct crtx_listener_base *lbase);
 void crtx_trigger_event_processing(struct crtx_listener_base *lstnr);
 
 void crtx_shutdown_after_fork();
+
+struct crtx_thread * crtx_start_detached_event_loop();
 
 #endif

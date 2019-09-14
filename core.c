@@ -38,7 +38,7 @@ char *crtx_evt_inbox[] = { CRTX_EVT_INBOX, 0 };
 char *crtx_evt_outbox[] = { CRTX_EVT_OUTBOX, 0 };
 
 char crtx_verbosity = CRTX_VLEVEL_INFO;
-
+char crtx_pid_prefix = 0;
 
 char *crtx_stracpy(const char *str, size_t *str_length) {
 	char *r;
@@ -70,11 +70,13 @@ char *crtx_stracpy(const char *str, size_t *str_length) {
 
 void crtx_printf_va(char level, char const *format, va_list va) {
 	if (level == CRTX_VLEVEL_ERR) {
-		fprintf(stderr, "[%d] ", getpid());
+		if (crtx_pid_prefix)
+			fprintf(stderr, "[%d] ", getpid());
 		vfprintf(stderr, format, va);
 	} else {
 		if (level <= crtx_verbosity) {
-			fprintf(stdout, "[%d] ", getpid());
+			if (crtx_pid_prefix)
+				fprintf(stdout, "[%d] ", getpid());
 			vfprintf(stdout, format, va);
 			fflush(stdout);
 		}
@@ -1299,6 +1301,72 @@ void crtx_flush_events() {
 // 	return 0;
 // }
 
+
+void crtx_loop() {
+	if (!crtx_root->event_loop)
+		return;
+	
+	// the thread calling this either executes the event loop or becomes one of
+	// the worker threads in the thread pool
+	if (crtx_root->event_loop->listener) {
+		// 		crtx_epoll_main(crtx_root->event_loop.listener);
+		crtx_evloop_start(crtx_root->event_loop);
+	} else {
+		spawn_thread(0);
+	}
+	
+	DBG("crtx_loop() end\n");
+	
+	if (crtx_root->reinit_after_shutdown) {
+		crtx_finish();
+		
+		crtx_init();
+		
+		if (crtx_root->reinit_cb) {
+			crtx_root->reinit_cb(crtx_root->reinit_cb_data);
+			crtx_root->reinit_cb = 0;
+		}
+		
+		crtx_loop();
+	}
+}
+
+void crtx_loop_onetime() {
+	crtx_root->event_loop->onetime(crtx_root->event_loop);
+}
+
+static void *evloop_detached_main(void *data) {
+	// 	crtx_epoll_main(crtx_root->event_loop.listener);
+	
+	crtx_evloop_start(crtx_root->event_loop);
+	
+	return 0;
+}
+// 
+// struct crtx_thread * crtx_start_detached_event_loop() {
+// 	if (!crtx_root->event_loop.listener)
+// 		crtx_get_event_loop();
+// 	
+// 	if (!crtx_root->event_loop.listener) {
+// 		ERROR("no event loop registered\n");
+// 		return 0;
+// 	}
+// 	
+// 	return get_thread(event_loop_tmain, 0, 1);
+// }
+
+struct crtx_thread * crtx_start_detached_event_loop() {
+	if (!crtx_root->evloop_thread) {
+		crtx_root->evloop_thread = crtx_thread_assign_job(&crtx_root->evloop_job);
+		
+		// 		crtx_reference_signal(&crtx_root->evloop_thread->finished);
+		
+		crtx_thread_start_job(crtx_root->evloop_thread);
+	}
+	
+	return crtx_root->evloop_thread;
+}
+
 void crtx_init_shutdown() {
 	if (crtx_root->shutdown)
 		return;
@@ -1383,9 +1451,9 @@ static char handle_shutdown(struct crtx_event *event, void *userdata, void **ses
 	
 	crtx_init_shutdown();
 	
-	if (crtx_root->event_loop && crtx_root->event_loop->listener) {
-		crtx_evloop_stop(crtx_root->event_loop);
-	}
+// 	if (crtx_root->event_loop && crtx_root->event_loop->listener) {
+// 		crtx_evloop_stop(crtx_root->event_loop);
+// 	}
 	
 	return 1;
 }
@@ -1564,6 +1632,9 @@ int crtx_init() {
 	if (getenv("CRTX_VERBOSITY"))
 		crtx_verbosity = atoi(getenv("CRTX_VERBOSITY"));
 	
+	if (getenv("CRTX_PID_PREFIX"))
+		crtx_pid_prefix = atoi(getenv("CRTX_PID_PREFIX"));
+	
 // 	memset(crtx_root, 0, sizeof(struct crtx_root));
 	
 	DBG("initialized cortex (PID: %d)\n", getpid());
@@ -1576,6 +1647,8 @@ int crtx_init() {
 	if (crtx_root->event_loop)
 		crtx_root->event_loop->after_fork_close = 0;
 	crtx_root->reinit_after_shutdown = 0;
+	
+	crtx_root->evloop_job.fct = &evloop_detached_main;
 	
 	INIT_MUTEX(crtx_root->graphs_mutex);
 	
@@ -1641,6 +1714,7 @@ int crtx_finish() {
 // 		free(it);
 // 	}
 	while (crtx_root->event_loops) {
+		crtx_evloop_stop((struct crtx_event_loop*) crtx_root->event_loops);
 		crtx_evloop_release((struct crtx_event_loop*) crtx_root->event_loops);
 	}
 	crtx_root->event_loop = 0;
@@ -1766,56 +1840,6 @@ char *get_username() {
 	// check if last char is \n
 // }
 
-void crtx_loop() {
-	if (!crtx_root->event_loop)
-		return;
-	
-	// the thread calling this either executes the event loop or becomes one of
-	// the worker threads in the thread pool
-	if (crtx_root->event_loop->listener) {
-// 		crtx_epoll_main(crtx_root->event_loop.listener);
-		crtx_evloop_start(crtx_root->event_loop);
-	} else {
-		spawn_thread(0);
-	}
-	
-	DBG("crtx_loop() end\n");
-	
-	if (crtx_root->reinit_after_shutdown) {
-		crtx_finish();
-		
-		crtx_init();
-		
-		if (crtx_root->reinit_cb) {
-			crtx_root->reinit_cb(crtx_root->reinit_cb_data);
-			crtx_root->reinit_cb = 0;
-		}
-		
-		crtx_loop();
-	}
-}
-
-void crtx_loop_onetime() {
-	crtx_root->event_loop->onetime(crtx_root->event_loop);
-}
-
-// static void *event_loop_tmain(void *data) {
-// 	crtx_epoll_main(crtx_root->event_loop.listener);
-// 	
-// 	return 0;
-// }
-// 
-// struct crtx_thread * crtx_start_detached_event_loop() {
-// 	if (!crtx_root->event_loop.listener)
-// 		crtx_get_event_loop();
-// 	
-// 	if (!crtx_root->event_loop.listener) {
-// 		ERROR("no event loop registered\n");
-// 		return 0;
-// 	}
-// 	
-// 	return get_thread(event_loop_tmain, 0, 1);
-// }
 
 // void crtx_init_notification_listeners(void **data) {
 // #ifdef TODO

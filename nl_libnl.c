@@ -170,9 +170,9 @@ struct crtx_libnl_callback libnl_callbacks[] = {
 	{ NL_CB_FINISH, NL_CB_CUSTOM, crtx_libnl_msg_end, 0},
 	{ 0 },
 };
+struct crtx_libnl_listener libnl;
 
 int libnl_main(int argc, char **argv) {
-	struct crtx_libnl_listener libnl;
 	struct crtx_listener_base *lbase;
 	struct crtx_libnl_callback *cbit;
 	int r;

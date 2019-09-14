@@ -596,6 +596,8 @@ struct crtx_listener_base *crtx_new_nl_route_raw_listener(void *options) {
 	
 	nlr_list = (struct crtx_nl_route_listener*) options;
 	
+	nlr_list->base.mode = CRTX_NO_PROCESSING_MODE;
+	
 	nlr_list->nl_listener.socket_protocol = NETLINK_ROUTE;
 	nlr_list->nl_listener.nl_family = AF_NETLINK;
 // 	nlr_list->nl_listener.nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
@@ -727,9 +729,9 @@ char crtx_get_own_ip_addresses() {
 	nlr_list.msg_done_cb = msg_done_cb;
 	nlr_list.msg_done_cb_data = &nlr_list;
 	
-	lbase = create_listener("nl_route", &nlr_list);
+	lbase = create_listener("nl_route_raw", &nlr_list);
 	if (!lbase) {
-		ERROR("create_listener(nl_route) failed\n");
+		ERROR("create_listener(nl_route_raw) failed\n");
 		exit(1);
 	}
 	
@@ -748,7 +750,7 @@ char crtx_get_own_ip_addresses() {
 	
 	ret = crtx_start_listener(lbase);
 	if (ret) {
-		ERROR("starting nl_route listener failed\n");
+		ERROR("starting nl_route_raw listener failed\n");
 		return 1;
 	}
 	
@@ -776,7 +778,7 @@ char crtx_get_own_ip_addresses() {
 	
 	crtx_free_listener(lbase);
 	
-	crtx_free_task(ip_cache_task);
+// 	crtx_free_task(ip_cache_task);
 	free_response_cache_task(ctask);
 	
 	return 1;
@@ -811,8 +813,7 @@ int netlink_raw_main(int argc, char **argv) {
 	
 	crtx_init_signal(&msg_done);
 	
-// 	crtx_start_detached_event_loop();
-	crtx_root->detached_event_loop = 1;
+	crtx_start_detached_event_loop();
 	
 	crtx_get_own_ip_addresses();
 	

@@ -346,8 +346,9 @@ static char udev_test_handler(struct crtx_event *event, void *userdata, void **s
 	return 0;
 }
 
+struct crtx_udev_listener ulist;
+
 int udev_main(int argc, char **argv) {
-	struct crtx_udev_listener ulist;
 	struct crtx_listener_base *lbase;
 	char ret;
 	
