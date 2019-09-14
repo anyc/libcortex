@@ -291,8 +291,8 @@ void crtx_popen_finish() {
 char buffer[BUF_SIZE];
 
 static char popen_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	if (event->type == CRTX_FORK_ET_CHILD_STOPPED) {
-		printf("child done, shutdown parent\n");
+	if (event->type == CRTX_FORK_ET_CHILD_STOPPED || event->type == CRTX_FORK_ET_CHILD_KILLED) {
+		printf("child done with rc %d, shutdown parent\n", event->data.int32);
 		crtx_init_shutdown();
 	} else {
 		printf("unexpected event\n");
@@ -366,7 +366,7 @@ int popen_main(int argc, char **argv) {
 	plist.stderr = STDERR_FILENO;
 	
 	plist.filepath = "/bin/sh";
-	plist.argv = (char*[]) {plist.filepath, "-c", "id; echo stdout_test; echo stderr_test >&2; pwd;", 0};
+	plist.argv = (char*[]) {plist.filepath, "-c", "id; echo stdout_test; echo stderr_test >&2; pwd; exit 1;", 0};
 // 	plist.filename = "id";
 	if (getuid() == 0) {
 		plist.fork_lstnr.user = "nobody";

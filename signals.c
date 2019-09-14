@@ -518,12 +518,20 @@ static char sigchild_event_handler(struct crtx_event *event, void *userdata, voi
 	
 	while (1) {
 		int status;
+		
 		pid_t pid = waitpid(-1, &status, WNOHANG);
 		if (pid <= 0) {
 			break;
 		}
 		
-		DBG("child %u finished with %d\n", pid, status);
+		if (WIFEXITED(status)) {
+			DBG("child %u finished with exit value %d\n", pid, WEXITSTATUS(status));
+		} else
+		if (WIFSIGNALED(status)) {
+			DBG("child %u got terminated by signal %d (%s coredump)\n",
+				pid, WTERMSIG(status), WCOREDUMP(status)?"with":"without"
+				);
+		}
 		
 		for (it=sigchld_cbs; it; it=it->next) {
 			data = (struct sigchld_cb_data *) it->data;

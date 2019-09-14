@@ -197,8 +197,14 @@ static void fork_sigchld_cb(pid_t pid, int status, void *userdata) {
 		
 		crtx_create_event(&new_event);
 		
-		new_event->type = CRTX_FORK_ET_CHILD_STOPPED;
-		crtx_event_set_raw_data(new_event, 'i', status, sizeof(status));
+		if (WIFEXITED(status)) {
+			new_event->type = CRTX_FORK_ET_CHILD_STOPPED;
+			crtx_event_set_raw_data(new_event, 'i', WEXITSTATUS(status), sizeof(status));
+		} else
+		if (WIFSIGNALED(status)) {
+			new_event->type = CRTX_FORK_ET_CHILD_KILLED;
+			crtx_event_set_raw_data(new_event, 'i', WTERMSIG(status), sizeof(status));
+		}
 		
 		crtx_add_event(lstnr->base.graph, new_event);
 	} else {
