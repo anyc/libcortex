@@ -94,6 +94,7 @@ static char timeout_event_handler(struct crtx_event *event, void *userdata, void
 static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evloop_fd *evloop_fd) {
 	MyQSocketNotifier *notifier;
 	struct crtx_evloop_callback *el_cb;
+	QMetaObject::Connection connection;
 	
 	for (el_cb=evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
 		if (!el_cb->active && el_cb->el_data) {
@@ -141,7 +142,11 @@ static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evl
 		
 		notifier = new MyQSocketNotifier(evloop_fd->fd, crtx_event_flags2qt_flags(el_cb->crtx_event_flags));
 		
-		notifier->connect(notifier, &MyQSocketNotifier::activated, notifier, &MyQSocketNotifier::socketEvent);
+		connection = notifier->connect(notifier, &MyQSocketNotifier::activated, notifier, &MyQSocketNotifier::socketEvent);
+		if (! (bool) connection) {
+			ERROR("connect() for MyQSocketNotifier failed\n");
+			return 1;
+		}
 		
 		notifier->el_cb = el_cb;
 		el_cb->el_data = notifier;

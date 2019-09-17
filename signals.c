@@ -40,12 +40,12 @@ struct sigchld_cb_data {
 
 static struct signal_map *signal_table = 0;
 static unsigned int n_signal_table_rows = 0;
-static struct crtx_signal_listener main_lstnr = { 0 };
+static struct crtx_signal_listener main_lstnr = { { { 0 } } };
 static char main_initialized = 0;
 static char main_started = 0;
 
 static int std_signals[] = {SIGTERM, SIGINT, 0};
-static struct crtx_signal_listener default_signal_lstnr = { 0 };
+static struct crtx_signal_listener default_signal_lstnr = { { { 0 } } };
 
 // static sigchld_cb *sigchld_cbs = 0;
 // static unsigned int n_sigchld_cbs 0 0;

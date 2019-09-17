@@ -64,7 +64,7 @@ char CRTX_DLL_FCT(unlink)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item) {
 	return 1;
 }
 
-char CRTX_DLL_FCT(unlink_data)(CRTX_DLL_TYPE **head, void *data) {
+CRTX_DLL_TYPE *CRTX_DLL_FCT(unlink_data)(CRTX_DLL_TYPE **head, void *data) {
 	CRTX_DLL_TYPE *i;
 	
 	for (i=*head; i && i->data != data; i = i->next) {}
