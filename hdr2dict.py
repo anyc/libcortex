@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python2
 
 #
 # Mario Kicherer (dev@kicherer.org) 2016

@@ -9,8 +9,9 @@
 #include "../nl_libnl.h"
 
 #define CRTX_NETCONF_INTF (1<<0)
-#define CRTX_NETCONF_IPV4_ADDR (1<<1)
-#define CRTX_NETCONF_IPV6_ADDR (1<<2)
+#define CRTX_NETCONF_NEIGH (1<<1)
+#define CRTX_NETCONF_IPV4_ADDR (1<<2)
+#define CRTX_NETCONF_IPV6_ADDR (1<<3)
 
 struct crtx_netconf_listener {
 	struct crtx_listener_base base;

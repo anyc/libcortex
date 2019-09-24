@@ -36,6 +36,22 @@ int crtx_netconf_query_interfaces(struct crtx_netconf_listener *netconf_lstnr) {
 	}
 	
 	if (
+		((netconf_lstnr->monitor_types & CRTX_NETCONF_NEIGH) != 0) &&
+		((netconf_lstnr->queried_types & CRTX_NETCONF_NEIGH) == 0)
+	)
+	{
+		r = nl_send_simple(netconf_lstnr->libnl_lstnr.sock, RTM_GETNEIGH, NLM_F_REQUEST | NLM_F_DUMP, &rt_hdr, sizeof(rt_hdr));
+		if (r < 0) {
+			ERROR("nl_send_simple failed: %d\n", r);
+			return 1;
+		}
+		
+		netconf_lstnr->queried_types |= CRTX_NETCONF_NEIGH;
+		
+		return 0;
+	}
+	
+	if (
 		((netconf_lstnr->monitor_types & CRTX_NETCONF_IPV4_ADDR) != 0 || (netconf_lstnr->monitor_types & CRTX_NETCONF_IPV6_ADDR) != 0) &&
 		((netconf_lstnr->queried_types & CRTX_NETCONF_IPV4_ADDR) == 0 && (netconf_lstnr->queried_types & CRTX_NETCONF_IPV6_ADDR) == 0)
 		)
@@ -56,14 +72,19 @@ int crtx_netconf_query_interfaces(struct crtx_netconf_listener *netconf_lstnr) {
 
 static char netconf_state_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_netconf_listener *netconf_lstnr;
-	// 	struct crtx_libnl_listener *libnl;
 	int r;
 	
 	netconf_lstnr = (struct crtx_netconf_listener *) userdata;
-	// 	libnl = (struct crtx_libnl_listener *) event->origin;
 	
 	if (event->data.type == 'u' && event->data.uint32 == CRTX_LSTNR_STARTED) {
-		nl_socket_add_memberships(netconf_lstnr->libnl_lstnr.sock, RTNLGRP_LINK, RTNLGRP_IPV4_IFADDR, 0);
+		if ((netconf_lstnr->monitor_types & CRTX_NETCONF_INTF) != 0)
+			nl_socket_add_membership(netconf_lstnr->libnl_lstnr.sock, RTNLGRP_LINK);
+		if ((netconf_lstnr->monitor_types & CRTX_NETCONF_NEIGH) != 0)
+			nl_socket_add_membership(netconf_lstnr->libnl_lstnr.sock, RTNLGRP_NEIGH);
+		if ((netconf_lstnr->monitor_types & CRTX_NETCONF_IPV4_ADDR) != 0)
+			nl_socket_add_membership(netconf_lstnr->libnl_lstnr.sock, RTNLGRP_IPV4_IFADDR);
+		if ((netconf_lstnr->monitor_types & CRTX_NETCONF_IPV6_ADDR) != 0)
+			nl_socket_add_membership(netconf_lstnr->libnl_lstnr.sock, RTNLGRP_IPV6_IFADDR);
 		
 		if (netconf_lstnr->query_existing > 0) {
 			r = crtx_netconf_query_interfaces(netconf_lstnr);
@@ -83,11 +104,9 @@ int crtx_libnl_msg2dict(struct nl_msg *msg, void *arg) {
 	
 	netconf_lstnr = (struct crtx_netconf_listener*) arg;
 	
-// 	dict = crtx_nl_route_raw2dict_interface(nlmsg_hdr(msg), 1);
 	dict = crtx_nl_route_raw2dict_ifaddr2(nlmsg_hdr(msg), 1);
 	
 	crtx_create_event(&event);
-	
 	crtx_event_set_dict_data(event, dict, 0);
 	
 	crtx_add_event(netconf_lstnr->base.graph, event);
@@ -236,7 +255,7 @@ int netconf_main(int argc, char **argv) {
 	
 	// we also want to receive status events of the listener in this graph
 	netconf_lstnr.base.state_graph = netconf_lstnr.base.graph;
-	netconf_lstnr.monitor_types = CRTX_NETCONF_INTF | CRTX_NETCONF_IPV4_ADDR | CRTX_NETCONF_IPV6_ADDR;
+	netconf_lstnr.monitor_types = CRTX_NETCONF_INTF | CRTX_NETCONF_NEIGH | CRTX_NETCONF_IPV4_ADDR | CRTX_NETCONF_IPV6_ADDR;
 	
 	crtx_create_task(netconf_lstnr.base.graph, 0, "netconf_event_handler", netconf_event_handler, 0);
 	

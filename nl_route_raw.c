@@ -457,6 +457,81 @@ struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char al
 	return dict;
 }
 
+struct crtx_dict * crtx_nl_route_raw2dict_neigh(struct nlmsghdr *nlh, char all_fields) {
+	struct crtx_dict *dict;
+	struct crtx_dict_item *di;
+	struct ndmsg *ndmsg;
+	struct rtattr *rth;
+	int32_t len;
+	
+	
+	ndmsg = NLMSG_DATA(nlh);
+	rth = NDA_RTA(ifi);
+	len = IFLA_PAYLOAD(nlh);
+	
+	dict = crtx_init_dict(0, 0, 0);
+	printf("neigh\n");
+	crtx_dict_new_item(dict, 'u', "ndm_family", ndmsg->ndm_family, sizeof(ndmsg->ndm_family), 0);
+	crtx_dict_new_item(dict, 'u', "ndm_pad1", ndmsg->ndm_pad1, sizeof(ndmsg->ndm_pad1), 0);
+	crtx_dict_new_item(dict, 'u', "ndm_pad2", ndmsg->ndm_pad2, sizeof(ndmsg->ndm_pad2), 0);
+	crtx_dict_new_item(dict, 'i', "ndm_ifindex", ndmsg->ndm_ifindex, sizeof(ndmsg->ndm_ifindex), 0);
+// 	crtx_dict_new_item(dict, 'u', "ndm_state", ndmsg->ndm_state, sizeof(ndmsg->ndm_state), 0);
+	crtx_dict_new_item(dict, 'u', "ndm_flags", ndmsg->ndm_flags, sizeof(ndmsg->ndm_flags), 0);
+	crtx_dict_new_item(dict, 'u', "ndm_type", ndmsg->ndm_type, sizeof(ndmsg->ndm_type), 0);
+	
+	di = crtx_alloc_item(dict);
+	di->type = 'D';
+	di->key = "ndm_state";
+	di->dict = crtx_init_dict(0, 0, 0);
+	
+#define CRTX_NDM_STATE(item) \
+	if (ndmsg->ndm_state & NUD_ ## item) { \
+		crtx_dict_new_item(di->dict, 's', "", #item, 0, CRTX_DIF_DONT_FREE_DATA); \
+	}
+	CRTX_NDM_STATE(INCOMPLETE);
+	CRTX_NDM_STATE(REACHABLE);
+	CRTX_NDM_STATE(STALE);
+	CRTX_NDM_STATE(DELAY);
+	CRTX_NDM_STATE(PROBE);
+	CRTX_NDM_STATE(FAILED);
+	CRTX_NDM_STATE(NOARP);
+	CRTX_NDM_STATE(PERMANENT);
+	
+	
+	
+	di = crtx_alloc_item(dict);
+	di->type = 'D';
+	di->key = "ndm_flags";
+	di->dict = crtx_init_dict(0, 0, 0);
+	
+#define CRTX_NDM_FLAGS(item) \
+	if (ndmsg->ndm_flags & NTF_ ## item) { \
+		crtx_dict_new_item(di->dict, 's', "", #item, 0, CRTX_DIF_DONT_FREE_DATA); \
+	}
+	
+	CRTX_NDM_FLAGS(PROXY);
+	CRTX_NDM_FLAGS(ROUTER);
+	
+	while (len && RTA_OK(rth, len)) {
+// 		switch (rth->rta_type) {
+// 			NDA_UNSPEC,
+// 			NDA_DST,
+// 			NDA_LLADDR,
+// 			NDA_CACHEINFO,
+// 			NDA_PROBES,
+// 			NDA_VLAN,
+// 			NDA_PORT,
+// 			NDA_VNI,
+// 			NDA_IFINDEX,
+// 			NDA_MASTER,
+// 			NDA_LINK_NETNSID,
+// 		}
+		rth = RTA_NEXT(rth, len);
+	}
+	
+	return dict;
+}
+
 struct crtx_dict *crtx_nl_route_raw2dict_ifaddr(struct crtx_nl_route_listener *nlr_list, struct nlmsghdr *nlh) {
 	switch (nlh->nlmsg_type) {
 		case RTM_NEWADDR:
@@ -481,6 +556,10 @@ struct crtx_dict *crtx_nl_route_raw2dict_ifaddr2(struct nlmsghdr *nlh, int all_f
 		case RTM_NEWLINK:
 		case RTM_DELLINK:
 			return crtx_nl_route_raw2dict_interface(nlh, all_fields);
+			break;
+		case RTM_NEWNEIGH:
+		case RTM_DELNEIGH:
+			return crtx_nl_route_raw2dict_neigh(nlh, all_fields);
 			break;
 	}
 	
