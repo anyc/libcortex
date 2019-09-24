@@ -472,6 +472,21 @@ struct crtx_dict *crtx_nl_route_raw2dict_ifaddr(struct crtx_nl_route_listener *n
 	return 0;
 }
 
+struct crtx_dict *crtx_nl_route_raw2dict_ifaddr2(struct nlmsghdr *nlh, int all_fields) {
+	switch (nlh->nlmsg_type) {
+		case RTM_NEWADDR:
+		case RTM_DELADDR:
+			return crtx_nl_route_raw2dict_addr(nlh, all_fields);
+			break;
+		case RTM_NEWLINK:
+		case RTM_DELLINK:
+			return crtx_nl_route_raw2dict_interface(nlh, all_fields);
+			break;
+	}
+	
+	return 0;
+}
+
 static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int fd, void *userdata) {
 	int len;
 	char buffer[4096];

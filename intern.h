@@ -49,6 +49,12 @@
 #define ASSERT_STR(x, msg, ...) do { if (!(x)) { ERROR(__FILE__ ":" STRINGIFY(__LINE__) " " msg " " #x "failed\n", __VA_ARGS__); exit(1); } } while (0)
 #define CRTX_ASSERT_STR(x, msg, ...) do { if (!(x)) { ERROR(__FILE__ ":" STRINGIFY(__LINE__) " " msg " " #x "failed\n", __VA_ARGS__); exit(1); } } while (0)
 
+#if __STDC_VERSION__ >= 201112L
+#define CRTX_STATIC_ASSERT(X, msg) _Static_assert(X, msg)
+#else
+#define CRTX_STATIC_ASSERT(X, msg) ({ extern int __attribute__((error("assertion failed: '" #X "' - " #msg))) crtx_static_assert(); ((X)?0:crtx_static_assert()),0; })
+#endif
+
 #define POPCOUNT32(x) __builtin_popcount(x)
 
 

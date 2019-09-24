@@ -22,6 +22,8 @@ CFLAGS_netif=
 LDLIBS_netif=
 DEPS_netif=nl_libnl
 
+DEPS_netconf=nl_libnl
+
 .PHONY: clean
 
 all: $(LAYER2_LISTENER_LIST)

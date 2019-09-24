@@ -197,7 +197,7 @@ int netif_main(int argc, char **argv) {
 	crtx_create_task(netif_lstnr.base.graph, 0, "netif_event_handler", netif_event_handler, 0);
 	
 	r = crtx_start_listener(&netif_lstnr.base);
-	if (!r) {
+	if (r) {
 		ERROR("starting netif listener failed\n");
 		return 1;
 	}
