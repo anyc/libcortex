@@ -6,11 +6,12 @@ PKG_CONFIG?=pkg-config
 CFLAGS+=-I$(libcrtx_dir) -I$(libcrtx_dir)include -fPIC
 LDFLAGS+=-L$(libcrtx_dir)
 
-LAYER2_LISTENER_LIST=$(patsubst %,libcrtx_%.so, $(LAYER2_MODULES))
+LAYER2_LISTENER_LIST=$(patsubst %,$(libcrtx_dir)/libcrtx_%.so, $(LAYER2_MODULES))
 
 TESTS+=$(foreach t,$(LAYER2_MODULES), $(t).test)
 
 include $(libcrtx_dir)/Makefile.modules
+include $(libcrtx_dir)/Makefile.common
 
 # CFLAGS_dynamic_evdev=$(shell pkg-config --cflags ncurses librrd)
 # LDLIBS_dynamic_evdev=$(shell pkg-config --libs ncurses librrd)
@@ -31,10 +32,13 @@ all: $(LAYER2_LISTENER_LIST)
 clean:
 	rm -rf *.o $(TESTS) libcrtx_*.so
 
-libcrtx_%.so: LDLIBS+=$(foreach d,$(DEPS_$(patsubst libcrtx_%.so,%,$@)),$(LDLIBS_$d))
-libcrtx_%.so: %.o
-	$(CC) -shared $(LDFLAGS) $< -o $@ $(LDLIBS) -L. -lcrtx
-	[ ! -f ../$@ ] && ln -s layer2/$@ ../$@ || true
+$(libcrtx_dir)/libcrtx_%.so: LDLIBS+=$(foreach d,$(DEPS_$(patsubst libcrtx_%.so,%,$@)),$(LDLIBS_$d))
+$(libcrtx_dir)/libcrtx_%.so: %.o
+	$(CC) -shared $(LDFLAGS) $< -o $@.$(SO_VERSION) $(LDLIBS) -L. -lcrtx -Wl,-soname,$(shell basename $@.$(SO_VERSION))
+	ln -s $(shell basename $@.$(SO_VERSION)) $(libcrtx_dir)/$(shell basename $@)
+	
+	#[ ! -f ../$@ ] && ln -s layer2/$@ ../$@ || true
+# 	mv layer2/$@ ../$@
 
 %.o: CFLAGS+=$(foreach d,$(DEPS_${@:.o=}),$(CFLAGS_$d))
 %.o: %.c

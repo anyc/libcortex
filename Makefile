@@ -17,7 +17,6 @@ includedir?=$(prefix)/include
 
 APP=cortexd
 SHAREDLIB=libcrtx.so
-SO_VERSION=0.1
 
 OBJS+=core.o \
 	dict.o \
@@ -44,6 +43,7 @@ all: $(local_mk) core_modules.h plugins shared layer2 crtx_include_dir
 #
 
 include Makefile.modules
+include Makefile.common
 
 # default module sets
 BUILTIN_MODULES=signals epoll

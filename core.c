@@ -17,6 +17,7 @@
 #include <pwd.h>
 
 #include <fcntl.h>
+#include <sys/stat.h>
 
 #include "intern.h"
 #include "core.h"
@@ -1474,8 +1475,28 @@ static void load_plugin(char *path, char *basename) {
 	char buf[1024];
 	char plugin_name[900];
 	size_t len;
+	char *dot;
 	
 	DBG("load plugin \"%s\"\n", path);
+	
+	
+	len = strlen(basename);
+	if (len <= 12)
+		return;
+	
+	dot = strchr(basename, '.');
+	if (dot == 0 || dot - basename <= 8)
+		return;
+	
+	memcpy(plugin_name, basename+8, dot - basename - 8);
+	plugin_name[dot - basename - 8] = 0;
+	
+	for (len = 0; len < crtx_root->n_plugins; len++) {
+		if (!strcmp(plugin_name, crtx_root->plugins[len].plugin_name)) {
+			VDBG("ignoring \"%s\", already loaded\n", plugin_name);
+			return;
+		}
+	}
 	
 	crtx_root->n_plugins++;
 	crtx_root->plugins = (struct crtx_lstnr_plugin*) realloc(crtx_root->plugins, sizeof(struct crtx_lstnr_plugin)*crtx_root->n_plugins);
@@ -1485,16 +1506,10 @@ static void load_plugin(char *path, char *basename) {
 	p->path = path;
 	p->basename = basename;
 	p->handle = dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
+	p->plugin_name = strdup(plugin_name);
 	
 	if (!p->handle)
 		return;
-	
-	len = strlen(basename);
-	if (len <= 12)
-		return;
-	
-	memcpy(plugin_name, basename+8, len - 8 - 3);
-	plugin_name[len - 8 - 3] = 0;
 	
 	p->initialized = 1;
 	snprintf(buf, 1024, "crtx_%s_init", plugin_name);
@@ -1557,6 +1572,9 @@ static void load_plugin(char *path, char *basename) {
 static void load_plugins(char * directory) {
 	DIR *dhandle;
 	struct dirent *dent;
+	struct stat buf;
+	int result;
+	
 	
 	if (!directory)
 		return;
@@ -1564,11 +1582,15 @@ static void load_plugins(char * directory) {
 	dhandle = opendir(directory);
 	if (dhandle != NULL) {
 		while ((dent = readdir(dhandle)) != NULL) {
-			if (!strncmp(dent->d_name, "libcrtx_", 8)) {
-				char * fullname = (char*) malloc(strlen(directory)+strlen(dent->d_name)+2);
-				sprintf(fullname, "%s/%s", directory, dent->d_name);
-				
-				load_plugin(fullname, dent->d_name);
+			char * fpath = (char*) malloc(strlen(directory)+strlen(dent->d_name)+2);
+			sprintf(fpath, "%s/%s", directory, dent->d_name);
+			
+			result = lstat(fpath, &buf);
+			
+			if (!strncmp(dent->d_name, "libcrtx_", 8) && (result != 0 || !S_ISLNK(buf.st_mode))) {
+				load_plugin(fpath, dent->d_name);
+			} else {
+				free(fpath);
 			}
 		}
 		closedir(dhandle);
@@ -2208,6 +2230,17 @@ void *crtx_event_get_ptr(struct crtx_event *event) {
 	crtx_event_get_payload(event, 0, &ptr, 0);
 	
 	return ptr;
+}
+
+char *crtx_event_get_string(struct crtx_event *event, char *key) {
+	struct crtx_dict *dict;
+	
+	crtx_event_get_payload(event, 0, 0, &dict);
+	if (!dict) {
+		return 0;
+	}
+	
+	return crtx_get_string(dict, key);
 }
 
 void crtx_register_handler_for_event_type(char *event_type, char *handler_name, crtx_handle_task_t handler_function, void *handler_data) {

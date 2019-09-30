@@ -197,6 +197,8 @@ struct crtx_lstnr_plugin {
 	char (*init)();
 	void (*finish)();
 	void (*get_listener_repository)(struct crtx_listener_repository **listener_repository, unsigned int *listener_repository_length);
+	
+	char *plugin_name;
 };
 
 struct crtx_handler_category_entry {
@@ -339,6 +341,7 @@ void crtx_event_get_payload(struct crtx_event *event, char *id, void **raw_point
 struct crtx_dict_item *crtx_event_get_item_by_key(struct crtx_event *event, char *id, char *key);
 int crtx_event_get_value_by_key(struct crtx_event *event, char *key, char type, void *buffer, size_t buffer_size);
 void *crtx_event_get_ptr(struct crtx_event *event);
+char *crtx_event_get_string(struct crtx_event *event, char *key);
 
 void crtx_register_handler_for_event_type(char *event_type, char *handler_name, crtx_handle_task_t handler_function, void *handler_data);
 void crtx_autofill_graph_with_tasks(struct crtx_graph *graph, const char *event_type);

@@ -43,6 +43,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 	struct rtattr *rth;
 	struct ifa_cacheinfo *cinfo;
 	int rtl;
+	char *family;
 	
 	
 	ifa = (struct ifaddrmsg *) NLMSG_DATA(nlh);
@@ -57,11 +58,21 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 	{
 		di = crtx_alloc_item(dict);
 		
-		if (nlh->nlmsg_type == RTM_NEWADDR)
+		if (nlh->nlmsg_type == RTM_NEWADDR) {
 			crtx_fill_data_item(di, 's', "type", "add", 0, CRTX_DIF_DONT_FREE_DATA);
-		else
-			if (nlh->nlmsg_type == RTM_DELADDR)
-				crtx_fill_data_item(di, 's', "type", "del", 0, CRTX_DIF_DONT_FREE_DATA);
+		} else
+		if (nlh->nlmsg_type == RTM_DELADDR) {
+			crtx_fill_data_item(di, 's', "type", "del", 0, CRTX_DIF_DONT_FREE_DATA);
+		}
+		
+		di = crtx_alloc_item(dict);
+		
+		if (nlh->nlmsg_type == RTM_NEWADDR) {
+			crtx_fill_data_item(di, 's', "action", "add", 0, CRTX_DIF_DONT_FREE_DATA);
+		} else
+		if (nlh->nlmsg_type == RTM_DELADDR) {
+			crtx_fill_data_item(di, 's', "action", "del", 0, CRTX_DIF_DONT_FREE_DATA);
+		}
 	}
 	
 	if (all_fields) {
@@ -119,6 +130,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 			cdi->flags |= CRTX_DIF_LAST_ITEM;
 	}
 	
+	family = 0;
 	while (rtl && RTA_OK(rth, rtl)) {
 		switch (rth->rta_type) {
 			case IFA_LABEL:
@@ -146,10 +158,16 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 					
 					sin = (struct sockaddr_in *) &addr;
 					memcpy(&sin->sin_addr, RTA_DATA(rth), sizeof(sin->sin_addr));
-					s = inet_ntop(ifa->ifa_family, &(((struct sockaddr_in *)&addr)->sin_addr), s_addr, sizeof(s_addr));
 					
+					s = inet_ntop(ifa->ifa_family, &(((struct sockaddr_in *)&addr)->sin_addr), s_addr, sizeof(s_addr));
 					if (!s) {
 						ERROR("inet_ntop(v4) failed: %s\n", strerror(errno));
+					}
+					
+					if (!family) {
+						family = "ipv4";
+						crtx_fill_data_item(di, 's', "family", family, 0, CRTX_DIF_DONT_FREE_DATA);
+						di = crtx_alloc_item(dict);
 					}
 				} else
 				if (addr.ss_family == AF_INET6) {
@@ -157,10 +175,16 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 					
 					sin6 = (struct sockaddr_in6 *) &addr;
 					memcpy(&sin6->sin6_addr, RTA_DATA(rth), sizeof(sin6->sin6_addr));
-					s = inet_ntop(ifa->ifa_family, &(((struct sockaddr_in6 *)&addr)->sin6_addr), s_addr, sizeof(s_addr));
 					
+					s = inet_ntop(ifa->ifa_family, &(((struct sockaddr_in6 *)&addr)->sin6_addr), s_addr, sizeof(s_addr));
 					if (!s) {
 						ERROR("inet_ntop(v6) failed: %s\n", strerror(errno));
+					}
+					
+					if (!family) {
+						family = "ipv6";
+						crtx_fill_data_item(di, 's', "family", family, 0, CRTX_DIF_DONT_FREE_DATA);
+						di = crtx_alloc_item(dict);
 					}
 				} else {
 					ERROR("unknown family: %d\n", addr.ss_family);
@@ -256,6 +280,9 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 		rth = RTA_NEXT(rth, rtl);
 	}
 	
+	di = crtx_alloc_item(dict);
+	crtx_fill_data_item(di, 'i', "interface_index", ifa->ifa_index, sizeof(ifa->ifa_index), 0);
+	
 	if (!got_ifname) {
 		di = crtx_alloc_item(dict);
 		
@@ -299,11 +326,21 @@ struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char al
 	{
 		di = crtx_alloc_item(dict);
 		
-		if (nlh->nlmsg_type == RTM_NEWLINK)
+		if (nlh->nlmsg_type == RTM_NEWLINK) {
 			crtx_fill_data_item(di, 's', "type", "add", 0, CRTX_DIF_DONT_FREE_DATA);
-		else
-			if (nlh->nlmsg_type == RTM_DELLINK)
-				crtx_fill_data_item(di, 's', "type", "del", 0, CRTX_DIF_DONT_FREE_DATA);
+		} else
+		if (nlh->nlmsg_type == RTM_DELLINK) {
+			crtx_fill_data_item(di, 's', "type", "del", 0, CRTX_DIF_DONT_FREE_DATA);
+		}
+		
+		di = crtx_alloc_item(dict);
+		
+		if (nlh->nlmsg_type == RTM_NEWLINK) {
+			crtx_fill_data_item(di, 's', "action", "add", 0, CRTX_DIF_DONT_FREE_DATA);
+		} else
+		if (nlh->nlmsg_type == RTM_DELLINK) {
+			crtx_fill_data_item(di, 's', "action", "del", 0, CRTX_DIF_DONT_FREE_DATA);
+		}
 	}
 	
 	{
@@ -463,11 +500,13 @@ struct crtx_dict * crtx_nl_route_raw2dict_neigh(struct nlmsghdr *nlh, char all_f
 	struct ndmsg *ndmsg;
 	struct rtattr *rth;
 	int32_t len;
-	
+
+# define NDA_RTA(r) \
+	((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct ndmsg))))
 	
 	ndmsg = NLMSG_DATA(nlh);
-	rth = NDA_RTA(ifi);
-	len = IFLA_PAYLOAD(nlh);
+	rth = NDA_RTA(ndmsg);
+	len = NLMSG_PAYLOAD(nlh, sizeof(struct ndmsg));
 	
 	dict = crtx_init_dict(0, 0, 0);
 	printf("neigh\n");

@@ -15,6 +15,8 @@
 #include "netconf.h"
 #include "nl_route_raw.h" // for crtx_nl_route_raw2dict_interface
 
+#ifndef CRTX_TEST
+
 int crtx_netconf_query_interfaces(struct crtx_netconf_listener *netconf_lstnr) {
 	int r;
 	struct rtgenmsg rt_hdr = { .rtgen_family = AF_PACKET, };
@@ -109,6 +111,21 @@ int crtx_libnl_msg2dict(struct nl_msg *msg, void *arg) {
 	crtx_create_event(&event);
 	crtx_event_set_dict_data(event, dict, 0);
 	
+	switch (nlmsg_hdr(msg)->nlmsg_type) {
+		case RTM_NEWADDR:
+		case RTM_DELADDR:
+			event->type = CRTX_NETCONF_ET_IP_ADDR;
+			break;
+		case RTM_NEWLINK:
+		case RTM_DELLINK:
+			event->type = CRTX_NETCONF_ET_INTF;
+			break;
+		case RTM_NEWNEIGH:
+		case RTM_DELNEIGH:
+			event->type = CRTX_NETCONF_ET_NEIGH;
+			break;
+	}
+	
 	crtx_add_event(netconf_lstnr->base.graph, event);
 	
 	return NL_OK;
@@ -117,9 +134,21 @@ int crtx_libnl_msg2dict(struct nl_msg *msg, void *arg) {
 int crtx_libnl_msg_end(struct nl_msg *msg, void *arg) {
 	struct crtx_netconf_listener *netconf_lstnr;
 	int r;
+	struct crtx_event *event;
 	
 	
 	netconf_lstnr = (struct crtx_netconf_listener*) arg;
+	
+	crtx_create_event(&event);
+	event->type = CRTX_NETCONF_ET_QUERY_DONE;
+// 	event->data.type = 'i';
+// 	event->data.int_t = netconf_lstnr->monitor_types & netconf_lstnr->queried_types) == netconf_lstnr->monitor_types;
+	crtx_event_set_raw_data(event, 'i', 
+		(netconf_lstnr->monitor_types & netconf_lstnr->queried_types) == netconf_lstnr->monitor_types,
+		sizeof(int),
+		0
+		);
+	crtx_add_event(netconf_lstnr->base.graph, event);
 	
 	if (netconf_lstnr->query_existing > 0) {
 		if ((netconf_lstnr->monitor_types & netconf_lstnr->queried_types) != netconf_lstnr->monitor_types) {
@@ -191,10 +220,10 @@ struct crtx_listener_base *crtx_new_netconf_listener(void *options) {
 	CRTX_STATIC_ASSERT(sizeof(libnl_callbacks) == sizeof(netconf_lstnr->libnl_callbacks), "size mismatch");
 	memcpy(netconf_lstnr->libnl_callbacks, libnl_callbacks, sizeof(libnl_callbacks));
 	
-	for (cbit = libnl_callbacks; cbit->func; cbit++) {
+	for (cbit = netconf_lstnr->libnl_callbacks; cbit->func; cbit++) {
 		cbit->arg = netconf_lstnr;
 	}
-	netconf_lstnr->libnl_lstnr.callbacks = libnl_callbacks;
+	netconf_lstnr->libnl_lstnr.callbacks = netconf_lstnr->libnl_callbacks;
 	
 	// 	lbase = create_listener("nl_libnl", &netconf_lstnr->libnl_lstnr);
 	ret = crtx_create_listener("nl_libnl", &netconf_lstnr->libnl_lstnr);
@@ -220,7 +249,7 @@ void crtx_netconf_finish() {}
 
 
 
-#ifdef CRTX_TEST
+#else
 
 static char netconf_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *dict;
