@@ -32,6 +32,16 @@ void reinit_cb(void *reinit_cb_data) {
 	else
 		DBG("exec \"%s\" (fds %d %d %d)\n", plstnr->filename, plstnr->stdin, plstnr->stdout, plstnr->stderr);
 	
+	if (plstnr->argv) {
+		char **arg;
+		
+		arg = plstnr->argv;
+		while (arg && *arg) {
+			DBG("\targ: %s\n", *arg);
+			arg++;
+		}
+	}
+	
 	if (plstnr->stdin != STDIN_FILENO) {
 		rv = dup2(plstnr->stdin, STDIN_FILENO);
 		if (rv == -1) {

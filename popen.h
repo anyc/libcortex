@@ -1,5 +1,5 @@
-#ifndef _CRTX_CURL_H
-#define _CRTX_CURL_H
+#ifndef _CRTX_POPEN_H
+#define _CRTX_POPEN_H
 
 /*
  * Mario Kicherer (dev@kicherer.org) 2019
@@ -33,8 +33,8 @@ struct crtx_popen_listener {
 	void *stdout_cb_data;
 	void *stderr_cb_data;
 	
-	char *filepath;
-	char *filename;
+	char *filepath; // execute the executable with this file path
+	char *filename; // execute an executable with this filename (e.g., in $PATH)
 	char **argv;
 	char **envp;
 	char *chdir;
