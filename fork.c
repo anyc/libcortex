@@ -118,7 +118,7 @@ static char do_fork(struct crtx_event *event, void *userdata, void **sessiondata
 		exit(1);
 	} else 
 	if (flstnr->pid == 0) {
-		DBG("child shutdown after fork\n");
+		DBG("child (%d) shutdown after fork\n", getpid());
 		
 		crtx_root->reinit_after_shutdown = 1;
 		crtx_root->reinit_cb = &reinit_cb;
@@ -128,7 +128,7 @@ static char do_fork(struct crtx_event *event, void *userdata, void **sessiondata
 	if (flstnr->pid > 0) {
 // 		struct crtx_event *event;
 		
-		DBG("fork done\n");
+		DBG("fork done - parent %d\n", flstnr->pid);
 		
 // 		crtx_create_event(&event);
 // 		event.type = CRTX_FORK_ET_FORK_DONE_PARENT;
@@ -162,7 +162,7 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 	
 	return 0;
 }
-void *sigchld_data = 0;
+
 static char stop_listener(struct crtx_listener_base *listener) {
 	int r;
 	struct crtx_fork_listener *flstnr;
@@ -180,7 +180,7 @@ static char stop_listener(struct crtx_listener_base *listener) {
 		}
 	}
 	
-	crtx_signals_rem_child_handler(sigchld_data);
+	crtx_signals_rem_child_handler(flstnr->sigchld_data);
 	
 	return 0;
 }
@@ -233,7 +233,7 @@ struct crtx_listener_base *crtx_new_fork_listener(void *options) {
 // 		return 0;
 // 	}
 	
-	sigchld_data = crtx_signals_add_child_handler(&fork_sigchld_cb, lstnr);
+	lstnr->sigchld_data = crtx_signals_add_child_handler(&fork_sigchld_cb, lstnr);
 	
 // 	crtx_create_task(lstnr->signal_lstnr.base.graph, 0, "sigchld_handler", &sigchild_event_handler, 0);
 	

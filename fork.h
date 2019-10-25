@@ -27,6 +27,8 @@ struct crtx_fork_listener {
 	
 	void (*reinit_cb)(void *cb_data);
 	void *reinit_cb_data;
+	
+	void *sigchld_data;
 };
 
 struct crtx_listener_base *crtx_new_fork_listener(void *options);
