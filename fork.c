@@ -162,7 +162,7 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 	
 	return 0;
 }
-
+void *sigchld_data = 0;
 static char stop_listener(struct crtx_listener_base *listener) {
 	int r;
 	struct crtx_fork_listener *flstnr;
@@ -179,6 +179,8 @@ static char stop_listener(struct crtx_listener_base *listener) {
 			return 1;
 		}
 	}
+	
+	crtx_signals_rem_child_handler(sigchld_data);
 	
 	return 0;
 }
@@ -231,7 +233,7 @@ struct crtx_listener_base *crtx_new_fork_listener(void *options) {
 // 		return 0;
 // 	}
 	
-	crtx_signals_add_child_handler(&fork_sigchld_cb, lstnr);
+	sigchld_data = crtx_signals_add_child_handler(&fork_sigchld_cb, lstnr);
 	
 // 	crtx_create_task(lstnr->signal_lstnr.base.graph, 0, "sigchld_handler", &sigchild_event_handler, 0);
 	

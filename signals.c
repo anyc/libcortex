@@ -543,7 +543,7 @@ static char sigchild_event_handler(struct crtx_event *event, void *userdata, voi
 	return 0;
 }
 
-int crtx_signals_add_child_handler(sigchld_cb cb, void *userdata) {
+void * crtx_signals_add_child_handler(sigchld_cb cb, void *userdata) {
 // 	n_sigchld_cbs += 1;
 // 	sigchld_cbs = (sigchld_cb*) realloc(sigchld_cbs, sizeof(sigchld_cb)*n_sigchld_cbs);
 // 	sigchld_cbs[n_sigchld_cbs-1] = cb;
@@ -556,7 +556,7 @@ int crtx_signals_add_child_handler(sigchld_cb cb, void *userdata) {
 		ret = crtx_create_listener("signals", &sigchld_lstnr);
 		if (ret) {
 			ERROR("create_listener(signal) failed\n");
-			return ret;
+			return 0;
 		}
 		
 		crtx_create_task(sigchld_lstnr.base.graph, 0, "sigchld_handler", &sigchild_event_handler, 0);
@@ -564,7 +564,7 @@ int crtx_signals_add_child_handler(sigchld_cb cb, void *userdata) {
 		ret = crtx_start_listener(&sigchld_lstnr.base);
 		if (ret) {
 			ERROR("starting signal listener failed\n");
-			return ret;
+			return 0;
 		}
 	}
 	
@@ -575,6 +575,21 @@ int crtx_signals_add_child_handler(sigchld_cb cb, void *userdata) {
 	data->userdata = userdata;
 	
 	crtx_dll_append_new(&sigchld_cbs, data);
+	
+	return data;
+}
+
+int crtx_signals_rem_child_handler(void *sigchld_cb) {
+	struct crtx_dll *item;
+	
+	item = crtx_dll_unlink_data(&sigchld_cbs, sigchld_cb);
+	if (item) {
+		free(sigchld_cb);
+		free(item);
+	} else {
+		CRTX_ERROR("callback %p not found in list of sigchld signal handlers\n", sigchld_cb);
+		return 1;
+	}
 	
 	return 0;
 }
