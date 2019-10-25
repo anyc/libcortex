@@ -669,6 +669,10 @@ void crtx_process_event(struct crtx_graph *graph, struct crtx_dll *queue_entry) 
 	if (!graph->equeue && graph->listener && graph->listener->state == CRTX_LSTNR_SHUTDOWN) {
 		free_listener_intern(graph->listener);
 	}
+	
+	/*if (graph->listener && graph->listener->free_after_event) {
+		crtx_free_listener(graph->listener);
+	}*/	
 }
 
 void *crtx_process_graph_tmain(void *arg) {
@@ -1582,12 +1586,24 @@ static void load_plugins(char * directory) {
 	dhandle = opendir(directory);
 	if (dhandle != NULL) {
 		while ((dent = readdir(dhandle)) != NULL) {
-			char * fpath = (char*) malloc(strlen(directory)+strlen(dent->d_name)+2);
+			size_t len;
+			char * fpath;
+			
+			
+			fpath = (char*) malloc(strlen(directory)+strlen(dent->d_name)+2);
 			sprintf(fpath, "%s/%s", directory, dent->d_name);
 			
 			result = lstat(fpath, &buf);
 			
-			if (!strncmp(dent->d_name, "libcrtx_", 8) && (result != 0 || !S_ISLNK(buf.st_mode))) {
+			len = strlen(dent->d_name);
+			if (len > strlen(SO_VERSION))
+				len -= strlen(SO_VERSION);
+			
+			if (
+				!strncmp(dent->d_name, "libcrtx_", 8) &&
+				!strncmp(&dent->d_name[len], SO_VERSION, strlen(SO_VERSION)) &&
+				(result != 0 || !S_ISLNK(buf.st_mode)))
+			{
 				load_plugin(fpath, dent->d_name);
 			} else {
 				free(fpath);

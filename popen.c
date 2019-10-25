@@ -102,7 +102,11 @@ void reinit_cb(void *reinit_cb_data) {
 		}
 	}
 	if (rv) {
-		ERROR("exec*(%s) failed: %s\n", plstnr->filepath, strerror(errno));
+		if (plstnr->filepath) {
+			ERROR("exec*(%s) failed: %s\n", plstnr->filepath, strerror(errno));
+		} else {
+			ERROR("exec*(%s) failed: %s\n", plstnr->filename, strerror(errno));
+		}
 		exit(1);
 	}
 	

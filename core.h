@@ -178,6 +178,7 @@ struct crtx_listener_base {
 	struct crtx_graph *graph;
 	
 	unsigned int flags;
+// 	char free_after_event;
 };
 
 struct crtx_module {

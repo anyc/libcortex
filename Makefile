@@ -59,7 +59,7 @@ DEFAULT_EVLOOP=epoll
 
 -include $(local_mk)
 
-CFLAGS+=-DDEFAULT_EVLOOP=\"$(DEFAULT_EVLOOP)\"
+CFLAGS+=-DDEFAULT_EVLOOP=\"$(DEFAULT_EVLOOP)\" -DSO_VERSION=\"$(SO_VERSION)\"
 
 # build tests for enabled modules
 TESTS+=$(foreach t,$(BUILTIN_MODULES) $(STATIC_MODULES) $(DYN_MODULES),$(if $(findstring $(t),$(AVAILABLE_TESTS)), $(t).test))
@@ -185,8 +185,10 @@ install:
 	$(INSTALL) -m 755 -d $(DESTDIR)$(libdir)
 	$(INSTALL) -m 755 -d $(DESTDIR)$(plugindir)
 	
-	$(INSTALL) -m 755 libcrtx.so* $(DESTDIR)$(libdir)
-	$(INSTALL) -m 755 libcrtx_*.so* $(DESTDIR)$(plugindir)
+	$(INSTALL) -m 755 libcrtx.so.* $(DESTDIR)$(libdir)
+	$(INSTALL) -m 755 libcrtx_*.so.* $(DESTDIR)$(plugindir)
+	cp -P libcrtx.so $(DESTDIR)$(libdir)
+	cp -P libcrtx_*.so $(DESTDIR)$(plugindir)
 	
 	# devel
 	
