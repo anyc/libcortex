@@ -5,6 +5,26 @@ DEPS_avahi+=sdbus
 
 CFLAGS_core+=$(patsubst %,-DSTATIC_%,$(STATIC_MODULES))
 
+### Licenses
+#
+# libnl		LGPL-2.1
+# libcap-ng	LGPL-2.1
+# curl		MIT
+# json-c	MIT
+# libevdev	MIT
+# libvirt	LGPL-2.1
+# libpulse	LGPL-2.1
+# 	NOTE: from https://cgit.freedesktop.org/pulseaudio/pulseaudio/tree/LICENSE 
+# 	In addition to this, if D-Bus support is enabled, the PulseAudio client library
+# 	(libpulse) MAY need to be licensed under the GPL, depending on the license
+# 	adopted for libdbus.
+# libsystemd	LGPL2.1
+# libudev	LGPL2.1
+# libexosip2	GPL-2
+# libosip2	LGPL-2
+# libxcb	MIT
+
+
 CFLAGS_can+=$(shell $(PKG_CONFIG) --cflags libnl-3.0 libnl-route-3.0 libcap-ng)
 LDLIBS_can+=$(shell $(PKG_CONFIG) --libs libnl-3.0 libnl-route-3.0 libcap-ng)
 

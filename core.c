@@ -25,7 +25,7 @@
 
 
 #ifndef CRTX_PLUGIN_DIR
-#define CRTX_PLUGIN_DIR "/usr/lib/cortexd/plugins/"
+#define CRTX_PLUGIN_DIR "/usr/lib/"
 #endif
 
 struct crtx_root crtx_global_root = { 0 };
@@ -34,7 +34,6 @@ struct crtx_root *crtx_root = &crtx_global_root;
 #include "core_modules.h"
 
 char * crtx_evt_control[] = { CRTX_EVT_MOD_INIT, CRTX_EVT_SHUTDOWN, 0 };
-// char *crtx_evt_notification[] = { CRTX_EVT_NOTIFICATION, 0 };
 char *crtx_evt_inbox[] = { CRTX_EVT_INBOX, 0 };
 char *crtx_evt_outbox[] = { CRTX_EVT_OUTBOX, 0 };
 
@@ -279,10 +278,14 @@ int crtx_init_listener_base(struct crtx_listener_base *lbase) {
 	return 0;
 }
 
-struct crtx_listener_base *create_listener(const char *id, void *options) {
+int crtx_create_listener(const char *id, void *options) {
 	struct crtx_listener_repository *l;
 	struct crtx_listener_base *lbase;
 	char static_lstnr;
+	
+	
+	if (id == 0)
+		return -EINVAL;
 	
 	DBG("new listener %s\n", id);
 	
@@ -298,7 +301,7 @@ struct crtx_listener_base *create_listener(const char *id, void *options) {
 				
 				if (!lbase) {
 					ERROR("creating listener \"%s\" failed: create procedure failed\n", id);
-					return 0;
+					return 1; // TODO get error code from create()
 				}
 				
 				break;
@@ -316,7 +319,7 @@ struct crtx_listener_base *create_listener(const char *id, void *options) {
 	
 	if (!lbase) {
 		ERROR("creating listener \"%s\" failed: not found\n", id);
-		return 0;
+		return -ENOENT;
 	}
 	
 	lbase->id = id;
@@ -326,22 +329,7 @@ struct crtx_listener_base *create_listener(const char *id, void *options) {
 	crtx_ll_append(&crtx_root->listeners, &lbase->ll);
 	UNLOCK(crtx_root->listeners_mutex);
 	
-	return lbase;
-}
-
-int crtx_create_listener(const char *id, void *options) {
-	struct crtx_listener_base *lbase;
-	
-	
-	if (id == 0)
-		return -EINVAL;
-	
-	lbase = create_listener(id, options);
-	
-// 	if (listener)
-// 		*listener = lbase;
-	
-	return (lbase == 0);
+	return 0;
 }
 
 int crtx_stop_listener(struct crtx_listener_base *listener) {

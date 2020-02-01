@@ -113,8 +113,9 @@ static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evl
 // 		crtx_event_flags2str(stdout, el_cb->crtx_event_flags);
 		
 		if (el_cb->crtx_event_flags & EVLOOP_TIMEOUT) {
-			struct crtx_listener_base *lbase;
 			struct crtx_timer_listener *tlist;
+			int r;
+			
 			
 			tlist = (struct crtx_timer_listener*) malloc(sizeof(struct crtx_timer_listener));
 			
@@ -131,13 +132,13 @@ static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evl
 			tlist->oneshot_callback = timeout_event_handler;
 			tlist->oneshot_data = el_cb;
 			
-			lbase = create_listener("timer", tlist);
-			if (!lbase) {
-				ERROR("create_listener(timer) failed\n");
-				return 0;
+			r = crtx_create_listener("timer", tlist);
+			if (r) {
+				ERROR("create_listener(timer) failed: %s\n", strerror(-r));
+				return r;
 			}
 			
-			crtx_start_listener(lbase);
+			crtx_start_listener(&tlist->base);
 		}
 		
 		notifier = new MyQSocketNotifier(evloop_fd->fd, crtx_event_flags2qt_flags(el_cb->crtx_event_flags));
@@ -216,7 +217,6 @@ extern "C" {
 }
 
 struct crtx_timer_listener tlist;
-struct crtx_listener_base *blist;
 int counter = 0;
 QCoreApplication *a;
 
@@ -231,6 +231,9 @@ static char timertest_handler(struct crtx_event *event, void *userdata, void **s
 }
 
 void setup_timer() {
+	int r;
+	
+	
 	memset(&tlist, 0, sizeof(struct crtx_timer_listener));
 	
 	// set time for (first) alarm
@@ -244,15 +247,15 @@ void setup_timer() {
 	tlist.clockid = CLOCK_REALTIME;
 	tlist.settime_flags = 0;
 	
-	blist = create_listener("timer", &tlist);
-	if (!blist) {
-		ERROR("create_listener(timer) failed\n");
+	r = crtx_create_listener("timer", &tlist);
+	if (r) {
+		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		exit(1);
 	}
 	
-	crtx_create_task(blist->graph, 0, "timertest", timertest_handler, 0);
+	crtx_create_task(tlist.base.graph, 0, "timertest", timertest_handler, 0);
 	
-	crtx_start_listener(blist);
+	crtx_start_listener(&tlist.base);
 }
 
 int main(int argc, char *argv[]) {

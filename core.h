@@ -296,7 +296,6 @@ struct crtx_graph *crtx_get_graph_for_event_description(char *event_type, char *
 struct crtx_task *new_task();
 void crtx_free_task(struct crtx_task *task);
 char wait_on_event(struct crtx_event *event);
-struct crtx_listener_base *create_listener(const char *id, void *options);
 int crtx_create_listener(const char *id, void *options);
 int crtx_init_listener_base(struct crtx_listener_base *lstnr);
 

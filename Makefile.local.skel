@@ -7,7 +7,7 @@
 # LAYER2_TESTS=crtx_layer2_tests
 # LAYER2_MODULES=dynamic_evdev netif
 
-# CFLAGS+=-DCRTX_PLUGIN_DIR=\"/usr/lib/cortexd/plugins/\"
+# CFLAGS+=-DCRTX_PLUGIN_DIR=\"/usr/lib/\"
 
 # CFLAGS+=-DCRTX_DICT_DB_PATH=\"/var/lib/cortex/dict_db/\"
 

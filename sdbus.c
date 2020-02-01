@@ -541,18 +541,18 @@ static struct crtx_sdbus_listener default_listeners[CRTX_SDBUS_TYPE_MAX] = { { {
 
 struct crtx_sdbus_listener *crtx_sdbus_get_default_listener(enum crtx_sdbus_type sdbus_type) {
 	if (!default_listeners[sdbus_type].bus) {
-		struct crtx_listener_base *lbase;
 		int ret;
 		
 		
 		default_listeners[sdbus_type].bus_type = sdbus_type;
 		
-		lbase = create_listener("sdbus", &default_listeners[sdbus_type]);
-		if (!lbase) {
+		ret = crtx_create_listener("sdbus", &default_listeners[sdbus_type]);
+		if (ret) {
+			ERROR("create_listener(timer) failed: %s\n", strerror(-ret));
 			return 0;
 		}
 		
-		ret = crtx_start_listener(lbase);
+		ret = crtx_start_listener(&default_listeners[sdbus_type].base);
 		if (ret) {
 			return 0;
 		}
@@ -595,9 +595,8 @@ struct crtx_sdbus_match matches[] = {
 
 int sdbus_main(int argc, char **argv) {
 	struct crtx_sdbus_listener sdlist;
-	struct crtx_listener_base *lbase;
 	struct crtx_sdbus_match *it;
-	char ret;
+	int ret;
 	
 	
 	memset(&sdlist, 0, sizeof(struct crtx_sdbus_listener));
@@ -605,15 +604,15 @@ int sdbus_main(int argc, char **argv) {
 	sdlist.bus_type = CRTX_SDBUS_TYPE_USER;
 	sdlist.connection_signals = 1;
 	
-	lbase = create_listener("sdbus", &sdlist);
-	if (!lbase) {
-		ERROR("create_listener(sdbus) failed\n");
+	ret = crtx_create_listener("sdbus", &sdlist);
+	if (ret) {
+		ERROR("create_listener(sdbus) failed: %s\n", strerror(-ret));
 		exit(1);
 	}
 	
-	crtx_create_task(lbase->graph, 0, "sdbus_test", sdbus_test_handler, 0);
+	crtx_create_task(sdlist.base.graph, 0, "sdbus_test", sdbus_test_handler, 0);
 	
-	ret = crtx_start_listener(lbase);
+	ret = crtx_start_listener(&sdlist.base);
 	if (ret) {
 		ERROR("starting sdbus listener failed\n");
 		return 1;

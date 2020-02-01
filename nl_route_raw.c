@@ -724,8 +724,8 @@ static void shutdown_nl_route_listener(struct crtx_listener_base *lbase) {
 struct crtx_listener_base *crtx_new_nl_route_raw_listener(void *options) {
 	struct crtx_nl_route_listener *nlr_list;
 // 	struct sockaddr_nl addr;
-	struct crtx_listener_base *lbase;
-// 	int ret;
+// 	struct crtx_listener_base *lbase;
+	int ret;
 	
 	nlr_list = (struct crtx_nl_route_listener*) options;
 	
@@ -741,9 +741,9 @@ struct crtx_listener_base *crtx_new_nl_route_raw_listener(void *options) {
 	nlr_list->raw2dict = &crtx_nl_route_raw2dict_ifaddr;
 	nlr_list->all_fields = 1;
 	
-	lbase = create_listener("netlink_raw", &nlr_list->nl_listener);
-	if (!lbase) {
-		ERROR("create_listener(netlink_raw) failed\n");
+	ret = crtx_create_listener("netlink_raw", &nlr_list->nl_listener);
+	if (ret) {
+		ERROR("create_listener(netlink_raw) failed: %s\n", strerror(-ret));
 		exit(1);
 	}
 	
@@ -844,8 +844,7 @@ static char crtx_get_own_ip_addresses_keygen(struct crtx_event *event, struct cr
 
 char crtx_get_own_ip_addresses() {
 	struct crtx_nl_route_listener nlr_list;
-	struct crtx_listener_base *lbase;
-	char ret;
+	int ret;
 	struct crtx_task *ip_cache_task;
 	struct crtx_cache_task *ctask;
 	
@@ -862,9 +861,9 @@ char crtx_get_own_ip_addresses() {
 	nlr_list.msg_done_cb = msg_done_cb;
 	nlr_list.msg_done_cb_data = &nlr_list;
 	
-	lbase = create_listener("nl_route_raw", &nlr_list);
-	if (!lbase) {
-		ERROR("create_listener(nl_route_raw) failed\n");
+	ret = crtx_create_listener("nl_route_raw", &nlr_list);
+	if (ret) {
+		ERROR("create_listener(nl_route_raw) failed: %s\n", strerror(-ret));
 		exit(1);
 	}
 	
@@ -878,10 +877,10 @@ char crtx_get_own_ip_addresses() {
 		ctask->on_add = &crtx_cache_no_add;
 		ctask->on_miss = &crtx_cache_add_on_miss;
 		
-		add_task(lbase->graph, ip_cache_task);
+		add_task(nlr_list.base.graph, ip_cache_task);
 	}
 	
-	ret = crtx_start_listener(lbase);
+	ret = crtx_start_listener(&nlr_list.base);
 	if (ret) {
 		ERROR("starting nl_route_raw listener failed\n");
 		return 1;
@@ -903,13 +902,13 @@ char crtx_get_own_ip_addresses() {
 // 	sleep(5);
 // 	dls_loop();
 	
-	crtx_stop_listener(lbase);
+	crtx_stop_listener(&nlr_list.base);
 	
-	crtx_wait_on_graph_empty(lbase->graph);
+	crtx_wait_on_graph_empty(nlr_list.base.graph);
 	
 	crtx_print_dict(ctask->cache->entries);
 	
-	crtx_free_listener(lbase);
+	crtx_free_listener(&nlr_list.base);
 	
 // 	crtx_free_task(ip_cache_task);
 	free_response_cache_task(ctask);

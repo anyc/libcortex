@@ -138,8 +138,8 @@ static char retry_listener_task(struct crtx_event *event, void *userdata, void *
 
 struct crtx_timer_retry_listener *crtx_timer_retry_listener(struct crtx_listener_base *lstnr, unsigned int seconds) {
 	struct crtx_timer_listener *tlist;
-	struct crtx_listener_base *blist;
 	struct crtx_timer_retry_listener *retry_lstnr;
+	int r;
 	
 	
 	retry_lstnr = (struct crtx_timer_retry_listener*) calloc(1, sizeof(struct crtx_timer_retry_listener));
@@ -152,16 +152,16 @@ struct crtx_timer_retry_listener *crtx_timer_retry_listener(struct crtx_listener
 	tlist->newtimer.it_interval.tv_nsec = 0;
 	tlist->clockid = CLOCK_REALTIME;
 	
-	blist = create_listener("timer", tlist);
-	if (!blist) {
-		ERROR("create_listener(timer) failed\n");
+	r = crtx_create_listener("timer", tlist);
+	if (r) {
+		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		
 		free(retry_lstnr);
 		
 		return 0;
 	}
 	
-	crtx_create_task(blist->graph, 0, "retry_lstnr_task", &retry_listener_task, retry_lstnr);
+	crtx_create_task(tlist->base.graph, 0, "retry_lstnr_task", &retry_listener_task, retry_lstnr);
 	
 	return retry_lstnr;
 }
@@ -184,7 +184,8 @@ int crtx_timer_get_listener(struct crtx_timer_listener *tlist,
 							long int_nsec
 							)
 {
-	struct crtx_listener_base *lbase;
+	int r;
+	
 	
 	memset(tlist, 0, sizeof(struct crtx_timer_listener));
 	
@@ -197,9 +198,9 @@ int crtx_timer_get_listener(struct crtx_timer_listener *tlist,
 	tlist->clockid = CLOCK_REALTIME;
 	tlist->settime_flags = 0;
 	
-	lbase = create_listener("timer", tlist);
-	if (!lbase) {
-		ERROR("create_listener(timer) failed\n");
+	r = crtx_create_listener("timer", tlist);
+	if (r) {
+		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		return 0;
 	}
 	
@@ -213,8 +214,9 @@ int crtx_timer_oneshot(time_t offset_sec,
 						void *callback_userdata
 						)
 {
-	struct crtx_listener_base *lbase;
 	struct crtx_timer_listener *tlist;
+	int r;
+	
 	
 	tlist = (struct crtx_timer_listener*) malloc(sizeof(struct crtx_timer_listener));
 	
@@ -230,13 +232,13 @@ int crtx_timer_oneshot(time_t offset_sec,
 	tlist->oneshot_callback = callback;
 	tlist->oneshot_data = callback_userdata;
 	
-	lbase = create_listener("timer", tlist);
-	if (!lbase) {
-		ERROR("create_listener(timer) failed\n");
+	r = crtx_create_listener("timer", tlist);
+	if (r) {
+		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		return 0;
 	}
 	
-	crtx_start_listener(lbase);
+	crtx_start_listener(&tlist->base);
 	
 	return 0;
 }
@@ -260,7 +262,8 @@ static char timertest_handler(struct crtx_event *event, void *userdata, void **s
 int timer_main(int argc, char **argv) {
 	struct crtx_timer_listener tlist;
 // 	struct itimerspec newtimer;
-	struct crtx_listener_base *blist;
+	int r;
+	
 	
 	memset(&tlist, 0, sizeof(struct crtx_timer_listener));
 	
@@ -276,15 +279,15 @@ int timer_main(int argc, char **argv) {
 	tlist.settime_flags = 0; // absolute (TFD_TIMER_ABSTIME), or relative (0) time, see: man timerfd_settime()
 // 	tlist.newtimer = &newtimer;
 	
-	blist = create_listener("timer", &tlist);
-	if (!blist) {
-		ERROR("create_listener(timer) failed\n");
+	r = crtx_create_listener("timer", &tlist);
+	if (r) {
+		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		exit(1);
 	}
 	
-	crtx_create_task(blist->graph, 0, "timertest", timertest_handler, 0);
+	crtx_create_task(tlist.base.graph, 0, "timertest", timertest_handler, 0);
 	
-	crtx_start_listener(blist);
+	crtx_start_listener(&tlist.base);
 	
 	crtx_loop();
 	

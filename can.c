@@ -452,7 +452,6 @@ static char can_event_handler(struct crtx_event *event, void *userdata, void **s
 
 int can_main(int argc, char **argv) {
 	struct crtx_can_listener clist;
-	struct crtx_listener_base *lbase;
 	int ret;
 	
 	
@@ -463,20 +462,20 @@ int can_main(int argc, char **argv) {
 	if (argc > 1)
 		clist.interface_name = argv[1];
 	
-	lbase = create_listener("can", &clist);
-	if (!lbase) {
-		ERROR("create_listener(can) failed\n");
+	ret = crtx_create_listener("can", &clist);
+	if (ret) {
+		ERROR("create_listener(can) failed: %s\n", strerror(-ret));
 		return 0;
 	}
 	
-	ret = crtx_start_listener(lbase);
+	ret = crtx_start_listener(&clist.base);
 	if (ret) {
 		ERROR("starting can listener failed\n");
 		return 0;
 	}
 	
 	
-	crtx_create_task(lbase->graph, 0, "can_test", &can_event_handler, 0);
+	crtx_create_task(clist.base.graph, 0, "can_test", &can_event_handler, 0);
 	
 	crtx_loop();
 	

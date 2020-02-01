@@ -349,8 +349,7 @@ static char udev_test_handler(struct crtx_event *event, void *userdata, void **s
 struct crtx_udev_listener ulist;
 
 int udev_main(int argc, char **argv) {
-	struct crtx_listener_base *lbase;
-	char ret;
+	int ret;
 	
 // 	crtx_handle_std_signals();
 	
@@ -360,15 +359,15 @@ int udev_main(int argc, char **argv) {
 	
 	ulist.sys_dev_filter = test_filters;
 	
-	lbase = create_listener("udev", &ulist);
-	if (!lbase) {
-		ERROR("create_listener(udev) failed\n");
+	ret = crtx_create_listener("udev", &ulist);
+	if (ret) {
+		ERROR("create_listener(udev) failed: %s\n", strerror(-ret));
 		exit(1);
 	}
 	
-	crtx_create_task(lbase->graph, 0, "udev_test", udev_test_handler, 0);
+	crtx_create_task(ulist.base.graph, 0, "udev_test", udev_test_handler, 0);
 	
-	ret = crtx_start_listener(lbase);
+	ret = crtx_start_listener(&ulist.base);
 	if (ret) {
 		ERROR("starting udev listener failed\n");
 		return 1;

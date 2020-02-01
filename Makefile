@@ -95,7 +95,7 @@ clean:
 	rm -rf *.o $(APP) core_modules.h $(TESTS) $(SHAREDLIB) libcrtx*.so*
 
 debug:
-	$(MAKE) $(MAKEFILE) DEBUG_FLAGS="-g -g3 -gdwarf-2 -DDEBUG -Wall" #-Werror 
+	$(MAKE) $(MAKEFILE) DEBUG_FLAGS="-g -g3 -gdwarf-2 -DDEBUG -Wall -Werror"
 
 
 crtx_include_dir:

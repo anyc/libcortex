@@ -166,7 +166,6 @@ struct crtx_libnl_callback libnl_callbacks[] = {
 struct crtx_libnl_listener libnl;
 
 int libnl_main(int argc, char **argv) {
-	struct crtx_listener_base *lbase;
 	struct crtx_libnl_callback *cbit;
 	int r;
 	
@@ -178,16 +177,16 @@ int libnl_main(int argc, char **argv) {
 	}
 	libnl.callbacks = libnl_callbacks;
 	
-	lbase = create_listener("nl_libnl", &libnl);
-	if (!lbase) {
-		ERROR("create_listener(libnl) failed\n");
+	r = crtx_create_listener("nl_libnl", &libnl);
+	if (r) {
+		ERROR("create_listener(libnl) failed: %s\n", strerror(-r));
 		exit(1);
 	}
 	
-	lbase->state_graph = lbase->graph;
-	crtx_create_task(lbase->graph, 0, "libnl_test", libnl_test_handler, 0);
+	libnl.base.state_graph = libnl.base.graph;
+	crtx_create_task(libnl.base.graph, 0, "libnl_test", libnl_test_handler, 0);
 	
-	r = crtx_start_listener(lbase);
+	r = crtx_start_listener(&libnl.base);
 	if (r) {
 		ERROR("starting libnl listener failed\n");
 		return 1;

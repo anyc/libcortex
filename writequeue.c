@@ -107,7 +107,8 @@ struct crtx_listener_base *crtx_new_writequeue_listener(void *options) {
 }
 
 int crtx_add_writequeue2listener(struct crtx_writequeue *writequeue, struct crtx_listener_base *listener, crtx_wq_write_cb write_cb, void *write_userdata) {
-	struct crtx_listener_base *lbase;
+	int r;
+	
 	
 	memset(writequeue, 0, sizeof(struct crtx_writequeue));
 	
@@ -129,9 +130,9 @@ int crtx_add_writequeue2listener(struct crtx_writequeue *writequeue, struct crtx
 // 	writequeue->base.evloop_fd.el_data = &writequeue->epoll_event;
 // 	writequeue->epoll_event.data.ptr = &writequeue->base.evloop_fd;
 	
-	lbase = create_listener("writequeue", writequeue);
-	if (!lbase) {
-		ERROR("create_listener(writequeue) failed\n");
+	r = crtx_create_listener("writequeue", writequeue);
+	if (r) {
+		ERROR("create_listener(writequeue) failed: %s\n", strerror(-r));
 		exit(1);
 	}
 	
@@ -189,7 +190,6 @@ static int wq_write(struct crtx_writequeue *wqueue, void *userdata) {
 
 int writequeue_main(int argc, char **argv) {
 	struct crtx_writequeue wqueue;
-	struct crtx_listener_base *lbase;
 	char ret;
 	
 	
@@ -203,13 +203,13 @@ int writequeue_main(int argc, char **argv) {
 	wqueue.write_fd = pipe_fds[1];
 	wqueue.write = &wq_write;
 	
-	lbase = create_listener("writequeue", &wqueue);
-	if (!lbase) {
-		ERROR("create_listener(writequeue) failed\n");
+	ret = crtx_create_listener("writequeue", &wqueue);
+	if (ret) {
+		ERROR("create_listener(writequeue) failed: %s\n", strerror(-ret));
 		exit(1);
 	}
 	
-	ret = crtx_start_listener(lbase);
+	ret = crtx_start_listener(&wqueue.base);
 	if (ret) {
 		ERROR("starting writequeue listener failed\n");
 		return 1;

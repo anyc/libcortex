@@ -580,7 +580,6 @@ void crtx_epoll_finish() {
 
 struct crtx_timer_listener tlist;
 struct itimerspec newtimer;
-struct crtx_listener_base *blist;
 int testpipe[2];
 int count = 0;
 
@@ -617,6 +616,9 @@ static char timer_handler(struct crtx_event *event, void *userdata, void **sessi
 }
 
 void start_timer() {
+	int r;
+	
+	
 	// set time for (first) alarm
 	tlist.newtimer.it_value.tv_sec = 1;
 	tlist.newtimer.it_value.tv_nsec = 0;
@@ -628,15 +630,15 @@ void start_timer() {
 	tlist.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
 	tlist.settime_flags = 0; // absolute (TFD_TIMER_ABSTIME), or relative (0) time, see: man timerfd_settime()
 	
-	blist = create_listener("timer", &tlist);
-	if (!blist) {
-		ERROR("create_listener(timer) failed\n");
+	r = crtx_create_listener("timer", &tlist);
+	if (r) {
+		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		exit(1);
 	}
 	
-	crtx_create_task(blist->graph, 0, "timer", timer_handler, 0);
+	crtx_create_task(tlist.base.graph, 0, "timer", timer_handler, 0);
 	
-	crtx_start_listener(blist);
+	crtx_start_listener(&tlist.base);
 }
 
 int epoll_main(int argc, char **argv) {

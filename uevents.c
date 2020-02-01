@@ -149,7 +149,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 
 struct crtx_listener_base *crtx_new_uevents_listener(void *options) {
 	struct crtx_uevents_listener *ulist;
-	struct crtx_listener_base *lbase;
+	int r;
 	
 	
 	ulist = (struct crtx_uevents_listener*) options;
@@ -161,9 +161,9 @@ struct crtx_listener_base *crtx_new_uevents_listener(void *options) {
 	ulist->nl_listener.read_cb = uevents_read_cb;
 	ulist->nl_listener.read_cb_userdata = ulist;
 	
-	lbase = create_listener("netlink_raw", &ulist->nl_listener);
-	if (!lbase) {
-		ERROR("create_listener(netlink_raw) failed\n");
+	r = crtx_create_listener("netlink_raw", &ulist->nl_listener);
+	if (r) {
+		ERROR("create_listener(netlink_raw) failed: %s\n", strerror(-r));
 		exit(1);
 	}
 	
@@ -212,20 +212,20 @@ static char uevents_test_handler(struct crtx_event *event, void *userdata, void 
 
 int netlink_raw_main(int argc, char **argv) {
 	struct crtx_uevents_listener ulist;
-	struct crtx_listener_base *lbase;
 	int ret;
+	
 	
 	memset(&ulist, 0, sizeof(struct crtx_uevents_listener));
 	
-	lbase = create_listener("uevents", &ulist);
-	if (!lbase) {
-		ERROR("create_listener(uevents) failed\n");
+	ret = crtx_create_listener("uevents", &ulist);
+	if (ret) {
+		ERROR("create_listener(uevents) failed: %s\n", strerror(ret));
 		exit(1);
 	}
 	
-	crtx_create_task(lbase->graph, 0, "uevents_test", uevents_test_handler, 0);
+	crtx_create_task(ulist.base.graph, 0, "uevents_test", uevents_test_handler, 0);
 	
-	ret = crtx_start_listener(lbase);
+	ret = crtx_start_listener(&ulist.base);
 	if (ret) {
 		ERROR("starting uevents listener failed\n");
 		return 1;
@@ -233,7 +233,7 @@ int netlink_raw_main(int argc, char **argv) {
 	
 	crtx_loop();
 	
-// 	free_listener(lbase);
+	// 	free_listener(&ulist.base);
 	
 	return 0;
 }

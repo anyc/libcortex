@@ -217,8 +217,8 @@ static char evdev_test_handler(struct crtx_event *event, void *userdata, void **
 
 int evdev_main(int argc, char **argv) {
 	struct crtx_evdev_listener el;
-	struct crtx_listener_base *lbase;
 	char ret;
+	
 	
 	if (argc < 2) {
 		fprintf(stderr, "Usage: %s </dev/input/eventX>\n", argv[0]);
@@ -229,15 +229,15 @@ int evdev_main(int argc, char **argv) {
 	
 	el.device_path = argv[1];
 	
-	lbase = create_listener("evdev", &el);
-	if (!lbase) {
-		ERROR("create_listener(evdev) failed\n");
+	ret = crtx_create_listener("evdev", &el);
+	if (ret) {
+		ERROR("create_listener(evdev) failed: %s\n", strerror(-ret));
 		exit(1);
 	}
 	
-	crtx_create_task(lbase->graph, 0, "evdev_test", evdev_test_handler, 0);
+	crtx_create_task(el.base.graph, 0, "evdev_test", evdev_test_handler, 0);
 	
-	ret = crtx_start_listener(lbase);
+	ret = crtx_start_listener(&el.base);
 	if (ret) {
 		ERROR("starting evdev listener failed\n");
 		return 1;
@@ -245,7 +245,7 @@ int evdev_main(int argc, char **argv) {
 	
 	crtx_loop();
 	
-	crtx_free_listener(lbase);
+	crtx_free_listener(&el.base);
 	
 	return 0;
 }
