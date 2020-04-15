@@ -390,8 +390,9 @@ struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char al
 			case IFLA_BROADCAST:
 				di = crtx_alloc_item(dict);
 				
-				if (RTA_PAYLOAD(rth) != 6)
-					ERROR("netlink_raw: RTA_PAYLOAD %zu != 6\n", RTA_PAYLOAD(rth));
+				// e.g., sit0 interfaces use only 4 bytes
+				if (RTA_PAYLOAD(rth) > 6)
+					INFO("netlink_raw: RTA_PAYLOAD %zu > 6\n", RTA_PAYLOAD(rth));
 				
 				s = (char*) malloc(RTA_PAYLOAD(rth)*3);
 				b = (unsigned char*) RTA_DATA(rth);
