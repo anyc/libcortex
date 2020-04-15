@@ -256,7 +256,12 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 			#endif
 			
 			if (epl->events[i].events & EPOLLERR || epl->events[i].events & EPOLLRDHUP || epl->events[i].events & EPOLLHUP) {
-				ERROR("epoll returned EPOLLERR for fd %d\n", evloop_fd->fd);
+				if (epl->events[i].events & EPOLLERR)
+					ERROR("epoll returned EPOLLERR for fd %d\n", evloop_fd->fd);
+				if (epl->events[i].events & EPOLLHUP)
+					ERROR("epoll returned EPOLLHUP for fd %d\n", evloop_fd->fd);
+				if (epl->events[i].events & EPOLLRDHUP)
+					ERROR("epoll returned EPOLLRDHUP for fd %d\n", evloop_fd->fd);
 				
 				for (el_cb = evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
 					if (el_cb->error_cb)

@@ -309,6 +309,20 @@ int crtx_sdbus_get_events(sd_bus *bus) {
 	return result;
 }
 
+#if 1
+void poll_flags2str(unsigned int flags) {
+	#define RETFLAG(flag) if (flags & flag) printf(#flag " ");
+	
+	RETFLAG(POLLIN);
+	RETFLAG(POLLOUT);
+	RETFLAG(POLLPRI);
+// 	RETFLAG(POLLRDHUP);
+	RETFLAG(POLLERR);
+	RETFLAG(POLLHUP);
+	RETFLAG(POLLNVAL);
+}
+#endif
+
 static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct crtx_evloop_callback *el_cb) {
 	int new_flags, r;
 	uint64_t timeout_us;
@@ -320,11 +334,16 @@ static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct cr
 		return new_flags;
 	}
 	
+	if (new_flags & POLLHUP) {
+		VDBG("POLLHUP set by sdbus on fd %d\n", sd_bus_get_fd(sdlist->bus));
+	}
+	
 	el_cb->crtx_event_flags |= EVLOOP_TIMEOUT;
 	new_flags |= EVLOOP_TIMEOUT;
 	
 	if (el_cb->crtx_event_flags != new_flags) {
 		printf("TODO sdbus update_evloop_settings() %d != %d\n", el_cb->crtx_event_flags, new_flags);
+// 		poll_flags2str(new_flags);
 		// TODO set epoll flags again everytime?
 // 		el_cb->crtx_event_flags = new_flags;
 // 		crtx_evloop_enable_cb(el_cb->fd_entry->evloop, el_cb);
