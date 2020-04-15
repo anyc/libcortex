@@ -658,9 +658,9 @@ void crtx_process_event(struct crtx_graph *graph, struct crtx_dll *queue_entry) 
 		free_listener_intern(graph->listener);
 	}
 	
-	/*if (graph->listener && graph->listener->free_after_event) {
+	if (graph->listener && graph->listener->free_after_event) {
 		crtx_free_listener(graph->listener);
-	}*/	
+	}	
 }
 
 void *crtx_process_graph_tmain(void *arg) {
