@@ -3,8 +3,7 @@
  *
  */
 
-// no preprocessor guard necessary as linkedlist.h will include this header
-// twice
+// no preprocessor guard as linkedlist.h will include this header twice
 
 #ifdef CRTX_DLL
 	#define CRTX_DLL_PREFIX crtx_dll
@@ -45,13 +44,13 @@ CRTX_DLL_TYPE {
 	int payload[0];
 };
 
-char CRTX_DLL_FCT(append)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item);
+int CRTX_DLL_FCT(append)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item);
 CRTX_DLL_TYPE * CRTX_DLL_FCT(append_new)(CRTX_DLL_TYPE **head, void *data);
 
-char CRTX_DLL_FCT(unlink)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item);
+int CRTX_DLL_FCT(unlink)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item);
 CRTX_DLL_TYPE *CRTX_DLL_FCT(unlink_data)(CRTX_DLL_TYPE **head, void *data);
 
-char CRTX_DLL_FCT(insert)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item, CRTX_DLL_TYPE *before);
+int CRTX_DLL_FCT(insert)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item, CRTX_DLL_TYPE *before);
 CRTX_DLL_TYPE * CRTX_DLL_FCT(insert_new)(CRTX_DLL_TYPE **head, void *data, CRTX_DLL_TYPE *before);
 
 // #undef CRTX_DLL_PREFIX

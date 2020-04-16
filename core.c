@@ -466,6 +466,8 @@ static void free_listener_intern(struct crtx_listener_base *listener) {
 }
 
 void crtx_free_listener(struct crtx_listener_base *listener) {
+	int r;
+	
 // 	struct crtx_ll *ll;
 // 	
 // 	
@@ -517,7 +519,10 @@ void crtx_free_listener(struct crtx_listener_base *listener) {
 	}
 	
 	LOCK(crtx_root->listeners_mutex);
-	crtx_ll_unlink(&crtx_root->listeners, &listener->ll);
+	r = crtx_ll_unlink(&crtx_root->listeners, &listener->ll);
+	if (r) {
+		ERROR("error unlinking listener %p in global list: %s\n", listener, strerror(-r));
+	}
 	UNLOCK(crtx_root->listeners_mutex);
 	
 	/*

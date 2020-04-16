@@ -4,14 +4,15 @@
  */
 
 #include <stdlib.h>
+#include <errno.h>
 
 #include "llist.h"
 
-char CRTX_DLL_FCT(append)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item) {
+int CRTX_DLL_FCT(append)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item) {
 	CRTX_DLL_TYPE *it;
 	
 	if (!head)
-		return 0;
+		return -EINVAL;
 	
 	for (it = *head; it && it->next; it=it->next) {}
 	
@@ -28,10 +29,10 @@ char CRTX_DLL_FCT(append)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item) {
 	}
 	item->next = 0;
 	
-	return 1;
+	return 0;
 }
 
-char CRTX_DLL_FCT(unlink)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item) {
+int CRTX_DLL_FCT(unlink)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item) {
 	#ifdef CRTX_DLL
 	if (*head == item) {
 		*head = item->next;
@@ -55,13 +56,13 @@ char CRTX_DLL_FCT(unlink)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item) {
 			i->next = item->next;
 		} else {
 // 			VDBG("item not found in llist\n");
-			return 0;
+			return -ENOENT;
 		}
 	}
 	item->next = 0;
 	#endif
 	
-	return 1;
+	return 0;
 }
 
 CRTX_DLL_TYPE *CRTX_DLL_FCT(unlink_data)(CRTX_DLL_TYPE **head, void *data) {
@@ -80,11 +81,13 @@ CRTX_DLL_TYPE *CRTX_DLL_FCT(unlink_data)(CRTX_DLL_TYPE **head, void *data) {
 
 CRTX_DLL_TYPE * CRTX_DLL_FCT(append_new)(CRTX_DLL_TYPE **head, void *data) {
 	CRTX_DLL_TYPE *it;
+	int r;
 	
 	it = (CRTX_DLL_TYPE*) malloc(sizeof(CRTX_DLL_TYPE));
 	it->data = data;
 	
-	if (!CRTX_DLL_FCT(append)(head, it)) {
+	r = CRTX_DLL_FCT(append)(head, it);
+	if (r) {
 		free(it);
 		return 0;
 	}
@@ -93,9 +96,9 @@ CRTX_DLL_TYPE * CRTX_DLL_FCT(append_new)(CRTX_DLL_TYPE **head, void *data) {
 }
 
 #ifdef CRTX_DLL
-char CRTX_DLL_FCT(insert)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item, CRTX_DLL_TYPE *before) {
+int CRTX_DLL_FCT(insert)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item, CRTX_DLL_TYPE *before) {
 	if (!head)
-		return 0;
+		return -EINVAL;
 	
 	if (!before->prev) {
 		*head = item;
@@ -109,17 +112,19 @@ char CRTX_DLL_FCT(insert)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item, CRTX_DLL_TY
 		item->next = before;
 	}
 	
-	return 1;
+	return 0;
 }
 
 
 CRTX_DLL_TYPE * CRTX_DLL_FCT(insert_new)(CRTX_DLL_TYPE **head, void *data, CRTX_DLL_TYPE *before) {
 	CRTX_DLL_TYPE *it;
+	int r;
 	
 	it = (CRTX_DLL_TYPE*) malloc(sizeof(CRTX_DLL_TYPE));
 	it->data = data;
 	
-	if (!CRTX_DLL_FCT(insert)(head, it, before)) {
+	r = CRTX_DLL_FCT(insert)(head, it, before);
+	if (r) {
 		free(it);
 		return 0;
 	}
