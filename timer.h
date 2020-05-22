@@ -6,7 +6,7 @@
  *
  */
 
-#include "timer.h"
+#include "core.h"
 
 #define CRTX_EVT_TIMER "cortex.timer"
 
