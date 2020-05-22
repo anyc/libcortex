@@ -55,8 +55,6 @@ static int async_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) 
 	
 	async_cb_data = (struct async_callback*) userdata;
 	
-// 	printf("sdbus async cb response %p\n", async_cb_data);
-	
 	*async_cb_data->reply = m;
 	
 	sd_bus_message_ref(m);
@@ -100,15 +98,16 @@ int crtx_sdbus_call(struct crtx_sdbus_listener *lstnr, sd_bus_message *msg, sd_b
 	
 	// this triggers a call to sdbus_process() which sets timeout/flags/etc
 	crtx_sdbus_trigger_event_processing(lstnr);
-// 	printf("wait %p\n", &async_cb_data);
+	
 	if (lstnr->single_threaded) {
 		while (!crtx_signal_is_active(&async_cb_data.signal)) {
-			crtx_loop_onetime();
+			err = crtx_loop_onetime();
+			if (err)
+				break;
 		}
 	} else {
 		crtx_wait_on_signal(&async_cb_data.signal, 0);
 	}
-// 	printf("wait %p end\n", &async_cb_data);
 finish:
 	crtx_shutdown_signal(&async_cb_data.signal);
 	

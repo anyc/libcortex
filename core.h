@@ -276,7 +276,7 @@ void free_event(struct crtx_event *event);
 int crtx_init();
 int crtx_finish();
 void crtx_loop();
-void crtx_loop_onetime();
+int crtx_loop_onetime();
 
 int crtx_create_graph(struct crtx_graph **crtx_graph, const char *name);
 int crtx_init_graph(struct crtx_graph *crtx_graph, const char *name);

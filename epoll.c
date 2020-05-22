@@ -221,6 +221,9 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 	else
 		loop = 1;
 	
+	if (evloop->after_fork_close)
+		return 1;
+	
 	while (loop) {
 		/*
 		 * process (outstanding) events
@@ -277,12 +280,18 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 					el_cb->triggered_flags = epoll_flags2crtx_event_flags(epl->events[i].events);
 					
 					crtx_evloop_callback(el_cb);
+					
+					if (evloop->after_fork_close)
+						break;
 				}
 			}
 			
 			if (evloop->after_fork_close)
 				break;
 		}
+		
+		if (evloop->after_fork_close)
+			break;
 		
 		/*
 		 * process timeout callbacks

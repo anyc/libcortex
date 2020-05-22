@@ -1329,8 +1329,8 @@ void crtx_loop() {
 	}
 }
 
-void crtx_loop_onetime() {
-	crtx_root->event_loop->onetime(crtx_root->event_loop);
+int crtx_loop_onetime() {
+	return crtx_root->event_loop->onetime(crtx_root->event_loop);
 }
 
 static void *evloop_detached_main(void *data) {
