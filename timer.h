@@ -6,6 +6,8 @@
  *
  */
 
+#include "timer.h"
+
 #define CRTX_EVT_TIMER "cortex.timer"
 
 // for settime_flags

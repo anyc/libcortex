@@ -82,13 +82,14 @@ static int async_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) 
  */
 int crtx_sdbus_call(struct crtx_sdbus_listener *lstnr, sd_bus_message *msg, sd_bus_message **reply, uint64_t timeout_us) {
 	struct async_callback async_cb_data;
+	sd_bus_slot *slot;
 	int err;
 	
 	async_cb_data.reply = reply;
 	crtx_init_signal(&async_cb_data.signal);
 	
 	crtx_lock_listener_source(&lstnr->base);
-	err = sd_bus_call_async(lstnr->bus, 0, msg, async_cb, &async_cb_data, timeout_us);
+	err = sd_bus_call_async(lstnr->bus, &slot, msg, async_cb, &async_cb_data, timeout_us);
 	crtx_unlock_listener_source(&lstnr->base);
 	
 	if (err < 0) {
@@ -109,6 +110,8 @@ int crtx_sdbus_call(struct crtx_sdbus_listener *lstnr, sd_bus_message *msg, sd_b
 		crtx_wait_on_signal(&async_cb_data.signal, 0);
 	}
 finish:
+	sd_bus_slot_unref(slot);
+	
 	crtx_shutdown_signal(&async_cb_data.signal);
 	
 	return err;

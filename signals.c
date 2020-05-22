@@ -169,7 +169,7 @@ static char selfpipe_event_handler(struct crtx_event *event, void *userdata, voi
 			else
 				new_event->description = "";
 			
-			crtx_event_set_raw_data(new_event, 'i', signal_num, sizeof(signal_num));
+			crtx_event_set_raw_data(new_event, 'i', signal_num, sizeof(signal_num), 0);
 			crtx_add_event(signal_table[i].lstnr->graph, new_event);
 			
 			break;
@@ -513,7 +513,7 @@ struct crtx_listener_base *crtx_new_signals_listener(void *options) {
 
 static char sigchild_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	// 	unsigned int i;
-	struct crtx_dll *it;
+	struct crtx_dll *it, *itn;
 	struct sigchld_cb_data *data;
 	
 	while (1) {
@@ -533,7 +533,9 @@ static char sigchild_event_handler(struct crtx_event *event, void *userdata, voi
 				);
 		}
 		
-		for (it=sigchld_cbs; it; it=it->next) {
+		for (it=sigchld_cbs; it; it=itn) {
+			itn = it->next;
+			
 			data = (struct sigchld_cb_data *) it->data;
 			
 			data->cb(pid, status, data->userdata);

@@ -221,7 +221,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 	else
 		loop = 1;
 	
-	if (evloop->after_fork_close)
+	if (evloop->after_fork_close || evloop->phase_out || epl->stop)
 		return 1;
 	
 	while (loop) {

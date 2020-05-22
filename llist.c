@@ -36,6 +36,8 @@ int CRTX_DLL_FCT(unlink)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item) {
 	#ifdef CRTX_DLL
 	if (*head == item) {
 		*head = item->next;
+		if (item->next)
+			item->next->prev = item->prev;
 	} else {
 		if (item->prev)
 			item->prev->next = item->next;
