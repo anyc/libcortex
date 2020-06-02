@@ -177,8 +177,13 @@ struct crtx_listener_base *crtx_new_curl_listener(void *options) {
 	curlr = curl_easy_setopt(clist->easy, CURLOPT_PRIVATE, clist); CURL_CHECK(curlr);
 	
 	if (clist->progress_callback) {
+		#if LIBCURL_VERSION_NUM >= 0x072000 // 0.7.32
 		curlr = curl_easy_setopt(clist->easy, CURLOPT_XFERINFOFUNCTION, clist->progress_callback); CURL_CHECK(curlr);
 		curlr = curl_easy_setopt(clist->easy, CURLOPT_XFERINFODATA, clist->progress_cb_data); CURL_CHECK(curlr);
+		#else
+		curlr = curl_easy_setopt(clist->easy, CURLOPT_PROGRESSFUNCTION, clist->progress_callback); CURL_CHECK(curlr);
+		curlr = curl_easy_setopt(clist->easy, CURLOPT_PROGRESSDATA, clist->progress_cb_data); CURL_CHECK(curlr);
+		#endif
 		curlr = curl_easy_setopt(clist->easy, CURLOPT_NOPROGRESS, 0L); CURL_CHECK(curlr);
 	}
 	
