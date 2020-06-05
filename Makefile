@@ -195,8 +195,8 @@ install:
 	$(INSTALL) -m 755 -d $(DESTDIR)$(includedir)/cortex/
 	$(INSTALL) -m 755 -d $(DESTDIR)$(includedir)/cortex/layer2/
 	
-	$(INSTALL) -m 755 libcrtx.so $(DESTDIR)$(libdir)
-	$(INSTALL) -m 755 libcrtx_*.so $(DESTDIR)$(plugindir)
+	cp -P libcrtx.so $(DESTDIR)$(libdir)
+	cp -P libcrtx_*.so $(DESTDIR)$(plugindir)
 	
 	$(INSTALL) -m 644 *.h $(DESTDIR)$(includedir)/cortex/
 	ln -s cortex $(DESTDIR)$(includedir)/crtx
