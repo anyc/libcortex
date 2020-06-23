@@ -18,6 +18,7 @@ struct crtx_netif_listener {
 
 struct crtx_listener_base *crtx_new_netif_listener(void *options);
 int crtx_netif_query_interfaces(struct crtx_netif_listener *netif_lstnr);
+CRTX_DECLARE_ALLOC_FUNCTION(netif)
 
 void crtx_netif_init();
 void crtx_netif_finish();

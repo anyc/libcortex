@@ -367,6 +367,8 @@ struct crtx_listener_base *crtx_new_socket_client_listener(void *options) {
 	return &slistener->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(socket)
+
 void crtx_socket_init() {
 }
 

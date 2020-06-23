@@ -442,6 +442,8 @@ static void init_curl() {
 	curlr = curl_multi_setopt(crtx_curlm, CURLMOPT_TIMERDATA, crtx_curlm); CURLM_CHECK(curlr);
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(curl)
+
 void crtx_curl_init() {
 	curl_global_init(CURL_GLOBAL_ALL);
 	

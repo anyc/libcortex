@@ -174,6 +174,8 @@ struct crtx_listener_base *crtx_new_uevents_listener(void *options) {
 	return &ulist->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(uevents)
+
 void crtx_uevents_init() {
 }
 

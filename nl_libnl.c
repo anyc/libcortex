@@ -98,6 +98,8 @@ struct crtx_listener_base *crtx_new_nl_libnl_listener(void *options) {
 	return &libnl_lstnr->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(nl_libnl)
+
 void crtx_nl_libnl_init() {
 }
 

@@ -28,6 +28,7 @@ int crtx_add_writequeue2listener(struct crtx_writequeue *writequeue, struct crtx
 struct crtx_listener_base *crtx_new_writequeue_listener(void *options);
 void crtx_writequeue_start(struct crtx_writequeue *wqueue);
 void crtx_writequeue_stop(struct crtx_writequeue *wqueue);
+CRTX_DECLARE_ALLOC_FUNCTION(writequeue)
 
 void crtx_writequeue_init();
 void crtx_writequeue_finish();

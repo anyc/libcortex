@@ -34,14 +34,16 @@ struct crtx_signal_listener {
 
 int crtx_signals_handle_std_signals(struct crtx_signal_listener **signal_lstnr);
 
-struct crtx_listener_base *crtx_new_signals_listener(void *options);
-void crtx_signals_init();
-void crtx_signals_finish();
-
 typedef void (*sigchld_cb)(pid_t pid, int status, void *userdata);
 void *crtx_signals_add_child_handler(sigchld_cb cb, void *userdata);
 int crtx_signals_rem_child_handler(void *sigchld_cb);
 
 struct signal_map *crtx_get_signal_info(int signum);
+
+struct crtx_listener_base *crtx_new_signals_listener(void *options);
+CRTX_DECLARE_ALLOC_FUNCTION(signals)
+
+void crtx_signals_init();
+void crtx_signals_finish();
 
 #endif

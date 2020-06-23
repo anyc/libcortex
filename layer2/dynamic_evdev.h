@@ -23,8 +23,10 @@ struct crtx_dynamic_evdev_listener {
 };
 
 struct crtx_listener_base *crtx_new_dynamic_evdev_listener(void *options);
+CRTX_DECLARE_ALLOC_FUNCTION(dynamic_evdev)
 
 void crtx_dynamic_evdev_init();
 void crtx_dynamic_evdev_finish();
+
 
 #endif

@@ -423,6 +423,8 @@ char *crtx_nfq_proto2str(u_int16_t protocol) {
 	}
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(nf_queue)
+
 void crtx_nf_queue_init() {
 }
 

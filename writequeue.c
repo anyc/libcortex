@@ -139,6 +139,8 @@ int crtx_add_writequeue2listener(struct crtx_writequeue *writequeue, struct crtx
 	return 0;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(writequeue)
+
 void crtx_writequeue_init() {
 }
 

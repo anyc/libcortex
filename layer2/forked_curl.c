@@ -80,6 +80,8 @@ struct crtx_listener_base *crtx_new_forked_curl_listener(void *options) {
 	return &fc_lstnr->base;  
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(forked_curl)
+
 void crtx_forked_curl_init() {
 }
 

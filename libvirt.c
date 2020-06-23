@@ -863,6 +863,8 @@ struct crtx_listener_base *crtx_new_libvirt_listener(void *options) {
 	return &lvlist->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(libvirt)
+
 void crtx_libvirt_init() {
 }
 

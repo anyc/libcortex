@@ -32,6 +32,7 @@ struct crtx_fork_listener {
 };
 
 struct crtx_listener_base *crtx_new_fork_listener(void *options);
+CRTX_DECLARE_ALLOC_FUNCTION(fork)
 
 void crtx_fork_init();
 void crtx_fork_finish();

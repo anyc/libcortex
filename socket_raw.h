@@ -46,13 +46,13 @@ struct crtx_socket_raw_listener {
 struct addrinfo *crtx_get_addrinfo(struct crtx_socket_raw_listener *listener);
 void crtx_free_addrinfo(struct addrinfo *result);
 
-void crtx_socket_raw_init();
-void crtx_socket_raw_finish();
-struct crtx_listener_base *crtx_new_socket_raw_listener(void *options);
-// struct crtx_listener_base *crtx_new_socket_raw_server_listener(void *options);
-// struct crtx_listener_base *crtx_new_socket_raw_client_listener(void *options);
-
 int crtx_init_socket_raw_client_listener(struct crtx_socket_raw_listener *slistener);
 int crtx_init_socket_raw_server_listener(struct crtx_socket_raw_listener *slistener);
+
+struct crtx_listener_base *crtx_new_socket_raw_listener(void *options);
+CRTX_DECLARE_ALLOC_FUNCTION(socket_raw)
+
+void crtx_socket_raw_init();
+void crtx_socket_raw_finish();
 
 #endif

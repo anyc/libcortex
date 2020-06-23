@@ -171,6 +171,8 @@ struct crtx_listener_base *crtx_new_sip_listener(void *options) {
 	return &slist->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(sip)
+
 void crtx_sip_init() {
 }
 

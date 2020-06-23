@@ -80,6 +80,7 @@ int crtx_sdbus_track_remove(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus
 struct crtx_sdbus_listener *crtx_sdbus_get_default_listener(enum crtx_sdbus_type sdbus_type);
 
 struct crtx_listener_base *crtx_sdbus_new_listener(void *options);
+CRTX_DECLARE_ALLOC_FUNCTION(sdbus)
 
 void crtx_sdbus_init();
 void crtx_sdbus_finish();

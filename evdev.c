@@ -174,6 +174,8 @@ struct crtx_listener_base *crtx_new_evdev_listener(void *options) {
 	return &evdev->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(evdev)
+
 void crtx_evdev_init() {
 }
 

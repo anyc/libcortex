@@ -30,6 +30,7 @@ struct crtx_can_listener {
 };
 
 struct crtx_listener_base *crtx_new_can_listener(void *options);
+CRTX_DECLARE_ALLOC_FUNCTION(can)
 
 void crtx_can_init();
 void crtx_can_finish();

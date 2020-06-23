@@ -20,6 +20,7 @@ struct crtx_forked_curl_listener {
 };
 
 struct crtx_listener_base *crtx_new_forked_curl_listener(void *options);
+CRTX_DECLARE_ALLOC_FUNCTION(forked_curl)
 
 void crtx_forked_curl_init();
 void crtx_forked_curl_finish();

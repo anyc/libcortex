@@ -29,11 +29,12 @@ struct crtx_udev_listener {
 	char **sys_dev_filter;
 };
 
+struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_raw2dict_attr_req *r2ds, char make_persistent);
+
 struct crtx_listener_base *crtx_new_udev_listener(void *options);
+CRTX_DECLARE_ALLOC_FUNCTION(udev)
 
 void crtx_udev_init();
 void crtx_udev_finish();
-
-struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_raw2dict_attr_req *r2ds, char make_persistent);
 
 #endif

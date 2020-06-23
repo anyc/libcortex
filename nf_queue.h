@@ -45,12 +45,14 @@ struct crtx_nfq_packet {
 	u_int32_t mark_out;
 };
 
-char nfq_packet_msg_okay(struct crtx_event *event);
-struct crtx_listener_base *crtx_new_nf_queue_listener(void *options);
-void crtx_nf_queue_init();
-void crtx_nf_queue_finish();
-
 char crtx_nfq_print_packet(struct crtx_dict *ds);
 char *crtx_nfq_proto2str(u_int16_t protocol);
+
+char nfq_packet_msg_okay(struct crtx_event *event);
+struct crtx_listener_base *crtx_new_nf_queue_listener(void *options);
+CRTX_DECLARE_ALLOC_FUNCTION(nf_queue)
+
+void crtx_nf_queue_init();
+void crtx_nf_queue_finish();
 
 #endif

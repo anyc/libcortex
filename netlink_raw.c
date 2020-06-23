@@ -102,6 +102,8 @@ struct crtx_listener_base *crtx_new_netlink_raw_listener(void *options) {
 	return &nl_listener->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(netlink_raw)
+
 void crtx_netlink_raw_init() {
 }
 

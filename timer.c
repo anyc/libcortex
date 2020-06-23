@@ -243,6 +243,8 @@ int crtx_timer_oneshot(time_t offset_sec,
 	return 0;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(timer)
+
 void crtx_timer_init() {
 }
 

@@ -242,6 +242,8 @@ struct crtx_listener_base *crtx_new_netconf_listener(void *options) {
 	return &netconf_lstnr->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(netconf)
+
 void crtx_netconf_init() {}
 void crtx_netconf_finish() {}
 

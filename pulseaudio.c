@@ -280,6 +280,8 @@ struct crtx_listener_base *crtx_new_pa_listener(void *options) {
 	return &palist->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(pa)
+
 void crtx_pa_init() {
 }
 

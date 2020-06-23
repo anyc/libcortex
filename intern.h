@@ -57,5 +57,12 @@
 
 #define POPCOUNT32(x) __builtin_popcount(x)
 
+#define CRTX_DEFINE_ALLOC_FUNCTION(lstnr) \
+	struct crtx_ ## lstnr ## _listener * crtx_alloc_ ## lstnr ## _listener() { \
+		return calloc(1, sizeof(struct crtx_ ## lstnr ## _listener)); \
+	}
+
+#define CRTX_DECLARE_ALLOC_FUNCTION(lstnr) \
+	struct crtx_ ## lstnr ## _listener * crtx_alloc_ ## lstnr ## _listener();
 
 #endif

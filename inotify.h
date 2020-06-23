@@ -19,10 +19,12 @@ struct crtx_inotify_listener {
 	char *path;
 };
 
-struct crtx_listener_base *crtx_new_inotify_listener(void *options);
-
 uint32_t crtx_inotify_string2mask(char *mask_string);
 char crtx_inotify_mask2string(uint32_t mask, char *string, size_t *string_size);
+
+struct crtx_listener_base *crtx_new_inotify_listener(void *options);
+CRTX_DECLARE_ALLOC_FUNCTION(inotify)
+
 void crtx_inotify_init();
 void crtx_inotify_finish();
 

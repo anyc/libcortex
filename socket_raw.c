@@ -346,6 +346,8 @@ struct crtx_listener_base *crtx_new_socket_raw_listener(void *options) {
 	return 0;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(socket_raw)
+
 void crtx_socket_raw_init() {
 }
 

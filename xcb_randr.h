@@ -21,6 +21,7 @@ struct crtx_xcb_randr_listener {
 };
 
 struct crtx_listener_base *crtx_new_xcb_randr_listener(void *options);
+CRTX_DECLARE_ALLOC_FUNCTION(xcb_randr)
 
 void crtx_xcb_randr_init();
 void crtx_xcb_randr_finish();

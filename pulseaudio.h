@@ -26,6 +26,7 @@ struct crtx_pa_listener {
 };
 
 struct crtx_listener_base *crtx_new_pa_listener(void *options);
+CRTX_DECLARE_ALLOC_FUNCTION(pa)
 
 void crtx_pa_init();
 void crtx_pa_finish();

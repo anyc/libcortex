@@ -390,6 +390,8 @@ struct crtx_listener_base *crtx_new_inotify_listener(void *options) {
 	return &inlist->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(inotify)
+
 void crtx_inotify_init() {
 }
 

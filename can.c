@@ -432,6 +432,8 @@ struct crtx_listener_base *crtx_new_can_listener(void *options) {
 	return &clist->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(can)
+
 void crtx_can_init() {
 }
 

@@ -292,6 +292,8 @@ void crtx_popen_clear_lstnr(struct crtx_popen_listener *lstnr) {
 	lstnr->chdir = "/";
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(popen)
+
 void crtx_popen_init() {
 }
 

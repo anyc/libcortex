@@ -43,7 +43,8 @@ struct crtx_genl_listener {
 };
 
 struct crtx_listener_base *crtx_new_genl_listener(void *options);
-// char crtx_netlink_raw_send_req(struct crtx_netlink_listener *nl_listener, struct nlmsghdr *n);
+CRTX_DECLARE_ALLOC_FUNCTION(genl)
+
 void crtx_netlink_ge_init();
 void crtx_netlink_ge_finish();
 

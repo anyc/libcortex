@@ -151,6 +151,8 @@ struct crtx_listener_base *crtx_new_fanotify_listener(void *options) {
 	return &falist->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(fanotify)
+
 void crtx_fanotify_init() {
 }
 

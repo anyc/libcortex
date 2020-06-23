@@ -469,6 +469,8 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 	return &lstnr->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(v4l)
+
 void crtx_v4l_init() {
 }
 

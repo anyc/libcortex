@@ -20,6 +20,7 @@ struct crtx_pipe_listener {
 };
 
 struct crtx_listener_base *crtx_new_pipe_listener(void *options);
+CRTX_DECLARE_ALLOC_FUNCTION(pipe)
 
 void crtx_pipe_init();
 void crtx_pipe_finish();

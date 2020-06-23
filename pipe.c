@@ -80,6 +80,8 @@ struct crtx_listener_base *crtx_new_pipe_listener(void *options) {
 	return &lstnr->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(pipe)
+
 void crtx_pipe_init() {
 }
 

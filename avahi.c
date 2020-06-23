@@ -422,6 +422,8 @@ struct crtx_listener_base *crtx_new_avahi_listener(void *options) {
 	return &alist->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(avahi)
+
 void crtx_avahi_init() {
 }
 

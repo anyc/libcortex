@@ -181,6 +181,8 @@ struct crtx_listener_base *crtx_new_genl_listener(void *options) {
 	return &genlist->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(genl)
+
 void crtx_netlink_ge_init() {
 }
 

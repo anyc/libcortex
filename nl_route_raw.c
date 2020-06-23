@@ -780,6 +780,8 @@ struct crtx_listener_base *crtx_new_nl_route_raw_listener(void *options) {
 	return &nlr_list->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(nl_route_raw)
+
 void crtx_nl_route_raw_init() {
 }
 

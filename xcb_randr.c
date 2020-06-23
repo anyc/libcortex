@@ -626,6 +626,8 @@ struct crtx_listener_base *crtx_new_xcb_randr_listener(void *options) {
 	return &xrlist->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(xcb_randr)
+
 void crtx_xcb_randr_init() {
 }
 

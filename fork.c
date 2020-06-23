@@ -240,6 +240,8 @@ struct crtx_listener_base *crtx_new_fork_listener(void *options) {
 	return &lstnr->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(fork)
+
 void crtx_fork_init() {
 }
 

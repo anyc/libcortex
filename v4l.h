@@ -21,11 +21,12 @@ struct crtx_v4l_listener {
 	unsigned int subscription_length;
 };
 
+char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr, struct crtx_dict *controls);
+
 struct crtx_listener_base *crtx_new_v4l_listener(void *options);
+CRTX_DECLARE_ALLOC_FUNCTION(v4l)
 
 void crtx_v4l_init();
 void crtx_v4l_finish();
-
-char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr, struct crtx_dict *controls);
 
 #endif

@@ -661,6 +661,8 @@ int crtx_signals_handle_std_signals(struct crtx_signal_listener **signal_lstnr) 
 	return 0;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(signals)
+
 void crtx_signals_init() {
 	memset(&default_signal_lstnr, 0, sizeof(struct crtx_signal_listener));
 	memset(&main_lstnr, 0, sizeof(struct crtx_signal_listener));

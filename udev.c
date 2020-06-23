@@ -295,6 +295,8 @@ struct crtx_listener_base *crtx_new_udev_listener(void *options) {
 	return &ulist->base;
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(udev)
+
 void crtx_udev_init() {
 }
 

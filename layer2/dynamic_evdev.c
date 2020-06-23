@@ -207,6 +207,8 @@ struct crtx_listener_base *crtx_new_dynamic_evdev_listener(void *options) {
 	return &dyn_evdev->base;  
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(dynamic_evdev)
+
 void crtx_dynamic_evdev_init() {
 	struct crtx_listener_repository *lrepo;
 	

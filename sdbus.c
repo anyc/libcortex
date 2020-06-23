@@ -582,6 +582,8 @@ struct crtx_sdbus_listener *crtx_sdbus_get_default_listener(enum crtx_sdbus_type
 	return &default_listeners[sdbus_type];
 }
 
+CRTX_DEFINE_ALLOC_FUNCTION(sdbus)
+
 void crtx_sdbus_init() {
 }
 
