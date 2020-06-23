@@ -87,8 +87,7 @@ static void init_listener() {
 		
 		
 		ret = pthread_mutex_init(&notif_root->wait_list_mutex, 0); ASSERT(ret >= 0);
-		
-		graph = get_graph_for_event_type(EV_NOTIF_SIGNAL, notif_event_types);
+		graph = crtx_get_graph_for_event_description(EV_NOTIF_SIGNAL, notif_event_types);
 		
 		/*
 		 * instruct the sd_bus module to listen for notification DBUS signals
@@ -215,7 +214,7 @@ void crtx_send_notification(char *icon, char *title, char *text, char **actions,
 		crtx_init_signal(&it->barrier);
 		it->id = sdbus_send_notification(icon, title, text, actions);
 		
-		crtx_wait_on_signal(&it->barrier);
+		crtx_wait_on_signal(&it->barrier, 0);
 		
 		*chosen_action = it->answer;
 		
