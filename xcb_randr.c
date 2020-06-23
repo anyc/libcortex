@@ -464,7 +464,7 @@ static void xcb_handle_event(struct crtx_xcb_randr_listener *xrlist, xcb_generic
 	xcb_randr_notify_event_t *xcb_event;
 	char *event_type;
 	uint8_t type;
-	int sent;
+	int sent, r;
 	void *data_ptr;
 	
 	
@@ -505,7 +505,14 @@ static void xcb_handle_event(struct crtx_xcb_randr_listener *xrlist, xcb_generic
 				}
 		}
 		if (event_type) {
-			crtx_event = crtx_create_event(event_type); //, data_ptr, 0);
+			r = crtx_create_event(&crtx_event); //, data_ptr, 0);
+			if (r) {
+				ERROR("xcb_randr crtx_create_event failed: %s\n", strerror(-r));
+				free(xcb_event);
+				
+				return;
+			}
+			crtx_event->description = event_type;
 // 			crtx_event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 			crtx_event_set_raw_data(crtx_event, 'p', data_ptr, 0, CRTX_DIF_DONT_FREE_DATA);
 			crtx_event->cb_before_release = &xcb_event_before_release_cb;
@@ -604,7 +611,7 @@ struct crtx_listener_base *crtx_new_xcb_randr_listener(void *options) {
 	free(version);
 	
 	xrlist->base.start_listener = &start_listener;
-	xrlist->base.free = &crtx_free_xcb_randr_listener;
+	xrlist->base.free_cb = &crtx_free_xcb_randr_listener;
 	
 	xrlist->base.thread_job.fct = &xcb_randr_tmain;
 	xrlist->base.thread_job.fct_data = xrlist;
