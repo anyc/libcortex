@@ -43,8 +43,8 @@ LDLIBS_libvirt+=$(shell $(PKG_CONFIG) --libs libvirt)
 CFLAGS_netlink_ge+=$(shell $(PKG_CONFIG) --cflags libnl-genl-3.0)
 LDLIBS_netlink_ge+=$(shell $(PKG_CONFIG) --libs libnl-genl-3.0)
 
-CFLAGS_nl_libnl+=$(shell $(PKG_CONFIG) --cflags libnl-3.0)
-LDLIBS_nl_libnl+=$(shell $(PKG_CONFIG) --libs libnl-3.0)
+CFLAGS_libnl+=$(shell $(PKG_CONFIG) --cflags libnl-3.0)
+LDLIBS_libnl+=$(shell $(PKG_CONFIG) --libs libnl-3.0)
 
 # CFLAGS_nl_route_libnl+=$(shell $(PKG_CONFIG) --cflags libnl-genl-3.0)
 # LDLIBS_nl_route_libnl+=$(shell $(PKG_CONFIG) --libs libnl-genl-3.0)

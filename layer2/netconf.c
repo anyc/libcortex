@@ -225,8 +225,8 @@ struct crtx_listener_base *crtx_new_netconf_listener(void *options) {
 	}
 	netconf_lstnr->libnl_lstnr.callbacks = netconf_lstnr->libnl_callbacks;
 	
-	// 	lbase = create_listener("nl_libnl", &netconf_lstnr->libnl_lstnr);
-	ret = crtx_create_listener("nl_libnl", &netconf_lstnr->libnl_lstnr);
+	// 	lbase = create_listener("libnl", &netconf_lstnr->libnl_lstnr);
+	ret = crtx_create_listener("libnl", &netconf_lstnr->libnl_lstnr);
 	if (ret) {
 		ERROR("create_listener(libnl) failed\n");
 		exit(1);

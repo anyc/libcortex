@@ -10,7 +10,7 @@
 
 #include "intern.h"
 #include "core.h"
-#include "nl_libnl.h"
+#include "libnl.h"
 
 // handler that is called on file descriptor events
 static char libnl_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -55,7 +55,7 @@ void free_libnl_listener(struct crtx_listener_base *lbase, void *userdata) {
 	nl_socket_free(libnl_lstnr->sock);
 }
 
-struct crtx_listener_base *crtx_new_nl_libnl_listener(void *options) {
+struct crtx_listener_base *crtx_new_libnl_listener(void *options) {
 	struct crtx_libnl_listener *libnl_lstnr;
 	struct crtx_libnl_callback *cb;
 	int r;
@@ -98,12 +98,12 @@ struct crtx_listener_base *crtx_new_nl_libnl_listener(void *options) {
 	return &libnl_lstnr->base;
 }
 
-CRTX_DEFINE_ALLOC_FUNCTION(nl_libnl)
+CRTX_DEFINE_ALLOC_FUNCTION(libnl)
 
-void crtx_nl_libnl_init() {
+void crtx_libnl_init() {
 }
 
-void crtx_nl_libnl_finish() {
+void crtx_libnl_finish() {
 }
 
 
@@ -179,7 +179,7 @@ int libnl_main(int argc, char **argv) {
 	}
 	libnl.callbacks = libnl_callbacks;
 	
-	r = crtx_create_listener("nl_libnl", &libnl);
+	r = crtx_create_listener("libnl", &libnl);
 	if (r) {
 		ERROR("create_listener(libnl) failed: %s\n", strerror(-r));
 		exit(1);

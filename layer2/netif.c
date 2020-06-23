@@ -137,8 +137,8 @@ struct crtx_listener_base *crtx_new_netif_listener(void *options) {
 	}
 	netif_lstnr->libnl_lstnr.callbacks = libnl_callbacks;
 	
-// 	lbase = create_listener("nl_libnl", &netif_lstnr->libnl_lstnr);
-	ret = crtx_create_listener("nl_libnl", &netif_lstnr->libnl_lstnr);
+// 	lbase = create_listener("libnl", &netif_lstnr->libnl_lstnr);
+	ret = crtx_create_listener("libnl", &netif_lstnr->libnl_lstnr);
 	if (ret) {
 		ERROR("create_listener(libnl) failed\n");
 		exit(1);

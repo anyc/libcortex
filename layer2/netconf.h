@@ -6,7 +6,7 @@
  *
  */
 
-#include "../nl_libnl.h"
+#include "../libnl.h"
 
 #define CRTX_NETCONF_INTF (1<<0)
 #define CRTX_NETCONF_NEIGH (1<<1)

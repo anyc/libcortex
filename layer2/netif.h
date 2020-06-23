@@ -6,7 +6,7 @@
  *
  */
 
-#include "../nl_libnl.h"
+#include "../libnl.h"
 
 struct crtx_netif_listener {
 	struct crtx_listener_base base;

@@ -21,9 +21,9 @@ DEPS_forked_curl=curl
 
 CFLAGS_netif=
 LDLIBS_netif=
-DEPS_netif=nl_libnl
+DEPS_netif=libnl
 
-DEPS_netconf=nl_libnl
+DEPS_netconf=libnl
 
 .PHONY: clean
 

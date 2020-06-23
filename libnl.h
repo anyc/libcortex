@@ -1,5 +1,5 @@
-#ifndef _CRTX_NL_LIBNL_H
-#define _CRTX_NL_LIBNL_H
+#ifndef _CRTX_LIBNL_H
+#define _CRTX_LIBNL_H
 
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
