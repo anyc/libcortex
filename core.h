@@ -76,6 +76,12 @@ struct crtx_event {
 	void *cb_before_release_data;
 	
 	pthread_mutex_t mutex;
+	
+	#ifndef CRTX_REDUCED_SIZE
+	/* reserved to avoid ABI breakage */
+	void *reserved1;
+	void *reserved2;
+	#endif
 };
 
 typedef char (*crtx_handle_task_t)(struct crtx_event *event, void *userdata, void **sessiondata);
@@ -94,6 +100,12 @@ struct crtx_task {
 	
 	struct crtx_task *prev;
 	struct crtx_task *next;
+	
+	#ifndef CRTX_REDUCED_SIZE
+	/* reserved to avoid ABI breakage */
+	void *reserved1;
+	void *reserved2;
+	#endif
 };
 
 #define CRTX_GRAPH_KEEP_GOING 1<<0
@@ -126,12 +138,24 @@ struct crtx_graph {
 	struct crtx_thread_job_description thread_job;
 	
 	struct crtx_dll ll_hdr;
+	
+	#ifndef CRTX_REDUCED_SIZE
+	/* reserved to avoid ABI breakage */
+	void *reserved1;
+	void *reserved2;
+	#endif
 };
 
 struct crtx_listener_repository {
 	char *id;
 	
 	struct crtx_listener_base *(*create)(void *options);
+	
+	#ifndef CRTX_REDUCED_SIZE
+	/* reserved to avoid ABI breakage */
+	void *reserved1;
+	void *reserved2;
+	#endif
 };
 
 enum crtx_listener_state { CRTX_LSTNR_UNKNOWN=0, CRTX_LSTNR_STARTING, CRTX_LSTNR_STARTED, CRTX_LSTNR_PAUSED, CRTX_LSTNR_STOPPING, CRTX_LSTNR_STOPPED, CRTX_LSTNR_SHUTDOWN }; //CRTX_LSTNR_ABORTED, 
@@ -179,6 +203,12 @@ struct crtx_listener_base {
 	
 	unsigned int flags;
 	char free_after_event;
+	
+	#ifndef CRTX_REDUCED_SIZE
+	/* reserved to avoid ABI breakage */
+	void *reserved1;
+	void *reserved2;
+	#endif
 };
 
 struct crtx_module {
@@ -200,6 +230,12 @@ struct crtx_lstnr_plugin {
 	void (*get_listener_repository)(struct crtx_listener_repository **listener_repository, unsigned int *listener_repository_length);
 	
 	char *plugin_name;
+	
+	#ifndef CRTX_REDUCED_SIZE
+	/* reserved to avoid ABI breakage */
+	void *reserved1;
+	void *reserved2;
+	#endif
 };
 
 struct crtx_handler_category_entry {
@@ -255,6 +291,12 @@ struct crtx_root {
 	struct crtx_ll *handler_categories;
 	
 	int global_fd_flags;
+	
+	#ifndef CRTX_REDUCED_SIZE
+	/* reserved to avoid ABI breakage */
+	void *reserved1;
+	void *reserved2;
+	#endif
 };
 
 extern struct crtx_module static_modules[];
