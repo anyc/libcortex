@@ -403,4 +403,6 @@ void crtx_shutdown_after_fork();
 
 struct crtx_thread * crtx_start_detached_event_loop();
 
+int crtx_get_version(unsigned int *major, unsigned int *minor);
+
 #endif

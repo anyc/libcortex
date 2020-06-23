@@ -2318,3 +2318,13 @@ int crtx_handle_std_signals() {
 void crtx_trigger_event_processing(struct crtx_listener_base *lstnr) {
 	crtx_evloop_trigger_callback(lstnr->evloop_fd.evloop, &lstnr->default_el_cb);
 }
+
+int crtx_get_version(unsigned int *major, unsigned int *minor) {
+	if (!major || !minor)
+		return -EINVAL;
+	
+	*major = MAJOR_VERSION;
+	*minor = MINOR_VERSION;
+	
+	return 0;
+}
