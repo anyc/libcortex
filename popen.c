@@ -340,7 +340,7 @@ static void stdout_cb(int fd, void *userdata) {
 	return;
 }
 
-static int wq_write(struct crtx_writequeue *wqueue, void *userdata) {
+static int wq_write(struct crtx_writequeue_listener *wqueue, void *userdata) {
 	ssize_t n_bytes;
 	
 	while (1) {

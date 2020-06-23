@@ -22,7 +22,7 @@
 
 static char fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	struct crtx_evloop_fd *payload;
-	struct crtx_writequeue *wqueue;
+	struct crtx_writequeue_listener *wqueue;
 // 	struct crtx_event_loop *eloop;
 	int r;
 // 	struct crtx_evloop_callback *el_cb;
@@ -30,7 +30,7 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 // 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 // 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
-	wqueue = (struct crtx_writequeue *) userdata;
+	wqueue = (struct crtx_writequeue_listener *) userdata;
 	
 	r = wqueue->write(wqueue, wqueue->write_userdata);
 	if (r != EAGAIN && r != ENOBUFS) {
@@ -45,7 +45,7 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 	return 0;
 }
 
-void crtx_writequeue_start(struct crtx_writequeue *wqueue) {
+void crtx_writequeue_start(struct crtx_writequeue_listener *wqueue) {
 // // 	struct crtx_event_loop *eloop;
 // 	
 // // 	wqueue->base.evloop_fd.crtx_event_flags = EVLOOP_WRITE;
@@ -58,7 +58,7 @@ void crtx_writequeue_start(struct crtx_writequeue *wqueue) {
 	crtx_evloop_enable_cb(&wqueue->evloop_cb);
 }
 
-void crtx_writequeue_stop(struct crtx_writequeue *wqueue) {
+void crtx_writequeue_stop(struct crtx_writequeue_listener *wqueue) {
 // // 	struct crtx_event_loop *eloop;
 // 	
 // // 	wqueue->base.evloop_fd.crtx_event_flags = 0;
@@ -72,10 +72,10 @@ void crtx_writequeue_stop(struct crtx_writequeue *wqueue) {
 }
 
 struct crtx_listener_base *crtx_new_writequeue_listener(void *options) {
-	struct crtx_writequeue *wqueue;
+	struct crtx_writequeue_listener *wqueue;
 	
 	
-	wqueue = (struct crtx_writequeue *) options;
+	wqueue = (struct crtx_writequeue_listener *) options;
 	
 // 	wqueue->base.evloop_fd.fd = wqueue->write_fd;
 // 	wqueue->base.evloop_fd.crtx_event_flags = 0;
@@ -106,11 +106,11 @@ struct crtx_listener_base *crtx_new_writequeue_listener(void *options) {
 	return &wqueue->base;
 }
 
-int crtx_add_writequeue2listener(struct crtx_writequeue *writequeue, struct crtx_listener_base *listener, crtx_wq_write_cb write_cb, void *write_userdata) {
+int crtx_add_writequeue2listener(struct crtx_writequeue_listener *writequeue, struct crtx_listener_base *listener, crtx_wq_write_cb write_cb, void *write_userdata) {
 	int r;
 	
 	
-	memset(writequeue, 0, sizeof(struct crtx_writequeue));
+	memset(writequeue, 0, sizeof(struct crtx_writequeue_listener));
 	
 // 	listener->evloop_fd.epollout = &writequeue->base.evloop_fd;
 // 	writequeue->base.evloop_fd.epollin = &listener->evloop_fd;
@@ -154,7 +154,7 @@ char stop;
 #define BUF_SIZE 1024
 char buffer[BUF_SIZE];
 
-static int wq_write(struct crtx_writequeue *wqueue, void *userdata) {
+static int wq_write(struct crtx_writequeue_listener *wqueue, void *userdata) {
 	ssize_t n_bytes;
 	
 	if (stop > 1)
@@ -191,11 +191,11 @@ static int wq_write(struct crtx_writequeue *wqueue, void *userdata) {
 }
 
 int writequeue_main(int argc, char **argv) {
-	struct crtx_writequeue wqueue;
+	struct crtx_writequeue_listener wqueue;
 	char ret;
 	
 	
-	memset(&wqueue, 0, sizeof(struct crtx_writequeue));
+	memset(&wqueue, 0, sizeof(struct crtx_writequeue_listener));
 	
 	ret = pipe2(pipe_fds, O_NONBLOCK); // 0 read, 1 write
 	if (ret < 0) {

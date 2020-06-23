@@ -16,7 +16,7 @@ struct crtx_popen_listener {
 	
 	struct crtx_fork_listener fork_lstnr;
 	
-	struct crtx_writequeue stdin_wq_lstnr;
+	struct crtx_writequeue_listener stdin_wq_lstnr;
 	struct crtx_pipe_listener stdin_lstnr;
 	struct crtx_pipe_listener stdout_lstnr;
 	struct crtx_pipe_listener stderr_lstnr;
