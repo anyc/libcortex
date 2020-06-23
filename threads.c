@@ -26,7 +26,7 @@ static char pool_stop = 0;
  * signals
  */
 
-void crtx_init_signal(struct crtx_signal *s) {
+void crtx_init_signal(struct crtx_signals *s) {
 	int ret;
 // 	pthread_condattr_t attr;
 	
@@ -48,17 +48,17 @@ void crtx_init_signal(struct crtx_signal *s) {
 	s->n_refs = 0;
 }
 
-// static struct crtx_signal *new_signal() {
-// 	struct crtx_signal *signal;
+// static struct crtx_signals *new_signal() {
+// 	struct crtx_signals *signal;
 // 	
-// 	signal = (struct crtx_signal*) calloc(1, sizeof(struct crtx_signal));
+// 	signal = (struct crtx_signals*) calloc(1, sizeof(struct crtx_signals));
 // 	
 // 	crtx_init_signal(signal);
 // 	
 // 	return signal;
 // }
 
-void crtx_reset_signal(struct crtx_signal *s) {
+void crtx_reset_signal(struct crtx_signals *s) {
 	LOCK(s->ref_mutex);
 	while (s->n_refs > 0)
 		pthread_cond_wait(&s->ref_cond, &s->ref_mutex);
@@ -71,7 +71,7 @@ void crtx_reset_signal(struct crtx_signal *s) {
 	}
 }
 
-int crtx_wait_on_signal(struct crtx_signal *s, struct timespec *ts) {
+int crtx_wait_on_signal(struct crtx_signals *s, struct timespec *ts) {
 	int r, err;
 	
 	r = LOCK(s->mutex);
@@ -117,7 +117,7 @@ finish:
 	return err;
 }
 
-void crtx_send_signal(struct crtx_signal *s, char brdcst) {
+void crtx_send_signal(struct crtx_signals *s, char brdcst) {
 	LOCK(s->mutex);
 	
 	if (s->bitflag_idx == -1) {
@@ -137,7 +137,7 @@ void crtx_send_signal(struct crtx_signal *s, char brdcst) {
 	UNLOCK(s->mutex);
 }
 
-void crtx_reference_signal(struct crtx_signal *s) {
+void crtx_reference_signal(struct crtx_signals *s) {
 	LOCK(s->ref_mutex);
 	
 	s->n_refs += 1;
@@ -145,7 +145,7 @@ void crtx_reference_signal(struct crtx_signal *s) {
 	UNLOCK(s->ref_mutex);
 }
 
-void crtx_dereference_signal(struct crtx_signal *s) {
+void crtx_dereference_signal(struct crtx_signals *s) {
 	LOCK(s->ref_mutex);
 	
 	if (s->n_refs == 0)
@@ -158,7 +158,7 @@ void crtx_dereference_signal(struct crtx_signal *s) {
 	UNLOCK(s->ref_mutex);
 }
 
-void crtx_shutdown_signal(struct crtx_signal *s) {
+void crtx_shutdown_signal(struct crtx_signals *s) {
 	LOCK(s->mutex);
 	UNLOCK(s->mutex);
 	
@@ -169,7 +169,7 @@ void crtx_shutdown_signal(struct crtx_signal *s) {
 	pthread_cond_destroy(&s->cond);
 }
 
-char crtx_signal_is_active(struct crtx_signal *s) {
+char crtx_signal_is_active(struct crtx_signals *s) {
 	if (s->bitflag_idx == -1) {
 		return *s->condition;
 	} else {

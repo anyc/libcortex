@@ -40,20 +40,20 @@ struct sigchld_cb_data {
 
 static struct signal_map *signal_table = 0;
 static unsigned int n_signal_table_rows = 0;
-static struct crtx_signal_listener main_lstnr = { { { 0 } } };
+static struct crtx_signals_listener main_lstnr = { { { 0 } } };
 static char main_initialized = 0;
 static char main_started = 0;
 
 static int std_signals[] = {SIGTERM, SIGINT, 0};
-static struct crtx_signal_listener default_signal_lstnr = { { { 0 } } };
+static struct crtx_signals_listener default_signal_lstnr = { { { 0 } } };
 
 // static sigchld_cb *sigchld_cbs = 0;
 // static unsigned int n_sigchld_cbs 0 0;
 static struct crtx_dll *sigchld_cbs = 0;
-struct crtx_signal_listener sigchld_lstnr;
+struct crtx_signals_listener sigchld_lstnr;
 static int sigchld_signals[] = {SIGCHLD, 0};
 
-// static int lstnr_enable_signals(struct crtx_signal_listener *signal_lstnr);
+// static int lstnr_enable_signals(struct crtx_signals_listener *signal_lstnr);
 
 
 struct signal_map *crtx_get_signal_info(int signum) {
@@ -94,11 +94,11 @@ static void signal_handler(int signum) {
 
 #ifndef WITHOUT_SIGNALFD
 static char signalfd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_signal_listener *slistener;
+	struct crtx_signals_listener *slistener;
 	struct signalfd_siginfo si;
 	ssize_t r;
 	
-	slistener = (struct crtx_signal_listener *) userdata;
+	slistener = (struct crtx_signals_listener *) userdata;
 	
 	r = read(slistener->fd, &si, sizeof(si));
 	
@@ -117,12 +117,12 @@ static char signalfd_event_handler(struct crtx_event *event, void *userdata, voi
 }
 
 static void shutdown_listener(struct crtx_listener_base *data) {
-	struct crtx_signal_listener *slistener;
+	struct crtx_signals_listener *slistener;
 	sigset_t mask;
 	int r;
 	
 	
-	slistener = (struct crtx_signal_listener*) data;
+	slistener = (struct crtx_signals_listener*) data;
 	
 	sigemptyset(&mask);
 	r = sigprocmask(SIG_BLOCK, &mask, NULL);
@@ -137,11 +137,11 @@ static void shutdown_listener(struct crtx_listener_base *data) {
 
 #ifndef WITHOUT_SELFPIPE
 static char selfpipe_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_signal_listener *slistener;
+	struct crtx_signals_listener *slistener;
 	int32_t signal_num;
 	ssize_t r;
 	
-	slistener = (struct crtx_signal_listener *) userdata;
+	slistener = (struct crtx_signals_listener *) userdata;
 	
 	r = read(slistener->pipe_lstnr.fds[0], &signal_num, sizeof(signal_num));
 	if (r < 0) {
@@ -195,7 +195,7 @@ static void selfpipe_signal_handler(int signum) {
 }
 #endif
 
-// static int update_signals(struct crtx_signal_listener *slistener) {
+// static int update_signals(struct crtx_signals_listener *slistener) {
 // 	int r;
 // 	
 // 	if (slistener->type == CRTX_SIGNAL_SIGACTION) {
@@ -228,7 +228,7 @@ static void selfpipe_signal_handler(int signum) {
 // 			return r;
 // 		}
 // 		
-// 		slistener->sub_lstnr = (struct crtx_signal_listener *) calloc(1, sizeof(struct crtx_signal_listener));
+// 		slistener->sub_lstnr = (struct crtx_signals_listener *) calloc(1, sizeof(struct crtx_signals_listener));
 // 		slistener->sub_lstnr->signals = slistener->signals;
 // 		slistener->sub_lstnr->type = CRTX_SIGNAL_SIGACTION;
 // 		slistener->sub_lstnr->signal_handler = selfpipe_signal_handler;
@@ -248,7 +248,7 @@ static void selfpipe_signal_handler(int signum) {
 // 	return lstnr_enable_signals(slistener);
 // }
 
-static int update_signals(struct crtx_signal_listener *signal_lstnr) {
+static int update_signals(struct crtx_signals_listener *signal_lstnr) {
 	if (!signal_lstnr->signals) {
 		DBG("no signals, will not enable handler\n");
 		return 0;
@@ -361,11 +361,11 @@ static int update_signals(struct crtx_signal_listener *signal_lstnr) {
 
 static char start_sub_listener(struct crtx_listener_base *listener) {
 	int i, *s;
-	struct crtx_signal_listener *signal_lstnr;
+	struct crtx_signals_listener *signal_lstnr;
 	char found, changed;
 	
 	
-	signal_lstnr = (struct crtx_signal_listener*) listener;
+	signal_lstnr = (struct crtx_signals_listener*) listener;
 	
 	signal_lstnr->base.mode = CRTX_NO_PROCESSING_MODE;
 	
@@ -410,10 +410,10 @@ static void free_sublistener(struct crtx_listener_base *listener, void *userdata
 }
 
 static char start_main_listener(struct crtx_listener_base *listener) {
-	struct crtx_signal_listener *slistener;
+	struct crtx_signals_listener *slistener;
 	int r;
 	
-	slistener = (struct crtx_signal_listener *) listener;
+	slistener = (struct crtx_signals_listener *) listener;
 	
 	if (slistener->type == CRTX_SIGNAL_SIGACTION) {
 		DBG("signal mode sigaction\n");
@@ -445,7 +445,7 @@ static char start_main_listener(struct crtx_listener_base *listener) {
 			return r;
 		}
 		
-		slistener->sub_lstnr = (struct crtx_signal_listener *) calloc(1, sizeof(struct crtx_signal_listener));
+		slistener->sub_lstnr = (struct crtx_signals_listener *) calloc(1, sizeof(struct crtx_signals_listener));
 // 		slistener->sub_lstnr = &default_signal_lstnr;
 		slistener->sub_lstnr->signals = slistener->signals;
 		slistener->sub_lstnr->type = CRTX_SIGNAL_SIGACTION;
@@ -474,10 +474,10 @@ static void shutdown_main_listener(struct crtx_listener_base *listener) {
 }
 
 struct crtx_listener_base *crtx_new_signals_listener(void *options) {
-	struct crtx_signal_listener *slistener;
+	struct crtx_signals_listener *slistener;
 	
 	
-	slistener = (struct crtx_signal_listener *) options;
+	slistener = (struct crtx_signals_listener *) options;
 	
 	if (slistener->type != CRTX_SIGNAL_SIGACTION) {
 		if (!main_initialized) {
@@ -625,7 +625,7 @@ static char sigint_handler(struct crtx_event *event, void *userdata, void **sess
 }
 
 
-int crtx_signals_handle_std_signals(struct crtx_signal_listener **signal_lstnr) {
+int crtx_signals_handle_std_signals(struct crtx_signals_listener **signal_lstnr) {
 	struct crtx_task *t;
 	int err;
 	
@@ -664,8 +664,8 @@ int crtx_signals_handle_std_signals(struct crtx_signal_listener **signal_lstnr) 
 CRTX_DEFINE_ALLOC_FUNCTION(signals)
 
 void crtx_signals_init() {
-	memset(&default_signal_lstnr, 0, sizeof(struct crtx_signal_listener));
-	memset(&main_lstnr, 0, sizeof(struct crtx_signal_listener));
+	memset(&default_signal_lstnr, 0, sizeof(struct crtx_signals_listener));
+	memset(&main_lstnr, 0, sizeof(struct crtx_signals_listener));
 }
 
 void crtx_signals_finish() {

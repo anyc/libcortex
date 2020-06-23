@@ -23,7 +23,7 @@ struct wait_list_item {
 	
 	uint32_t id;
 	char *answer;
-	struct crtx_signal barrier;
+	struct crtx_signals barrier;
 };
 
 struct crtx_sdbus_notifications {

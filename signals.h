@@ -18,7 +18,7 @@ struct signal_map {
 	struct crtx_listener_base *lstnr;
 };
 
-struct crtx_signal_listener {
+struct crtx_signals_listener {
 	struct crtx_listener_base base;
 	
 	int *signals; // { SIGINT, ..., 0 }
@@ -29,10 +29,10 @@ struct crtx_signal_listener {
 	void (*signal_handler)(int sig_num);
 	
 	struct crtx_pipe_listener pipe_lstnr;
-	struct crtx_signal_listener *sub_lstnr;
+	struct crtx_signals_listener *sub_lstnr;
 };
 
-int crtx_signals_handle_std_signals(struct crtx_signal_listener **signal_lstnr);
+int crtx_signals_handle_std_signals(struct crtx_signals_listener **signal_lstnr);
 
 typedef void (*sigchld_cb)(pid_t pid, int status, void *userdata);
 void *crtx_signals_add_child_handler(sigchld_cb cb, void *userdata);

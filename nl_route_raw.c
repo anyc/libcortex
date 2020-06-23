@@ -809,7 +809,7 @@ struct {
 	struct ifinfomsg ifinfomsg;
 } if_req;
 
-struct crtx_signal msg_done;
+struct crtx_signals msg_done;
 
 // static char netlink_raw_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	crtx_print_dict(event->data.dict);

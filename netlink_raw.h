@@ -26,7 +26,7 @@ struct crtx_netlink_raw_listener {
 	int (*read_cb)(struct crtx_netlink_raw_listener *nl_listener, int fd, void *userdata);
 	void *read_cb_userdata;
 	
-// 	struct crtx_signal msg_done;
+// 	struct crtx_signals msg_done;
 	
 	int sockfd;
 	char stop;

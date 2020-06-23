@@ -29,7 +29,7 @@
 
 typedef void *(*thread_fct)(void *data);
 
-struct crtx_signal {
+struct crtx_signals {
 	unsigned char *condition;
 	unsigned char local_condition;
 	signed char bitflag_idx;
@@ -63,27 +63,27 @@ struct crtx_thread {
 	
 	char in_use;
 	
-	struct crtx_signal start;
-	struct crtx_signal finished;
+	struct crtx_signals start;
+	struct crtx_signals finished;
 	
 	struct crtx_thread_job_description *job;
 	
 // 	MUTEX_TYPE mutex;
 	
-// 	struct crtx_signal *main_thread_finished;
+// 	struct crtx_signals *main_thread_finished;
 	
 	struct crtx_thread *next;
 };
 
 
-void crtx_init_signal(struct crtx_signal *signal);
-int crtx_wait_on_signal(struct crtx_signal *s, struct timespec *ts);
-void crtx_send_signal(struct crtx_signal *s, char brdcst);
-void crtx_shutdown_signal(struct crtx_signal *s);
-void crtx_reset_signal(struct crtx_signal *signal);
-void crtx_reference_signal(struct crtx_signal *s);
-void crtx_dereference_signal(struct crtx_signal *s);
-char crtx_signal_is_active(struct crtx_signal *s);
+void crtx_init_signal(struct crtx_signals *signal);
+int crtx_wait_on_signal(struct crtx_signals *s, struct timespec *ts);
+void crtx_send_signal(struct crtx_signals *s, char brdcst);
+void crtx_shutdown_signal(struct crtx_signals *s);
+void crtx_reset_signal(struct crtx_signals *signal);
+void crtx_reference_signal(struct crtx_signals *s);
+void crtx_dereference_signal(struct crtx_signals *s);
+char crtx_signal_is_active(struct crtx_signals *s);
 
 struct crtx_thread *crtx_thread_assign_job(struct crtx_thread_job_description *job);
 void crtx_thread_start_job(struct crtx_thread *t);

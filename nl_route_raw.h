@@ -21,7 +21,7 @@ struct crtx_nl_route_listener {
 	struct crtx_dict *(*raw2dict)(struct crtx_nl_route_listener *nl_listener, struct nlmsghdr *nlh);
 	char all_fields;
 	
-// 	struct crtx_signal msg_done;
+// 	struct crtx_signals msg_done;
 	void (*msg_done_cb)();
 	void *msg_done_cb_data;
 };

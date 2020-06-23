@@ -45,7 +45,7 @@ void crtx_sdbus_trigger_event_processing(struct crtx_sdbus_listener *lstnr) {
 }
 
 struct async_callback {
-	struct crtx_signal signal;
+	struct crtx_signals signal;
 	
 	sd_bus_message **reply;
 };
