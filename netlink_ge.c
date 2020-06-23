@@ -20,7 +20,7 @@ int crtx_genl_msg2dict(struct nl_msg *msg, void *arg) {
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di, *tdi;
 	struct crtx_genl_group *g;
-	int i;
+	int i, r;
 	struct sockaddr_nl *sock;
 	struct nlmsghdr *nlh;
 	
@@ -45,7 +45,12 @@ int crtx_genl_msg2dict(struct nl_msg *msg, void *arg) {
 	// validate msg and parse attributes
 	genlmsg_parse(nlh, 0, g->attrs, g->n_attrs, 0);
 	
-	event = crtx_create_event("netlink/genl");
+	r = crtx_create_event(&event);
+	if (r) {
+		ERROR("crtx_create_event in crtx_genl_msg2dict failed: %s", strerror(-r));
+		return r;
+	}
+	event->description = "netlink/genl";
 	dict = crtx_init_dict(0, 0, 0);
 // 	dict = event->data.dict;
 	crtx_event_set_dict_data(event, dict, 0);
@@ -153,7 +158,7 @@ struct crtx_listener_base *crtx_new_genl_listener(void *options) {
 // 	genlist->base.evloop_fd.data = genlist;
 // 	genlist->base.evloop_fd.event_handler = &genl_fd_event_handler;
 // 	genlist->base.evloop_fd.event_handler_name = "genl fd handler";
-	genlist->base.free = &free_genl_listener;
+	genlist->base.free_cb = &free_genl_listener;
 	
 	crtx_evloop_init_listener(&genlist->base,
 						nl_socket_get_fd(genlist->sock),

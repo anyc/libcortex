@@ -321,7 +321,14 @@ static char sdbus_to_avahi_handler(struct crtx_event *event, void *userdata, voi
 	service->payload = m;
 	sd_bus_message_ref(m);
 	
-	avahi_event = crtx_create_event("avahi/event"); //, service, 0);
+	r = crtx_create_event(&avahi_event); //, service, 0);
+	if (r) {
+		ERROR("crtx_create_event(avahi) failed: %s\n", strerror(-r));
+		
+		return r;
+	}
+	
+	avahi_event->description = "avahi/event";
 	crtx_event_set_raw_data(avahi_event, 'p', service, 0, 0);
 // 	avahi_event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
 	avahi_event->cb_before_release = &cb_sdbus_event_release;
@@ -400,11 +407,12 @@ struct crtx_listener_base *crtx_new_avahi_listener(void *options) {
 	crtx_sdbus_match_add(&alist->sdlist, &alist->sdbus_match[1]);
 	crtx_sdbus_match_add(&alist->sdlist, &alist->sdbus_match[2]);
 	
-	alist->sdbase = create_listener("sdbus", &alist->sdlist);
-	if (!alist->sdbase) {
-		ERROR("create_listener(sdbus) failed\n");
-		exit(1);
+	ret = crtx_create_listener("sdbus", &alist->sdlist);
+	if (ret) {
+		ERROR("create_listener(udev) failed\n");
+		return 0;
 	}
+	alist->sdbase = &alist->sdlist.base;
 	
 	crtx_create_task(alist->sdbase->graph, 0, "sdbus_to_avahi_handler", sdbus_to_avahi_handler, alist);
 	
