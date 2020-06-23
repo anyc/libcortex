@@ -26,6 +26,9 @@
 		return i; \
 	}
 
+#define CRTX_DECLARE_ALLOC_FUNCTION(lstnr) \
+	struct crtx_ ## lstnr ## _listener * crtx_alloc_ ## lstnr ## _listener();
+
 #define CRTX_RET_GEZ(r) { if (r < 0) {ERROR("%s:%d: %d %s\n", __FILE__, __LINE__, r, strerror(r)); return(r); } }
 
 #define CRTX_EVT_NOTIFICATION "cortexd.notification"

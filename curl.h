@@ -13,6 +13,7 @@
 struct crtx_curl_listener;
 
 typedef int crtx_CURLOPT_XFERINFOFUNCTION(void *userdata, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
+typedef int crtx_CURLOPT_PROGRESSFUNCTION(void *userdata, double dltotal, double dlnow, double ultotal, double ulnow);
 typedef size_t crtx_CURLOPT_WRITEFUNCTION(char *ptr, size_t size, size_t nmemb, void *userdata);
 typedef size_t crtx_CURLOPT_HEADERFUNCTION(char *buffer, size_t size, size_t nitems, void *userdata);
 typedef int crtx_curl_done_cb(void *userdata, struct CURLMsg *msg, long response_code, long error_code);
@@ -24,7 +25,11 @@ struct crtx_curl_listener {
 	char *url;
 	char error[CURL_ERROR_SIZE];
 	
+	#if LIBCURL_VERSION_NUM >= 0x072000 // 0.7.32
 	crtx_CURLOPT_XFERINFOFUNCTION *progress_callback;
+	#else
+	crtx_CURLOPT_PROGRESSFUNCTION *progress_callback;
+	#endif
 	void *progress_cb_data;
 	crtx_CURLOPT_HEADERFUNCTION *header_callback;
 	void *header_cb_data;
