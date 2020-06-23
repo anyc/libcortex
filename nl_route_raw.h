@@ -11,14 +11,14 @@
 
 #include "netlink_raw.h"
 
-struct crtx_nl_route_listener {
+struct crtx_nl_route_raw_listener {
 	struct crtx_listener_base base;
 	
 	struct crtx_netlink_raw_listener nl_listener;
 	
 	uint16_t *nlmsg_types;
 	
-	struct crtx_dict *(*raw2dict)(struct crtx_nl_route_listener *nl_listener, struct nlmsghdr *nlh);
+	struct crtx_dict *(*raw2dict)(struct crtx_nl_route_raw_listener *nl_listener, struct nlmsghdr *nlh);
 	char all_fields;
 	
 // 	struct crtx_signals msg_done;
@@ -26,10 +26,10 @@ struct crtx_nl_route_listener {
 	void *msg_done_cb_data;
 };
 
-struct crtx_dict *crtx_nl_route_raw2dict_ifaddr(struct crtx_nl_route_listener *nlr_list, struct nlmsghdr *nlh);
+struct crtx_dict *crtx_nl_route_raw2dict_ifaddr(struct crtx_nl_route_raw_listener *nlr_list, struct nlmsghdr *nlh);
 struct crtx_dict *crtx_nl_route_raw2dict_ifaddr2(struct nlmsghdr *nlh, int all_fields);
 struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char all_fields);
-char crtx_nl_route_send_req(struct crtx_nl_route_listener *nl_listener, struct nlmsghdr *n);
+char crtx_nl_route_send_req(struct crtx_nl_route_raw_listener *nl_listener, struct nlmsghdr *n);
 
 struct crtx_listener_base *crtx_new_nl_route_raw_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(nl_route_raw)

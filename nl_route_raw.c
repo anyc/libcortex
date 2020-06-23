@@ -15,7 +15,7 @@
 #include "intern.h"
 #include "nl_route_raw.h"
 
-char crtx_nl_route_send_req(struct crtx_nl_route_listener *nlr_list, struct nlmsghdr *n) {
+char crtx_nl_route_send_req(struct crtx_nl_route_raw_listener *nlr_list, struct nlmsghdr *n) {
 	int ret;
 	
 // 	printf("send %d\n", nlr_list->nl_listener.sockfd);
@@ -572,7 +572,7 @@ struct crtx_dict * crtx_nl_route_raw2dict_neigh(struct nlmsghdr *nlh, char all_f
 	return dict;
 }
 
-struct crtx_dict *crtx_nl_route_raw2dict_ifaddr(struct crtx_nl_route_listener *nlr_list, struct nlmsghdr *nlh) {
+struct crtx_dict *crtx_nl_route_raw2dict_ifaddr(struct crtx_nl_route_raw_listener *nlr_list, struct nlmsghdr *nlh) {
 	switch (nlh->nlmsg_type) {
 		case RTM_NEWADDR:
 		case RTM_DELADDR:
@@ -611,11 +611,11 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 	char buffer[4096];
 	struct nlmsghdr *nlh;
 	struct crtx_event *event;
-	struct crtx_nl_route_listener *nlr_list;
+	struct crtx_nl_route_raw_listener *nlr_list;
 	
 	nlh = (struct nlmsghdr *) buffer;
 	
-	nlr_list = (struct crtx_nl_route_listener*) userdata;
+	nlr_list = (struct crtx_nl_route_raw_listener*) userdata;
 	
 	len = recv(fd, nlh, 4096, 0);
 	if (len > 0) {
@@ -688,10 +688,10 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 }
 
 static char nl_route_start_listener(struct crtx_listener_base *listener) {
-	struct crtx_nl_route_listener *nlr_list;
+	struct crtx_nl_route_raw_listener *nlr_list;
 	int ret;
 	
-	nlr_list = (struct crtx_nl_route_listener*) listener;
+	nlr_list = (struct crtx_nl_route_raw_listener*) listener;
 	
 	ret = crtx_start_listener(&nlr_list->nl_listener.base);
 	if (ret) {
@@ -703,9 +703,9 @@ static char nl_route_start_listener(struct crtx_listener_base *listener) {
 }
 
 static char nl_route_stop_listener(struct crtx_listener_base *listener) {
-	struct crtx_nl_route_listener *nlr_list;
+	struct crtx_nl_route_raw_listener *nlr_list;
 	
-	nlr_list = (struct crtx_nl_route_listener*) listener;
+	nlr_list = (struct crtx_nl_route_raw_listener*) listener;
 	
 	crtx_stop_listener(&nlr_list->nl_listener.base);
 	
@@ -713,9 +713,9 @@ static char nl_route_stop_listener(struct crtx_listener_base *listener) {
 }
 
 static void shutdown_nl_route_listener(struct crtx_listener_base *lbase) {
-	struct crtx_nl_route_listener *nlr_list;
+	struct crtx_nl_route_raw_listener *nlr_list;
 	
-	nlr_list = (struct crtx_nl_route_listener*) lbase;
+	nlr_list = (struct crtx_nl_route_raw_listener*) lbase;
 	
 	crtx_free_listener(&nlr_list->nl_listener.base);
 	nlr_list->base.graph = 0;
@@ -723,12 +723,12 @@ static void shutdown_nl_route_listener(struct crtx_listener_base *lbase) {
 
 
 struct crtx_listener_base *crtx_new_nl_route_raw_listener(void *options) {
-	struct crtx_nl_route_listener *nlr_list;
+	struct crtx_nl_route_raw_listener *nlr_list;
 // 	struct sockaddr_nl addr;
 // 	struct crtx_listener_base *lbase;
 	int ret;
 	
-	nlr_list = (struct crtx_nl_route_listener*) options;
+	nlr_list = (struct crtx_nl_route_raw_listener*) options;
 	
 	nlr_list->base.mode = CRTX_NO_PROCESSING_MODE;
 	
@@ -846,7 +846,7 @@ static char crtx_get_own_ip_addresses_keygen(struct crtx_event *event, struct cr
 }
 
 char crtx_get_own_ip_addresses() {
-	struct crtx_nl_route_listener nlr_list;
+	struct crtx_nl_route_raw_listener nlr_list;
 	int ret;
 	struct crtx_task *ip_cache_task;
 	struct crtx_cache_task *ctask;
@@ -854,7 +854,7 @@ char crtx_get_own_ip_addresses() {
 	
 // 	crtx_root->force_mode = CRTX_PREFER_THREAD;
 	
-	memset(&nlr_list, 0, sizeof(struct crtx_nl_route_listener));
+	memset(&nlr_list, 0, sizeof(struct crtx_nl_route_raw_listener));
 	nlr_list.nl_listener.nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
 	nlr_list.nlmsg_types = nlmsg_addr_types;
 	
