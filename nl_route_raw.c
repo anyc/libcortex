@@ -742,7 +742,7 @@ struct crtx_listener_base *crtx_setup_nl_route_raw_listener(void *options) {
 	nlr_list->raw2dict = &crtx_nl_route_raw2dict_ifaddr;
 	nlr_list->all_fields = 1;
 	
-	ret = crtx_create_listener("netlink_raw", &nlr_list->nl_listener);
+	ret = crtx_setup_listener("netlink_raw", &nlr_list->nl_listener);
 	if (ret) {
 		ERROR("create_listener(netlink_raw) failed: %s\n", strerror(-ret));
 		exit(1);
@@ -864,7 +864,7 @@ char crtx_get_own_ip_addresses() {
 	nlr_list.msg_done_cb = msg_done_cb;
 	nlr_list.msg_done_cb_data = &nlr_list;
 	
-	ret = crtx_create_listener("nl_route_raw", &nlr_list);
+	ret = crtx_setup_listener("nl_route_raw", &nlr_list);
 	if (ret) {
 		ERROR("create_listener(nl_route_raw) failed: %s\n", strerror(-ret));
 		exit(1);

@@ -230,7 +230,7 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 	plstnr->fork_lstnr.reinit_cb = &reinit_cb;
 	plstnr->fork_lstnr.reinit_cb_data = plstnr;
 	
-	rv = crtx_create_listener("fork", &plstnr->fork_lstnr);
+	rv = crtx_setup_listener("fork", &plstnr->fork_lstnr);
 	if (rv) {
 		ERROR("create_listener(fork) failed\n");
 		return 0;
@@ -240,13 +240,13 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 // 	plstnr->stdin_lstnr.fd_event_handler_data = &plstnr->stdin_lstnr;
 	
 	if (plstnr->stdin == -1 && plstnr->stdin_cb) {
-		rv = crtx_create_listener("pipe", &plstnr->stdin_lstnr);
+		rv = crtx_setup_listener("pipe", &plstnr->stdin_lstnr);
 		if (rv) {
 			ERROR("create_listener(pipe) failed\n");
 			return 0;
 		}
 		
-		rv = crtx_create_listener("writequeue", &plstnr->stdin_wq_lstnr);
+		rv = crtx_setup_listener("writequeue", &plstnr->stdin_wq_lstnr);
 		if (rv) {
 			ERROR("create_listener(writequeue) failed\n");
 			return 0;
@@ -258,7 +258,7 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 	// 	plstnr->stdout_lstnr.fd_event_handler_data = &plstnr->stdout_lstnr;
 		plstnr->stdout_lstnr.fd_event_handler_data = plstnr;
 		
-		rv = crtx_create_listener("pipe", &plstnr->stdout_lstnr);
+		rv = crtx_setup_listener("pipe", &plstnr->stdout_lstnr);
 		if (rv) {
 			ERROR("create_listener(pipe) failed\n");
 			return 0;
@@ -270,7 +270,7 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 	// 	plstnr->stderr_lstnr.fd_event_handler_data = &plstnr->stderr_lstnr;
 		plstnr->stderr_lstnr.fd_event_handler_data = plstnr;
 		
-		rv = crtx_create_listener("pipe", &plstnr->stderr_lstnr);
+		rv = crtx_setup_listener("pipe", &plstnr->stderr_lstnr);
 		if (rv) {
 			ERROR("create_listener(pipe) failed\n");
 			return 0;
@@ -396,7 +396,7 @@ int popen_main(int argc, char **argv) {
 	
 	plist.pre_exec = &pre_exec;
 	
-	ret = crtx_create_listener("popen", &plist);
+	ret = crtx_setup_listener("popen", &plist);
 	if (ret) {
 		ERROR("create_listener(popen) failed\n");
 		return 0;

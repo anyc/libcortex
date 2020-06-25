@@ -152,7 +152,7 @@ struct crtx_timer_retry_listener *crtx_timer_retry_listener(struct crtx_listener
 	tlist->newtimer.it_interval.tv_nsec = 0;
 	tlist->clockid = CLOCK_REALTIME;
 	
-	r = crtx_create_listener("timer", tlist);
+	r = crtx_setup_listener("timer", tlist);
 	if (r) {
 		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		
@@ -198,7 +198,7 @@ int crtx_timer_get_listener(struct crtx_timer_listener *tlist,
 	tlist->clockid = CLOCK_REALTIME;
 	tlist->settime_flags = 0;
 	
-	r = crtx_create_listener("timer", tlist);
+	r = crtx_setup_listener("timer", tlist);
 	if (r) {
 		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		return 0;
@@ -232,7 +232,7 @@ int crtx_timer_oneshot(time_t offset_sec,
 	tlist->oneshot_callback = callback;
 	tlist->oneshot_data = callback_userdata;
 	
-	r = crtx_create_listener("timer", tlist);
+	r = crtx_setup_listener("timer", tlist);
 	if (r) {
 		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		return 0;
@@ -281,7 +281,7 @@ int timer_main(int argc, char **argv) {
 	tlist.settime_flags = 0; // absolute (TFD_TIMER_ABSTIME), or relative (0) time, see: man timerfd_settime()
 // 	tlist.newtimer = &newtimer;
 	
-	r = crtx_create_listener("timer", &tlist);
+	r = crtx_setup_listener("timer", &tlist);
 	if (r) {
 		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		exit(1);

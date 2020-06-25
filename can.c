@@ -464,7 +464,7 @@ int can_main(int argc, char **argv) {
 	if (argc > 1)
 		clist.interface_name = argv[1];
 	
-	ret = crtx_create_listener("can", &clist);
+	ret = crtx_setup_listener("can", &clist);
 	if (ret) {
 		ERROR("create_listener(can) failed: %s\n", strerror(-ret));
 		return 0;

@@ -227,7 +227,7 @@ struct crtx_listener_base *crtx_setup_fork_listener(void *options) {
 // 	lstnr->signal_lstnr.signals = sigchld_signal;
 // 	lstnr->signal_lstnr.base.graph = lstnr->base.graph;
 // 	
-// 	rv = crtx_create_listener("signals", &lstnr->signal_lstnr);
+// 	rv = crtx_setup_listener("signals", &lstnr->signal_lstnr);
 // 	if (rv) {
 // 		ERROR("create_listener(signal) failed\n");
 // 		return 0;
@@ -283,7 +283,7 @@ static char timertest_handler(struct crtx_event *event, void *userdata, void **s
 		fork_lstnr.reinit_cb_data = 0;
 // 		fork_lstnr.sigchld_cb = &fork_sigchld_cb;
 		
-		rv = crtx_create_listener("fork", &fork_lstnr);
+		rv = crtx_setup_listener("fork", &fork_lstnr);
 		if (rv) {
 			ERROR("create_listener(fork) failed\n");
 			return -1;
@@ -319,7 +319,7 @@ int start_timer() {
 	tlist.settime_flags = 0; // absolute (TFD_TIMER_ABSTIME), or relative (0) time, see: man timerfd_settime()
 	// 	tlist.newtimer = &newtimer;
 	
-	r = crtx_create_listener("timer", &tlist);
+	r = crtx_setup_listener("timer", &tlist);
 	if (r) {
 		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		exit(1);

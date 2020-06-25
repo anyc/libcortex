@@ -278,7 +278,7 @@ int crtx_init_listener_base(struct crtx_listener_base *lbase) {
 	return 0;
 }
 
-int crtx_create_listener(const char *id, void *options) {
+int crtx_setup_listener(const char *id, void *options) {
 	struct crtx_listener_repository *l;
 	struct crtx_listener_base *lbase;
 	char static_lstnr;
@@ -330,6 +330,10 @@ int crtx_create_listener(const char *id, void *options) {
 	UNLOCK(crtx_root->listeners_mutex);
 	
 	return 0;
+}
+
+int crtx_create_listener(const char *id, void *options) {
+	return crtx_setup_listener(id, options);
 }
 
 int crtx_stop_listener(struct crtx_listener_base *listener) {

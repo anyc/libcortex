@@ -22,7 +22,7 @@ static void reinit_cb(void *reinit_cb_data) {
 	
 	crtx_handle_std_signals();
 	
-	ret = crtx_create_listener("curl", &fc_lstnr->curl_lstnr);
+	ret = crtx_setup_listener("curl", &fc_lstnr->curl_lstnr);
 	if (ret) {
 		ERROR("create_listener(curl) failed\n");
 		return;
@@ -68,7 +68,7 @@ struct crtx_listener_base *crtx_setup_forked_curl_listener(void *options) {
 	
 	fc_lstnr->fork_lstnr.base.graph = fc_lstnr->base.graph;
 	
-	ret = crtx_create_listener("fork", &fc_lstnr->fork_lstnr);
+	ret = crtx_setup_listener("fork", &fc_lstnr->fork_lstnr);
 	if (ret) {
 		ERROR("create_listener(fork) failed\n");
 		return 0;
@@ -134,7 +134,7 @@ int fcurl_main(int argc, char **argv) {
 	fc_lstnr.curl_lstnr.url = argv[1];
 	fc_lstnr.curl_lstnr.write_file_ptr = stdout;
 	
-	ret = crtx_create_listener("forked_curl", &fc_lstnr);
+	ret = crtx_setup_listener("forked_curl", &fc_lstnr);
 	if (ret) {
 		ERROR("create_listener(forked_curl) failed\n");
 		return 0;

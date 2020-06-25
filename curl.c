@@ -419,7 +419,7 @@ static void init_curl() {
 	
 	memset(&timer_list, 0, sizeof(struct crtx_timer_listener));
 	
-	err = crtx_create_listener("timer", &timer_list);
+	err = crtx_setup_listener("timer", &timer_list);
 	if (err) {
 		ERROR("create_listener(timer) failed: %d\n", err);
 		// TODO
@@ -521,7 +521,7 @@ int curl_main(int argc, char **argv) {
 	clist.header_callback = &crtx_curl_header_callback;
 	clist.header_cb_data = &clist;
 	
-	ret = crtx_create_listener("curl", &clist);
+	ret = crtx_setup_listener("curl", &clist);
 	if (ret) {
 		ERROR("create_listener(curl) failed\n");
 		return 0;

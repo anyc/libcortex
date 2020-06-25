@@ -222,7 +222,7 @@ static void selfpipe_signal_handler(int signum) {
 // 		slistener->pipe_lstnr.fd_event_handler = selfpipe_event_handler;
 // 		slistener->pipe_lstnr.fd_event_handler_data = slistener;
 // 		
-// 		r = crtx_create_listener("pipe", &slistener->pipe_lstnr);
+// 		r = crtx_setup_listener("pipe", &slistener->pipe_lstnr);
 // 		if (r < 0) {
 // 			ERROR("create_listener(pipe) failed: %s\n", strerror(-r));
 // 			return r;
@@ -233,7 +233,7 @@ static void selfpipe_signal_handler(int signum) {
 // 		slistener->sub_lstnr->type = CRTX_SIGNAL_SIGACTION;
 // 		slistener->sub_lstnr->signal_handler = selfpipe_signal_handler;
 // 		
-// 		r = crtx_create_listener("signals", slistener->sub_lstnr);
+// 		r = crtx_setup_listener("signals", slistener->sub_lstnr);
 // 		if (r < 0) {
 // 			ERROR("create_listener(signals) failed: %s\n", strerror(-r));
 // 			return r;
@@ -439,7 +439,7 @@ static char start_main_listener(struct crtx_listener_base *listener) {
 		slistener->pipe_lstnr.fd_event_handler = selfpipe_event_handler;
 		slistener->pipe_lstnr.fd_event_handler_data = slistener;
 		
-		r = crtx_create_listener("pipe", &slistener->pipe_lstnr);
+		r = crtx_setup_listener("pipe", &slistener->pipe_lstnr);
 		if (r < 0) {
 			ERROR("create_listener(pipe) failed: %s\n", strerror(-r));
 			return r;
@@ -452,7 +452,7 @@ static char start_main_listener(struct crtx_listener_base *listener) {
 		slistener->sub_lstnr->signal_handler = selfpipe_signal_handler;
 		slistener->sub_lstnr->base.free_cb = &free_sublistener;
 		
-		r = crtx_create_listener("signals", slistener->sub_lstnr);
+		r = crtx_setup_listener("signals", slistener->sub_lstnr);
 		if (r < 0) {
 			ERROR("create_listener(signals) failed: %s\n", strerror(-r));
 			return r;
@@ -485,7 +485,7 @@ struct crtx_listener_base *crtx_setup_signals_listener(void *options) {
 			
 			main_initialized = 1;
 			
-			err = crtx_create_listener("signals", &main_lstnr);
+			err = crtx_setup_listener("signals", &main_lstnr);
 			if (err < 0) {
 				return 0;
 			}
@@ -555,7 +555,7 @@ void * crtx_signals_add_child_handler(sigchld_cb cb, void *userdata) {
 		
 		sigchld_lstnr.signals = sigchld_signals;
 		
-		ret = crtx_create_listener("signals", &sigchld_lstnr);
+		ret = crtx_setup_listener("signals", &sigchld_lstnr);
 		if (ret) {
 			ERROR("create_listener(signal) failed\n");
 			return 0;
@@ -632,7 +632,7 @@ int crtx_signals_handle_std_signals(struct crtx_signals_listener **signal_lstnr)
 	
 	default_signal_lstnr.signals = std_signals;
 	
-	err = crtx_create_listener("signals", &default_signal_lstnr);
+	err = crtx_setup_listener("signals", &default_signal_lstnr);
 	if (err < 0) {
 		return err;
 	}

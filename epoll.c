@@ -546,7 +546,7 @@ static int evloop_create(struct crtx_event_loop *evloop) {
 	
 	epl->evloop = evloop;
 	
-	ret = crtx_create_listener("epoll", evloop->listener);
+	ret = crtx_setup_listener("epoll", evloop->listener);
 	if (ret) {
 		ERROR("create_listener(epoll) failed\n");
 	}
@@ -644,7 +644,7 @@ void start_timer() {
 	tlist.clockid = CLOCK_REALTIME; // clock source, see: man clock_gettime()
 	tlist.settime_flags = 0; // absolute (TFD_TIMER_ABSTIME), or relative (0) time, see: man timerfd_settime()
 	
-	r = crtx_create_listener("timer", &tlist);
+	r = crtx_setup_listener("timer", &tlist);
 	if (r) {
 		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		exit(1);

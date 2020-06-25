@@ -83,7 +83,7 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 	el->base.free_cb_userdata = dyn_evdev;
 	
 // 	lbase = create_listener("evdev", el);
-	ret = crtx_create_listener("evdev", el);
+	ret = crtx_setup_listener("evdev", el);
 	if (ret) {
 		ERROR("create_listener(evdev) failed\n");
 		
@@ -193,7 +193,7 @@ struct crtx_listener_base *crtx_setup_dynamic_evdev_listener(void *options) {
 	dyn_evdev->udev_lstnr.query_existing = 1;
 	
 // 	udev_lbase = create_listener("udev", &dyn_evdev->udev_lstnr);
-	ret = crtx_create_listener("udev", &dyn_evdev->udev_lstnr);
+	ret = crtx_setup_listener("udev", &dyn_evdev->udev_lstnr);
 	if (ret) {
 		ERROR("create_listener(udev) failed\n");
 		return 0;
@@ -493,7 +493,7 @@ int dynamic_evdev_main(int argc, char **argv) {
 	dyn_evdev.handler_userdata = &dyn_evdev;
 	
 // 	lbase = create_listener("dynamic_evdev", &dyn_evdev);
-	ret = crtx_create_listener("dynamic_evdev", &dyn_evdev);
+	ret = crtx_setup_listener("dynamic_evdev", &dyn_evdev);
 	if (ret) {
 		ERROR("create_listener(dynamic_evdev) failed\n");
 		return 0;

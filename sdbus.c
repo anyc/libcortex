@@ -567,7 +567,7 @@ struct crtx_sdbus_listener *crtx_sdbus_get_default_listener(enum crtx_sdbus_type
 		
 		default_listeners[sdbus_type].bus_type = sdbus_type;
 		
-		ret = crtx_create_listener("sdbus", &default_listeners[sdbus_type]);
+		ret = crtx_setup_listener("sdbus", &default_listeners[sdbus_type]);
 		if (ret) {
 			ERROR("create_listener(timer) failed: %s\n", strerror(-ret));
 			return 0;
@@ -627,7 +627,7 @@ int sdbus_main(int argc, char **argv) {
 	sdlist.bus_type = CRTX_SDBUS_TYPE_USER;
 	sdlist.connection_signals = 1;
 	
-	ret = crtx_create_listener("sdbus", &sdlist);
+	ret = crtx_setup_listener("sdbus", &sdlist);
 	if (ret) {
 		ERROR("create_listener(sdbus) failed: %s\n", strerror(-ret));
 		exit(1);

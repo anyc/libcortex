@@ -231,7 +231,7 @@ int evdev_main(int argc, char **argv) {
 	
 	el.device_path = argv[1];
 	
-	ret = crtx_create_listener("evdev", &el);
+	ret = crtx_setup_listener("evdev", &el);
 	if (ret) {
 		ERROR("create_listener(evdev) failed: %s\n", strerror(-ret));
 		exit(1);

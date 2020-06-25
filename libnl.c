@@ -179,7 +179,7 @@ int libnl_main(int argc, char **argv) {
 	}
 	libnl.callbacks = libnl_callbacks;
 	
-	r = crtx_create_listener("libnl", &libnl);
+	r = crtx_setup_listener("libnl", &libnl);
 	if (r) {
 		ERROR("create_listener(libnl) failed: %s\n", strerror(-r));
 		exit(1);

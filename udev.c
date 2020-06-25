@@ -361,7 +361,7 @@ int udev_main(int argc, char **argv) {
 	
 	ulist.sys_dev_filter = test_filters;
 	
-	ret = crtx_create_listener("udev", &ulist);
+	ret = crtx_setup_listener("udev", &ulist);
 	if (ret) {
 		ERROR("create_listener(udev) failed: %s\n", strerror(-ret));
 		exit(1);

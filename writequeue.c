@@ -130,7 +130,7 @@ int crtx_add_writequeue2listener(struct crtx_writequeue_listener *writequeue, st
 // 	writequeue->base.evloop_fd.el_data = &writequeue->epoll_event;
 // 	writequeue->epoll_event.data.ptr = &writequeue->base.evloop_fd;
 	
-	r = crtx_create_listener("writequeue", writequeue);
+	r = crtx_setup_listener("writequeue", writequeue);
 	if (r) {
 		ERROR("create_listener(writequeue) failed: %s\n", strerror(-r));
 		exit(1);
@@ -205,7 +205,7 @@ int writequeue_main(int argc, char **argv) {
 	wqueue.write_fd = pipe_fds[1];
 	wqueue.write = &wq_write;
 	
-	ret = crtx_create_listener("writequeue", &wqueue);
+	ret = crtx_setup_listener("writequeue", &wqueue);
 	if (ret) {
 		ERROR("create_listener(writequeue) failed: %s\n", strerror(-ret));
 		exit(1);

@@ -407,7 +407,7 @@ struct crtx_listener_base *crtx_setup_avahi_listener(void *options) {
 	crtx_sdbus_match_add(&alist->sdlist, &alist->sdbus_match[1]);
 	crtx_sdbus_match_add(&alist->sdlist, &alist->sdbus_match[2]);
 	
-	ret = crtx_create_listener("sdbus", &alist->sdlist);
+	ret = crtx_setup_listener("sdbus", &alist->sdlist);
 	if (ret) {
 		ERROR("create_listener(udev) failed\n");
 		return 0;
@@ -476,7 +476,7 @@ int avahi_main(int argc, char **argv) {
 	alist.service_browser.type = "_http._tcp";
 	alist.service_browser.domain = "";
 	
-	err = crtx_create_listener("avahi", &alist);
+	err = crtx_setup_listener("avahi", &alist);
 	if (err) {
 		ERROR("create_listener(alist) failed: %d\n", err);
 		// TODO
