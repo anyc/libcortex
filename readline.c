@@ -133,7 +133,7 @@ static char rl_notify_send_handler(struct crtx_event *event, void *userdata, voi
 	return 1;
 }
 
-// struct crtx_listener_base *crtx_new_readline_listener(void *options) {
+// struct crtx_listener_base *crtx_setup_readline_listener(void *options) {
 // 	struct crtx_readline_listener *slistener;
 // 	struct crtx_graph *global_notify_graph;
 // 	

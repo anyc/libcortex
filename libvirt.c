@@ -827,7 +827,7 @@ static char start_listener(struct crtx_listener_base *base) {
 	return 0;
 }
 
-struct crtx_listener_base *crtx_new_libvirt_listener(void *options) {
+struct crtx_listener_base *crtx_setup_libvirt_listener(void *options) {
 	struct crtx_libvirt_listener *lvlist;
 	int ret;
 	

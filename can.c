@@ -334,7 +334,7 @@ static void on_error_cb(struct crtx_evloop_callback *el_cb, void *data) {
 	crtx_stop_listener(&clist->base);
 }
 
-struct crtx_listener_base *crtx_new_can_listener(void *options) {
+struct crtx_listener_base *crtx_setup_can_listener(void *options) {
 	struct crtx_can_listener *clist;
 	int r;
 	

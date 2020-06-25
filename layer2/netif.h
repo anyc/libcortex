@@ -16,7 +16,7 @@ struct crtx_netif_listener {
 	char query_existing; // 1 = query existing interfaces, 2 = query and stop listener
 };
 
-struct crtx_listener_base *crtx_new_netif_listener(void *options);
+struct crtx_listener_base *crtx_setup_netif_listener(void *options);
 int crtx_netif_query_interfaces(struct crtx_netif_listener *netif_lstnr);
 CRTX_DECLARE_ALLOC_FUNCTION(netif)
 

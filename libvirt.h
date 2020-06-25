@@ -18,7 +18,7 @@ struct crtx_libvirt_listener {
 	int domain_event_id;
 };
 
-struct crtx_listener_base *crtx_new_libvirt_listener(void *options);
+struct crtx_listener_base *crtx_setup_libvirt_listener(void *options);
 virConnectPtr crtx_libvirt_get_conn(struct crtx_listener_base *base);
 CRTX_DECLARE_ALLOC_FUNCTION(libvirt)
 

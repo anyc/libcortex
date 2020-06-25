@@ -25,7 +25,7 @@ struct crtx_pa_listener {
 	enum pa_context_state state;
 };
 
-struct crtx_listener_base *crtx_new_pa_listener(void *options);
+struct crtx_listener_base *crtx_setup_pa_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(pa)
 
 void crtx_pa_init();

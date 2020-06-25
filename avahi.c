@@ -374,7 +374,7 @@ static char init_service_browser(struct crtx_avahi_listener *alist) {
 	return 0;
 }
 
-struct crtx_listener_base *crtx_new_avahi_listener(void *options) {
+struct crtx_listener_base *crtx_setup_avahi_listener(void *options) {
 	struct crtx_avahi_listener *alist;
 	int ret;
 	
@@ -452,8 +452,7 @@ static char avahi_test_handler(struct crtx_event *event, void *userdata, void **
 
 int avahi_main(int argc, char **argv) {
 	struct crtx_avahi_listener alist;
-	struct crtx_listener_base *lbase;
-	char ret;
+	char err;
 	struct crtx_avahi_service s;
 	
 	s.interface = AVAHI_IF_UNSPEC;
@@ -477,18 +476,19 @@ int avahi_main(int argc, char **argv) {
 	alist.service_browser.type = "_http._tcp";
 	alist.service_browser.domain = "";
 	
-	lbase = create_listener("avahi", &alist);
-	if (!lbase) {
-		ERROR("create_listener(avahi) failed\n");
-		exit(1);
+	err = crtx_create_listener("avahi", &alist);
+	if (err) {
+		ERROR("create_listener(alist) failed: %d\n", err);
+		// TODO
+		return err;
 	}
 	
-	crtx_create_task(lbase->graph, 0, "avahi_test", avahi_test_handler, 0);
+	crtx_create_task(alist.base.graph, 0, "avahi_test", avahi_test_handler, 0);
 	
-	ret = crtx_start_listener(lbase);
-	if (ret) {
+	err = crtx_start_listener(&alist.base);
+	if (err) {
 		ERROR("starting avahi listener failed\n");
-		return 1;
+		return err;
 	}
 	
 	

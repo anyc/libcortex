@@ -21,7 +21,7 @@ struct crtx_evdev_listener {
 	struct libevdev *device;
 };
 
-struct crtx_listener_base *crtx_new_evdev_listener(void *options);
+struct crtx_listener_base *crtx_setup_evdev_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(evdev)
 
 void crtx_evdev_init();

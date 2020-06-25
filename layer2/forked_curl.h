@@ -19,7 +19,7 @@ struct crtx_forked_curl_listener {
 	void *reinit_cb_data;
 };
 
-struct crtx_listener_base *crtx_new_forked_curl_listener(void *options);
+struct crtx_listener_base *crtx_setup_forked_curl_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(forked_curl)
 
 void crtx_forked_curl_init();

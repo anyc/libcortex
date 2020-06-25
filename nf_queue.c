@@ -397,7 +397,7 @@ void *nfq_tmain(void *data) {
 void free_nf_queue_listener(struct crtx_listener_base *data, void *userdata) {
 }
 
-struct crtx_listener_base *crtx_new_nf_queue_listener(void *options) {
+struct crtx_listener_base *crtx_setup_nf_queue_listener(void *options) {
 	struct crtx_nfq_listener *nfq_listener;
 	
 	nfq_listener = (struct crtx_nfq_listener*) options;

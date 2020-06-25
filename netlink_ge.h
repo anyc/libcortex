@@ -42,7 +42,7 @@ struct crtx_genl_listener {
 	struct crtx_genl_group *groups;
 };
 
-struct crtx_listener_base *crtx_new_genl_listener(void *options);
+struct crtx_listener_base *crtx_setup_genl_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(genl)
 
 void crtx_netlink_ge_init();

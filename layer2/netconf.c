@@ -208,7 +208,7 @@ static void netconf_shutdown_listener(struct crtx_listener_base *listener) {
 	netconf_lstnr->libnl_lstnr.base.graph = 0;
 }
 
-struct crtx_listener_base *crtx_new_netconf_listener(void *options) {
+struct crtx_listener_base *crtx_setup_netconf_listener(void *options) {
 	struct crtx_netconf_listener *netconf_lstnr;
 	// 	struct crtx_listener_base *lbase;
 	struct crtx_libnl_callback *cbit;

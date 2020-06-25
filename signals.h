@@ -40,7 +40,7 @@ int crtx_signals_rem_child_handler(void *sigchld_cb);
 
 struct signal_map *crtx_get_signal_info(int signum);
 
-struct crtx_listener_base *crtx_new_signals_listener(void *options);
+struct crtx_listener_base *crtx_setup_signals_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(signals)
 
 void crtx_signals_init();

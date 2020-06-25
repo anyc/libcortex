@@ -139,7 +139,7 @@ static char start_listener(struct crtx_listener_base *base) {
 	return 1;
 }
 
-struct crtx_listener_base *crtx_new_curl_listener(void *options) {
+struct crtx_listener_base *crtx_setup_curl_listener(void *options) {
 	struct crtx_curl_listener *clist;
 	CURLcode curlr;
 	

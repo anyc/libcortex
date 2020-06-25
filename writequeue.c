@@ -71,7 +71,7 @@ void crtx_writequeue_stop(struct crtx_writequeue_listener *wqueue) {
 	crtx_evloop_disable_cb(&wqueue->evloop_cb);
 }
 
-struct crtx_listener_base *crtx_new_writequeue_listener(void *options) {
+struct crtx_listener_base *crtx_setup_writequeue_listener(void *options) {
 	struct crtx_writequeue_listener *wqueue;
 	
 	

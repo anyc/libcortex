@@ -179,7 +179,7 @@ static void shutdown_listener(struct crtx_listener_base *data) {
 	}
 }
 
-struct crtx_listener_base *crtx_new_dynamic_evdev_listener(void *options) {
+struct crtx_listener_base *crtx_setup_dynamic_evdev_listener(void *options) {
 // 	struct crtx_listener_base *udev_lbase;
 	struct crtx_dynamic_evdev_listener *dyn_evdev;
 	int ret;
@@ -215,7 +215,7 @@ void crtx_dynamic_evdev_init() {
 	lrepo = crtx_get_new_listener_repo_entry();
 	
 	lrepo->id = "dynamic_evdev";
-	lrepo->create = &crtx_new_dynamic_evdev_listener;
+	lrepo->create = &crtx_setup_dynamic_evdev_listener;
 }
 
 void crtx_dynamic_evdev_finish() {

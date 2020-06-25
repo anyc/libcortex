@@ -312,7 +312,7 @@ static char notify_send_handler(struct crtx_event *event, void *userdata, void *
 	return 1;
 }
 
-// struct crtx_listener_base *crtx_new_sd_bus_notification_listener(void *options) {
+// struct crtx_listener_base *crtx_setup_sd_bus_notification_listener(void *options) {
 // 	struct crtx_sd_bus_notification_listener *slistener;
 // 	struct crtx_graph *global_notify_graph;
 // 	

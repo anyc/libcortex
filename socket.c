@@ -325,7 +325,7 @@ static void stop_thread(struct crtx_thread *t, void *data) {
 		shutdown(inlist->server_sockfd, SHUT_RDWR);
 }
 
-struct crtx_listener_base *crtx_new_socket_server_listener(void *options) {
+struct crtx_listener_base *crtx_setup_socket_server_listener(void *options) {
 	struct crtx_socket_listener *slistener;
 // 	struct crtx_thread *t;
 	
@@ -343,7 +343,7 @@ struct crtx_listener_base *crtx_new_socket_server_listener(void *options) {
 	return &slistener->base;
 }
 
-struct crtx_listener_base *crtx_new_socket_client_listener(void *options) {
+struct crtx_listener_base *crtx_setup_socket_client_listener(void *options) {
 	struct crtx_socket_listener *slistener;
 	
 	slistener = (struct crtx_socket_listener *) options;

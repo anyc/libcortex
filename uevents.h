@@ -15,7 +15,7 @@ struct crtx_uevents_listener {
 };
 
 struct crtx_dict *crtx_uevents_raw2dict(struct crtx_event *event);
-struct crtx_listener_base *crtx_new_uevents_listener(void *options);
+struct crtx_listener_base *crtx_setup_uevents_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(uevents)
 
 void crtx_uevents_init();

@@ -55,7 +55,7 @@ static char netlink_el_event_handler(struct crtx_event *event, void *userdata, v
 // 		shutdown(nl_listener->sockfd, SHUT_RDWR);
 // }
 
-struct crtx_listener_base *crtx_new_netlink_raw_listener(void *options) {
+struct crtx_listener_base *crtx_setup_netlink_raw_listener(void *options) {
 	struct crtx_netlink_raw_listener *nl_listener;
 	struct sockaddr_nl addr;
 	

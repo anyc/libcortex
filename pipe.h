@@ -19,7 +19,7 @@ struct crtx_pipe_listener {
 	void *fd_event_handler_data;
 };
 
-struct crtx_listener_base *crtx_new_pipe_listener(void *options);
+struct crtx_listener_base *crtx_setup_pipe_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(pipe)
 
 void crtx_pipe_init();

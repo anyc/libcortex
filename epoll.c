@@ -491,7 +491,7 @@ static char stop_epoll_listener(struct crtx_listener_base *lbase) {
 	return 0;
 }
 
-struct crtx_listener_base *crtx_new_epoll_listener(void *options) {
+struct crtx_listener_base *crtx_setup_epoll_listener(void *options) {
 	struct crtx_epoll_listener *epl;
 	int flags;
 	

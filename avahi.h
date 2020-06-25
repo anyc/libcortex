@@ -41,7 +41,7 @@ int crtx_avahi_resolve_service(struct crtx_avahi_service *service);
 char crtx_avahi_service(struct crtx_event *event);
 char crtx_avahi_publish_service(struct crtx_avahi_service *service);
 char crtx_avahi_remove_service(struct crtx_avahi_service *service);
-struct crtx_listener_base *crtx_new_avahi_listener(void *options);
+struct crtx_listener_base *crtx_setup_avahi_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(avahi)
 
 void crtx_avahi_init();

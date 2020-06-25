@@ -50,7 +50,7 @@ struct crtx_curl_listener {
 int crtx_curl_progress_callback(void *userdata, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
 size_t crtx_curl_header_callback(char *buffer, size_t size, size_t nitems, void *userdata);
 
-struct crtx_listener_base *crtx_new_curl_listener(void *options);
+struct crtx_listener_base *crtx_setup_curl_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(curl)
 
 void crtx_curl_init();

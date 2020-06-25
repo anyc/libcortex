@@ -473,7 +473,7 @@ static void shutdown_main_listener(struct crtx_listener_base *listener) {
 	main_started = 0;
 }
 
-struct crtx_listener_base *crtx_new_signals_listener(void *options) {
+struct crtx_listener_base *crtx_setup_signals_listener(void *options) {
 	struct crtx_signals_listener *slistener;
 	
 	

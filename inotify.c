@@ -332,7 +332,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
-struct crtx_listener_base *crtx_new_inotify_listener(void *options) {
+struct crtx_listener_base *crtx_setup_inotify_listener(void *options) {
 	struct crtx_inotify_listener *inlist;
 	unsigned int list_idx;
 	

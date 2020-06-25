@@ -23,7 +23,7 @@ struct crtx_libnl_listener {
 	struct crtx_libnl_callback *callbacks;
 };
 
-struct crtx_listener_base *crtx_new_libnl_listener(void *options);
+struct crtx_listener_base *crtx_setup_libnl_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(libnl)
 
 void crtx_libnl_init();

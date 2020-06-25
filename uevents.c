@@ -147,7 +147,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
-struct crtx_listener_base *crtx_new_uevents_listener(void *options) {
+struct crtx_listener_base *crtx_setup_uevents_listener(void *options) {
 	struct crtx_uevents_listener *ulist;
 	int r;
 	

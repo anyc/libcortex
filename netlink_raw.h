@@ -32,7 +32,7 @@ struct crtx_netlink_raw_listener {
 	char stop;
 };
 
-struct crtx_listener_base *crtx_new_netlink_raw_listener(void *options);
+struct crtx_listener_base *crtx_setup_netlink_raw_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(netlink_raw)
 
 void crtx_netlink_raw_init();

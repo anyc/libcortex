@@ -120,7 +120,7 @@ void crtx_shutdown_evdev_listener(struct crtx_listener_base *data) {
 	libevdev_free(el->device);
 }
 
-struct crtx_listener_base *crtx_new_evdev_listener(void *options) {
+struct crtx_listener_base *crtx_setup_evdev_listener(void *options) {
 	struct crtx_evdev_listener *evdev;
 	int ret;
 	

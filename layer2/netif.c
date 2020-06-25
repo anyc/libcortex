@@ -123,7 +123,7 @@ static void netif_shutdown_listener(struct crtx_listener_base *listener) {
 	netif_lstnr->libnl_lstnr.base.graph = 0;
 }
 
-struct crtx_listener_base *crtx_new_netif_listener(void *options) {
+struct crtx_listener_base *crtx_setup_netif_listener(void *options) {
 	struct crtx_netif_listener *netif_lstnr;
 // 	struct crtx_listener_base *lbase;
 	struct crtx_libnl_callback *cbit;

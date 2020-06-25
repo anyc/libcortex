@@ -468,7 +468,7 @@ char crtx_sdbus_open_bus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name
 			}
 			break;
 		default:
-			ERROR("crtx_new_sdbus_listener\n");
+			ERROR("crtx_setup_sdbus_listener\n");
 			return -1;
 	}
 	if (r < 0) {

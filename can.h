@@ -29,7 +29,7 @@ struct crtx_can_listener {
 	struct sockaddr_can addr;
 };
 
-struct crtx_listener_base *crtx_new_can_listener(void *options);
+struct crtx_listener_base *crtx_setup_can_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(can)
 
 void crtx_can_init();

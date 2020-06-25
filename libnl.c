@@ -55,7 +55,7 @@ void free_libnl_listener(struct crtx_listener_base *lbase, void *userdata) {
 	nl_socket_free(libnl_lstnr->sock);
 }
 
-struct crtx_listener_base *crtx_new_libnl_listener(void *options) {
+struct crtx_listener_base *crtx_setup_libnl_listener(void *options) {
 	struct crtx_libnl_listener *libnl_lstnr;
 	struct crtx_libnl_callback *cb;
 	int r;

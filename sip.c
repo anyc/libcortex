@@ -132,7 +132,7 @@ static void free_listener(struct crtx_listener_base *listener, void *userdata) {
 	eXosip_quit(slist->ctx);
 }
 
-struct crtx_listener_base *crtx_new_sip_listener(void *options) {
+struct crtx_listener_base *crtx_setup_sip_listener(void *options) {
 	struct crtx_sip_listener *slist;
 	int r;
 	

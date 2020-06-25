@@ -172,7 +172,7 @@ void shutdown_socket_raw_listener(struct crtx_listener_base *data) {
 	close(slist->sockfd);
 }
 
-// struct crtx_listener_base *crtx_new_socket_raw_server_listener(void *options) {
+// struct crtx_listener_base *crtx_setup_socket_raw_server_listener(void *options) {
 int crtx_init_socket_raw_server_listener(struct crtx_socket_raw_listener *slistener) {
 	struct addrinfo *addrinfos, *rit;
 	int ret;
@@ -216,7 +216,7 @@ int crtx_init_socket_raw_server_listener(struct crtx_socket_raw_listener *sliste
 		close(slistener->sockfd);
 	}
 	if (rit == 0) {
-		ERROR("crtx_new_socket_raw_server_listener: %s\n", strerror(errno));
+		ERROR("crtx_setup_socket_raw_server_listener: %s\n", strerror(errno));
 		return errno;
 	}
 	
@@ -327,7 +327,7 @@ int crtx_init_socket_raw_client_listener(struct crtx_socket_raw_listener *sliste
 	return 0;
 }
 
-// struct crtx_listener_base *crtx_new_socket_raw_client_listener(void *options) {
+// struct crtx_listener_base *crtx_setup_socket_raw_client_listener(void *options) {
 // 	struct crtx_socket_raw_listener *slistener;
 // 	struct addrinfo *addrinfos, *rit;
 // 	int r;
@@ -342,7 +342,7 @@ int crtx_init_socket_raw_client_listener(struct crtx_socket_raw_listener *sliste
 // 	return &slistener->base;
 // }
 
-struct crtx_listener_base *crtx_new_socket_raw_listener(void *options) {
+struct crtx_listener_base *crtx_setup_socket_raw_listener(void *options) {
 	return 0;
 }
 

@@ -24,7 +24,7 @@ struct crtx_epoll_listener {
 	char stop;
 };
 
-struct crtx_listener_base *crtx_new_epoll_listener(void *options);
+struct crtx_listener_base *crtx_setup_epoll_listener(void *options);
 void crtx_epoll_init();
 void crtx_epoll_finish();
 

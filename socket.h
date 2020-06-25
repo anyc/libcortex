@@ -33,8 +33,8 @@ struct crtx_socket_listener {
 };
 
 
-struct crtx_listener_base *crtx_new_socket_server_listener(void *options);
-struct crtx_listener_base *crtx_new_socket_client_listener(void *options);
+struct crtx_listener_base *crtx_setup_socket_server_listener(void *options);
+struct crtx_listener_base *crtx_setup_socket_client_listener(void *options);
 
 CRTX_DECLARE_ALLOC_FUNCTION(socket)
 

@@ -116,7 +116,7 @@ void free_genl_listener(struct crtx_listener_base *lbase, void *userdata) {
 	nl_socket_free(genlist->sock);
 }
 
-struct crtx_listener_base *crtx_new_genl_listener(void *options) {
+struct crtx_listener_base *crtx_setup_genl_listener(void *options) {
 	struct crtx_genl_listener *genlist;
 	struct crtx_genl_group *g;
 	struct crtx_genl_callback *cb;

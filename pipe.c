@@ -51,7 +51,7 @@ static void shutdown_listener(struct crtx_listener_base *lbase) {
 		close(lstnr->fds[CRTX_WRITE_END]);
 }
 
-struct crtx_listener_base *crtx_new_pipe_listener(void *options) {
+struct crtx_listener_base *crtx_setup_pipe_listener(void *options) {
 	struct crtx_pipe_listener *lstnr;
 	int r;
 	

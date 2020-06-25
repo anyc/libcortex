@@ -722,7 +722,7 @@ static void shutdown_nl_route_listener(struct crtx_listener_base *lbase) {
 }
 
 
-struct crtx_listener_base *crtx_new_nl_route_raw_listener(void *options) {
+struct crtx_listener_base *crtx_setup_nl_route_raw_listener(void *options) {
 	struct crtx_nl_route_raw_listener *nlr_list;
 // 	struct sockaddr_nl addr;
 // 	struct crtx_listener_base *lbase;

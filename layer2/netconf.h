@@ -31,7 +31,7 @@ struct crtx_netconf_listener {
 	struct crtx_libnl_callback libnl_callbacks[3];
 };
 
-struct crtx_listener_base *crtx_new_netconf_listener(void *options);
+struct crtx_listener_base *crtx_setup_netconf_listener(void *options);
 int crtx_netconf_query_interfaces(struct crtx_netconf_listener *netconf_lstnr);
 CRTX_DECLARE_ALLOC_FUNCTION(netconf)
 

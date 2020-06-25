@@ -214,7 +214,7 @@ static void fork_sigchld_cb(pid_t pid, int status, void *userdata) {
 	}
 }
 
-struct crtx_listener_base *crtx_new_fork_listener(void *options) {
+struct crtx_listener_base *crtx_setup_fork_listener(void *options) {
 	struct crtx_fork_listener *lstnr;
 // 	int rv;
 	

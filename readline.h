@@ -11,7 +11,7 @@
 // };
 
 // void send_notification(char *icon, char *title, char *text, char **actions, char**chosen_action);
-// struct crtx_listener_base *crtx_new_readline_listener(void *options);
+// struct crtx_listener_base *crtx_setup_readline_listener(void *options);
 
 void crtx_readline_init();
 void crtx_readline_finish();

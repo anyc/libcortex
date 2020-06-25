@@ -216,7 +216,7 @@ static char stop_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
-struct crtx_listener_base *crtx_new_popen_listener(void *options) {
+struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 	struct crtx_popen_listener *plstnr;
 	int rv;
 	

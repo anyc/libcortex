@@ -56,7 +56,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
-struct crtx_listener_base *crtx_new_forked_curl_listener(void *options) {
+struct crtx_listener_base *crtx_setup_forked_curl_listener(void *options) {
 	struct crtx_forked_curl_listener *fc_lstnr;
 	int ret;
 	

@@ -86,7 +86,7 @@ static void shutdown_listener(struct crtx_listener_base *base) {
 	base->evloop_fd.fd = 0;
 }
 
-struct crtx_listener_base *crtx_new_timer_listener(void *options) {
+struct crtx_listener_base *crtx_setup_timer_listener(void *options) {
 	struct crtx_timer_listener *tlist;
 	
 	tlist = (struct crtx_timer_listener *) options;

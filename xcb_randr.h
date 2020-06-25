@@ -20,7 +20,7 @@ struct crtx_xcb_randr_listener {
 	xcb_screen_t *screen;
 };
 
-struct crtx_listener_base *crtx_new_xcb_randr_listener(void *options);
+struct crtx_listener_base *crtx_setup_xcb_randr_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(xcb_randr)
 
 void crtx_xcb_randr_init();

@@ -28,7 +28,7 @@ struct crtx_sip_listener {
 
 char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_ptr);
 
-struct crtx_listener_base *crtx_new_sip_listener(void *options);
+struct crtx_listener_base *crtx_setup_sip_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(sip)
 
 void crtx_sip_init();

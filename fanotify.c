@@ -115,7 +115,7 @@ static void stop_thread(struct crtx_thread *thread, void *data) {
 	crtx_threads_interrupt_thread(thread);
 }
 
-struct crtx_listener_base *crtx_new_fanotify_listener(void *options) {
+struct crtx_listener_base *crtx_setup_fanotify_listener(void *options) {
 	struct crtx_fanotify_listener *falist;
 // 	struct crtx_thread *t;
 	int ret;

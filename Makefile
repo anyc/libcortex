@@ -124,9 +124,9 @@ core_modules.h: $(local_mk)
 	
 	echo "" >> $@
 	echo "struct crtx_listener_repository static_listener_repository[] = {" >> $@
-	for m in $(BUILTIN_MODULES); do echo -e "\t{\"$${m}\", &crtx_new_$${m}_listener}," >> $@; done
+	for m in $(BUILTIN_MODULES); do echo -e "\t{\"$${m}\", &crtx_setup_$${m}_listener}," >> $@; done
 # 	for m in $(STATIC_MODULES); do echo -e "#ifdef STATIC_$${m}\n\t{\"$${m}\", &crtx_new_$${m}_listener},\n#endif" >> $@; done
-	for m in $(STATIC_MODULES); do echo -e "\t{\"$${m}\", &crtx_new_$${m}_listener}," >> $@; done
+	for m in $(STATIC_MODULES); do echo -e "\t{\"$${m}\", &crtx_setup_$${m}_listener}," >> $@; done
 	echo -e "\t{0, 0}," >> $@
 	echo "};" >> $@
 
@@ -157,7 +157,7 @@ plugins: $(SHAREDLIB) $(DYN_MODULES_LIST)
 
 
 
-tests: $(SHAREDLIB) $(TESTS) layer2_tests
+tests: $(TESTS) layer2_tests
 
 %.test: CFLAGS+=-DCRTX_TEST -g -g3 -gdwarf-2 -DDEBUG -Wall $(CFLAGS_${@:.test=})
 %.test: LDLIBS+=$(LDLIBS_${@:.test=}) $(foreach d,${@:.test=} $(DEPS_${@:.test=}),$(if $(findstring $(d),$(DYN_MODULES)),-lcrtx_$(d)))

@@ -224,7 +224,7 @@ static void wait_for_op_result(struct crtx_pa_listener *palist, pa_operation* op
 	pa_operation_unref(op);
 }
 
-struct crtx_listener_base *crtx_new_pa_listener(void *options) {
+struct crtx_listener_base *crtx_setup_pa_listener(void *options) {
 	struct crtx_pa_listener *palist;
 	pa_operation *op;
 	

@@ -578,7 +578,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
-struct crtx_listener_base *crtx_new_xcb_randr_listener(void *options) {
+struct crtx_listener_base *crtx_setup_xcb_randr_listener(void *options) {
 	struct crtx_xcb_randr_listener *xrlist;
 	const xcb_query_extension_reply_t *query;
 	xcb_randr_query_version_reply_t *version;
