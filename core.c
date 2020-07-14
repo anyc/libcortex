@@ -1535,6 +1535,11 @@ static void load_plugin(char *path, char *basename) {
 			create = dlsym(p->handle, buf);
 		}
 		
+		if (!create) {
+			snprintf(buf, 1024, "crtx_setup_%s_listener", plugin_name);
+			create = dlsym(p->handle, buf);
+		}
+		
 		if (create) {
 			lrepo = crtx_get_new_listener_repo_entry();
 			
