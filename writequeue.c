@@ -55,6 +55,9 @@ void crtx_writequeue_start(struct crtx_writequeue_listener *wqueue) {
 // // 	crtx_epoll_mod_fd(&eloop->listener->base, &wqueue->base.evloop_fd);
 // 	crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &wqueue->base.evloop_fd);
 	
+	if (wqueue->read_listener)
+		wqueue->evloop_cb.fd_entry->fd = wqueue->read_listener->evloop_fd.fd;
+	
 	crtx_evloop_enable_cb(&wqueue->evloop_cb);
 }
 

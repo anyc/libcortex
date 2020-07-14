@@ -210,7 +210,8 @@ static void fork_sigchld_cb(pid_t pid, int status, void *userdata) {
 		
 		crtx_add_event(lstnr->base.graph, new_event);
 	} else {
-		ERROR("received unexpected pid: %d != %d\n", pid, lstnr->pid);
+		// if the process receives a signal from a child, all signal handlers
+		// are notified and the callbacks have to determine, if it is for them
 	}
 }
 

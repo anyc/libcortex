@@ -14,7 +14,11 @@ int CRTX_DLL_FCT(append)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item) {
 	if (!head)
 		return -EINVAL;
 	
-	for (it = *head; it && it->next; it=it->next) {}
+	for (it = *head; it && it->next; it=it->next) {
+		if (it == item) {
+			return -EALREADY;
+		}
+	}
 	
 	if (!it) {
 		*head = item;

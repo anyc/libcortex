@@ -209,7 +209,6 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 			}
 			
 // 			crtx_evloop_add_el_fd(&listener->evloop_fd);
-			
 			crtx_evloop_enable_cb(&listener->default_el_cb);
 		} else
 		if (mode == CRTX_NO_PROCESSING_MODE) {
@@ -220,7 +219,6 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 			return -EINVAL;
 		}
 	}
-	
 	listener->state = CRTX_LSTNR_STARTED;
 	
 	if (listener->state_graph) {

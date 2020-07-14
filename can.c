@@ -334,12 +334,15 @@ static void on_error_cb(struct crtx_evloop_callback *el_cb, void *data) {
 	crtx_stop_listener(&clist->base);
 }
 
-struct crtx_listener_base *crtx_setup_can_listener(void *options) {
+static char start_listener(struct crtx_listener_base *lstnr) {
 	struct crtx_can_listener *clist;
 	int r;
 	
 	
-	clist = (struct crtx_can_listener *) options;
+	clist = (struct crtx_can_listener*) lstnr;
+	
+	if (clist->sockfd)
+		return 0;
 	
 	clist->sockfd = socket(PF_CAN, SOCK_RAW, clist->protocol);
 	if (clist->sockfd == -1) {
@@ -403,31 +406,33 @@ struct crtx_listener_base *crtx_setup_can_listener(void *options) {
 			return 0;
 		}
 		
-// 		clist->base.evloop_fd.fd = clist->sockfd;
-// 		clist->base.evloop_fd.data = clist;
-// 		clist->base.evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 		clist->base.evloop_fd.event_handler = &can_fd_event_handler;
-// 		clist->base.evloop_fd.event_handler_name = "can fd handler";
-// 		clist->base.evloop_fd.error_cb = &on_error_cb;
-// 		clist->base.evloop_fd.error_cb_data = clist;
 		crtx_evloop_init_listener(&clist->base,
-							clist->sockfd,
+								  clist->sockfd,
 							EVLOOP_READ,
 							0,
 							&can_fd_event_handler,
 							clist,
 							&on_error_cb, clist
-						);
-// 		clist->base.evloop_fd.subsystems->error_cb = &on_error_cb;
-// 		clist->base.evloop_fd.subsystems->error_cb_data = clist;
-		
+		);
+	}
+	
+	return 0;
+}
+
+struct crtx_listener_base *crtx_setup_can_listener(void *options) {
+	struct crtx_can_listener *clist;
+	
+	
+	clist = (struct crtx_can_listener *) options;
+	
+	clist->base.start_listener = &start_listener;
+	
+	if (!clist->setup_if_only) {
 		clist->base.shutdown = &shutdown_listener;
 	} else {
 		// we have no fd or thread to monitor
 		clist->base.mode = CRTX_NO_PROCESSING_MODE;
 	}
-	
-// 	new_eventgraph(&clist->base.graph, "can", can_msg_etype);
 	
 	return &clist->base;
 }
