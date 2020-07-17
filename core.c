@@ -343,7 +343,7 @@ int crtx_stop_listener(struct crtx_listener_base *listener) {
 	LOCK(listener->state_mutex);
 	
 // 	if (listener->state == CRTX_LSTNR_STOPPING || listener->state == CRTX_LSTNR_STOPPED || listener->state == CRTX_LSTNR_SHUTDOWN) {
-	if (listener->state == CRTX_LSTNR_STOPPED || listener->state == CRTX_LSTNR_SHUTDOWN) {
+	if (CRTX_LSTNR_STOPPED <= listener->state && listener->state <= CRTX_LSTNR_SHUTDOWN) {
 		UNLOCK(listener->state_mutex);
 		return EALREADY;
 	}
@@ -361,7 +361,7 @@ int crtx_stop_listener(struct crtx_listener_base *listener) {
 		ready = 1;
 		for (ll = listener->rev_dependencies; ll; ll = ll->next) {
 			dep = (struct crtx_listener_base *) ll->data;
-			if ( dep->state != CRTX_LSTNR_STOPPED && dep->state != CRTX_LSTNR_SHUTDOWN) {
+			if ( dep->state < CRTX_LSTNR_STOPPED || CRTX_LSTNR_SHUTDOWN < dep->state) {
 				ready = 0;
 				break;
 			}
@@ -489,14 +489,29 @@ void crtx_free_listener(struct crtx_listener_base *listener) {
 		return;
 	}
 	
+	if (listener->state == CRTX_LSTNR_SHUTTING_DOWN) {
+		UNLOCK(listener->state_mutex);
+		return;
+	}
+	
 	if (listener->state == CRTX_LSTNR_SHUTDOWN) {
+		if (listener->graph) {
+			LOCK(listener->graph->queue_mutex);
+			if (!listener->graph->equeue) {
+				free_listener_intern(listener);
+				return;
+			}
+			UNLOCK(listener->graph->queue_mutex);
+		}
+		
 		UNLOCK(listener->state_mutex);
 		return;
 	}
 	
 	CRTX_DBG("shutdown listener %s (%p)\n", listener->id, listener);
 	
-	listener->state = CRTX_LSTNR_SHUTDOWN;
+// 	listener->state = CRTX_LSTNR_SHUTDOWN;
+	listener->state = CRTX_LSTNR_SHUTTING_DOWN;
 	
 	UNLOCK(listener->state_mutex);
 	
@@ -540,7 +555,11 @@ void crtx_free_listener(struct crtx_listener_base *listener) {
 		if (listener->graph->equeue) {
 			DBG("delaying listener shutdown due to pending events\n");
 			UNLOCK(listener->graph->queue_mutex);
+			
+			listener->state = CRTX_LSTNR_SHUTDOWN;
+			
 			UNLOCK(listener->state_mutex);
+			
 			return;
 		}
 		UNLOCK(listener->graph->queue_mutex);
@@ -657,13 +676,18 @@ void crtx_process_event(struct crtx_graph *graph, struct crtx_dll *queue_entry) 
 	if (!graph->equeue)
 		pthread_cond_signal(&graph->queue_cond);
 	
-	UNLOCK(graph->queue_mutex);
-	
 	free(queue_entry);
 	
-	if (!graph->equeue && graph->listener && graph->listener->state == CRTX_LSTNR_SHUTDOWN) {
-		free_listener_intern(graph->listener);
+	if (graph->listener) {
+		LOCK(graph->listener->state_mutex);
+		if (!graph->equeue && graph->listener->state == CRTX_LSTNR_SHUTDOWN) {
+			free_listener_intern(graph->listener);
+		} else {
+			UNLOCK(graph->listener->state_mutex);
+		}
 	}
+	
+	UNLOCK(graph->queue_mutex);
 	
 	if (graph->listener && graph->listener->free_after_event) {
 		crtx_free_listener(graph->listener);

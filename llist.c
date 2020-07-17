@@ -36,7 +36,7 @@ int CRTX_DLL_FCT(append)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item) {
 	return 0;
 }
 
-int CRTX_DLL_FCT(unlink)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item) {
+int CRTX_DLL_FCT(unlink_intern)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item, CRTX_DLL_TYPE *prev) {
 	#ifdef CRTX_DLL
 	if (*head == item) {
 		*head = item->next;
@@ -55,20 +55,26 @@ int CRTX_DLL_FCT(unlink)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item) {
 	if (*head == item) {
 		*head = item->next;
 	} else {
-		CRTX_DLL_TYPE *i;
-		
-		for (i=*head; i && i->next != item; i = i->next) {}
-		if (i) {
-			i->next = item->next;
-		} else {
-// 			VDBG("item not found in llist\n");
-			return -ENOENT;
+		if (!prev) {
+			CRTX_DLL_TYPE *i;
+			
+			for (i=*head; i && i->next != item; i = i->next) {}
+			if (i) {
+				prev = i;
+			} else {
+				return ENOENT;
+			}
 		}
+		prev->next = item->next;
 	}
 	item->next = 0;
 	#endif
 	
 	return 0;
+}
+
+int CRTX_DLL_FCT(unlink)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item) {
+	return CRTX_DLL_FCT(unlink_intern)(head, item, 0);
 }
 
 CRTX_DLL_TYPE *CRTX_DLL_FCT(unlink_data)(CRTX_DLL_TYPE **head, void *data) {
@@ -82,6 +88,23 @@ CRTX_DLL_TYPE *CRTX_DLL_FCT(unlink_data)(CRTX_DLL_TYPE **head, void *data) {
 	} else {
 // 		printf("unlink_data called with an unknown item\n");
 		return 0;
+	}
+}
+
+int CRTX_DLL_FCT(unlink_data2)(CRTX_DLL_TYPE **head, void *data) {
+	CRTX_DLL_TYPE *i, *prev;
+	int r;
+	
+	prev = 0;
+	for (i=*head; i && i->data != data; prev = i, i = i->next) {}
+	if (i) {
+		r = CRTX_DLL_FCT(unlink_intern)(head, i, prev);
+		if (r)
+			return r;
+		
+		return 0;
+	} else {
+		return ENOENT;
 	}
 }
 
