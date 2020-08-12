@@ -1285,6 +1285,11 @@ void crtx_flush_events() {
 			
 			crtx_invalidate_event(qe->event);
 			
+			dereference_event_response(qe->event);
+			dereference_event_release(qe->event);
+			
+			crtx_dll_unlink(&crtx_root->graphs[i]->equeue, qe);
+			
 // 			free(qe);
 		}
 // 		graphs[i]->equeue = 0;
