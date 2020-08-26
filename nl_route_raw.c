@@ -745,7 +745,7 @@ struct crtx_listener_base *crtx_setup_nl_route_raw_listener(void *options) {
 	ret = crtx_setup_listener("netlink_raw", &nlr_list->nl_listener);
 	if (ret) {
 		ERROR("create_listener(netlink_raw) failed: %s\n", strerror(-ret));
-		exit(1);
+		return 0;
 	}
 	
 	// 	crtx_create_task(lbase->graph, 0, "netlink_raw_test", netlink_raw_test_handler, 0);

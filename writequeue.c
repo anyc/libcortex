@@ -136,7 +136,7 @@ int crtx_add_writequeue2listener(struct crtx_writequeue_listener *writequeue, st
 	r = crtx_setup_listener("writequeue", writequeue);
 	if (r) {
 		ERROR("create_listener(writequeue) failed: %s\n", strerror(-r));
-		exit(1);
+		return r;
 	}
 	
 	return 0;

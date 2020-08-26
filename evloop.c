@@ -195,11 +195,12 @@ void crtx_evloop_callback(struct crtx_evloop_callback *el_cb) {
 		if (el_cb->fd_entry && el_cb->fd_entry->listener && el_cb->fd_entry->listener->autolock_source)
 			UNLOCK(el_cb->fd_entry->listener->source_lock);
 	} else {
-		if (el_cb->fd_entry)
+		if (el_cb->fd_entry) {
 			ERROR("no handler for fd %d\n", el_cb->fd_entry->fd);
-		else
-			ERROR("no callback handler\n");
-		exit(1);
+		} else {
+			ERROR("crtx_evloop_callback(): no callback handler\n");
+// 			exit(1);
+		}
 	}
 }
 

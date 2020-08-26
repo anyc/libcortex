@@ -354,11 +354,13 @@ static int wq_write(struct crtx_writequeue_listener *wqueue, void *userdata) {
 				return EAGAIN;
 			} else {
 				printf("error %s\n", strerror(errno));
-				exit(1);
+				return -errno;
 			}
 		} else {
 		}
 	}
+	
+	return 0;
 }
 
 void pre_exec(struct crtx_popen_listener *plstnr, void *pre_exec_userdata) {

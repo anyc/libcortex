@@ -114,8 +114,8 @@ static char do_fork(struct crtx_event *event, void *userdata, void **sessiondata
 	flstnr->pid = fork();
 	
 	if (flstnr->pid < 0) {
-		fprintf(stderr, "fork failed: %s\n", strerror(errno));
-		exit(1);
+		ERROR("fork failed: %s\n", strerror(errno));
+		return -1;
 	} else 
 	if (flstnr->pid == 0) {
 		DBG("child (%d) shutdown after fork\n", getpid());

@@ -141,7 +141,7 @@ struct crtx_listener_base *crtx_setup_netif_listener(void *options) {
 	ret = crtx_setup_listener("libnl", &netif_lstnr->libnl_lstnr);
 	if (ret) {
 		ERROR("create_listener(libnl) failed\n");
-		exit(1);
+		return 0;
 	}
 	
 	netif_lstnr->libnl_lstnr.base.state_graph = netif_lstnr->libnl_lstnr.base.graph;
