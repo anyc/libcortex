@@ -27,8 +27,6 @@ struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_r
 	struct udev_device *new_dev;
 	int flags;
 	
-// 	if (!dev)
-// 		dev = (struct udev_device *) event->data.pointer;
 	
 	dict = crtx_init_dict(0, 0, 0);
 	
@@ -166,29 +164,18 @@ void push_new_udev_event(struct crtx_udev_listener *ulist, struct udev_device *d
 	
 	// size of struct udev_device is unknown
 	crtx_create_event(&nevent); //, dev, sizeof(struct udev_device*));
-// 	nevent->data.flags |= CRTX_DIF_DONT_FREE_DATA;
+	
 	crtx_event_set_raw_data(nevent, 'p', dev, sizeof(struct udev_device*), CRTX_DIF_DONT_FREE_DATA);
-
+	
 	nevent->cb_before_release = &udev_event_before_release_cb;
-	// 		reference_event_release(nevent);
-
+	
 	crtx_add_event(ulist->base.graph, nevent);
-
-	// 		wait_on_event(nevent);
-
-	// 		dereference_event_release(nevent);
-
-	// 		udev_device_unref(dev);
 }
 
 static char udev_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	struct crtx_evloop_fd *payload;
 	struct crtx_udev_listener *ulist;
 	struct udev_device *dev;
-// 	struct crtx_evloop_callback *el_cb;
 	
-// 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
-// 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
 	ulist = (struct crtx_udev_listener *) userdata;
 	
@@ -273,11 +260,6 @@ struct crtx_listener_base *crtx_setup_udev_listener(void *options) {
 		p+=2;
 	}
 	
-// 	ulist->base.evloop_fd.fd = udev_monitor_get_fd(ulist->monitor);
-// 	ulist->base.evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 	ulist->base.evloop_fd.data = ulist;
-// 	ulist->base.evloop_fd.event_handler = &udev_fd_event_handler;
-// 	ulist->base.evloop_fd.event_handler_name = "udev fd handler";
 	crtx_evloop_init_listener(&ulist->base,
 						udev_monitor_get_fd(ulist->monitor),
 						EVLOOP_READ,
@@ -288,7 +270,6 @@ struct crtx_listener_base *crtx_setup_udev_listener(void *options) {
 					);
 	
 	ulist->base.shutdown = &crtx_shutdown_udev_listener;
-// 	new_eventgraph(&ulist->base.graph, "udev", udev_msg_etype);
 	
 	ulist->base.start_listener = &start_listener;
 	
@@ -329,10 +310,8 @@ char *test_filters[] = {
 };
 
 static char udev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	struct udev_device *dev, *usb_dev;
 	struct crtx_dict *dict;
 	
-// 	dev = (struct udev_device *) event->data.pointer;
 	
 	dict = crtx_udev_raw2dict((struct udev_device *) crtx_event_get_ptr(event), r2ds, 0);
 	
@@ -342,7 +321,6 @@ static char udev_test_handler(struct crtx_event *event, void *userdata, void **s
 // 	r = crtx_dict_locate_value(dict, "usb-usb_device/idVendor", 's', &s, sizeof(void*));
 // 	printf("%d %s\n", r, s);
 	
-// 	crtx_free_dict(dict);
 	crtx_dict_unref(dict);
 	
 	return 0;
@@ -353,9 +331,6 @@ struct crtx_udev_listener ulist;
 int udev_main(int argc, char **argv) {
 	int ret;
 	
-// 	crtx_handle_std_signals();
-	
-// 	crtx_root->no_threads = 1;
 	
 	memset(&ulist, 0, sizeof(struct crtx_udev_listener));
 	
@@ -376,8 +351,6 @@ int udev_main(int argc, char **argv) {
 	}
 	
 	crtx_loop();
-	
-// 	crtx_free_listener(lbase);
 	
 	return 0;  
 }
