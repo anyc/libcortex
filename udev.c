@@ -146,7 +146,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_r
 		}
 	}
 	
-	crtx_print_dict(dict);
+	//crtx_print_dict(dict);
 	
 	return dict;
 }
