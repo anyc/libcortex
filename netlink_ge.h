@@ -1,6 +1,10 @@
 #ifndef _CRTX_NETLINK_GE_H
 #define _CRTX_NETLINK_GE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -47,5 +51,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(genl)
 
 void crtx_netlink_ge_init();
 void crtx_netlink_ge_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

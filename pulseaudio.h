@@ -1,6 +1,10 @@
 #ifndef _CRTX_PULSEAUDIO_H
 #define _CRTX_PULSEAUDIO_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -30,5 +34,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(pa)
 
 void crtx_pa_init();
 void crtx_pa_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

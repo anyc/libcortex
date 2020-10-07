@@ -1,6 +1,10 @@
 #ifndef _CRTX_NF_QUEUE_H
 #define _CRTX_NF_QUEUE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -54,5 +58,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(nf_queue)
 
 void crtx_nf_queue_init();
 void crtx_nf_queue_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

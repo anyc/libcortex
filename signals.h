@@ -1,6 +1,15 @@
 #ifndef _CRTX_SIGNALS_H
 #define _CRTX_SIGNALS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/*
+ * Mario Kicherer (dev@kicherer.org) 2016
+ *
+ */
+
 #include <sys/types.h>
 
 #include "core.h"
@@ -45,5 +54,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(signals)
 
 void crtx_signals_init();
 void crtx_signals_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

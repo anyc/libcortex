@@ -1,6 +1,10 @@
 #ifndef _CRTX_NETLINK_RAW
 #define _CRTX_NETLINK_RAW
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -37,5 +41,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(netlink_raw)
 
 void crtx_netlink_raw_init();
 void crtx_netlink_raw_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

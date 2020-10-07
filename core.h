@@ -1,6 +1,10 @@
 #ifndef _CRTX_CORE_H
 #define _CRTX_CORE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -408,5 +412,9 @@ void crtx_shutdown_after_fork();
 struct crtx_thread * crtx_start_detached_event_loop();
 
 int crtx_get_version(unsigned int *major, unsigned int *minor);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

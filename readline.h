@@ -1,6 +1,10 @@
 #ifndef _CRTX_READLINE_H
 #define _CRTX_READLINE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -15,5 +19,9 @@
 
 void crtx_readline_init();
 void crtx_readline_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

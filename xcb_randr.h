@@ -1,6 +1,10 @@
 #ifndef _CRTX_XCB_RANDR_H
 #define _CRTX_XCB_RANDR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -25,5 +29,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(xcb_randr)
 
 void crtx_xcb_randr_init();
 void crtx_xcb_randr_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

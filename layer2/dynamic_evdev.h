@@ -1,6 +1,10 @@
 #ifndef _CRTX_DYNAMIC_EVDEV_H
 #define _CRTX_DYNAMIC_EVDEV_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -28,5 +32,8 @@ CRTX_DECLARE_ALLOC_FUNCTION(dynamic_evdev)
 void crtx_dynamic_evdev_init();
 void crtx_dynamic_evdev_finish();
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

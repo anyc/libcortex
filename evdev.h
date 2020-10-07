@@ -1,6 +1,10 @@
 #ifndef _CRTX_EVDEV_H
 #define _CRTX_EVDEV_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -26,5 +30,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(evdev)
 
 void crtx_evdev_init();
 void crtx_evdev_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

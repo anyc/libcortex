@@ -1,6 +1,10 @@
 #ifndef _CRTX_SIP_H
 #define _CRTX_SIP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -33,5 +37,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(sip)
 
 void crtx_sip_init();
 void crtx_sip_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

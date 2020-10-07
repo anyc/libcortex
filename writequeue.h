@@ -1,6 +1,10 @@
 #ifndef CRTX_WRITE_QUEUE_H
 #define CRTX_WRITE_QUEUE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -32,5 +36,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(writequeue)
 
 void crtx_writequeue_init();
 void crtx_writequeue_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

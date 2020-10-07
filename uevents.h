@@ -1,6 +1,10 @@
 #ifndef _CRTX_UEVENTS_H
 #define _CRTX_UEVENTS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -20,5 +24,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(uevents)
 
 void crtx_uevents_init();
 void crtx_uevents_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -1,6 +1,10 @@
 #ifndef CRTX_EVLOOP_H
 #define CRTX_EVLOOP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org)
  *
@@ -144,5 +148,9 @@ int crtx_evloop_trigger_callback(struct crtx_event_loop *evloop, struct crtx_evl
 void crtx_event_flags2str(FILE *fd, unsigned int flags);
 
 // int crtx_evloop_finish(struct crtx_event_loop *evloop);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

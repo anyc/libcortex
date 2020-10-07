@@ -1,6 +1,10 @@
 #ifndef _CRTX_POPEN_H
 #define _CRTX_POPEN_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2019
  *
@@ -49,5 +53,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(popen)
 
 void crtx_popen_init();
 void crtx_popen_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

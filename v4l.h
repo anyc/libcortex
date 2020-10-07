@@ -1,6 +1,10 @@
 #ifndef _CRTX_V4L_H
 #define _CRTX_V4L_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -28,5 +32,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(v4l)
 
 void crtx_v4l_init();
 void crtx_v4l_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -1,6 +1,10 @@
 #ifndef _CRTX_TIMER_H
 #define _CRTX_TIMER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -57,5 +61,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(timer)
 
 void crtx_timer_init();
 void crtx_timer_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

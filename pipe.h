@@ -1,6 +1,10 @@
 #ifndef _CRTX_PIPE_H
 #define _CRTX_PIPE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2018
  *
@@ -24,5 +28,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(pipe)
 
 void crtx_pipe_init();
 void crtx_pipe_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

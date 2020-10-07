@@ -1,6 +1,10 @@
 #ifndef INTERN_H
 #define INTERN_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -61,5 +65,9 @@
 	struct crtx_ ## lstnr ## _listener * crtx_alloc_ ## lstnr ## _listener() { \
 		return calloc(1, sizeof(struct crtx_ ## lstnr ## _listener)); \
 	}
+	
+#ifdef __cplusplus
+}
+#endif
 
 #endif

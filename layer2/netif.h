@@ -1,6 +1,10 @@
 #ifndef _CRTX_NETIF_H
 #define _CRTX_NETIF_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -22,5 +26,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(netif)
 
 void crtx_netif_init();
 void crtx_netif_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

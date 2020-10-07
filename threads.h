@@ -1,6 +1,10 @@
 #ifndef CRTX_THREADS_H
 #define CRTX_THREADS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -95,5 +99,9 @@ void crtx_threads_interrupt_thread(struct crtx_thread *t);
 
 void crtx_threads_init();
 void crtx_threads_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

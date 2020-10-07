@@ -1,6 +1,10 @@
 #ifndef _CRTX_CURL_H
 #define _CRTX_CURL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2019
  *
@@ -55,5 +59,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(curl)
 
 void crtx_curl_init();
 void crtx_curl_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

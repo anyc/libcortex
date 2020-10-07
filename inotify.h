@@ -1,6 +1,10 @@
 #ifndef _CRTX_INOTIFY_H
 #define _CRTX_INOTIFY_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -27,5 +31,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(inotify)
 
 void crtx_inotify_init();
 void crtx_inotify_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

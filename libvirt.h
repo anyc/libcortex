@@ -1,6 +1,10 @@
 #ifndef _CRTX_LIBVIRT_H
 #define _CRTX_LIBVIRT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -24,5 +28,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(libvirt)
 
 void crtx_libvirt_init();
 void crtx_libvirt_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

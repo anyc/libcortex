@@ -2,6 +2,10 @@
 #ifndef _CRTX_AVAHI_H
 #define _CRTX_AVAHI_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core.h"
 #include "sdbus.h"
 
@@ -46,5 +50,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(avahi)
 
 void crtx_avahi_init();
 void crtx_avahi_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

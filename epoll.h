@@ -1,6 +1,10 @@
 #ifndef _CRTX_EPOLL_H
 #define _CRTX_EPOLL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -27,5 +31,9 @@ struct crtx_epoll_listener {
 struct crtx_listener_base *crtx_setup_epoll_listener(void *options);
 void crtx_epoll_init();
 void crtx_epoll_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

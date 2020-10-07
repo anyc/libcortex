@@ -1,6 +1,10 @@
 #ifndef _CRTX_NL_ROUTE_H
 #define _CRTX_NL_ROUTE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -36,4 +40,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(nl_route_raw)
 
 void crtx_nl_route_raw_init();
 void crtx_nl_route_raw_finish();
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

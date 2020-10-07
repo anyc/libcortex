@@ -1,6 +1,10 @@
 #ifndef _CRTX_NETCONF_H
 #define _CRTX_NETCONF_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2019
  *
@@ -37,5 +41,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(netconf)
 
 void crtx_netconf_init();
 void crtx_netconf_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

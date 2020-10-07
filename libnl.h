@@ -1,6 +1,10 @@
 #ifndef _CRTX_LIBNL_H
 #define _CRTX_LIBNL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -28,5 +32,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(libnl)
 
 void crtx_libnl_init();
 void crtx_libnl_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

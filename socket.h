@@ -1,6 +1,10 @@
 #ifndef _CRTX_SOCKET_H
 #define _CRTX_SOCKET_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <arpa/inet.h>
 
 #ifndef CRTX_UNIX_SOCKET_DIR
@@ -40,5 +44,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(socket)
 
 void crtx_socket_init();
 void crtx_socket_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

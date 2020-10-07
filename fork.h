@@ -1,6 +1,10 @@
 #ifndef CRTX_FORK_H
 #define CRTX_FORK_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2019
  *
@@ -36,5 +40,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(fork)
 
 void crtx_fork_init();
 void crtx_fork_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

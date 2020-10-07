@@ -1,6 +1,10 @@
 #ifndef _CRTX_FANOTIFY_H
 #define _CRTX_FANOTIFY_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -33,5 +37,9 @@ CRTX_DECLARE_ALLOC_FUNCTION(fanotify)
 
 void crtx_fanotify_init();
 void crtx_fanotify_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

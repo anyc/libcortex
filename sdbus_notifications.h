@@ -1,6 +1,10 @@
 #ifndef _CRTX_SD_BUS_NOTIFICATIONS_H
 #define _CRTX_SD_BUS_NOTIFICATIONS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
@@ -15,5 +19,9 @@
 
 void crtx_sdbus_notifications_init();
 void crtx_sdbus_notifications_finish();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
