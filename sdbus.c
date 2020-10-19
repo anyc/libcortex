@@ -85,9 +85,11 @@ int crtx_sdbus_call(struct crtx_sdbus_listener *lstnr, sd_bus_message *msg, sd_b
 	sd_bus_slot *slot;
 	int err;
 	
+	
 	async_cb_data.reply = reply;
 	crtx_init_signal(&async_cb_data.signal);
 	
+	slot = 0;
 	crtx_lock_listener_source(&lstnr->base);
 	err = sd_bus_call_async(lstnr->bus, &slot, msg, async_cb, &async_cb_data, timeout_us);
 	crtx_unlock_listener_source(&lstnr->base);
@@ -110,7 +112,8 @@ int crtx_sdbus_call(struct crtx_sdbus_listener *lstnr, sd_bus_message *msg, sd_b
 		crtx_wait_on_signal(&async_cb_data.signal, 0);
 	}
 finish:
-	sd_bus_slot_unref(slot);
+	if (slot)
+		sd_bus_slot_unref(slot);
 	
 	crtx_shutdown_signal(&async_cb_data.signal);
 	
