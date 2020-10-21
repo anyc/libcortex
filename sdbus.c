@@ -112,8 +112,10 @@ int crtx_sdbus_call(struct crtx_sdbus_listener *lstnr, sd_bus_message *msg, sd_b
 		crtx_wait_on_signal(&async_cb_data.signal, 0);
 	}
 finish:
+	crtx_lock_listener_source(&lstnr->base);
 	if (slot)
 		sd_bus_slot_unref(slot);
+	crtx_unlock_listener_source(&lstnr->base);
 	
 	crtx_shutdown_signal(&async_cb_data.signal);
 	
@@ -333,6 +335,8 @@ static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct cr
 	uint64_t timeout_us;
 	
 	
+	crtx_lock_listener_source(&sdlist->base);
+	
 	new_flags = crtx_sdbus_get_events(sdlist->bus);
 	if (new_flags < 0) {
 		ERROR("TODO update_evloop_settings()\n");
@@ -364,6 +368,8 @@ static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct cr
 	
 	VDBG("sdbus timeout: %"PRId64"\n", timeout_us);
 	crtx_evloop_set_timeout_abs(el_cb, CLOCK_MONOTONIC, timeout_us);
+	
+	crtx_unlock_listener_source(&sdlist->base);
 	
 	return 0;
 }
