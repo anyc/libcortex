@@ -23,14 +23,11 @@ static void sip_event_before_release_cb(struct crtx_event *event, void *userdata
 }
 
 static char sip_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	struct crtx_evloop_fd *payload;
 	struct crtx_sip_listener *slist;
 	eXosip_event_t *evt;
 	struct crtx_event *nevent;
-// 	struct crtx_evloop_callback *el_cb;
+	int r;
 	
-// 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
-// 	payload = (struct crtx_evloop_fd*) event->data.pointer;
 	
 	slist = (struct crtx_sip_listener *) userdata;
 	
@@ -44,8 +41,12 @@ static char sip_fd_event_handler(struct crtx_event *event, void *userdata, void 
 		if (!evt)
 			break;
 		
-		nevent = crtx_create_event(0); // evt, sizeof(eXosip_event_t*));
-// 		nevent->data.flags |= CRTX_DIF_DONT_FREE_DATA;
+		r = crtx_create_event(&nevent); // evt, sizeof(eXosip_event_t*));
+		if (r) {
+			ERROR("crtx_create_event() failed: %s\n", strerror(-r));
+			return r;
+		}
+		
 		crtx_event_set_raw_data(nevent, 'p', evt, sizeof(eXosip_event_t*), CRTX_DIF_DONT_FREE_DATA);
 		
 		nevent->cb_before_release = &sip_event_before_release_cb;
@@ -166,7 +167,7 @@ struct crtx_listener_base *crtx_setup_sip_listener(void *options) {
 	
 	slist->base.start_listener = &start_listener;
 	slist->base.stop_listener = &stop_listener;
-	slist->base.free = &free_listener;
+	slist->base.free_cb = &free_listener;
 	
 	return &slist->base;
 }

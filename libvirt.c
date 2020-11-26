@@ -110,7 +110,7 @@ static void elw_fd_cleanup(struct libvirt_eventloop_wrapper* wrap) {
 	
 // 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->base, &wrap->evloop_fd);
 // 	crtx_root->event_loop.del_fd(&crtx_root->event_loop, &wrap->evloop_fd);
-	crtx_evloop_remove_cb(&crtx_root->event_loop, wrap->evloop_fd.callbacks);
+	crtx_evloop_remove_cb(wrap->evloop_fd.callbacks);
 	
 	crtx_ll_unlink(&event_list, wrap->llentry);
 	
@@ -207,7 +207,7 @@ static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback c
 	wrap->llentry = crtx_ll_append_new(&event_list, wrap);
 	
 // 	crtx_root->event_loop.add_fd(&crtx_root->event_loop, &wrap->evloop_fd);
-	crtx_evloop_enable_cb(&crtx_root->event_loop, &wrap->default_el_cb);
+	crtx_evloop_enable_cb(&wrap->default_el_cb);
 	
 	return wrap->id;
 }
@@ -232,7 +232,7 @@ static void elw_virEventUpdateHandleFunc(int watch, int event) {
 	DBG("libvirt: update %d flags %d\n", wrap->id, wrap->default_el_cb.crtx_event_flags);
 	
 // 	crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &wrap->evloop_fd);
-	crtx_evloop_enable_cb(&crtx_root->event_loop, &wrap->default_el_cb);
+	crtx_evloop_enable_cb(&wrap->default_el_cb);
 }
 
 static int elw_virEventRemoveHandleFunc(int watch) {
@@ -304,6 +304,8 @@ static char elw_timer_event_cb(struct crtx_event *event, void *userdata, void **
 static int elw_virEventAddTimeoutFunc(int timeout, virEventTimeoutCallback cb, void * opaque, virFreeCallback ff) {
 	struct libvirt_eventloop_wrapper *wrap;
 	struct crtx_ll *it;
+	int r;
+	
 	
 	wrap = (struct libvirt_eventloop_wrapper*) calloc(1, sizeof(struct libvirt_eventloop_wrapper));
 	
@@ -328,8 +330,6 @@ static int elw_virEventAddTimeoutFunc(int timeout, virEventTimeoutCallback cb, v
 	DBG("libvirt: new timer %d (id %d)\n", timeout, wrap->id);
 	
 	wrap->llentry = crtx_ll_append_new(&timeout_list, wrap);
-	
-	struct crtx_listener_base *blist;
 	
 	if (timeout > 0) {
 		time_t secs = timeout / 1000;
@@ -361,15 +361,15 @@ static int elw_virEventAddTimeoutFunc(int timeout, virEventTimeoutCallback cb, v
 // 	wrap->timer_listener.base.free = &elw_free_timer_lstnr;
 // 	wrap->timer_listener.base.free_userdata = wrap;
 	
-	blist = create_listener("timer", &wrap->timer_listener);
-	if (!blist) {
-		ERROR("create_listener(timer) failed\n");
-		exit(1);
+	r = crtx_setup_listener("timer", &wrap->timer_listener);
+	if (r) {
+		ERROR("crtx_setup_listener(timer) failed: %s\n", strerror(-r));
+		return -1;
 	}
 	
-	crtx_create_task(blist->graph, 0, "libvirt_timer", elw_timer_event_cb, wrap);
+	crtx_create_task(wrap->timer_listener.base.graph, 0, "libvirt_timer", elw_timer_event_cb, wrap);
 	
-	crtx_start_listener(blist);
+	crtx_start_listener(&wrap->timer_listener.base);
 	
 	return wrap->id;
 }
@@ -659,10 +659,18 @@ static int domain_evt_cb(virConnectPtr conn,
 	struct crtx_dict_item *di;
 	size_t slen;
 	const char *vm_name;
+	int r;
+	
 	
 	lvlist = (struct crtx_libvirt_listener *) opaque;
 	
-	crtx_event = crtx_create_event("domain_event"); //, 0, 0);
+	r = crtx_create_event(&crtx_event); //, 0, 0);
+	if (r) {
+		ERROR("crtx_create_event() failed: %s\n", strerror(-r));
+		return r;
+	}
+	
+	crtx_event->description = "domain_event";
 	
 	dict = crtx_init_dict(0, 0, 0);
 	
@@ -881,7 +889,7 @@ struct crtx_timer_retry_listener *retry_lstnr;
 
 static char libvirt_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	printf("virt %d timer %d\n", lvlist.base.state, tlist.base.state);
-	if (!strcmp(event->type, "listener_state")) {
+	if (!strcmp(event->description, "listener_state")) {
 // 		printf("ev %d\n", event->data.uint32);
 // 		if (event->data.uint32 == CRTX_LSTNR_STARTED && tlist.base.state == CRTX_LSTNR_STARTED) {
 		if (event->data.uint32 == CRTX_LSTNR_STARTED) {
@@ -894,7 +902,7 @@ static char libvirt_test_handler(struct crtx_event *event, void *userdata, void 
 			crtx_start_listener(&retry_lstnr->timer_lstnr.base);
 		}
 	} else
-	if (!strcmp(event->type, "domain_event")) {
+	if (!strcmp(event->description, "domain_event")) {
 		crtx_print_dict(event->data.dict);
 	}
 	

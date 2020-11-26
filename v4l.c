@@ -186,13 +186,23 @@ static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void 
 			return -1;
 		}
 		
-		nevent = crtx_create_event("event");
+		r = crtx_create_event(&nevent);
+		if (r) {
+			ERROR("crtx_create_event() failed: %s\n", strerror(-r));
+			return r;
+		}
+		nevent->description = "event";
 		crtx_event_set_raw_data(nevent, 'p', v4l_event, sizeof(v4l_event), 0);
 		
 		crtx_add_event(clist->base.graph, nevent);
 	} else
 	if (el_cb->triggered_flags & EVLOOP_READ) {
-		nevent = crtx_create_event("frame");
+		r = crtx_create_event(&nevent);
+		if (r) {
+			ERROR("crtx_create_event() failed: %s\n", strerror(-r));
+			return r;
+		}
+		nevent->description = "frame";
 // 		crtx_event_set_raw_data(nevent, 'p', v4l_event, sizeof(v4l_event), 0);
 		
 		crtx_add_event(clist->base.graph, nevent);

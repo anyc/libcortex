@@ -67,6 +67,7 @@ static void generic_pa_get_info_callback(pa_context *c, void *info, int eol, voi
 	struct crtx_dict_item *di;
 	struct crtx_dict *dict;
 	pa_subscription_event_type_t ev_op;
+	int r;
 	
 	
 	helper = (struct generic_pa_callback_helper *) userdata;
@@ -90,7 +91,13 @@ static void generic_pa_get_info_callback(pa_context *c, void *info, int eol, voi
 	}
 	
 	
-	nevent = crtx_create_event(crtx_pa_subscription_etypes[helper->type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK]);
+	r = crtx_create_event(&nevent);
+	if (r) {
+		ERROR("crtx_create_event() in generic_pa_get_info_callback() failed: %s\n", strerror(-r));
+		return;
+	}
+	nevent->description = crtx_pa_subscription_etypes[helper->type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK];
+	
 	dict = crtx_init_dict(0, 0, 0);
 	crtx_event_set_dict_data(nevent, dict, 0);
 	
@@ -208,7 +215,7 @@ static void crtx_free_pa_listener(struct crtx_listener_base *data, void *userdat
 	
 	pa_mainloop_wakeup(palist->mainloop);
 	
-	crtx_wait_on_signal(&palist->base.eloop_thread->finished);
+	crtx_wait_on_signal(&palist->base.eloop_thread->finished, 0);
 	
 	pa_context_unref(palist->context);
 	pa_mainloop_free(palist->mainloop);
@@ -268,7 +275,7 @@ struct crtx_listener_base *crtx_setup_pa_listener(void *options) {
 		return 0;
 	}
 	
-	palist->base.free = &crtx_free_pa_listener;
+	palist->base.free_cb = &crtx_free_pa_listener;
 // 	new_eventgraph(&palist->base.graph, "pulseaudio", 0);
 	
 	// TODO set own poll function that wraps our epoll listener

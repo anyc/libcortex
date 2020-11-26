@@ -102,9 +102,9 @@ static int epoll_flags2crtx_event_flags(int epoll_flags) {
 }
 
 #if 1
-static char *epoll_flags2str(unsigned int *flags) {
+static char *epoll_flags2str(unsigned int flags) {
 	// #define RETFLAG(flag) if (*flags & flag) { *flags = (*flags) & (~flag); return #flag; }
-	#define RETFLAG(flag) if (*flags & flag) VDBG(#flag " ");
+	#define RETFLAG(flag) if (flags & flag) VDBG(#flag " ");
 		
 	RETFLAG(EPOLLIN);
 	RETFLAG(EPOLLOUT);
@@ -148,11 +148,11 @@ static int crtx_epoll_manage_fd(struct crtx_event_loop *evloop, struct crtx_evlo
 	
 	if (epoll_event->events) {
 		if (evloop_fd->fd_added) {
-			VDBG("epoll mod %d %s (%p)\n", evloop_fd->fd, epoll_flags2str(&epoll_event->events), evloop);
+			VDBG("epoll mod %d %s (%p)\n", evloop_fd->fd, epoll_flags2str(epoll_event->events), evloop);
 			
 			crtx_epoll_mod_fd_intern(epl, evloop_fd->fd, epoll_event);
 		} else {
-			VDBG("epoll add %d %s (%p)\n", evloop_fd->fd, epoll_flags2str(&epoll_event->events), evloop);
+			VDBG("epoll add %d %s (%p)\n", evloop_fd->fd, epoll_flags2str(epoll_event->events), evloop);
 			
 			ret = crtx_epoll_add_fd_intern(epl, evloop_fd->fd, epoll_event);
 			

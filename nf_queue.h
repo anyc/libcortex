@@ -22,7 +22,7 @@ enum {PFW_NEWP_TCP_SPORT=0, PFW_NEWP_TCP_DPORT};
 enum {PFW_NEWP_UDP_SPORT=0, PFW_NEWP_UDP_DPORT};
 
 
-struct crtx_nfq_listener {
+struct crtx_nf_queue_listener {
 	struct crtx_listener_base base;
 	
 	pthread_t thread;

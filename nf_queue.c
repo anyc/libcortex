@@ -199,13 +199,13 @@ static void nfq_raw2dict(struct crtx_event *event) {
 static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		    struct nfq_data *tb, void *data)
 {
-	struct crtx_nfq_listener *nfq_list;
+	struct crtx_nf_queue_listener *nfq_list;
 	struct nfqnl_msg_packet_hdr *ph;
 	struct nfqnl_msg_packet_hw *hwph;
 	u_int32_t mark, ifi;
 	int ret;
 	
-	nfq_list = (struct crtx_nfq_listener*) data;
+	nfq_list = (struct crtx_nf_queue_listener*) data;
 	
 	if (!is_graph_empty(nfq_list->base.graph, 0)) {
 		struct crtx_nfq_packet *pkt;
@@ -291,7 +291,13 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		pkt->mark_out = nfq_list->default_mark;
 		
-		event = crtx_create_event(nfq_list->base.graph->types[0]); //, pkt, data_size);
+		ret = crtx_create_event(&event); //, pkt, data_size);
+		if (ret) {
+			ERROR("crtx_create_event() failed: %s\n", strerror(-ret));
+			return ret;
+		}
+		
+		event->type = nfq_list->base.graph->types[0];
 // 		event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
 // 		event->data.to_dict = &nfq_raw2dict;
 		crtx_event_set_raw_data(event, 'p', pkt, data_size, CRTX_DIF_DONT_FREE_DATA);
@@ -350,7 +356,7 @@ void *nfq_tmain(void *data) {
 	int fd, rv;
 	char buf[4096] __attribute__ ((aligned));
 	
-	struct crtx_nfq_listener *nfq_list = (struct crtx_nfq_listener*) data;
+	struct crtx_nf_queue_listener *nfq_list = (struct crtx_nf_queue_listener*) data;
 	
 	h = nfq_open();
 	if (!h) {
@@ -398,10 +404,10 @@ void free_nf_queue_listener(struct crtx_listener_base *data, void *userdata) {
 }
 
 struct crtx_listener_base *crtx_setup_nf_queue_listener(void *options) {
-	struct crtx_nfq_listener *nfq_listener;
+	struct crtx_nf_queue_listener *nfq_listener;
 	
-	nfq_listener = (struct crtx_nfq_listener*) options;
-	nfq_listener->base.free = &free_nf_queue_listener;
+	nfq_listener = (struct crtx_nf_queue_listener*) options;
+	nfq_listener->base.free_cb = &free_nf_queue_listener;
 	
 // 	new_eventgraph(&nfq_listata->base.graph, 0, nfq_packet_msg_etype);
 	
