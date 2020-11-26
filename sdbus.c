@@ -340,6 +340,9 @@ static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct cr
 	new_flags = crtx_sdbus_get_events(sdlist->bus);
 	if (new_flags < 0) {
 		ERROR("TODO update_evloop_settings()\n");
+		
+		crtx_unlock_listener_source(&sdlist->base);
+		
 		return new_flags;
 	}
 	
@@ -363,6 +366,9 @@ static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct cr
 	r = sd_bus_get_timeout(sdlist->bus, &timeout_us);
 	if (r < 0) {
 		ERROR("sd_bus_get_timeout failed: %s\n", strerror(-r));
+		
+		crtx_unlock_listener_source(&sdlist->base);
+		
 		return r;
 	}
 	
