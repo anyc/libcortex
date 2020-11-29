@@ -654,13 +654,13 @@ static char xcb_randr_test_handler(struct crtx_event *event, void *userdata, voi
 	ptr = crtx_event_get_ptr(event);
 	
 	dict = 0;
-	if (!strcmp(event->type, "xcb_randr/crtc_change")) {
+	if (!strcmp(event->description, "xcb_randr/crtc_change")) {
 		crtx_xcb_randr_crtc_change_t2dict(ptr, &dict);
 	} else
-	if (!strcmp(event->type, "xcb_randr/output_change")) {
+	if (!strcmp(event->description, "xcb_randr/output_change")) {
 		dict = crtx_output_change2dict(&xrlist, ptr);
 	} else
-	if (!strcmp(event->type, "xcb_randr/output_property")) {
+	if (!strcmp(event->description, "xcb_randr/output_property")) {
 		crtx_xcb_randr_output_property_t2dict(&xrlist, ptr, &dict);
 	}
 	
@@ -674,21 +674,20 @@ static char xcb_randr_test_handler(struct crtx_event *event, void *userdata, voi
 }
 
 int xcb_randr_main(int argc, char **argv) {
-	struct crtx_listener_base *lbase;
 	char ret;
 	
 	
 	memset(&xrlist, 0, sizeof(struct crtx_xcb_randr_listener));
 	
-	lbase = create_listener("xcb_randr", &xrlist);
-	if (!lbase) {
+	ret = crtx_setup_listener("xcb_randr", &xrlist);
+	if (ret) {
 		ERROR("create_listener(xcb_randr) failed\n");
 		exit(1);
 	}
 	
-	crtx_create_task(lbase->graph, 0, "xcb_randr_test", xcb_randr_test_handler, 0);
+	crtx_create_task(xrlist.base.graph, 0, "xcb_randr_test", xcb_randr_test_handler, 0);
 	
-	ret = crtx_start_listener(lbase);
+	ret = crtx_start_listener(&xrlist.base);
 	if (ret) {
 		ERROR("starting xcb_randr listener failed\n");
 		return 1;

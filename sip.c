@@ -208,6 +208,8 @@ static char sip2notify_handler(struct crtx_event *event, void *userdata, void **
 	struct crtx_dict *dict;
 	struct eXosip_event *evt;
 	struct crtx_graph *notify_graph;
+	int r;
+	
 	
 	dict = 0;
 	evt = (struct eXosip_event *) event->data.pointer;
@@ -227,7 +229,11 @@ static char sip2notify_handler(struct crtx_event *event, void *userdata, void **
 // 		if (r == 0 && displayname && username)
 // 			crtx_print_dict(notify_dict);
 			
-		notify_event = crtx_create_event(0);
+		r = crtx_create_event(&notify_event);
+		if (r) {
+			ERROR("crtx_create_event() failed: %s\n", strerror(-r));
+			return r;
+		}
 		notify_dict = crtx_dict_transform(dict, "sss", dict_transformation);
 		
 		crtx_event_set_dict_data(notify_event, notify_dict, 0);
@@ -241,10 +247,10 @@ static char sip2notify_handler(struct crtx_event *event, void *userdata, void **
 
 int sip_main(int argc, char **argv) {
 	struct crtx_sip_listener slist;
-	struct crtx_listener_base *lbase;
 	struct crtx_graph *notify_graph;
 	char ret, opt;
 	char *username, *password, *server;
+	int r;
 	
 	
 	username = password = server = 0;
@@ -284,8 +290,8 @@ int sip_main(int argc, char **argv) {
 	slist.password = password;
 	slist.dst_addr = server;
 	
-	lbase = create_listener("sip", &slist);
-	if (!lbase) {
+	r = crtx_setup_listener("sip", &slist);
+	if (r) {
 		ERROR("create_listener(sip) failed\n");
 		exit(1);
 	}
@@ -295,9 +301,9 @@ int sip_main(int argc, char **argv) {
 	crtx_autofill_graph_with_tasks(notify_graph, "cortex.user_notification");
 	
 	// add the handler that will transform sip events into user notification events
-	crtx_create_task(lbase->graph, 0, "sip2notify", sip2notify_handler, notify_graph);
+	crtx_create_task(slist.base.graph, 0, "sip2notify", sip2notify_handler, notify_graph);
 	
-	ret = crtx_start_listener(lbase);
+	ret = crtx_start_listener(&slist.base);
 	if (ret) {
 		ERROR("starting sip listener failed\n");
 		return 1;
@@ -305,7 +311,7 @@ int sip_main(int argc, char **argv) {
 	
 	crtx_loop();
 	
-	crtx_free_listener(lbase);
+	crtx_free_listener(&slist.base);
 	
 	return 0;  
 }

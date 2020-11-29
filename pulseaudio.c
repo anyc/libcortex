@@ -306,7 +306,6 @@ static char pa_test_handler(struct crtx_event *event, void *userdata, void **ses
 
 int pa_main(int argc, char **argv) {
 	struct crtx_pa_listener palist;
-	struct crtx_listener_base *lbase;
 	char ret;
 	
 // 	crtx_root->no_threads = 1;
@@ -322,17 +321,17 @@ int pa_main(int argc, char **argv) {
 	
 	palist.subscription_mask = PA_SUBSCRIPTION_MASK_SINK_INPUT | PA_SUBSCRIPTION_MASK_CLIENT;
 	
-	lbase = create_listener("pulseaudio", &palist);
-	if (!lbase) {
+	ret = crtx_setup_listener("pulseaudio", &palist);
+	if (ret) {
 		ERROR("create_listener(pulseaudio) failed\n");
 		exit(1);
 	}
 	
 	pa_proplist_free(palist.client_proplist);
 	
-	crtx_create_task(lbase->graph, 0, "pa_test", pa_test_handler, 0);
+	crtx_create_task(palist.base.graph, 0, "pa_test", pa_test_handler, 0);
 	
-	ret = crtx_start_listener(lbase);
+	ret = crtx_start_listener(&palist.base);
 	if (ret) {
 		ERROR("starting pulseaudio listener failed\n");
 		return 1;

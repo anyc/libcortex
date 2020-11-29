@@ -792,7 +792,7 @@ static char start_listener(struct crtx_listener_base *base) {
 	lvlist->conn = virConnectOpen(lvlist->hypervisor);
 	if (lvlist->conn == 0) {
 		ERROR("Failed to connect to hypervisor\n");
-		return ret;
+		return -1;
 	}
 	
 	ret = virConnectRegisterCloseCallback(lvlist->conn, conn_evt_cb, lvlist, NULL);
@@ -922,7 +922,6 @@ static char libvirt_test_handler(struct crtx_event *event, void *userdata, void 
 // }
 
 int libvirt_main(int argc, char **argv) {
-	struct crtx_listener_base *lbase;
 	char ret;
 	
 	
@@ -933,17 +932,17 @@ int libvirt_main(int argc, char **argv) {
 	else
 		lvlist.hypervisor = argv[1];
 	
-	lbase = create_listener("libvirt", &lvlist);
-	if (!lbase) {
+	ret = crtx_setup_listener("libvirt", &lvlist);
+	if (ret) {
 		ERROR("create_listener(libvirt) failed\n");
 		exit(1);
 	}
 	
-	lbase->state_graph = lbase->graph;
+	lvlist.base.state_graph = lvlist.base.graph;
 	
-// 	new_eventgraph(&lvlist->base.graph, "libvirt", 0);
+	// 	new_eventgraph(&lvlist->base.graph, "libvirt", 0);
 	
-	crtx_create_task(lbase->graph, 0, "libvirt_test", libvirt_test_handler, 0);
+	crtx_create_task(lvlist.base.graph, 0, "libvirt_test", libvirt_test_handler, 0);
 	
 	
 	
@@ -967,7 +966,7 @@ int libvirt_main(int argc, char **argv) {
 	
 	retry_lstnr = crtx_timer_retry_listener(&lvlist.base, 5);
 	
-	ret = crtx_start_listener(lbase);
+	ret = crtx_start_listener(&lvlist.base);
 	if (ret) {
 		ERROR("starting libvirt listener failed\n");
 // 		return 1;

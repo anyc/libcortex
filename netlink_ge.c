@@ -246,7 +246,6 @@ struct crtx_genl_callback genl_callbacks[] = {
 
 int netlink_main(int argc, char **argv) {
 	struct crtx_genl_listener genl;
-	struct crtx_listener_base *lbase;
 	struct crtx_genl_group *g;
 	int r;
 	
@@ -264,13 +263,13 @@ int netlink_main(int argc, char **argv) {
 							"struct", 0, sizeof(struct acpi_genl_event), CRTX_DIF_DONT_FREE_DATA
 						  );
 	
-	lbase = create_listener("genl", &genl);
-	if (!lbase) {
+	r = crtx_setup_listener("genl", &genl);
+	if (r) {
 		ERROR("create_listener(genl) failed\n");
 		exit(1);
 	}
 	
-	r = crtx_start_listener(lbase);
+	r = crtx_start_listener(&genl.base);
 	if (r) {
 		ERROR("starting genl listener failed\n");
 		return 1;

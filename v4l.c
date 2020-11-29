@@ -507,11 +507,11 @@ static char v4l_event_handler(struct crtx_event *event, void *userdata, void **s
 
 int v4l_main(int argc, char **argv) {
 	struct crtx_v4l_listener clist;
-	struct crtx_listener_base *lbase;
 	int ret;
 	struct crtx_dict_item *di;
 	struct crtx_dict *pix_format, *fsize;
 	char *fourcc;
+	
 	
 	if (argc < 2) {
 		printf("usage: %s <device>\n", argv[0]);
@@ -521,8 +521,8 @@ int v4l_main(int argc, char **argv) {
 	memset(&clist, 0, sizeof(struct crtx_v4l_listener));
 	clist.device_path = argv[1];
 	
-	lbase = create_listener("v4l", &clist);
-	if (!lbase) {
+	ret = crtx_setup_listener("v4l", &clist);
+	if (ret) {
 		ERROR("create_listener(v4l) failed\n");
 		return 0;
 	}
@@ -568,9 +568,9 @@ int v4l_main(int argc, char **argv) {
 	// with V4L2_EVENT_SUB_FL_SEND_INITIAL we _only_ get the initial value
 // 	clist.subscriptions[0].flags = V4L2_EVENT_SUB_FL_SEND_INITIAL;
 	
-	crtx_create_task(lbase->graph, 0, "v4l_test", &v4l_event_handler, &clist);
+	crtx_create_task(clist.base.graph, 0, "v4l_test", &v4l_event_handler, &clist);
 	
-	ret = crtx_start_listener(lbase);
+	ret = crtx_start_listener(&clist.base);
 	if (ret) {
 		ERROR("starting v4l listener failed\n");
 		return 0;
