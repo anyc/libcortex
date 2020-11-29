@@ -161,6 +161,8 @@ struct crtx_listener_base *crtx_setup_uevents_listener(void *options) {
 	ulist->nl_listener.read_cb = uevents_read_cb;
 	ulist->nl_listener.read_cb_userdata = ulist;
 	
+	ulist->base.mode = CRTX_NO_PROCESSING_MODE;
+	
 	r = crtx_setup_listener("netlink_raw", &ulist->nl_listener);
 	if (r) {
 		ERROR("create_listener(netlink_raw) failed: %s\n", strerror(-r));
