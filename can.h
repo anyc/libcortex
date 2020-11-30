@@ -22,6 +22,7 @@ struct crtx_can_listener {
 	unsigned int bitrate;
 	int protocol;
 	int send_buffer_size;
+	int recv_buffer_size;
 	
 	struct nl_sock *socket;
 	struct rtnl_link *link;

@@ -336,6 +336,8 @@ static void on_error_cb(struct crtx_evloop_callback *el_cb, void *data) {
 
 static char start_listener(struct crtx_listener_base *lstnr) {
 	struct crtx_can_listener *clist;
+	int sendBufSize, recvBufSize;
+	int intSize;
 	int r;
 	
 	
@@ -350,9 +352,27 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 		return 0;
 	}
 	
+	intSize = sizeof(int);
+	r = getsockopt(udp_fd, SOL_SOCKET, SO_SNDBUF, &sendBufSize, &intSize);
+	if (r != 0) {
+		ERROR("unable to read send buffer size\n");
+	}
+	
+	r = getsockopt(udp_fd, SOL_SOCKET, SO_RCVBUF, &recvBufSize, &intSize);
+	if (r != 0) {
+		ERROR("unable to read receive buffer size\n");
+	}
+	
+	printf("changing R&W buffer from %d %d to %d %d\n", recvBufSize, sendBufSize, clist->recv_buffer_size, clist->send_buffer_size);
+	
 	r = setsockopt(clist->sockfd, SOL_SOCKET, SO_SNDBUF,  &clist->send_buffer_size, sizeof(clist->send_buffer_size));
 	if (r != 0) {
 		ERROR("unable to change send buffer size\n");
+	}
+	
+	r = setsockopt(clist->sockfd, SOL_SOCKET, SO_RCVBUF,  &clist->recv_buffer_size, sizeof(clist->recv_buffer_size));
+	if (r != 0) {
+		ERROR("unable to change receive buffer size\n");
 	}
 	
 	if (clist->interface_name) {
