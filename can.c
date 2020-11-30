@@ -353,12 +353,12 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 	}
 	
 	intSize = sizeof(int);
-	r = getsockopt(udp_fd, SOL_SOCKET, SO_SNDBUF, &sendBufSize, &intSize);
+	r = getsockopt(clist->sockfd, SOL_SOCKET, SO_SNDBUF, &sendBufSize, &intSize);
 	if (r != 0) {
 		ERROR("unable to read send buffer size\n");
 	}
 	
-	r = getsockopt(udp_fd, SOL_SOCKET, SO_RCVBUF, &recvBufSize, &intSize);
+	r = getsockopt(clist->sockfd, SOL_SOCKET, SO_RCVBUF, &recvBufSize, &intSize);
 	if (r != 0) {
 		ERROR("unable to read receive buffer size\n");
 	}
