@@ -5,7 +5,7 @@ DEPS_avahi+=sdbus
 
 CFLAGS_core+=$(patsubst %,-DSTATIC_%,$(STATIC_MODULES))
 
-### Licenses
+### Licenses of third-party libraries (NOTE this list might be incomplete or outdated!)
 #
 # libnl		LGPL-2.1
 # libcap-ng	LGPL-2.1
