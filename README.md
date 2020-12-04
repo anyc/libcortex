@@ -48,8 +48,8 @@ Other modules:
 Example
 -------
 
-Please note, some plugins contain a sample test application at the end of the
-source file which can compiled using the `make test` command.
+The following code will show information about a USB mass storage device whenever
+udev detects that one was plugged in:
 
 ```
 #include <stdio.h>
@@ -103,6 +103,7 @@ int main(int argc, char **argv) {
 	
 	
 	crtx_init();
+	// optional helper function to gracefully handle standard process signals
 	crtx_handle_std_signals();
 	
 	// initialize the control structure of this listener/event source
@@ -135,3 +136,7 @@ int main(int argc, char **argv) {
 	return 0;
 }
 ```
+
+Please note, some plugins also include example code (used to build a small test
+application) at the end of the source file which can compiled using the
+`make test` command.
