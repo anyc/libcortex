@@ -43,7 +43,7 @@ static void shutdown_listener(struct crtx_listener_base *lbase) {
 	
 	lstnr = (struct crtx_pipe_listener *) lbase;
 	
-	DBG("closing %d %d\n", lstnr->fds[CRTX_READ_END], lstnr->fds[CRTX_WRITE_END]);
+	CRTX_DBG("closing %d %d\n", lstnr->fds[CRTX_READ_END], lstnr->fds[CRTX_WRITE_END]);
 	
 	if (lstnr->fds[CRTX_READ_END] >= 0)
 		close(lstnr->fds[CRTX_READ_END]);
@@ -60,11 +60,11 @@ struct crtx_listener_base *crtx_setup_pipe_listener(void *options) {
 	
 	r = pipe2(lstnr->fds, crtx_root->global_fd_flags); // 0 read, 1 write
 	if (r < 0) {
-		ERROR("creating pipe failed: %s\n", strerror(errno));
+		CRTX_ERROR("creating pipe failed: %s\n", strerror(errno));
 		return 0;
 	}
 	
-	VDBG("pipe fds: %d %d\n", lstnr->fds[CRTX_READ_END], lstnr->fds[CRTX_WRITE_END]);
+	CRTX_VDBG("pipe fds: %d %d\n", lstnr->fds[CRTX_READ_END], lstnr->fds[CRTX_WRITE_END]);
 	
 	crtx_evloop_init_listener(&lstnr->base,
 							  lstnr->fds[CRTX_READ_END],

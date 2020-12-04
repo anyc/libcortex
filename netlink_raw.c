@@ -45,7 +45,7 @@ static char netlink_el_event_handler(struct crtx_event *event, void *userdata, v
 // static void stop_thread(struct crtx_thread *t, void *data) {
 // 	struct crtx_netlink_raw_listener *nl_listener;
 // 	
-// 	DBG("stopping netlink_raw listener\n");
+// 	CRTX_DBG("stopping netlink_raw listener\n");
 // 	
 // 	nl_listener = (struct crtx_netlink_raw_listener*) data;
 // 	

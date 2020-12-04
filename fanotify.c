@@ -105,7 +105,7 @@ void crtx_shutdown_fanotify_listener(struct crtx_listener_base *data) {
 static void stop_thread(struct crtx_thread *thread, void *data) {
 	struct crtx_fanotify_listener *falist;
 	
-	DBG("stopping fanotify\n");
+	CRTX_DBG("stopping fanotify\n");
 	
 	falist = (struct crtx_fanotify_listener*) data;
 	

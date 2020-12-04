@@ -89,7 +89,7 @@ char init() {
 		INFO("new monitor for path \"%s\"\n", path);
 		
 		if (!path || !mask || !actions) {
-			ERROR("invalid monitor entry\n");
+			CRTX_ERROR("invalid monitor entry\n");
 			continue;
 		}
 		
@@ -169,7 +169,7 @@ char init() {
 						format = crtx_get_string(trule, "format");
 						
 						if (!key || !type || !flag || !format) {
-							ERROR("invalid transformation rule\n");
+							CRTX_ERROR("invalid transformation rule\n");
 							crtx_print_dict(transform_rules);
 							continue;
 						}
@@ -179,7 +179,7 @@ char init() {
 							case 'D':
 								break;
 							default:
-								ERROR("invalid transformation rule: unknown type %c\n", type[0]);
+								CRTX_ERROR("invalid transformation rule: unknown type %c\n", type[0]);
 								continue;
 						}
 						

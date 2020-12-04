@@ -78,9 +78,9 @@ static void signal_handler(int signum) {
 	if (crtx_verbosity > 0) {
 		smap = crtx_get_signal_info(signum);
 		if (smap)
-			DBG("received signal %s (%d)\n", smap->name, signum);
+			CRTX_DBG("received signal %s (%d)\n", smap->name, signum);
 		else
-			DBG("received signal %d\n", signum);
+			CRTX_DBG("received signal %d\n", signum);
 	}
 	
 	crtx_create_event(&event);
@@ -103,11 +103,11 @@ static char signalfd_event_handler(struct crtx_event *event, void *userdata, voi
 	r = read(slistener->fd, &si, sizeof(si));
 	
 	if (r < 0) {
-		ERROR("read from signalfd %d failed: %s\n", slistener->fd, strerror(r));
+		CRTX_ERROR("read from signalfd %d failed: %s\n", slistener->fd, strerror(r));
 		return r;
 	}
 	if (r != sizeof(si)) {
-		ERROR("read from signalfd %d failed: %s\n", slistener->fd, strerror(r));
+		CRTX_ERROR("read from signalfd %d failed: %s\n", slistener->fd, strerror(r));
 		return -EBADE;
 	}
 	
@@ -127,7 +127,7 @@ static void shutdown_listener(struct crtx_listener_base *data) {
 	sigemptyset(&mask);
 	r = sigprocmask(SIG_BLOCK, &mask, NULL);
 	if (r < 0) {
-		ERROR("signals: clearing sigprocmask failed: %s\n", strerror(-r));
+		CRTX_ERROR("signals: clearing sigprocmask failed: %s\n", strerror(-r));
 		return;
 	}
 	
@@ -145,11 +145,11 @@ static char selfpipe_event_handler(struct crtx_event *event, void *userdata, voi
 	
 	r = read(slistener->pipe_lstnr.fds[0], &signal_num, sizeof(signal_num));
 	if (r < 0) {
-		ERROR("read from signal selfpipe %d failed: %s\n", slistener->pipe_lstnr.fds[0], strerror(r));
+		CRTX_ERROR("read from signal selfpipe %d failed: %s\n", slistener->pipe_lstnr.fds[0], strerror(r));
 		return r;
 	}
 	if (r != sizeof(signal_num)) {
-		ERROR("read invalid data from signal selfpipe %d: %zd != %zd\n", slistener->pipe_lstnr.fds[0], r, sizeof(signal_num));
+		CRTX_ERROR("read invalid data from signal selfpipe %d: %zd != %zd\n", slistener->pipe_lstnr.fds[0], r, sizeof(signal_num));
 		return -EBADE;
 	}
 	
@@ -186,9 +186,9 @@ static void selfpipe_signal_handler(int signum) {
 	if (crtx_verbosity > 0) {
 		smap = crtx_get_signal_info(signum);
 		if (smap)
-			DBG("received signal %s (%d)\n", smap->name, signum);
+			CRTX_DBG("received signal %s (%d)\n", smap->name, signum);
 		else
-			DBG("received signal %d\n", signum);
+			CRTX_DBG("received signal %d\n", signum);
 	}
 	
 	write(main_lstnr.pipe_lstnr.fds[1], &signum, sizeof(int));
@@ -199,13 +199,13 @@ static void selfpipe_signal_handler(int signum) {
 // 	int r;
 // 	
 // 	if (slistener->type == CRTX_SIGNAL_SIGACTION) {
-// 		DBG("signal mode sigaction\n");
+// 		CRTX_DBG("signal mode sigaction\n");
 // 		
 // 		// we have no fd or thread to monitor
 // 		slistener->base.mode = CRTX_NO_PROCESSING_MODE;
 // 	} else
 // 	if (slistener->type == CRTX_SIGNAL_SIGNALFD) {
-// 		DBG("signal mode signalfd\n");
+// 		CRTX_DBG("signal mode signalfd\n");
 // 	} else
 // 	if (slistener->type == CRTX_SIGNAL_SELFPIPE || slistener->type == CRTX_SIGNAL_DEFAULT) {
 // 		/*
@@ -214,7 +214,7 @@ static void selfpipe_signal_handler(int signum) {
 // 		 * event loop
 // 		 */
 // 		
-// 		DBG("signal mode selfpipe\n");
+// 		CRTX_DBG("signal mode selfpipe\n");
 // 		
 // 		// this lstnr is just a container for the sigaction and pipe listeners
 // 		slistener->base.mode = CRTX_NO_PROCESSING_MODE;
@@ -224,7 +224,7 @@ static void selfpipe_signal_handler(int signum) {
 // 		
 // 		r = crtx_setup_listener("pipe", &slistener->pipe_lstnr);
 // 		if (r < 0) {
-// 			ERROR("create_listener(pipe) failed: %s\n", strerror(-r));
+// 			CRTX_ERROR("create_listener(pipe) failed: %s\n", strerror(-r));
 // 			return r;
 // 		}
 // 		
@@ -235,14 +235,14 @@ static void selfpipe_signal_handler(int signum) {
 // 		
 // 		r = crtx_setup_listener("signals", slistener->sub_lstnr);
 // 		if (r < 0) {
-// 			ERROR("create_listener(signals) failed: %s\n", strerror(-r));
+// 			CRTX_ERROR("create_listener(signals) failed: %s\n", strerror(-r));
 // 			return r;
 // 		}
 // 		
 // 		crtx_start_listener(&slistener->pipe_lstnr.base);
 // 		crtx_start_listener(&slistener->sub_lstnr->base);
 // 	} else {
-// 		ERROR("invalid type of signal listener: %d\n", slistener->type);
+// 		CRTX_ERROR("invalid type of signal listener: %d\n", slistener->type);
 // 	}
 // 	
 // 	return lstnr_enable_signals(slistener);
@@ -250,7 +250,7 @@ static void selfpipe_signal_handler(int signum) {
 
 static int update_signals(struct crtx_signals_listener *signal_lstnr) {
 	if (!signal_lstnr->signals) {
-		DBG("no signals, will not enable handler\n");
+		CRTX_DBG("no signals, will not enable handler\n");
 		return 0;
 	}
 	
@@ -277,7 +277,7 @@ static int update_signals(struct crtx_signals_listener *signal_lstnr) {
 				
 				smap = crtx_get_signal_info(*i);
 				
-				DBG("new signal handler for %s (%d)\n", smap?smap->name:"", *i);
+				CRTX_DBG("new signal handler for %s (%d)\n", smap?smap->name:"", *i);
 				
 // 				if (smap) {
 // 					default_signal_lstnr.base.graph->n_descriptions++;
@@ -300,7 +300,7 @@ static int update_signals(struct crtx_signals_listener *signal_lstnr) {
 		int *i;
 		
 		
-		DBG("signal mode signalfd\n");
+		CRTX_DBG("signal mode signalfd\n");
 		
 		/*
 		 * block old signal handling for signals we want to receive over the signalfd
@@ -312,7 +312,7 @@ static int update_signals(struct crtx_signals_listener *signal_lstnr) {
 		while (*i) {
 			r = sigaddset(&mask, *i);
 			if (r < 0) {
-				ERROR("signals: sigaddset %d failed: %s\n", *i, strerror(-r));
+				CRTX_ERROR("signals: sigaddset %d failed: %s\n", *i, strerror(-r));
 				return r;
 			}
 			i++;
@@ -320,7 +320,7 @@ static int update_signals(struct crtx_signals_listener *signal_lstnr) {
 		
 		r = sigprocmask(SIG_BLOCK, &mask, NULL);
 		if (r < 0) {
-			ERROR("signals: sigprocmask failed: %s\n", strerror(-r));
+			CRTX_ERROR("signals: sigprocmask failed: %s\n", strerror(-r));
 			return r;
 		}
 		
@@ -331,11 +331,11 @@ static int update_signals(struct crtx_signals_listener *signal_lstnr) {
 		
 		signal_lstnr->fd = signalfd(signal_lstnr->fd, &mask, flags);
 		if (signal_lstnr->fd < 0) {
-			ERROR("signalfd failed: %s", strerror(errno));
+			CRTX_ERROR("signalfd failed: %s", strerror(errno));
 			return errno;
 		}
 		
-		DBG("new signalfd with fd %d\n", signal_lstnr->fd);
+		CRTX_DBG("new signalfd with fd %d\n", signal_lstnr->fd);
 		
 		crtx_evloop_init_listener(&signal_lstnr->base,
 							signal_lstnr->fd,
@@ -348,7 +348,7 @@ static int update_signals(struct crtx_signals_listener *signal_lstnr) {
 		
 		signal_lstnr->base.shutdown = &shutdown_listener;
 		#else
-		ERROR("libcortex was compiled without signalfd support\n");
+		CRTX_ERROR("libcortex was compiled without signalfd support\n");
 		#endif
 	} else
 	if (signal_lstnr->type == CRTX_SIGNAL_SELFPIPE || signal_lstnr->type == CRTX_SIGNAL_DEFAULT) {
@@ -416,7 +416,7 @@ static char start_main_listener(struct crtx_listener_base *listener) {
 	slistener = (struct crtx_signals_listener *) listener;
 	
 	if (slistener->type == CRTX_SIGNAL_SIGACTION) {
-		DBG("signal mode sigaction\n");
+		CRTX_DBG("signal mode sigaction\n");
 		
 		// we have no fd or thread to monitor
 		slistener->base.mode = CRTX_NO_PROCESSING_MODE;
@@ -431,7 +431,7 @@ static char start_main_listener(struct crtx_listener_base *listener) {
 		 * through our event loop
 		 */
 		
-		DBG("signal mode selfpipe\n");
+		CRTX_DBG("signal mode selfpipe\n");
 		
 		// this lstnr is just a container for the sigaction and pipe listeners
 		slistener->base.mode = CRTX_NO_PROCESSING_MODE;
@@ -441,7 +441,7 @@ static char start_main_listener(struct crtx_listener_base *listener) {
 		
 		r = crtx_setup_listener("pipe", &slistener->pipe_lstnr);
 		if (r < 0) {
-			ERROR("create_listener(pipe) failed: %s\n", strerror(-r));
+			CRTX_ERROR("create_listener(pipe) failed: %s\n", strerror(-r));
 			return r;
 		}
 		
@@ -454,14 +454,14 @@ static char start_main_listener(struct crtx_listener_base *listener) {
 		
 		r = crtx_setup_listener("signals", slistener->sub_lstnr);
 		if (r < 0) {
-			ERROR("create_listener(signals) failed: %s\n", strerror(-r));
+			CRTX_ERROR("create_listener(signals) failed: %s\n", strerror(-r));
 			return r;
 		}
 		
 		crtx_start_listener(&slistener->pipe_lstnr.base);
 		crtx_start_listener(&slistener->sub_lstnr->base);
 	} else {
-		ERROR("invalid type of signal listener: %d\n", slistener->type);
+		CRTX_ERROR("invalid type of signal listener: %d\n", slistener->type);
 	}
 	
 	return update_signals(slistener);
@@ -525,10 +525,10 @@ static char sigchild_event_handler(struct crtx_event *event, void *userdata, voi
 		}
 		
 		if (WIFEXITED(status)) {
-			DBG("child %u finished with exit value %d\n", pid, WEXITSTATUS(status));
+			CRTX_DBG("child %u finished with exit value %d\n", pid, WEXITSTATUS(status));
 		} else
 		if (WIFSIGNALED(status)) {
-			DBG("child %u got terminated by signal %d (%s coredump)\n",
+			CRTX_DBG("child %u got terminated by signal %d (%s coredump)\n",
 				pid, WTERMSIG(status), WCOREDUMP(status)?"with":"without"
 				);
 		}
@@ -557,7 +557,7 @@ void * crtx_signals_add_child_handler(sigchld_cb cb, void *userdata) {
 		
 		ret = crtx_setup_listener("signals", &sigchld_lstnr);
 		if (ret) {
-			ERROR("create_listener(signal) failed\n");
+			CRTX_ERROR("create_listener(signal) failed\n");
 			return 0;
 		}
 		
@@ -565,7 +565,7 @@ void * crtx_signals_add_child_handler(sigchld_cb cb, void *userdata) {
 		
 		ret = crtx_start_listener(&sigchld_lstnr.base);
 		if (ret) {
-			ERROR("starting signal listener failed\n");
+			CRTX_ERROR("starting signal listener failed\n");
 			return 0;
 		}
 	}

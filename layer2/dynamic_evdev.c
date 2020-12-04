@@ -30,7 +30,7 @@ static void on_free_evdev_listener_data(struct crtx_listener_base *data, void *u
 	
 	for (dll=dyn_evdev->evdev_listeners; dll && dll->data != data; dll=dll->next) {}
 	if (!dll) {
-		ERROR("evdev_listener (%p) not found in list\n", data);
+		CRTX_ERROR("evdev_listener (%p) not found in list\n", data);
 		return;
 	}
 	
@@ -55,14 +55,14 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 	
 	devpath = udev_device_get_property_value(dev, "DEVNAME");
 	if (!devpath) {
-		INFO("ignoring device due to missing device path\n");
+		CRTX_INFO("ignoring device due to missing device path\n");
 		return -1;
 	}
 	
 	// only accept devices with this flag in order to avoid legacy interfaces
 	// that are incompatible with evdev (e.g., /dev/input/mouseX)
 	if (!udev_device_get_property_value(dev, "LIBINPUT_DEVICE_GROUP")) {
-		INFO("ignoring %s due to missing libinput flags\n", devpath);
+		CRTX_INFO("ignoring %s due to missing libinput flags\n", devpath);
 		return -1;
 	}
 	
@@ -85,7 +85,7 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 // 	lbase = create_listener("evdev", el);
 	ret = crtx_setup_listener("evdev", el);
 	if (ret) {
-		ERROR("create_listener(evdev) failed\n");
+		CRTX_ERROR("create_listener(evdev) failed\n");
 		
 		if (dyn_evdev->on_free)
 			dyn_evdev->on_free(dll);
@@ -114,14 +114,14 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 	
 	ret = crtx_start_listener(&el->base);
 	if (ret) {
-		ERROR("starting evdev listener failed\n");
+		CRTX_ERROR("starting evdev listener failed\n");
 		
 		crtx_free_listener(&el->base);
 		
 		return 1;
 	}
 	
-	DBG("new evdev device: %s\n", devpath);
+	CRTX_DBG("new evdev device: %s\n", devpath);
 	
 	return 0;
 }
@@ -155,7 +155,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	
 	ret = crtx_start_listener(&dyn_evdev->udev_lstnr.base);
 	if (ret) {
-		ERROR("starting udev listener failed\n");
+		CRTX_ERROR("starting udev listener failed\n");
 		return ret;
 	}
 	
@@ -195,7 +195,7 @@ struct crtx_listener_base *crtx_setup_dynamic_evdev_listener(void *options) {
 // 	udev_lbase = create_listener("udev", &dyn_evdev->udev_lstnr);
 	ret = crtx_setup_listener("udev", &dyn_evdev->udev_lstnr);
 	if (ret) {
-		ERROR("create_listener(udev) failed\n");
+		CRTX_ERROR("create_listener(udev) failed\n");
 		return 0;
 	}
 	
@@ -495,7 +495,7 @@ int dynamic_evdev_main(int argc, char **argv) {
 // 	lbase = create_listener("dynamic_evdev", &dyn_evdev);
 	ret = crtx_setup_listener("dynamic_evdev", &dyn_evdev);
 	if (ret) {
-		ERROR("create_listener(dynamic_evdev) failed\n");
+		CRTX_ERROR("create_listener(dynamic_evdev) failed\n");
 		return 0;
 	}
 	
@@ -536,7 +536,7 @@ int dynamic_evdev_main(int argc, char **argv) {
 	
 	ret = crtx_start_listener(&dyn_evdev.base);
 	if (!ret) {
-		ERROR("starting dynamic_evdev listener failed\n");
+		CRTX_ERROR("starting dynamic_evdev listener failed\n");
 		return 0;
 	}
 	

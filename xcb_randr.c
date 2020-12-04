@@ -33,7 +33,7 @@ char crtx_xcb_randr_get_edid(struct crtx_xcb_randr_listener *xrlist, xcb_randr_o
 									4,
 									"EDID");
 	if (error) {
-		ERROR("xcb_intern_atom returned: %d\n", error->error_code);
+		CRTX_ERROR("xcb_intern_atom returned: %d\n", error->error_code);
 		free(error);
 		return 1;
 	}
@@ -49,7 +49,7 @@ char crtx_xcb_randr_get_edid(struct crtx_xcb_randr_listener *xrlist, xcb_randr_o
 			);
 	free(atom);
 	if (error) {
-		ERROR("xcb_randr_get_output_property returned: %d\n", error->error_code);
+		CRTX_ERROR("xcb_randr_get_output_property returned: %d\n", error->error_code);
 		free(error);
 		free(out_prop);
 		return 1;
@@ -60,7 +60,7 @@ char crtx_xcb_randr_get_edid(struct crtx_xcb_randr_listener *xrlist, xcb_randr_o
 	*length = xcb_randr_get_output_property_data_length(out_prop);
 	
 	if ((*edid == NULL) || (*length < 1)) {
-		ERROR("xcb_randr_get_output_property_data returned no data\n");
+		CRTX_ERROR("xcb_randr_get_output_property_data returned no data\n");
 		free(out_prop);
 		return 1;
 	}
@@ -75,14 +75,14 @@ char crtx_xcb_randr_get_edid(struct crtx_xcb_randr_listener *xrlist, xcb_randr_o
 		sum += (*edid)[i];
 	
 	if (sum) {
-		ERROR("received EDID has wrong checksum\n");
+		CRTX_ERROR("received EDID has wrong checksum\n");
 		free(out_prop);
 		return 1;
 	}
 	
 	unsigned char magic[] = { 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00 };
 	if (memcmp(magic, *edid, 8)) {
-		ERROR("received EDID has wrong header\n");
+		CRTX_ERROR("received EDID has wrong header\n");
 		free(out_prop);
 		return 1;
 	}
@@ -263,7 +263,7 @@ struct crtx_dict * crtx_output_change2dict(struct crtx_xcb_randr_listener *xrlis
 	if (oevent->crtc != XCB_NONE) {
 		output_info = QRY(xcb_randr_get_output_info, xrlist->conn, error, oevent->output, XCB_CURRENT_TIME);
 		if (error) {
-			ERROR("xcb_randr_get_output_info returned: %d\n", error->error_code);
+			CRTX_ERROR("xcb_randr_get_output_info returned: %d\n", error->error_code);
 			free(error);
 			return 0;
 		}
@@ -289,7 +289,7 @@ struct crtx_dict * crtx_output_change2dict(struct crtx_xcb_randr_listener *xrlis
 		for (i=0; i < output_info->num_crtcs; i++) {
 			crtc_info = QRY(xcb_randr_get_crtc_info, xrlist->conn, error, crtc[i], XCB_CURRENT_TIME);
 			if (error) {
-				ERROR("xcb_randr_get_crtc_info returned: %d\n", error->error_code);
+				CRTX_ERROR("xcb_randr_get_crtc_info returned: %d\n", error->error_code);
 				free(error);
 				continue;
 			}
@@ -412,7 +412,7 @@ char crtx_xcb_randr_output_property_t2dict(struct crtx_xcb_randr_listener *xrlis
 	
 	atom_reply = QRY(xcb_get_atom_name, xrlist->conn, error, ptr->atom);
 	if (error) {
-		ERROR("xcb_get_atom_name returned: %d\n", error->error_code);
+		CRTX_ERROR("xcb_get_atom_name returned: %d\n", error->error_code);
 		free(error);
 	} else {
 		char *prop;
@@ -501,13 +501,13 @@ static void xcb_handle_event(struct crtx_xcb_randr_listener *xrlist, xcb_generic
 						XCBRANDR2STR(XCB_RANDR_NOTIFY_PROVIDER_PROPERTY)
 						XCBRANDR2STR(XCB_RANDR_NOTIFY_RESOURCE_CHANGE)
 					}
-					INFO("unhandled xcb_randr notify event with subcode %d: %s\n", xcb_event->subCode, s);
+					CRTX_INFO("unhandled xcb_randr notify event with subcode %d: %s\n", xcb_event->subCode, s);
 				}
 		}
 		if (event_type) {
 			r = crtx_create_event(&crtx_event); //, data_ptr, 0);
 			if (r) {
-				ERROR("xcb_randr crtx_create_event failed: %s\n", strerror(-r));
+				CRTX_ERROR("xcb_randr crtx_create_event failed: %s\n", strerror(-r));
 				free(xcb_event);
 				
 				return;
@@ -523,7 +523,7 @@ static void xcb_handle_event(struct crtx_xcb_randr_listener *xrlist, xcb_generic
 			free(xcb_event);
 		}
 	} else {
-		INFO("unhandled event of type %d (randr starts at: %d) %s\n", type, randr->first_event, sent ? " (generated)" : "");
+		CRTX_INFO("unhandled event of type %d (randr starts at: %d) %s\n", type, randr->first_event, sent ? " (generated)" : "");
 		free(ev);
 	}
 }
@@ -591,7 +591,7 @@ struct crtx_listener_base *crtx_setup_xcb_randr_listener(void *options) {
 	xrlist->conn = xcb_connect(NULL, NULL);
 	ret = xcb_connection_has_error(xrlist->conn);
 	if (ret) {
-		ERROR("xcb_connect failed: %d\n", ret);
+		CRTX_ERROR("xcb_connect failed: %d\n", ret);
 		return 0;
 	}
 	
@@ -599,13 +599,13 @@ struct crtx_listener_base *crtx_setup_xcb_randr_listener(void *options) {
 	
 	query = xcb_get_extension_data(xrlist->conn, &xcb_randr_id);
 	if (!query || !query->present) {
-		ERROR("randr extension not present\n");
+		CRTX_ERROR("randr extension not present\n");
 		return 0;
 	}
 	
 	version = QRY(xcb_randr_query_version, xrlist->conn, error, XCB_RANDR_MAJOR_VERSION, XCB_RANDR_MINOR_VERSION);
 	if (!version || version->major_version < 1 || (version->major_version == 1 && version->minor_version < 2)) {
-		ERROR("randr extension too old\n");
+		CRTX_ERROR("randr extension too old\n");
 		return 0;
 	}
 	free(version);
@@ -681,7 +681,7 @@ int xcb_randr_main(int argc, char **argv) {
 	
 	ret = crtx_setup_listener("xcb_randr", &xrlist);
 	if (ret) {
-		ERROR("create_listener(xcb_randr) failed\n");
+		CRTX_ERROR("create_listener(xcb_randr) failed\n");
 		exit(1);
 	}
 	
@@ -689,7 +689,7 @@ int xcb_randr_main(int argc, char **argv) {
 	
 	ret = crtx_start_listener(&xrlist.base);
 	if (ret) {
-		ERROR("starting xcb_randr listener failed\n");
+		CRTX_ERROR("starting xcb_randr listener failed\n");
 		return 1;
 	}
 	

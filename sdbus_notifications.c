@@ -86,7 +86,7 @@ static void init_listener() {
 		struct crtx_graph *graph;
 		
 		
-		ret = pthread_mutex_init(&notif_root->wait_list_mutex, 0); ASSERT(ret >= 0);
+		ret = pthread_mutex_init(&notif_root->wait_list_mutex, 0); CRTX_ASSERT(ret >= 0);
 		graph = crtx_get_graph_for_event_description(EV_NOTIF_SIGNAL, notif_event_types);
 		
 		/*
@@ -254,7 +254,7 @@ static char notify_send_handler(struct crtx_event *event, void *userdata, void *
 	crtx_get_value(dict, "icon", 's', &icon, sizeof(void*));
 	
 	if (!title && !msg) {
-		ERROR("error, no title and no message in dict\n");
+		CRTX_ERROR("error, no title and no message in dict\n");
 		crtx_print_dict(event->data.dict);
 		return 1;
 	}

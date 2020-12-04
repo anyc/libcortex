@@ -110,7 +110,7 @@ static void nfq_raw2dict(struct crtx_event *event) {
 	if (event->data.size < sizeof(struct crtx_nfq_packet))
 		return;
 	
-	VDBG("convert nfq raw2dict\n");
+	CRTX_VDBG("convert nfq raw2dict\n");
 	
 	ev = (struct crtx_nfq_packet*) event->data.pointer;
 	
@@ -293,7 +293,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		ret = crtx_create_event(&event); //, pkt, data_size);
 		if (ret) {
-			ERROR("crtx_create_event() failed: %s\n", strerror(-ret));
+			CRTX_ERROR("crtx_create_event() failed: %s\n", strerror(-ret));
 			return ret;
 		}
 		
@@ -326,7 +326,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 // 				pkt->mark_out = nfq_list->default_mark;
 		}
 		
-		INFO("packet mark: %" PRIu32 "\n", pkt->mark_out);
+		CRTX_INFO("packet mark: %" PRIu32 "\n", pkt->mark_out);
 		
 		ret = nfq_set_verdict2(qh, pkt->id, NF_REPEAT, pkt->mark_out, 0, NULL);
 		

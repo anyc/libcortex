@@ -48,15 +48,15 @@ static void reinit_cb(void *reinit_cb_data) {
 		
 		rv = getgrnam_r(flstnr->group, &grp, buf, bufsize, &p_grp);
 		if (rv != 0 || p_grp == 0) {
-			ERROR("getgrpnam_r(%s) failed: %s\n", flstnr->group, strerror(errno));
+			CRTX_ERROR("getgrpnam_r(%s) failed: %s\n", flstnr->group, strerror(errno));
 			exit(1);
 		}
 		
-		DBG("change group to %s (%d)\n", flstnr->group, grp.gr_gid);
+		CRTX_DBG("change group to %s (%d)\n", flstnr->group, grp.gr_gid);
 		
 		rv = setgid(grp.gr_gid);
 		if (rv == -1) {
-			ERROR("setgid(%d) failed: %s\n", grp.gr_gid, strerror(errno));
+			CRTX_ERROR("setgid(%d) failed: %s\n", grp.gr_gid, strerror(errno));
 			exit(1);
 		}
 		
@@ -77,22 +77,22 @@ static void reinit_cb(void *reinit_cb_data) {
 		
 		rv = getpwnam_r(flstnr->user, &pw, buf, bufsize, &p_pw);
 		if (rv != 0 || p_pw == 0) {
-			ERROR("getpwnam_r(%s) failed: %s\n", flstnr->user, strerror(errno));
+			CRTX_ERROR("getpwnam_r(%s) failed: %s\n", flstnr->user, strerror(errno));
 			exit(1);
 		}
 		
-		DBG("change user to %s (%d %d)\n", flstnr->user, pw.pw_uid, pw.pw_gid);
+		CRTX_DBG("change user to %s (%d %d)\n", flstnr->user, pw.pw_uid, pw.pw_gid);
 		
 		rv = setuid(pw.pw_uid);
 		if (rv == -1) {
-			ERROR("setuid(%d) failed: %s\n", pw.pw_uid, strerror(errno));
+			CRTX_ERROR("setuid(%d) failed: %s\n", pw.pw_uid, strerror(errno));
 			exit(1);
 		}
 		
 		if (!flstnr->group) {
 			rv = setgid(pw.pw_gid);
 			if (rv == -1) {
-				ERROR("setgid(%d) failed: %s\n", pw.pw_gid, strerror(errno));
+				CRTX_ERROR("setgid(%d) failed: %s\n", pw.pw_gid, strerror(errno));
 				exit(1);
 			}
 		}
@@ -100,7 +100,7 @@ static void reinit_cb(void *reinit_cb_data) {
 		free(buf);
 	}
 	
-	DBG("calling reinit_cb()\n");
+	CRTX_DBG("calling reinit_cb()\n");
 	
 	flstnr->reinit_cb(flstnr->reinit_cb_data);
 }
@@ -114,11 +114,11 @@ static char do_fork(struct crtx_event *event, void *userdata, void **sessiondata
 	flstnr->pid = fork();
 	
 	if (flstnr->pid < 0) {
-		ERROR("fork failed: %s\n", strerror(errno));
+		CRTX_ERROR("fork failed: %s\n", strerror(errno));
 		return -1;
 	} else 
 	if (flstnr->pid == 0) {
-		DBG("child (%d) shutdown after fork\n", getpid());
+		CRTX_DBG("child (%d) shutdown after fork\n", getpid());
 		
 		crtx_root->reinit_after_shutdown = 1;
 		crtx_root->reinit_cb = &reinit_cb;
@@ -128,7 +128,7 @@ static char do_fork(struct crtx_event *event, void *userdata, void **sessiondata
 	if (flstnr->pid > 0) {
 // 		struct crtx_event *event;
 		
-		DBG("fork done - parent %d\n", flstnr->pid);
+		CRTX_DBG("fork done - parent %d\n", flstnr->pid);
 		
 // 		crtx_create_event(&event);
 // 		event.type = CRTX_FORK_ET_FORK_DONE_PARENT;
@@ -150,7 +150,7 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 	
 // 	ret = crtx_start_listener(&flstnr->signal_lstnr.base);
 // 	if (ret) {
-// 		ERROR("starting signal listener failed\n");
+// 		CRTX_ERROR("starting signal listener failed\n");
 // 		return ret;
 // 	}
 	
@@ -175,7 +175,7 @@ static char stop_listener(struct crtx_listener_base *listener) {
 
 		r = kill(flstnr->pid, SIGTERM);
 		if (r != 0) {
-			ERROR("killing pid %d failed: %s\n", flstnr->pid, strerror(errno));
+			CRTX_ERROR("killing pid %d failed: %s\n", flstnr->pid, strerror(errno));
 			return 1;
 		}
 	}
@@ -230,7 +230,7 @@ struct crtx_listener_base *crtx_setup_fork_listener(void *options) {
 // 	
 // 	rv = crtx_setup_listener("signals", &lstnr->signal_lstnr);
 // 	if (rv) {
-// 		ERROR("create_listener(signal) failed\n");
+// 		CRTX_ERROR("create_listener(signal) failed\n");
 // 		return 0;
 // 	}
 	
@@ -286,7 +286,7 @@ static char timertest_handler(struct crtx_event *event, void *userdata, void **s
 		
 		rv = crtx_setup_listener("fork", &fork_lstnr);
 		if (rv) {
-			ERROR("create_listener(fork) failed\n");
+			CRTX_ERROR("create_listener(fork) failed\n");
 			return -1;
 		}
 		
@@ -294,7 +294,7 @@ static char timertest_handler(struct crtx_event *event, void *userdata, void **s
 		
 		rv = crtx_start_listener(&fork_lstnr.base);
 		if (rv) {
-			ERROR("starting signal listener failed\n");
+			CRTX_ERROR("starting signal listener failed\n");
 			return rv;
 		}
 	}
@@ -322,7 +322,7 @@ int start_timer() {
 	
 	r = crtx_setup_listener("timer", &tlist);
 	if (r) {
-		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
+		CRTX_ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		exit(1);
 	}
 	

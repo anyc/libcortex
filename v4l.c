@@ -182,13 +182,13 @@ static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void 
 		v4l_event = (struct v4l2_event *) malloc(sizeof(struct v4l2_event));
 		r = ioctl(clist->fd, VIDIOC_DQEVENT, v4l_event);
 		if (r < 0) {
-			ERROR("VIDIOC_DQEVENT failed\n");
+			CRTX_ERROR("VIDIOC_DQEVENT failed\n");
 			return -1;
 		}
 		
 		r = crtx_create_event(&nevent);
 		if (r) {
-			ERROR("crtx_create_event() failed: %s\n", strerror(-r));
+			CRTX_ERROR("crtx_create_event() failed: %s\n", strerror(-r));
 			return r;
 		}
 		nevent->description = "event";
@@ -199,7 +199,7 @@ static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void 
 	if (el_cb->triggered_flags & EVLOOP_READ) {
 		r = crtx_create_event(&nevent);
 		if (r) {
-			ERROR("crtx_create_event() failed: %s\n", strerror(-r));
+			CRTX_ERROR("crtx_create_event() failed: %s\n", strerror(-r));
 			return r;
 		}
 		nevent->description = "frame";
@@ -235,14 +235,14 @@ static char start_listener(struct crtx_listener_base *listener) {
 		lstnr->format.fmt.pix.width, lstnr->format.fmt.pix.height);
 	
 // 	if (ioctl(lstnr->fd, VIDIOC_S_FMT, &lstnr->format) < 0) {
-// 		ERROR("VIDIOC_S_FMT failed: %s\n", strerror(errno));
+// 		CRTX_ERROR("VIDIOC_S_FMT failed: %s\n", strerror(errno));
 // 		return -1;
 // 	}
 	
 	for (i=0; i < lstnr->subscription_length; i++) {
 		r = ioctl(lstnr->fd, VIDIOC_SUBSCRIBE_EVENT, &lstnr->subscriptions[i]);
 		if (r < 0) {
-			INFO("VIDIOC_SUBSCRIBE_EVENT (type=%d id=%d flags=%d) failed: %s\n",
+			CRTX_INFO("VIDIOC_SUBSCRIBE_EVENT (type=%d id=%d flags=%d) failed: %s\n",
 				lstnr->subscriptions[i].type, lstnr->subscriptions[i].id, lstnr->subscriptions[i].flags,
 				strerror(errno));
 			/*
@@ -281,7 +281,7 @@ static void enumerate_menu(struct crtx_v4l_listener *lstnr, struct v4l2_queryctr
 		if (r == 0) {
 			crtx_dict_new_item(di->dict, 'u', (char*) querymenu.name, querymenu.id, 0, CRTX_DIF_CREATE_KEY_COPY);
 		} else {
-			ERROR("VIDIOC_QUERYMENU failed: %s", strerror(errno));
+			CRTX_ERROR("VIDIOC_QUERYMENU failed: %s", strerror(errno));
 			break;
 		}
 	}
@@ -309,7 +309,7 @@ static void query_ctrls(struct crtx_v4l_listener *lstnr) {
 			if (errno == EINVAL)
 				continue;
 			
-			ERROR("VIDIOC_QUERYCTRL failed: %s", strerror(errno));
+			CRTX_ERROR("VIDIOC_QUERYCTRL failed: %s", strerror(errno));
 			break;
 		}
 	}
@@ -327,7 +327,7 @@ static void query_ctrls(struct crtx_v4l_listener *lstnr) {
 			if (errno == EINVAL)
 				break;
 			
-			ERROR("VIDIOC_QUERYCTRL failed: %s", strerror(errno));
+			CRTX_ERROR("VIDIOC_QUERYCTRL failed: %s", strerror(errno));
 			break;
 		}
 	}
@@ -434,7 +434,7 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 	
 	lstnr->fd = open(lstnr->device_path, O_RDWR);
 	if (lstnr->fd < 0) {
-		ERROR("opening v4l device failed: %s\n", strerror(errno));
+		CRTX_ERROR("opening v4l device failed: %s\n", strerror(errno));
 		return 0;
 	}
 	
@@ -523,7 +523,7 @@ int v4l_main(int argc, char **argv) {
 	
 	ret = crtx_setup_listener("v4l", &clist);
 	if (ret) {
-		ERROR("create_listener(v4l) failed\n");
+		CRTX_ERROR("create_listener(v4l) failed\n");
 		return 0;
 	}
 	
@@ -535,7 +535,7 @@ int v4l_main(int argc, char **argv) {
 	 */
 	
 	if (clist.formats->signature_length == 0) {
-		ERROR("no video formats found\n");
+		CRTX_ERROR("no video formats found\n");
 		return 0;
 	}
 	
@@ -572,7 +572,7 @@ int v4l_main(int argc, char **argv) {
 	
 	ret = crtx_start_listener(&clist.base);
 	if (ret) {
-		ERROR("starting v4l listener failed\n");
+		CRTX_ERROR("starting v4l listener failed\n");
 		return 0;
 	}
 	

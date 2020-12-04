@@ -22,7 +22,7 @@ char crtx_nl_route_send_req(struct crtx_nl_route_raw_listener *nlr_list, struct 
 	
 	ret = send(nlr_list->nl_listener.sockfd, n, n->nlmsg_len, 0);
 	if (ret < 0) {
-		ERROR("error while sending netlink request: %s\n", strerror(errno));
+		CRTX_ERROR("error while sending netlink request: %s\n", strerror(errno));
 		return 0;
 	}
 	
@@ -161,7 +161,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 					
 					s = inet_ntop(ifa->ifa_family, &(((struct sockaddr_in *)&addr)->sin_addr), s_addr, sizeof(s_addr));
 					if (!s) {
-						ERROR("inet_ntop(v4) failed: %s\n", strerror(errno));
+						CRTX_ERROR("inet_ntop(v4) failed: %s\n", strerror(errno));
 					}
 					
 					if (!family) {
@@ -178,7 +178,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 					
 					s = inet_ntop(ifa->ifa_family, &(((struct sockaddr_in6 *)&addr)->sin6_addr), s_addr, sizeof(s_addr));
 					if (!s) {
-						ERROR("inet_ntop(v6) failed: %s\n", strerror(errno));
+						CRTX_ERROR("inet_ntop(v6) failed: %s\n", strerror(errno));
 					}
 					
 					if (!family) {
@@ -187,7 +187,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 						di = crtx_alloc_item(dict);
 					}
 				} else {
-					ERROR("unknown family: %d\n", addr.ss_family);
+					CRTX_ERROR("unknown family: %d\n", addr.ss_family);
 					s = 0;
 				}
 				
@@ -275,7 +275,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 				break;
 				
 			default:
-					VDBG("nl_route: unhandled rta_type %d\n", rth->rta_type);
+					CRTX_VDBG("nl_route: unhandled rta_type %d\n", rth->rta_type);
 		}
 		rth = RTA_NEXT(rth, rtl);
 	}
@@ -392,7 +392,7 @@ struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char al
 				
 				// e.g., sit0 interfaces use only 4 bytes
 				if (RTA_PAYLOAD(rth) > 6)
-					INFO("netlink_raw: RTA_PAYLOAD %zu > 6\n", RTA_PAYLOAD(rth));
+					CRTX_INFO("netlink_raw: RTA_PAYLOAD %zu > 6\n", RTA_PAYLOAD(rth));
 				
 				s = (char*) malloc(RTA_PAYLOAD(rth)*3);
 				b = (unsigned char*) RTA_DATA(rth);
@@ -484,7 +484,7 @@ struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char al
 				// https://lists.open-mesh.org/pipermail/b.a.t.m.a.n/2014-January/011236.html
 				break;
 			default:
-				VDBG("nl_route: unhandled rta_type %d\n", rth->rta_type);
+				CRTX_VDBG("nl_route: unhandled rta_type %d\n", rth->rta_type);
 		}
 		
 		rth = RTA_NEXT(rth, len);
@@ -680,7 +680,7 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 	}
 	
 	if (len < 0) { //  && len != EAGAIN
-		ERROR("netlink_raw recv failed: %s\n", strerror(errno));
+		CRTX_ERROR("netlink_raw recv failed: %s\n", strerror(errno));
 		return -1;
 	}
 	
@@ -695,7 +695,7 @@ static char nl_route_start_listener(struct crtx_listener_base *listener) {
 	
 	ret = crtx_start_listener(&nlr_list->nl_listener.base);
 	if (ret) {
-		ERROR("starting netlink_raw listener failed\n");
+		CRTX_ERROR("starting netlink_raw listener failed\n");
 		return ret;
 	}
 	
@@ -744,7 +744,7 @@ struct crtx_listener_base *crtx_setup_nl_route_raw_listener(void *options) {
 	
 	ret = crtx_setup_listener("netlink_raw", &nlr_list->nl_listener);
 	if (ret) {
-		ERROR("create_listener(netlink_raw) failed: %s\n", strerror(-ret));
+		CRTX_ERROR("create_listener(netlink_raw) failed: %s\n", strerror(-ret));
 		return 0;
 	}
 	
@@ -752,7 +752,7 @@ struct crtx_listener_base *crtx_setup_nl_route_raw_listener(void *options) {
 	
 // 	ret = crtx_start_listener(lbase);
 // 	if (!ret) {
-// 		ERROR("starting netlink_raw listener failed\n");
+// 		CRTX_ERROR("starting netlink_raw listener failed\n");
 // 		return 0;
 // 	}
 	
@@ -866,7 +866,7 @@ char crtx_get_own_ip_addresses() {
 	
 	ret = crtx_setup_listener("nl_route_raw", &nlr_list);
 	if (ret) {
-		ERROR("create_listener(nl_route_raw) failed: %s\n", strerror(-ret));
+		CRTX_ERROR("create_listener(nl_route_raw) failed: %s\n", strerror(-ret));
 		exit(1);
 	}
 	
@@ -885,7 +885,7 @@ char crtx_get_own_ip_addresses() {
 	
 	ret = crtx_start_listener(&nlr_list.base);
 	if (ret) {
-		ERROR("starting nl_route_raw listener failed\n");
+		CRTX_ERROR("starting nl_route_raw listener failed\n");
 		return 1;
 	}
 	

@@ -126,7 +126,7 @@ void crtx_dict_parse_json(struct crtx_dict *dict, char *string) {
 	json_object * jobj = json_tokener_parse_verbose(string, &error);
 	
 	if (!jobj) {
-		ERROR("parsing json failed:\n%s\n-----\n%s", json_tokener_error_desc(error), string);
+		CRTX_ERROR("parsing json failed:\n%s\n-----\n%s", json_tokener_error_desc(error), string);
 		return;
 	}
 	

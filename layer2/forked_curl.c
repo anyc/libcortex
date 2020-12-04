@@ -24,7 +24,7 @@ static void reinit_cb(void *reinit_cb_data) {
 	
 	ret = crtx_setup_listener("curl", &fc_lstnr->curl_lstnr);
 	if (ret) {
-		ERROR("create_listener(curl) failed\n");
+		CRTX_ERROR("create_listener(curl) failed\n");
 		return;
 	}
 	
@@ -33,7 +33,7 @@ static void reinit_cb(void *reinit_cb_data) {
 	
 	ret = crtx_start_listener(&fc_lstnr->curl_lstnr.base);
 	if (ret) {
-		ERROR("starting curl listener failed\n");
+		CRTX_ERROR("starting curl listener failed\n");
 		return;
 	}
 }
@@ -49,7 +49,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	
 	rv = crtx_start_listener(&fc_lstnr->fork_lstnr.base);
 	if (rv) {
-		ERROR("starting fork listener failed\n");
+		CRTX_ERROR("starting fork listener failed\n");
 		return rv;
 	}
 	
@@ -70,7 +70,7 @@ struct crtx_listener_base *crtx_setup_forked_curl_listener(void *options) {
 	
 	ret = crtx_setup_listener("fork", &fc_lstnr->fork_lstnr);
 	if (ret) {
-		ERROR("create_listener(fork) failed\n");
+		CRTX_ERROR("create_listener(fork) failed\n");
 		return 0;
 	}
 	
@@ -113,7 +113,7 @@ static char fork_event_handler(struct crtx_event *event, void *userdata, void **
 		return 0;
 	}
 	
-	ERROR("unexpected event: %d\n", event->type);
+	CRTX_ERROR("unexpected event: %d\n", event->type);
 	
 	return 0;
 }
@@ -136,7 +136,7 @@ int fcurl_main(int argc, char **argv) {
 	
 	ret = crtx_setup_listener("forked_curl", &fc_lstnr);
 	if (ret) {
-		ERROR("create_listener(forked_curl) failed\n");
+		CRTX_ERROR("create_listener(forked_curl) failed\n");
 		return 0;
 	}
 	
@@ -144,7 +144,7 @@ int fcurl_main(int argc, char **argv) {
 	
 	ret = crtx_start_listener(&fc_lstnr.base);
 	if (ret) {
-		ERROR("starting forked_curl listener failed\n");
+		CRTX_ERROR("starting forked_curl listener failed\n");
 		return 0;
 	}
 	

@@ -107,7 +107,7 @@ static char evdev_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	} while (ret == LIBEVDEV_READ_STATUS_SUCCESS);
 	
 	if (ret != LIBEVDEV_READ_STATUS_SUCCESS && ret != -EAGAIN) {
-		ERROR("evdev: failed to handle events of %s: %s\n", evdev->device_path, strerror(-ret));
+		CRTX_ERROR("evdev: failed to handle events of %s: %s\n", evdev->device_path, strerror(-ret));
 	}
 	
 	return 0;
@@ -148,7 +148,7 @@ struct crtx_listener_base *crtx_setup_evdev_listener(void *options) {
 // 	printf("Phys location: %s\n", libevdev_get_phys(evdev->device));
 // 	printf("Uniq identifier: %s\n", libevdev_get_uniq(evdev->device));
 	
-	DBG("new evdev listener on %s: %s\n", evdev->device_path, libevdev_get_name(evdev->device));
+	CRTX_DBG("new evdev listener on %s: %s\n", evdev->device_path, libevdev_get_name(evdev->device));
 	
 	evdev->base.shutdown = &crtx_shutdown_evdev_listener;
 	
@@ -233,7 +233,7 @@ int evdev_main(int argc, char **argv) {
 	
 	ret = crtx_setup_listener("evdev", &el);
 	if (ret) {
-		ERROR("create_listener(evdev) failed: %s\n", strerror(-ret));
+		CRTX_ERROR("create_listener(evdev) failed: %s\n", strerror(-ret));
 		exit(1);
 	}
 	
@@ -241,7 +241,7 @@ int evdev_main(int argc, char **argv) {
 	
 	ret = crtx_start_listener(&el.base);
 	if (ret) {
-		ERROR("starting evdev listener failed\n");
+		CRTX_ERROR("starting evdev listener failed\n");
 		return 1;
 	}
 	

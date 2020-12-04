@@ -183,7 +183,7 @@ static char udev_fd_event_handler(struct crtx_event *event, void *userdata, void
 	if (dev) {
 		push_new_udev_event(ulist, dev);
 	} else {
-		DBG("udev_monitor_receive_device returned no device\n");
+		CRTX_DBG("udev_monitor_receive_device returned no device\n");
 	}
 	
 	return 0;
@@ -243,7 +243,7 @@ struct crtx_listener_base *crtx_setup_udev_listener(void *options) {
 	
 	ulist = (struct crtx_udev_listener *) options;
 	
-// 	DBG("new evdev listener on %s: %s\n", evdev->device_path, libevdev_get_name(evdev->device));
+// 	CRTX_DBG("new evdev listener on %s: %s\n", evdev->device_path, libevdev_get_name(evdev->device));
 	
 	/* Create the udev object */
 	ulist->udev = udev_new();
@@ -338,7 +338,7 @@ int udev_main(int argc, char **argv) {
 	
 	ret = crtx_setup_listener("udev", &ulist);
 	if (ret) {
-		ERROR("create_listener(udev) failed: %s\n", strerror(-ret));
+		CRTX_ERROR("create_listener(udev) failed: %s\n", strerror(-ret));
 		exit(1);
 	}
 	
@@ -346,7 +346,7 @@ int udev_main(int argc, char **argv) {
 	
 	ret = crtx_start_listener(&ulist.base);
 	if (ret) {
-		ERROR("starting udev listener failed\n");
+		CRTX_ERROR("starting udev listener failed\n");
 		return 1;
 	}
 	

@@ -246,7 +246,7 @@ static void *socket_server_tmain(void *data) {
 		args = (struct socket_connection_tmain_args *) malloc(sizeof(struct socket_connection_tmain_args));
 		
 		args->slistener = listeners;
-		args->sockfd = accept(listeners->sockfd, cliaddr, &addrlen); ASSERT(args->sockfd >= 0);
+		args->sockfd = accept(listeners->sockfd, cliaddr, &addrlen); CRTX_ASSERT(args->sockfd >= 0);
 		
 // 		get_thread(socket_connection_tmain, args, 1);
 		args->thread_job.fct = &socket_connection_tmain;
@@ -314,7 +314,7 @@ static void *socket_client_tmain(void *data) {
 static void stop_thread(struct crtx_thread *t, void *data) {
 	struct crtx_socket_listener *inlist;
 	
-	DBG("stopping socket listener\n");
+	CRTX_DBG("stopping socket listener\n");
 	
 	inlist = (struct crtx_socket_listener*) data;
 	

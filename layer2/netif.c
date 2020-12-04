@@ -21,7 +21,7 @@ int crtx_netif_query_interfaces(struct crtx_netif_listener *netif_lstnr) {
 	
 	r = nl_send_simple(netif_lstnr->libnl_lstnr.sock, RTM_GETLINK, NLM_F_REQUEST | NLM_F_DUMP, &rt_hdr, sizeof(rt_hdr));
 	if (r < 0) {
-		ERROR("nl_send_simple failed: %d\n", r);
+		CRTX_ERROR("nl_send_simple failed: %d\n", r);
 		return 1;
 	}
 	
@@ -94,7 +94,7 @@ static char netif_start_listener(struct crtx_listener_base *listener) {
 	
 	ret = crtx_start_listener(&netif_lstnr->libnl_lstnr.base);
 	if (ret) {
-		ERROR("starting libnl listener failed\n");
+		CRTX_ERROR("starting libnl listener failed\n");
 		return ret;
 	}
 	
@@ -140,7 +140,7 @@ struct crtx_listener_base *crtx_setup_netif_listener(void *options) {
 // 	lbase = create_listener("libnl", &netif_lstnr->libnl_lstnr);
 	ret = crtx_setup_listener("libnl", &netif_lstnr->libnl_lstnr);
 	if (ret) {
-		ERROR("create_listener(libnl) failed\n");
+		CRTX_ERROR("create_listener(libnl) failed\n");
 		return 0;
 	}
 	
@@ -189,7 +189,7 @@ int netif_main(int argc, char **argv) {
 // 	lbase = create_listener("netif", &netif_lstnr);
 	r = crtx_setup_listener("netif", &netif_lstnr);
 	if (r) {
-		ERROR("create_listener(netif) failed\n");
+		CRTX_ERROR("create_listener(netif) failed\n");
 		exit(1);
 	}
 	
@@ -200,7 +200,7 @@ int netif_main(int argc, char **argv) {
 	
 	r = crtx_start_listener(&netif_lstnr.base);
 	if (r) {
-		ERROR("starting netif listener failed\n");
+		CRTX_ERROR("starting netif listener failed\n");
 		return 1;
 	}
 	

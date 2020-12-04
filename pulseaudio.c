@@ -93,7 +93,7 @@ static void generic_pa_get_info_callback(pa_context *c, void *info, int eol, voi
 	
 	r = crtx_create_event(&nevent);
 	if (r) {
-		ERROR("crtx_create_event() in generic_pa_get_info_callback() failed: %s\n", strerror(-r));
+		CRTX_ERROR("crtx_create_event() in generic_pa_get_info_callback() failed: %s\n", strerror(-r));
 		return;
 	}
 	nevent->description = crtx_pa_subscription_etypes[helper->type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK];
@@ -123,7 +123,7 @@ static void generic_pa_get_info_callback(pa_context *c, void *info, int eol, voi
 				crtx_pa_card_info2dict(info, &dict);
 				break;
 			default:
-				ERROR("TODO no handler yet for type %d\n", helper->type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK);
+				CRTX_ERROR("TODO no handler yet for type %d\n", helper->type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK);
 				break;
 		}
 	}
@@ -177,7 +177,7 @@ static void pa_subscription_callback(pa_context *c, pa_subscription_event_type_t
 			break;
 		
 		default:
-			ERROR("TODO no handler yet for type %d\n", t & PA_SUBSCRIPTION_EVENT_FACILITY_MASK);
+			CRTX_ERROR("TODO no handler yet for type %d\n", t & PA_SUBSCRIPTION_EVENT_FACILITY_MASK);
 			free(helper);
 			break;
 	}
@@ -246,7 +246,7 @@ struct crtx_listener_base *crtx_setup_pa_listener(void *options) {
 											palist->client_proplist
 										);
 	if (!palist->context) {
-		ERROR("pa_context_new_with_proplist failed\n");
+		CRTX_ERROR("pa_context_new_with_proplist failed\n");
 		return 0;
 	}
 	
@@ -258,7 +258,7 @@ struct crtx_listener_base *crtx_setup_pa_listener(void *options) {
 	}
 	
 	if (palist->state != PA_CONTEXT_READY) {
-		ERROR("failed to connect to pulse daemon: %s\n",
+		CRTX_ERROR("failed to connect to pulse daemon: %s\n",
 				pa_strerror(pa_context_errno(palist->context)));
 		return 0;
 	}
@@ -271,7 +271,7 @@ struct crtx_listener_base *crtx_setup_pa_listener(void *options) {
 	if (op) {
 		wait_for_op_result(palist, op);
 	} else {
-		ERROR("pa_context_subscribe\n");
+		CRTX_ERROR("pa_context_subscribe\n");
 		return 0;
 	}
 	
@@ -323,7 +323,7 @@ int pa_main(int argc, char **argv) {
 	
 	ret = crtx_setup_listener("pulseaudio", &palist);
 	if (ret) {
-		ERROR("create_listener(pulseaudio) failed\n");
+		CRTX_ERROR("create_listener(pulseaudio) failed\n");
 		exit(1);
 	}
 	
@@ -333,7 +333,7 @@ int pa_main(int argc, char **argv) {
 	
 	ret = crtx_start_listener(&palist.base);
 	if (ret) {
-		ERROR("starting pulseaudio listener failed\n");
+		CRTX_ERROR("starting pulseaudio listener failed\n");
 		return 1;
 	}
 	

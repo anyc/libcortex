@@ -31,7 +31,7 @@ struct crtx_dict *crtx_uevents_raw2dict(struct crtx_event *event) {
 	
 	sep = strchr(buf, '@');
 	if (!sep) {
-		ERROR("wrong format of uevent msg\n");
+		CRTX_ERROR("wrong format of uevent msg\n");
 		return 0;
 	}
 	s = buf + strlen(buf)+1;
@@ -46,7 +46,7 @@ struct crtx_dict *crtx_uevents_raw2dict(struct crtx_event *event) {
 			continue;
 		}
 		if (sep >= buf+size) {
-			ERROR("wrong format of uevent msg\n");
+			CRTX_ERROR("wrong format of uevent msg\n");
 // 			crtx_free_dict(dict);
 			crtx_dict_unref(dict);
 			return 0;
@@ -84,7 +84,7 @@ static int uevents_read_cb(struct crtx_netlink_raw_listener *nl_listener, int fd
 		if (errno == EWOULDBLOCK)
 			return 0;
 		
-		ERROR("error while receiving nl route event: %s\n", strerror(errno));
+		CRTX_ERROR("error while receiving nl route event: %s\n", strerror(errno));
 		return errno;
 	}
 	
@@ -140,7 +140,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	
 	ret = crtx_start_listener(&ulist->nl_listener.base);
 	if (ret) {
-		ERROR("starting netlink_raw listener failed\n");
+		CRTX_ERROR("starting netlink_raw listener failed\n");
 		return ret;
 	}
 	
@@ -165,7 +165,7 @@ struct crtx_listener_base *crtx_setup_uevents_listener(void *options) {
 	
 	r = crtx_setup_listener("netlink_raw", &ulist->nl_listener);
 	if (r) {
-		ERROR("create_listener(netlink_raw) failed: %s\n", strerror(-r));
+		CRTX_ERROR("create_listener(netlink_raw) failed: %s\n", strerror(-r));
 		exit(1);
 	}
 	
@@ -223,7 +223,7 @@ int netlink_raw_main(int argc, char **argv) {
 	
 	ret = crtx_setup_listener("uevents", &ulist);
 	if (ret) {
-		ERROR("create_listener(uevents) failed: %s\n", strerror(ret));
+		CRTX_ERROR("create_listener(uevents) failed: %s\n", strerror(ret));
 		exit(1);
 	}
 	
@@ -231,7 +231,7 @@ int netlink_raw_main(int argc, char **argv) {
 	
 	ret = crtx_start_listener(&ulist.base);
 	if (ret) {
-		ERROR("starting uevents listener failed\n");
+		CRTX_ERROR("starting uevents listener failed\n");
 		return 1;
 	}
 	

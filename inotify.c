@@ -79,7 +79,7 @@ uint32_t crtx_inotify_string2mask(char *mask_string) {
 		}
 	}
 	
-	ERROR("inotify: no mask \"%s\" found\n", mask_string);
+	CRTX_ERROR("inotify: no mask \"%s\" found\n", mask_string);
 	return 0;
 }
 
@@ -111,7 +111,7 @@ char crtx_inotify_mask2string(uint32_t mask, char *string, size_t *string_size) 
 		
 		return 1;
 	} else {
-		ERROR("error while executing crtx_inotify_string2mask\n");
+		CRTX_ERROR("error while executing crtx_inotify_string2mask\n");
 		return 0;
 	}
 }
@@ -231,7 +231,7 @@ static char inotify_eloop() {
 			
 			// 				dereference_event_release(event);
 		} else {
-			ERROR("inotify listener for wd %d not found\n", in_event->wd);
+			CRTX_ERROR("inotify listener for wd %d not found\n", in_event->wd);
 		}
 		
 		i += sizeof(struct inotify_event) + in_event->len;

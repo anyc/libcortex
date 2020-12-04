@@ -43,7 +43,7 @@ static char sip_fd_event_handler(struct crtx_event *event, void *userdata, void 
 		
 		r = crtx_create_event(&nevent); // evt, sizeof(eXosip_event_t*));
 		if (r) {
-			ERROR("crtx_create_event() failed: %s\n", strerror(-r));
+			CRTX_ERROR("crtx_create_event() failed: %s\n", strerror(-r));
 			return r;
 		}
 		
@@ -75,7 +75,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	reg = 0;
 	slist->rid = eXosip_register_build_initial_register(slist->ctx, from, proxy, NULL, 1800, &reg);
 	if (slist->rid < 0) {
-		ERROR("eXosip_register_build_initial_register failed: %d %s\n", slist->rid, osip_strerror(slist->rid));
+		CRTX_ERROR("eXosip_register_build_initial_register failed: %d %s\n", slist->rid, osip_strerror(slist->rid));
 		eXosip_unlock(slist->ctx);
 		return slist->rid;
 	}
@@ -84,7 +84,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	osip_message_set_supported(reg, "path");
 	r = eXosip_register_send_register(slist->ctx, slist->rid, reg);
 	if (r) {
-		ERROR("eXosip_register_send_register failed: %d\n", r);
+		CRTX_ERROR("eXosip_register_send_register failed: %d\n", r);
 		eXosip_unlock(slist->ctx);
 		return r;
 	}
@@ -114,7 +114,7 @@ static char stop_listener(struct crtx_listener_base *listener) {
 	eXosip_lock(slist->ctx);
 	r = eXosip_register_build_register(slist->ctx, slist->rid, 0, &reg);
 	if (r < 0) {
-		ERROR("eXosip_register_build_register failed: %d\n", r);
+		CRTX_ERROR("eXosip_register_build_register failed: %d\n", r);
 		eXosip_unlock(slist->ctx);
 		return r;
 	}
@@ -144,20 +144,20 @@ struct crtx_listener_base *crtx_setup_sip_listener(void *options) {
 	
 	slist->ctx = eXosip_malloc();
 	if (!slist->ctx) {
-		ERROR("eXosip_malloc failed\n");
+		CRTX_ERROR("eXosip_malloc failed\n");
 		return 0;
 	}
 	
 	r = eXosip_init(slist->ctx);
 	if (r) {
-		ERROR("eXosip_init failed: %d\n", r);
+		CRTX_ERROR("eXosip_init failed: %d\n", r);
 		return 0;
 	}
 	
 	r = eXosip_listen_addr(slist->ctx, slist->transport, slist->src_addr, slist->src_port, slist->family, slist->secure);
 	if (r) {
 		eXosip_quit(slist->ctx);
-		ERROR("eXosip_listen_addr failed: %d\n", r);
+		CRTX_ERROR("eXosip_listen_addr failed: %d\n", r);
 		return 0;
 	}
 	
@@ -231,7 +231,7 @@ static char sip2notify_handler(struct crtx_event *event, void *userdata, void **
 			
 		r = crtx_create_event(&notify_event);
 		if (r) {
-			ERROR("crtx_create_event() failed: %s\n", strerror(-r));
+			CRTX_ERROR("crtx_create_event() failed: %s\n", strerror(-r));
 			return r;
 		}
 		notify_dict = crtx_dict_transform(dict, "sss", dict_transformation);
@@ -292,7 +292,7 @@ int sip_main(int argc, char **argv) {
 	
 	r = crtx_setup_listener("sip", &slist);
 	if (r) {
-		ERROR("create_listener(sip) failed\n");
+		CRTX_ERROR("create_listener(sip) failed\n");
 		exit(1);
 	}
 	
@@ -305,7 +305,7 @@ int sip_main(int argc, char **argv) {
 	
 	ret = crtx_start_listener(&slist.base);
 	if (ret) {
-		ERROR("starting sip listener failed\n");
+		CRTX_ERROR("starting sip listener failed\n");
 		return 1;
 	}
 	

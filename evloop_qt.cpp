@@ -41,7 +41,7 @@ static enum MyQSocketNotifier::Type crtx_event_flags2qt_flags(int crtx_event_fla
 		crtx_event_flags = crtx_event_flags & (~EVLOOP_TIMEOUT);
 	
 	if (POPCOUNT32(crtx_event_flags) != 1) {
-		ERROR("evloop_qt: invalid amount of event flags %u != 1 (%d)\n", POPCOUNT32(crtx_event_flags), crtx_event_flags);
+		CRTX_ERROR("evloop_qt: invalid amount of event flags %u != 1 (%d)\n", POPCOUNT32(crtx_event_flags), crtx_event_flags);
 	}
 	
 	if (crtx_event_flags & EVLOOP_READ)
@@ -65,7 +65,7 @@ static int qt_flags2crtx_event_flags(enum QSocketNotifier::Type qt_flags) {
 	else if (qt_flags == MyQSocketNotifier::Exception)
 		ret = EVLOOP_SPECIAL;
 	else
-		ERROR("evloop_qt: unknown Qt socketnotifier type: %d\n", qt_flags);
+		CRTX_ERROR("evloop_qt: unknown Qt socketnotifier type: %d\n", qt_flags);
 	
 	return ret;
 }
@@ -79,7 +79,7 @@ static char timeout_event_handler(struct crtx_event *event, void *userdata, void
 	
 	r = crtx_create_event(&event);
 	if (r) {
-		ERROR("crtx_create_event failed: %s\n", strerror(r));
+		CRTX_ERROR("crtx_create_event failed: %s\n", strerror(r));
 	} else {
 		crtx_event_set_raw_data(event, 'p', userdata, sizeof(struct crtx_evloop_callback), CRTX_DIF_DONT_FREE_DATA);
 		
@@ -124,7 +124,7 @@ static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evl
 			tlist->newtimer.it_value.tv_sec = el_cb->timeout.tv_sec;
 			tlist->newtimer.it_value.tv_nsec = el_cb->timeout.tv_nsec;
 			
-			VDBG("setup evloop timeout: %ld %ld\n", el_cb->timeout.tv_sec,el_cb->timeout.tv_nsec );
+			CRTX_VDBG("setup evloop timeout: %ld %ld\n", el_cb->timeout.tv_sec,el_cb->timeout.tv_nsec );
 			
 			tlist->clockid = CRTX_DEFAULT_CLOCK;
 // 			tlist->settime_flags = TFD_TIMER_ABSTIME;
@@ -134,7 +134,7 @@ static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evl
 			
 			r = crtx_setup_listener("timer", tlist);
 			if (r) {
-				ERROR("create_listener(timer) failed: %s\n", strerror(-r));
+				CRTX_ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 				return r;
 			}
 			
@@ -145,7 +145,7 @@ static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evl
 		
 		connection = notifier->connect(notifier, &MyQSocketNotifier::activated, notifier, &MyQSocketNotifier::socketEvent);
 		if (! (bool) connection) {
-			ERROR("connect() for MyQSocketNotifier failed\n");
+			CRTX_ERROR("connect() for MyQSocketNotifier failed\n");
 			return 1;
 		}
 		
@@ -249,7 +249,7 @@ void setup_timer() {
 	
 	r = crtx_setup_listener("timer", &tlist);
 	if (r) {
-		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
+		CRTX_ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		exit(1);
 	}
 	

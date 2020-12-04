@@ -23,7 +23,7 @@ static char libnl_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	// nl_recvmsgs_default will eventually call the registered callback
 	r = nl_recvmsgs_default(libnl_lstnr->sock);
 	if (r) {
-		ERROR("nl_recvmsgs_default failed: %d\n", r);
+		CRTX_ERROR("nl_recvmsgs_default failed: %d\n", r);
 	}
 	
 	return 0;
@@ -38,7 +38,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	
 	ret = nl_connect(libnl_lstnr->sock, NETLINK_ROUTE); 
 	if (ret < 0) {
-		ERROR("nl_connect failed: %d\n", ret);
+		CRTX_ERROR("nl_connect failed: %d\n", ret);
 		return ret;
 	}
 	
@@ -75,7 +75,7 @@ struct crtx_listener_base *crtx_setup_libnl_listener(void *options) {
 	while (cb->func) {
 		r = nl_socket_modify_cb(libnl_lstnr->sock, cb->type, cb->kind, cb->func, cb->arg);
 		if (r) {
-			ERROR("nl_socket_modify_cb failed %d\n", r);
+			CRTX_ERROR("nl_socket_modify_cb failed %d\n", r);
 			nl_socket_free(libnl_lstnr->sock);
 			return 0;
 		}
@@ -128,7 +128,7 @@ static char libnl_test_handler(struct crtx_event *event, void *userdata, void **
 		
 		r = nl_send_simple(libnl->sock, RTM_GETLINK, NLM_F_REQUEST | NLM_F_DUMP, &rt_hdr, sizeof(rt_hdr));
 		if (r < 0) {
-			ERROR("nl_send_simple failed: %d\n", r);
+			CRTX_ERROR("nl_send_simple failed: %d\n", r);
 			return 1;
 		}
 	}
@@ -181,7 +181,7 @@ int libnl_main(int argc, char **argv) {
 	
 	r = crtx_setup_listener("libnl", &libnl);
 	if (r) {
-		ERROR("create_listener(libnl) failed: %s\n", strerror(-r));
+		CRTX_ERROR("create_listener(libnl) failed: %s\n", strerror(-r));
 		exit(1);
 	}
 	
@@ -190,7 +190,7 @@ int libnl_main(int argc, char **argv) {
 	
 	r = crtx_start_listener(&libnl.base);
 	if (r) {
-		ERROR("starting libnl listener failed\n");
+		CRTX_ERROR("starting libnl listener failed\n");
 		return 1;
 	}
 	

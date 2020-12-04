@@ -41,7 +41,7 @@ char crtx_fill_data_item_va2(struct crtx_dict_item *di, unsigned char type, char
 			
 			// TODO smaller types are promoted to int
 			if (di->size > 0 && di->size > sizeof(uint32_t)) {
-				ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint32_t));
+				CRTX_ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint32_t));
 				return 0;
 			}
 			break;
@@ -51,7 +51,7 @@ char crtx_fill_data_item_va2(struct crtx_dict_item *di, unsigned char type, char
 			
 			di->size = va_arg(*va, size_t);
 			if (di->size > 0 && di->size != sizeof(uint64_t)) {
-				ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint64_t));
+				CRTX_ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint64_t));
 				return 0;
 			}
 			break;
@@ -61,7 +61,7 @@ char crtx_fill_data_item_va2(struct crtx_dict_item *di, unsigned char type, char
 			
 			di->size = va_arg(*va, size_t);
 			if (di->size > 0 && di->size != sizeof(size_t)) {
-				ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint64_t));
+				CRTX_ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint64_t));
 				return 0;
 			}
 			break;
@@ -70,7 +70,7 @@ char crtx_fill_data_item_va2(struct crtx_dict_item *di, unsigned char type, char
 			
 			di->size = va_arg(*va, size_t);
 			if (di->size > 0 && di->size != sizeof(double)) {
-				ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(double));
+				CRTX_ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(double));
 				return 0;
 			}
 			break;
@@ -93,7 +93,7 @@ char crtx_fill_data_item_va2(struct crtx_dict_item *di, unsigned char type, char
 			di->size = va_arg(*va, size_t);
 			break;
 		default:
-			ERROR("unknown literal '%c'\n", di->type);
+			CRTX_ERROR("unknown literal '%c'\n", di->type);
 			return -1;
 	}
 	
@@ -131,7 +131,7 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, unsigned char type, va_li
 			
 			// TODO smaller types are promoted to int
 			if (di->size > 0 && di->size > sizeof(uint32_t)) {
-				ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint32_t));
+				CRTX_ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint32_t));
 				return 0;
 			}
 			break;
@@ -141,7 +141,7 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, unsigned char type, va_li
 			
 			di->size = va_arg(*va, size_t);
 			if (di->size > 0 && di->size != sizeof(uint64_t)) {
-				ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint64_t));
+				CRTX_ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint64_t));
 				return 0;
 			}
 			break;
@@ -151,7 +151,7 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, unsigned char type, va_li
 			
 			di->size = va_arg(*va, size_t);
 			if (di->size > 0 && di->size != sizeof(size_t)) {
-				ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint64_t));
+				CRTX_ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(uint64_t));
 				return 0;
 			}
 			break;
@@ -160,7 +160,7 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, unsigned char type, va_li
 			
 			di->size = va_arg(*va, size_t);
 			if (di->size > 0 && di->size != sizeof(double)) {
-				ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(double));
+				CRTX_ERROR("crtx size mismatch for key \"%s\" type '%c': %zu expected: %zu\n", di->key, di->type, di->size, sizeof(double));
 				return 0;
 			}
 			break;
@@ -183,7 +183,7 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, unsigned char type, va_li
 			di->size = va_arg(*va, size_t);
 			break;
 		default:
-			ERROR("unknown literal '%c'\n", di->type);
+			CRTX_ERROR("unknown literal '%c'\n", di->type);
 			return -1;
 	}
 	
@@ -230,14 +230,14 @@ char crtx_dict_new_item(struct crtx_dict *dict, unsigned char type, char *key, .
 
 char crtx_resize_dict(struct crtx_dict *dict, size_t n_items) {
 	if (n_items < dict->signature_length) {
-		ERROR("shrinking dicts not yet supported\n");
+		CRTX_ERROR("shrinking dicts not yet supported\n");
 		return 1;
 	}
 	
 // 	printf("resize %d -> %d\n", dict->signature_length, n_items);
 	
 	if (dict->size && dict->size != sizeof(struct crtx_dict)+dict->signature_length*sizeof(struct crtx_dict_item)) {
-		ERROR("TODO handle payload in crtx_resize_dict (%lu != %zu)\n", dict->size,
+		CRTX_ERROR("TODO handle payload in crtx_resize_dict (%lu != %zu)\n", dict->size,
 			 sizeof(struct crtx_dict) + dict->signature_length * sizeof(struct crtx_dict_item) );
 	}
 	
@@ -485,26 +485,26 @@ void crtx_free_dict(struct crtx_dict *ds) {
 
 void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level);
 void crtx_print_dict_item(struct crtx_dict_item *di, unsigned char level) {
-	INFO("%s = ", di->key?di->key:"\"\"");
+	CRTX_INFO("%s = ", di->key?di->key:"\"\"");
 	
 	switch (di->type) {
-		case 'u': INFO("(uint32_t) %u", di->uint32); break;
-		case 'i': INFO("(int32_t) %d", di->int32); break;
-		case 's': INFO("(char*) \"%s\"", di->string); break;
-		case 'p': INFO("(void*) %p", di->pointer); break;
-		case 'U': INFO("(uint64_t) %" PRIu64, di->uint64); break;
-		case 'I': INFO("(int64_t) %" PRId64, di->int64); break;
-		case 'd': INFO("(double) %f", di->double_fp); break;
-		case 'z': INFO("(size_t) %zu", di->sizet); break;
-		case 'Z': INFO("(ssize_t) %zu", di->ssizet); break;
+		case 'u': CRTX_INFO("(uint32_t) %u", di->uint32); break;
+		case 'i': CRTX_INFO("(int32_t) %d", di->int32); break;
+		case 's': CRTX_INFO("(char*) \"%s\"", di->string); break;
+		case 'p': CRTX_INFO("(void*) %p", di->pointer); break;
+		case 'U': CRTX_INFO("(uint64_t) %" PRIu64, di->uint64); break;
+		case 'I': CRTX_INFO("(int64_t) %" PRId64, di->int64); break;
+		case 'd': CRTX_INFO("(double) %f", di->double_fp); break;
+		case 'z': CRTX_INFO("(size_t) %zu", di->sizet); break;
+		case 'Z': CRTX_INFO("(ssize_t) %zu", di->ssizet); break;
 		case 'D':
-// 			INFO("(dict) ");
+// 			CRTX_INFO("(dict) ");
 			if (di->dict)
 				crtx_print_dict_rec(di->dict, level+1);
 			else
-				INFO("(null)\n");
+				CRTX_INFO("(null)\n");
 			break;
-		default: ERROR("print_dict: unknown type '%c'\n", di->type); break;
+		default: CRTX_ERROR("print_dict: unknown type '%c'\n", di->type); break;
 	}
 	
 }
@@ -515,28 +515,28 @@ void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level) {
 	uint8_t i,j;
 	
 	if (!ds) {
-		ERROR("error, trying to print non-existing dict\n");
+		CRTX_ERROR("error, trying to print non-existing dict\n");
 		return;
 	}
 	
-// 	for (j=0;j<level-1;j++) INFO("   ");
-	INFO("(dict) %s (%zu==%u)\n", ds->signature?ds->signature:"\"\"", ds->signature?strlen(ds->signature):0, ds->signature_length);
+// 	for (j=0;j<level-1;j++) CRTX_INFO("   ");
+	CRTX_INFO("(dict) %s (%zu==%u)\n", ds->signature?ds->signature:"\"\"", ds->signature?strlen(ds->signature):0, ds->signature_length);
 	
 	i=0;
 	s = ds->signature;
 	di = ds->items;
 
 	while ( s?*s:1 && (!s)? i<ds->signature_length:1 ) {
-		for (j=0;j<level;j++) INFO("   "); // indent
+		for (j=0;j<level;j++) CRTX_INFO("   "); // indent
 		
-		INFO("%u: ", i);
+		CRTX_INFO("%u: ", i);
 		
 		crtx_print_dict_item(di, level);
 		if (di->type != 'D')
-			INFO("\n");
+			CRTX_INFO("\n");
 		
 		if (s && *s != di->type)
-			ERROR("error type %c != %c\n", *s, di->type);
+			CRTX_ERROR("error type %c != %c\n", *s, di->type);
 		
 		if (s) s++;
 		di++;
@@ -583,10 +583,10 @@ char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size
 				memcpy(buffer, &di->pointer, buffer_size);
 				return 1;
 			} else
-				ERROR("error, size does not match type: %zu != %zu\n", buffer_size, sizeof(void*));
+				CRTX_ERROR("error, size does not match type: %zu != %zu\n", buffer_size, sizeof(void*));
 			break;
 		default:
-			ERROR("error, unimplemented value type %c\n", di->type);
+			CRTX_ERROR("error, unimplemented value type %c\n", di->type);
 			return 0;
 	}
 	
@@ -637,7 +637,7 @@ struct crtx_dict_item * crtx_get_item_by_idx(struct crtx_dict *ds, size_t idx) {
 char crtx_conv_value(char dtype,  void *dbuffer, size_t dbuffer_size, char stype,  void *sbuffer, size_t sbuffer_size) {
 	int ret;
 	
-	VDBG("convert %c to %c\n", stype, dtype);
+	CRTX_VDBG("convert %c to %c\n", stype, dtype);
 	
 	if (stype == dtype) {
 		memcpy(dbuffer, sbuffer, dbuffer_size);
@@ -654,7 +654,7 @@ char crtx_conv_value(char dtype,  void *dbuffer, size_t dbuffer_size, char stype
 			memcpy(dbuffer, &v64, sizeof(uint64_t));
 			return 1;
 		} else {
-			ERROR("crtx_get_item_value insufficient size: %zu > %zu\n", sizeof(uint64_t), dbuffer_size);
+			CRTX_ERROR("crtx_get_item_value insufficient size: %zu > %zu\n", sizeof(uint64_t), dbuffer_size);
 			return 0;
 		}
 	} else
@@ -666,7 +666,7 @@ char crtx_conv_value(char dtype,  void *dbuffer, size_t dbuffer_size, char stype
 		if (u64 < UINT32_MAX) {
 			u32 = u64;
 		} else {
-			ERROR("cannot convert %" PRIu64 " to uint32_t\n", u64);
+			CRTX_ERROR("cannot convert %" PRIu64 " to uint32_t\n", u64);
 			return 0;
 		}
 			
@@ -674,7 +674,7 @@ char crtx_conv_value(char dtype,  void *dbuffer, size_t dbuffer_size, char stype
 			memcpy(dbuffer, &u32, sizeof(uint32_t));
 			return 1;
 		} else {
-			ERROR("crtx_get_item_value insufficient size: %zu > %zu\n", sizeof(uint32_t), dbuffer_size);
+			CRTX_ERROR("crtx_get_item_value insufficient size: %zu > %zu\n", sizeof(uint32_t), dbuffer_size);
 			return 0;
 		}
 	} else
@@ -688,14 +688,14 @@ char crtx_conv_value(char dtype,  void *dbuffer, size_t dbuffer_size, char stype
 		{
 			i32 = i64;
 		} else {
-			ERROR("cannot convert %" PRIi64 " to int32_t\n", i64);
+			CRTX_ERROR("cannot convert %" PRIi64 " to int32_t\n", i64);
 			return 0;
 		}
 		if (sizeof(int32_t) <= dbuffer_size) {
 			memcpy(dbuffer, &i32, sizeof(int32_t));
 			return 1;
 		} else {
-			ERROR("crtx_get_item_value insufficient size: %zu > %zu\n", sizeof(int32_t), dbuffer_size);
+			CRTX_ERROR("crtx_get_item_value insufficient size: %zu > %zu\n", sizeof(int32_t), dbuffer_size);
 			return 0;
 		}
 	} else
@@ -707,14 +707,14 @@ char crtx_conv_value(char dtype,  void *dbuffer, size_t dbuffer_size, char stype
 		if (i32 >= 0) {
 			u32 = i32;
 		} else {
-			ERROR("cannot convert %" PRId32 " to uint32_t\n", i32);
+			CRTX_ERROR("cannot convert %" PRId32 " to uint32_t\n", i32);
 			return 0;
 		}
 		if (sizeof(uint32_t) <= dbuffer_size) {
 			memcpy(dbuffer, &u32, sizeof(uint32_t));
 			return 1;
 		} else {
-			ERROR("crtx_get_item_value insufficient size: %zu > %zu\n", sizeof(uint32_t), dbuffer_size);
+			CRTX_ERROR("crtx_get_item_value insufficient size: %zu > %zu\n", sizeof(uint32_t), dbuffer_size);
 			return 0;
 		}
 	} else
@@ -726,14 +726,14 @@ char crtx_conv_value(char dtype,  void *dbuffer, size_t dbuffer_size, char stype
 		if (i64 >= 0) {
 			u64 = i64;
 		} else {
-			ERROR("cannot convert %" PRId64 " to uint64_t\n", i64);
+			CRTX_ERROR("cannot convert %" PRId64 " to uint64_t\n", i64);
 			return 0;
 		}
 		if (sizeof(uint64_t) <= dbuffer_size) {
 			memcpy(dbuffer, &u64, sizeof(uint64_t));
 			return 1;
 		} else {
-			ERROR("crtx_get_item_value insufficient size: %zu > %zu\n", sizeof(uint64_t), dbuffer_size);
+			CRTX_ERROR("crtx_get_item_value insufficient size: %zu > %zu\n", sizeof(uint64_t), dbuffer_size);
 			return 0;
 		}
 	} else
@@ -745,14 +745,14 @@ char crtx_conv_value(char dtype,  void *dbuffer, size_t dbuffer_size, char stype
 		if (d < INT64_MAX && INT64_MIN < d) {
 			i64 = d;
 		} else {
-			ERROR("cannot convert %f to int64_t\n", d);
+			CRTX_ERROR("cannot convert %f to int64_t\n", d);
 			return 0;
 		}
 		if (sizeof(int64_t) <= dbuffer_size) {
 			memcpy(dbuffer, &i64, sizeof(int64_t));
 			return 1;
 		} else {
-			ERROR("crtx_get_item_value insufficient size: %zu > %zu\n", sizeof(int64_t), dbuffer_size);
+			CRTX_ERROR("crtx_get_item_value insufficient size: %zu > %zu\n", sizeof(int64_t), dbuffer_size);
 			return 0;
 		}
 	} else
@@ -780,7 +780,7 @@ char crtx_conv_value(char dtype,  void *dbuffer, size_t dbuffer_size, char stype
 		
 		return 1;
 	} else {
-		ERROR("TODO conversion %c -> %c\n", stype, dtype);
+		CRTX_ERROR("TODO conversion %c -> %c\n", stype, dtype);
 		return 0;
 	}
 	
@@ -802,7 +802,7 @@ char crtx_get_item_value(struct crtx_dict_item *di, char type,  void *buffer, si
 		case 'd':
 			return crtx_conv_value(type, buffer, buffer_size, di->type, &di->double_fp, sizeof(uint64_t));
 		default:
-			ERROR("TODO conversion2 %c -> %c\n", di->type, type);
+			CRTX_ERROR("TODO conversion2 %c -> %c\n", di->type, type);
 			return 0;
 	}
 }
@@ -817,7 +817,7 @@ char crtx_get_value(struct crtx_dict *ds, const char *key, char type, void *buff
 	return crtx_get_item_value(di, type, buffer, buffer_size);
 	
 // 	if (type > 0 && di->type != type) {
-// 		ERROR("type mismatch for \"%s\": %c != %c\n", key, type, di->type);
+// 		CRTX_ERROR("type mismatch for \"%s\": %c != %c\n", key, type, di->type);
 // 		return 0;
 // 	}
 	
@@ -864,7 +864,7 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 			 */
 			
 			if (*(f+1) != '[') {
-				ERROR("character after %% neither %% nor [: %c\n", *(f+1));
+				CRTX_ERROR("character after %% neither %% nor [: %c\n", *(f+1));
 				return 0;
 			}
 			
@@ -885,7 +885,7 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 // 				di = crtx_get_item(ds, key);
 				di = crtx_dict_locate(ds, key);
 				if (!di) {
-					ERROR("dict transformation failed, no entry \"%s\"\n", key);
+					CRTX_ERROR("dict transformation failed, no entry \"%s\"\n", key);
 					return 0;
 				}
 			} else {
@@ -940,7 +940,7 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 						i = 0;
 						do {
 							if (di->type != 's') {
-								ERROR("unexpected type in array of strings: %c\n", di->type);
+								CRTX_ERROR("unexpected type in array of strings: %c\n", di->type);
 								return 0;
 							}
 							
@@ -964,9 +964,9 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 						break;
 					case 'd':
 					case 'u':
-						ERROR("TODO\n");
+						CRTX_ERROR("TODO\n");
 // 						if (!di || (di->type != 's' && di->type != 'u')) {
-// 							ERROR("get_value failed\n");
+// 							CRTX_ERROR("get_value failed\n");
 // 							return 0;
 // 						}
 // 						
@@ -980,7 +980,7 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 						
 						break;
 					default:
-						ERROR("%c unknown", *e);
+						CRTX_ERROR("%c unknown", *e);
 						return 0;
 				}
 			}
@@ -1070,9 +1070,9 @@ char crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void 
 	
 	if (!orig_dict) {
 		if (event->description)
-			ERROR("cannot convert event %s to dict", event->description);
+			CRTX_ERROR("cannot convert event %s to dict", event->description);
 		else
-			ERROR("cannot convert event %d to dict", event->type);
+			CRTX_ERROR("cannot convert event %d to dict", event->type);
 		return 1;
 	}
 	
@@ -1082,7 +1082,7 @@ char crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void 
 	
 	r = crtx_create_event(&new_event);
 	if (r) {
-		ERROR("crtx_create_event failed: %s\n", strerror(r));
+		CRTX_ERROR("crtx_create_event failed: %s\n", strerror(r));
 		return r;
 	}
 	
@@ -1143,7 +1143,7 @@ char crtx_cmp_item(struct crtx_dict_item *a, struct crtx_dict_item *b) {
 				return -1;
 			if (!ib)
 				return 1;
-		default: ERROR("TODO");
+		default: CRTX_ERROR("TODO");
 			return 1;
 	}
 }
@@ -1165,7 +1165,7 @@ char crtx_dict_calc_payload_size(struct crtx_dict *orig, size_t *size) {
 		} else
 		if (di->type == 'p' || di->type == 's') {
 			if (di->size == 0)
-				DBG("calc_payload_size: size of item \"%s\" (t %c) = 0\n", di->key, di->type);
+				CRTX_DBG("calc_payload_size: size of item \"%s\" (t %c) = 0\n", di->key, di->type);
 			lsize += di->size;
 		}
 		
@@ -1229,7 +1229,7 @@ void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src,
 				dst->pointer = malloc(src->size);
 				memcpy(dst->pointer, src->pointer, src->size);
 			} else {
-				ERROR("copying reference only\n");
+				CRTX_ERROR("copying reference only\n");
 				dst->pointer = src->pointer;
 			}
 			
@@ -1283,7 +1283,7 @@ void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src,
 // 	psize = 0;
 // 	ret = crtx_dict_calc_payload_size(orig, &psize);
 // 	if (!ret)
-// 		ERROR("error while calculating dict payload size (sign \"%s\")\n", orig->signature);
+// 		CRTX_ERROR("error while calculating dict payload size (sign \"%s\")\n", orig->signature);
 // 	
 // 	dict = crtx_init_dict(orig->signature, orig->signature_length, psize);
 // 	
@@ -1392,7 +1392,7 @@ char crtx_dict_locate_value(struct crtx_dict *dict, const char *path, char type,
 	
 	di = crtx_dict_locate(dict, path);
 	if (!di) {
-		DBG("could not find \"%s\" in dict\n", path);
+		CRTX_DBG("could not find \"%s\" in dict\n", path);
 		return 1;
 	}
 	
@@ -1405,7 +1405,7 @@ char *crtx_dict_locate_string(struct crtx_dict *dict, const char *path) {
 	
 	di = crtx_dict_locate(dict, path);
 	if (!di) {
-		DBG("could not find \"%s\" in dict\n", path);
+		CRTX_DBG("could not find \"%s\" in dict\n", path);
 		return 0;
 	}
 	

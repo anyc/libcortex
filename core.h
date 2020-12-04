@@ -23,9 +23,9 @@ extern "C" {
 		int i; \
 		crtx_init(); \
 		crtx_handle_std_signals(); \
-		DBG("entering test function\n"); \
+		CRTX_DBG("entering test function\n"); \
 		i = mainfct(argc, argv); \
-		DBG("left test function\n"); \
+		CRTX_DBG("left test function\n"); \
 		crtx_finish(); \
 		return i; \
 	}
@@ -33,7 +33,7 @@ extern "C" {
 #define CRTX_DECLARE_ALLOC_FUNCTION(lstnr) \
 	struct crtx_ ## lstnr ## _listener * crtx_alloc_ ## lstnr ## _listener();
 
-#define CRTX_RET_GEZ(r) { if (r < 0) {ERROR("%s:%d: %d %s\n", __FILE__, __LINE__, r, strerror(r)); return(r); } }
+#define CRTX_RET_GEZ(r) { if (r < 0) {CRTX_ERROR("%s:%d: %d %s\n", __FILE__, __LINE__, r, strerror(r)); return(r); } }
 
 #define CRTX_EVT_NOTIFICATION "cortexd.notification"
 extern char *crtx_evt_notification[];

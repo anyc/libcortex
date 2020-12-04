@@ -62,7 +62,7 @@ static int async_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) 
 // 	printf("%p\n", ret_error);
 // 	error = sd_bus_message_get_error(ret_error);
 // 	if (ret_error) {
-// 		ERROR("DBus error: %s %s\n", ret_error->name, ret_error->message);
+// 		CRTX_ERROR("DBus error: %s %s\n", ret_error->name, ret_error->message);
 // 	}
 	
 	crtx_send_signal(&async_cb_data->signal, 1);
@@ -156,22 +156,22 @@ static int match_event_cb_track(sd_bus_message *m, void *userdata, sd_bus_error 
 	
 	r = sd_bus_message_read_basic(m, 's', &peer);
 	if (r < 0) {
-		ERROR("sd_bus_message_read_basic failed: %s\n", strerror(r));
+		CRTX_ERROR("sd_bus_message_read_basic failed: %s\n", strerror(r));
 		return r;
 	}
 	r = sd_bus_message_read_basic(m, 's', &old);
 	if (r < 0) {
-		ERROR("sd_bus_message_read_basic failed: %s\n", strerror(r));
+		CRTX_ERROR("sd_bus_message_read_basic failed: %s\n", strerror(r));
 		return r;
 	}
 	r = sd_bus_message_read_basic(m, 's', &new);
 	if (r < 0) {
-		ERROR("sd_bus_message_read_basic failed: %s\n", strerror(r));
+		CRTX_ERROR("sd_bus_message_read_basic failed: %s\n", strerror(r));
 		return r;
 	}
 	
 	if (strcmp(peer, track->peer)) {
-		ERROR("received unexpected peer: \"%s\" != \"%s\"\n", peer, track->peer);
+		CRTX_ERROR("received unexpected peer: \"%s\" != \"%s\"\n", peer, track->peer);
 		return -1;
 	}
 	
@@ -198,11 +198,11 @@ int crtx_sdbus_match_add(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus_ma
 	
 	dll = crtx_dll_append_new(&lstnr->matches, match);
 	
-	DBG("sdbus will listen for \"%s\" (etype: \"%s\")\n", match->match_str, match->event_type);
+	CRTX_DBG("sdbus will listen for \"%s\" (etype: \"%s\")\n", match->match_str, match->event_type);
 	
 	r = sd_bus_add_match(lstnr->bus, &match->slot, match->match_str, match->callback, match->callback_data);
 	if (r < 0) {
-		ERROR("sd_bus_add_match failed: %s\n", strerror(-r));
+		CRTX_ERROR("sd_bus_add_match failed: %s\n", strerror(-r));
 		
 		crtx_dll_unlink(&lstnr->matches, dll);
 		free(dll);
@@ -223,7 +223,7 @@ int crtx_sdbus_match_remove(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus
 		
 		sd_bus_slot_unref(match->slot);
 	} else {
-		ERROR("did not find match obj in linked list\n");
+		CRTX_ERROR("did not find match obj in linked list\n");
 	}
 	
 	return 0;
@@ -251,7 +251,7 @@ int crtx_sdbus_track_add(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus_tr
 	
 	r = crtx_sdbus_match_add(lstnr, &track->match);
 	if (r) {
-		ERROR("crtx_sdbus_match_add failed: %s\n", strerror(-r));
+		CRTX_ERROR("crtx_sdbus_match_add failed: %s\n", strerror(-r));
 		
 		free(track->match.match_str);
 		
@@ -293,7 +293,7 @@ int crtx_sdbus_get_events(sd_bus *bus) {
 	
 	f = sd_bus_get_events(bus);
 	if (f < 0) {
-		ERROR("sd_bus_get_events() failed: %d\n", f);
+		CRTX_ERROR("sd_bus_get_events() failed: %d\n", f);
 		return f;
 	}
 	if (f & POLLIN) {
@@ -305,12 +305,12 @@ int crtx_sdbus_get_events(sd_bus *bus) {
 		f = f & (~POLLOUT);
 	}
 	if (f & POLLERR) {
-		DBG("error flags from sd_bus_get_events()\n");
+		CRTX_DBG("error flags from sd_bus_get_events()\n");
 		f = f & (~POLLERR);
 	}
 	
 	if (f) {
-		INFO("sdbus poll2epoll: untranslated flag %d\n", f);
+		CRTX_INFO("sdbus poll2epoll: untranslated flag %d\n", f);
 	}
 	
 	return result;
@@ -339,7 +339,7 @@ static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct cr
 	
 	new_flags = crtx_sdbus_get_events(sdlist->bus);
 	if (new_flags < 0) {
-		ERROR("TODO update_evloop_settings()\n");
+		CRTX_ERROR("TODO update_evloop_settings()\n");
 		
 		crtx_unlock_listener_source(&sdlist->base);
 		
@@ -347,7 +347,7 @@ static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct cr
 	}
 	
 	if (new_flags & POLLHUP) {
-		VDBG("POLLHUP set by sdbus on fd %d\n", sd_bus_get_fd(sdlist->bus));
+		CRTX_VDBG("POLLHUP set by sdbus on fd %d\n", sd_bus_get_fd(sdlist->bus));
 	}
 	
 	el_cb->crtx_event_flags |= EVLOOP_TIMEOUT;
@@ -365,14 +365,14 @@ static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct cr
 	// 18446744073709551615 == UINT64_MAX
 	r = sd_bus_get_timeout(sdlist->bus, &timeout_us);
 	if (r < 0) {
-		ERROR("sd_bus_get_timeout failed: %s\n", strerror(-r));
+		CRTX_ERROR("sd_bus_get_timeout failed: %s\n", strerror(-r));
 		
 		crtx_unlock_listener_source(&sdlist->base);
 		
 		return r;
 	}
 	
-	VDBG("sdbus timeout: %"PRId64"\n", timeout_us);
+	CRTX_VDBG("sdbus timeout: %"PRId64"\n", timeout_us);
 	crtx_evloop_set_timeout_abs(el_cb, CLOCK_MONOTONIC, timeout_us);
 	
 	crtx_unlock_listener_source(&sdlist->base);
@@ -395,7 +395,7 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 		crtx_unlock_listener_source(&sdlist->base);
 		
 		if (r < 0) {
-			ERROR("sd_bus_process failed: %s\n", strerror(-r));
+			CRTX_ERROR("sd_bus_process failed: %s\n", strerror(-r));
 			break;
 		}
 		if (r == 0)
@@ -412,7 +412,7 @@ static void fd_error_handler(struct crtx_evloop_callback *el_cb, void *userdata)
 	int r;
 	
 	
-	ERROR("error from sdbus fd\n");
+	CRTX_ERROR("error from sdbus fd\n");
 	
 	sdlist = (struct crtx_sdbus_listener *) userdata;
 	
@@ -422,7 +422,7 @@ static void fd_error_handler(struct crtx_evloop_callback *el_cb, void *userdata)
 		crtx_unlock_listener_source(&sdlist->base);
 		
 		if (r < 0) {
-			ERROR("sd_bus_process failed: %s\n", strerror(-r));
+			CRTX_ERROR("sd_bus_process failed: %s\n", strerror(-r));
 			break;
 		}
 		if (r == 0)
@@ -467,7 +467,7 @@ char crtx_sdbus_open_bus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name
 			if (r >= 0) {
 				int t;
 				
-				DBG("using custom DBUS at address \"%s\"\n", name);
+				CRTX_DBG("using custom DBUS at address \"%s\"\n", name);
 				
 				t = sd_bus_set_address(*bus, name);
 				if (t < 0) {
@@ -483,7 +483,7 @@ char crtx_sdbus_open_bus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name
 			}
 			break;
 		default:
-			ERROR("crtx_setup_sdbus_listener\n");
+			CRTX_ERROR("crtx_setup_sdbus_listener\n");
 			return -1;
 	}
 	if (r < 0) {
@@ -531,7 +531,7 @@ struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 	
 	r = sd_bus_get_unique_name(sdlist->bus, &sdlist->unique_name);
 	if (r < 0) {
-		ERROR("sd_bus_get_unique_name failed: %s\n", strerror(-r));
+		CRTX_ERROR("sd_bus_get_unique_name failed: %s\n", strerror(-r));
 		return 0;
 	}
 	
@@ -555,7 +555,7 @@ struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 #if 0 // starting with version 237/238
 		r = sd_bus_set_connected_signal(sdlist->bus, 1);
 		if (r < 0) {
-			ERROR("sd_bus_set_connected_signal returned: %s\n", strerror(-r));
+			CRTX_ERROR("sd_bus_set_connected_signal returned: %s\n", strerror(-r));
 			return 0;
 		}
 #else
@@ -584,7 +584,7 @@ struct crtx_sdbus_listener *crtx_sdbus_get_default_listener(enum crtx_sdbus_type
 		
 		ret = crtx_setup_listener("sdbus", &default_listeners[sdbus_type]);
 		if (ret) {
-			ERROR("create_listener(timer) failed: %s\n", strerror(-ret));
+			CRTX_ERROR("create_listener(timer) failed: %s\n", strerror(-ret));
 			return 0;
 		}
 		
@@ -644,7 +644,7 @@ int sdbus_main(int argc, char **argv) {
 	
 	ret = crtx_setup_listener("sdbus", &sdlist);
 	if (ret) {
-		ERROR("create_listener(sdbus) failed: %s\n", strerror(-ret));
+		CRTX_ERROR("create_listener(sdbus) failed: %s\n", strerror(-ret));
 		exit(1);
 	}
 	
@@ -652,7 +652,7 @@ int sdbus_main(int argc, char **argv) {
 	
 	ret = crtx_start_listener(&sdlist.base);
 	if (ret) {
-		ERROR("starting sdbus listener failed\n");
+		CRTX_ERROR("starting sdbus listener failed\n");
 		return 1;
 	}
 	

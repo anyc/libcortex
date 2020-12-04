@@ -40,16 +40,16 @@ void crtx_readline_show_notification(char *title, char *text, char **actions, ch
 	
 	pthread_mutex_lock(&stdout_mutex);
 	
-	INFO("Notification \"%s\": \"%s\"\n", title, text);
+	CRTX_INFO("Notification \"%s\": \"%s\"\n", title, text);
 	if (actions) {
-		INFO("Possible actions:\n");
+		CRTX_INFO("Possible actions:\n");
 		a = actions;
 		while (*a) {
-			INFO("\t\"%s\" - type \"%s\"\n", *a, *(a+1) );
+			CRTX_INFO("\t\"%s\" - type \"%s\"\n", *a, *(a+1) );
 			a += 2;
 		}
 		
-		INFO("Response: ");
+		CRTX_INFO("Response: ");
 		input = readline_read();
 		
 		*chosen_action = input;
@@ -156,11 +156,11 @@ void crtx_readline_init() {
 	
 	crtx_register_handler_for_event_type("cortex.user_notification", "readline_notify", &rl_notify_send_handler, 0);
 	
-	ret = pthread_mutex_init(&stdout_mutex, 0); ASSERT(ret >= 0);
+	ret = pthread_mutex_init(&stdout_mutex, 0); CRTX_ASSERT(ret >= 0);
 }
 
 void crtx_readline_finish() {
 	int ret;
 	
-	ret = pthread_mutex_destroy(&stdout_mutex); ASSERT(ret >= 0);
+	ret = pthread_mutex_destroy(&stdout_mutex); CRTX_ASSERT(ret >= 0);
 }

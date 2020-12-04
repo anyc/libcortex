@@ -16,8 +16,8 @@
 #include "timer.h"
 #include "curl.h"
 
-#define CURLM_CHECK(curlr) { if (curlr != CURLM_OK) { ERROR("curl returned: %s (%d)\n", curl_multi_strerror(curlr), curlr); } }
-#define CURL_CHECK(curlr) { if (curlr != CURLE_OK) { ERROR("curl returned: %s (%d)\n", curl_easy_strerror(curlr), curlr); } }
+#define CURLM_CHECK(curlr) { if (curlr != CURLM_OK) { CRTX_ERROR("curl returned: %s (%d)\n", curl_multi_strerror(curlr), curlr); } }
+#define CURL_CHECK(curlr) { if (curlr != CURLE_OK) { CRTX_ERROR("curl returned: %s (%d)\n", curl_easy_strerror(curlr), curlr); } }
 
 #ifndef CRTX_TEST
 
@@ -129,7 +129,7 @@ static char start_listener(struct crtx_listener_base *base) {
 	
 	curlr = curl_multi_add_handle(crtx_curlm, clist->easy);
 	if (curlr != CURLM_OK) {
-		ERROR("curl_multi_add_handle failed: %s\n", curl_easy_strerror(curlr));
+		CRTX_ERROR("curl_multi_add_handle failed: %s\n", curl_easy_strerror(curlr));
 		return 0;
 	}
 	
@@ -146,7 +146,7 @@ struct crtx_listener_base *crtx_setup_curl_listener(void *options) {
 	clist = (struct crtx_curl_listener *) options;
 	
 	if (!clist->url) {
-		ERROR("curl: missing url\n");
+		CRTX_ERROR("curl: missing url\n");
 		return 0;
 	}
 	
@@ -160,7 +160,7 @@ struct crtx_listener_base *crtx_setup_curl_listener(void *options) {
 	
 	clist->easy = curl_easy_init();
 	if(!clist->easy) {
-		ERROR("curl_easy_init() failed, exiting!\n");
+		CRTX_ERROR("curl_easy_init() failed, exiting!\n");
 		return 0;
 	}
 	
@@ -212,7 +212,7 @@ static int timer_callback(CURLM *multi, long timeout_ms, CURLM *curlm) {
 		timeout_ms = 0;
 	}
 	
-	DBG("curl set timeout %ld ms\n", timeout_ms);
+	CRTX_DBG("curl set timeout %ld ms\n", timeout_ms);
 	
 	// set time for (first) alarm
 	timer_list.newtimer.it_value.tv_sec = timeout_ms / 1000;
@@ -231,7 +231,7 @@ static int timer_callback(CURLM *multi, long timeout_ms, CURLM *curlm) {
 	
 	err = crtx_update_listener(&timer_list.base);
 	if (err) {
-		ERROR("starting timer failed: %d\n", err);
+		CRTX_ERROR("starting timer failed: %d\n", err);
 		return 1;
 	}
 	
@@ -271,7 +271,7 @@ static void process_curl_infos() {
 			#endif
 			
 			
-			DBG("curl done: %s (response: %ld, errno: %ld, result %d, error \"%s\", size %"CURL_FORMAT_CURL_OFF_T" bytes)\n",
+			CRTX_DBG("curl done: %s (response: %ld, errno: %ld, result %d, error \"%s\", size %"CURL_FORMAT_CURL_OFF_T" bytes)\n",
 					eff_url, response_code, error_code, msg->data.result, clist->error, dltotal);
 			
 			if (clist->done_callback) {
@@ -318,7 +318,7 @@ static char fd_event_callback(struct crtx_event *event, void *userdata, void **s
 		
 		curlr = curl_multi_socket_action(crtx_curlm, socketp->socket_fd, action, &still_running);
 		if (curlr != CURLM_OK) {
-			ERROR("curl_multi_socket_action() failed: %s\n", curl_easy_strerror(curlr));
+			CRTX_ERROR("curl_multi_socket_action() failed: %s\n", curl_easy_strerror(curlr));
 		}
 		
 		process_curl_infos();
@@ -333,7 +333,7 @@ static char timeout_handler(struct crtx_event *event, void *userdata, void **ses
 	
 	curlr = curl_multi_socket_action(crtx_curlm, CURL_SOCKET_TIMEOUT, 0, &still_running);
 	if (curlr != CURLM_OK) {
-		ERROR("curl_multi_socket_action(CURL_SOCKET_TIMEOUT) failed: %s\n", curl_easy_strerror(curlr));
+		CRTX_ERROR("curl_multi_socket_action(CURL_SOCKET_TIMEOUT) failed: %s\n", curl_easy_strerror(curlr));
 		return 0;
 	}
 	
@@ -354,7 +354,7 @@ static int update_socket_fd(struct crtx_curl_socket *s, int what) {
 			s->el_cb.crtx_event_flags = EVLOOP_READ | EVLOOP_WRITE;
 			break;
 		default:
-			ERROR("unexpected \"what\" value in curl socket callback: %d\n", what);
+			CRTX_ERROR("unexpected \"what\" value in curl socket callback: %d\n", what);
 			return -1;
 	}
 	
@@ -365,7 +365,7 @@ static int socket_callback(CURL *easy, curl_socket_t curl_socket, int what, CURL
 	struct crtx_curl_listener *clist;
 	
 	
-	DBG("new curl socket event: %d\n", what);
+	CRTX_DBG("new curl socket event: %d\n", what);
 	
 	curl_easy_getinfo(easy, CURLINFO_PRIVATE, &clist);
 	
@@ -421,7 +421,7 @@ static void init_curl() {
 	
 	err = crtx_setup_listener("timer", &timer_list);
 	if (err) {
-		ERROR("create_listener(timer) failed: %d\n", err);
+		CRTX_ERROR("create_listener(timer) failed: %d\n", err);
 		// TODO
 		return;
 	}
@@ -430,7 +430,7 @@ static void init_curl() {
 	
 	err = crtx_start_listener(&timer_list.base);
 	if (err) {
-		ERROR("starting curl listener failed\n");
+		CRTX_ERROR("starting curl listener failed\n");
 		return;
 	}
 	
@@ -523,7 +523,7 @@ int curl_main(int argc, char **argv) {
 	
 	ret = crtx_setup_listener("curl", &clist);
 	if (ret) {
-		ERROR("create_listener(curl) failed\n");
+		CRTX_ERROR("create_listener(curl) failed\n");
 		return 0;
 	}
 	
@@ -534,7 +534,7 @@ int curl_main(int argc, char **argv) {
 	
 	ret = crtx_start_listener(&clist.base);
 	if (ret) {
-		ERROR("starting curl listener failed\n");
+		CRTX_ERROR("starting curl listener failed\n");
 		return 0;
 	}
 	

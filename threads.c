@@ -30,20 +30,20 @@ void crtx_init_signal(struct crtx_signals *s) {
 	int ret;
 // 	pthread_condattr_t attr;
 	
-	ret = pthread_mutex_init(&s->mutex, 0); ASSERT(ret >= 0);
-	ret = pthread_cond_init(&s->cond, 0); ASSERT(ret >= 0);
+	ret = pthread_mutex_init(&s->mutex, 0); CRTX_ASSERT(ret >= 0);
+	ret = pthread_cond_init(&s->cond, 0); CRTX_ASSERT(ret >= 0);
 	
-// 	ret = pthread_condattr_init(&attr); ASSERT(ret >= 0);
+// 	ret = pthread_condattr_init(&attr); CRTX_ASSERT(ret >= 0);
 // 	ret = pthread_condattr_setclock(&attr, s->clockid);
-// 	ret = pthread_cond_init(&s->cond, &attr); ASSERT(ret >= 0);
+// 	ret = pthread_cond_init(&s->cond, &attr); CRTX_ASSERT(ret >= 0);
 // 	pthread_condattr_destroy(&attr);
 	
 	s->local_condition = 0;
 	s->condition = &s->local_condition;
 	s->bitflag_idx = 0;
 	
-	ret = pthread_mutex_init(&s->ref_mutex, 0); ASSERT(ret >= 0);
-	ret = pthread_cond_init(&s->ref_cond, NULL); ASSERT(ret >= 0);
+	ret = pthread_mutex_init(&s->ref_mutex, 0); CRTX_ASSERT(ret >= 0);
+	ret = pthread_cond_init(&s->ref_cond, NULL); CRTX_ASSERT(ret >= 0);
 	
 	s->n_refs = 0;
 }
@@ -76,7 +76,7 @@ int crtx_wait_on_signal(struct crtx_signals *s, struct timespec *ts) {
 	
 	r = LOCK(s->mutex);
 	if (r < 0) {
-		ERROR("cannot lock mutex: %s\n", strerror(-r));
+		CRTX_ERROR("cannot lock mutex: %s\n", strerror(-r));
 		return r;
 	}
 	
@@ -110,7 +110,7 @@ int crtx_wait_on_signal(struct crtx_signals *s, struct timespec *ts) {
 finish:
 	r = UNLOCK(s->mutex);
 	if (r < 0) {
-		ERROR("cannot unlock mutex: %s\n", strerror(-r));
+		CRTX_ERROR("cannot unlock mutex: %s\n", strerror(-r));
 		return r;
 	}
 	
@@ -149,7 +149,7 @@ void crtx_dereference_signal(struct crtx_signals *s) {
 	LOCK(s->ref_mutex);
 	
 	if (s->n_refs == 0)
-		ERROR("signal referance < 0\n");
+		CRTX_ERROR("signal referance < 0\n");
 	else
 		s->n_refs -= 1;
 	if (s->n_refs == 0)
@@ -188,7 +188,7 @@ char crtx_signal_is_active(struct crtx_signals *s) {
 static void * crtx_thread_tmain(void *data) {
 	struct crtx_thread *thread = (struct crtx_thread*) data;
 	
-	DBG("thread %p started\n", data);
+	CRTX_DBG("thread %p started\n", data);
 	
 // 	signal(SIGINT,test);
 	
@@ -353,7 +353,7 @@ void crtx_threads_stop_all() {
 	
 	pool_stop = 1;
 	
-	DBG("shutdown pool\n");
+	CRTX_DBG("shutdown pool\n");
 	
 	for (t=pool; t; t = t->next) {
 		crtx_threads_stop(t);

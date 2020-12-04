@@ -129,7 +129,7 @@ static char socket_raw_accept_handler(struct crtx_event *event, void *userdata, 
 	cliaddr = malloc(slist->addrlen);
 	fd = accept(slist->sockfd, cliaddr, &slist->addrlen);
 	if (slist->sockfd < 0) {
-		ERROR("accept failed: %d\n", fd);
+		CRTX_ERROR("accept failed: %d\n", fd);
 		return 0;
 	}
 	
@@ -195,13 +195,13 @@ int crtx_init_socket_raw_server_listener(struct crtx_socket_raw_listener *sliste
 		int enable = 1;
 		ret = setsockopt(slistener->sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int));
 		if (ret < 0) {
-			ERROR("setsockopt(SO_REUSEADDR) failed");
+			CRTX_ERROR("setsockopt(SO_REUSEADDR) failed");
 		}
 		
 		if (rit->ai_family == AF_UNIX) {
 			ret = unlink( ((struct sockaddr_un *)rit->ai_addr)->sun_path );
 			if (ret < 0)
-				ERROR("failed to unlink existing unix socket: %s\n", strerror(errno));
+				CRTX_ERROR("failed to unlink existing unix socket: %s\n", strerror(errno));
 		}
 		
 		int flags;
@@ -216,7 +216,7 @@ int crtx_init_socket_raw_server_listener(struct crtx_socket_raw_listener *sliste
 		close(slistener->sockfd);
 	}
 	if (rit == 0) {
-		ERROR("crtx_setup_socket_raw_server_listener: %s\n", strerror(errno));
+		CRTX_ERROR("crtx_setup_socket_raw_server_listener: %s\n", strerror(errno));
 		return errno;
 	}
 	
@@ -250,7 +250,7 @@ int crtx_init_socket_raw_server_listener(struct crtx_socket_raw_listener *sliste
 						0, 0
 					);
 	} else {
-		ERROR("invalid socket type %d\n", slistener->type);
+		CRTX_ERROR("invalid socket type %d\n", slistener->type);
 		return -EINVAL;
 	}
 	
@@ -286,7 +286,7 @@ int crtx_init_socket_raw_client_listener(struct crtx_socket_raw_listener *sliste
 	addrinfos = crtx_get_addrinfo(slistener);
 	
 	if (!addrinfos) {
-		ERROR("cannot resolve %s %s\n", slistener->host, slistener->service);
+		CRTX_ERROR("cannot resolve %s %s\n", slistener->host, slistener->service);
 		return -ENXIO;
 	}
 	
@@ -302,7 +302,7 @@ int crtx_init_socket_raw_client_listener(struct crtx_socket_raw_listener *sliste
 		close(slistener->sockfd);
 	}
 	if (rit == 0) {
-		ERROR("cannot connect to %s:%s: %s\n", slistener->host, slistener->service, strerror(errno));
+		CRTX_ERROR("cannot connect to %s:%s: %s\n", slistener->host, slistener->service, strerror(errno));
 		return -EHOSTUNREACH;
 	}
 	

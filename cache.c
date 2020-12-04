@@ -57,7 +57,7 @@ struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache *rc, struct cr
 // 		rkey = rcache_get_key(ditem);
 		
 		if (ditem->type != 'D') {
-			ERROR("wrong dictionary structure for complex cache layout: %c != %c\n", ditem->type, 'D');
+			CRTX_ERROR("wrong dictionary structure for complex cache layout: %c != %c\n", ditem->type, 'D');
 			ditem = crtx_get_next_item(rc->entries, ditem);
 			continue;
 		}
@@ -80,7 +80,7 @@ struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache *rc, struct cr
 			
 			ret = regcomp(regex->pointer, rkey->string, 0);
 			if (ret) {
-				ERROR("Could not compile regex %s\n", rkey->string);
+				CRTX_ERROR("Could not compile regex %s\n", rkey->string);
 				exit(1);
 			}
 		}
@@ -95,7 +95,7 @@ struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache *rc, struct cr
 			char msgbuf[128];
 			
 			regerror(ret, (regex_t*) regex->pointer, msgbuf, sizeof(msgbuf));
-			ERROR("Regex match failed: %s\n", msgbuf);
+			CRTX_ERROR("Regex match failed: %s\n", msgbuf);
 			
 // 			return 0;
 		}
@@ -113,17 +113,17 @@ char crtx_cache_on_hit(struct crtx_cache_task *rc, struct crtx_dict_item *key, s
 	
 	// if there is no value or type == 0, this cache entry is ignored
 	if (!c_entry || c_entry->type == 0) {
-		DBG("ignoring key ");
+		CRTX_DBG("ignoring key ");
 		crtx_print_dict_item(key, 0);
 		
 		return 0;
 	}
 	
-	INFO("cache hit for key ");
+	CRTX_INFO("cache hit for key ");
 	crtx_print_dict_item(key, 0);
-	INFO(" ");
+	CRTX_INFO(" ");
 	crtx_print_dict_item(c_entry, 0);
-	INFO("\n");
+	CRTX_INFO("\n");
 	
 	crtx_dict_copy_item(&event->response, c_entry, 0);
 	
@@ -150,9 +150,9 @@ char response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 	ret = ct->create_key(event, &sd->key);
 	if (ret) {
 		if (event->description)
-			DBG("no key created for \"%s\", ignoring\n", event->description);
+			CRTX_DBG("no key created for \"%s\", ignoring\n", event->description);
 		else
-			DBG("no key created for \"%d\", ignoring\n", event->type);
+			CRTX_DBG("no key created for \"%d\", ignoring\n", event->type);
 		sd->key.string = 0;
 		return 1;
 	}
@@ -183,7 +183,7 @@ char response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 // 			printf("%zu \n", now.uint64 - creation->uint64 + timeout);
 			if (di && now.uint64 > di->uint64 + timeout) {
 				struct crtx_dict_item *key_item;
-				DBG("dropping cache entry\n");
+				CRTX_DBG("dropping cache entry\n");
 				
 				key_item = crtx_get_item(ditem->dict, "key");
 				
@@ -216,7 +216,7 @@ char response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 				di->uint64 = 0;
 			} else {
 				if (di->uint64 == UINT64_MAX)
-					ERROR("cache uint64 value overflow\n");
+					CRTX_ERROR("cache uint64 value overflow\n");
 				di->uint64++;
 			}
 			
@@ -258,7 +258,7 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *cache, struct cr
 	struct crtx_dict_item *c_entry;
 	struct crtx_dict_item *value_item;
 	
-// 	DBG("new cache entry "); crtx_print_dict_item(key, 0); DBG("\n");
+// 	CRTX_DBG("new cache entry "); crtx_print_dict_item(key, 0); DBG("\n");
 	
 // 	crtx_print_dict_item(key, 0);
 	
@@ -282,7 +282,7 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *cache, struct cr
 	
 	if (dc->flags & CRTX_CACHE_SIMPLE_LAYOUT) {
 		if (key->type != 's')
-			ERROR("wrong dictionary structure for simple cache layout\n");
+			CRTX_ERROR("wrong dictionary structure for simple cache layout\n");
 		
 		c_entry = crtx_alloc_item(dc->entries);
 		
@@ -308,7 +308,7 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *cache, struct cr
 			struct crtx_dict_item *it;
 			
 			if (c_entry->type != 'D')
-				ERROR("cache item type %c != D\n", c_entry->type);
+				CRTX_ERROR("cache item type %c != D\n", c_entry->type);
 			
 			it = crtx_get_item(c_entry->dict, "key");
 			if (!it || it->type == 0)
@@ -434,7 +434,7 @@ void crtx_cache_remove_entry(struct crtx_cache *cache, struct crtx_dict_item *ke
 	struct crtx_cache *dc = cache;
 	struct crtx_dict_item *c_entry;
 	
-// 	DBG("new cache entry "); crtx_print_dict_item(key, 0); DBG("\n");
+// 	CRTX_DBG("new cache entry "); crtx_print_dict_item(key, 0); DBG("\n");
 	
 	if (!dc->entries)
 		return;
@@ -452,7 +452,7 @@ char crtx_cache_no_add(struct crtx_cache_task *ct, struct crtx_dict_item *key, s
 
 char crtx_cache_update_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
 	if (c_entry->type != 'D') {
-		ERROR("crtx_cache_update_on_hit: %c != D\n", c_entry->type);
+		CRTX_ERROR("crtx_cache_update_on_hit: %c != D\n", c_entry->type);
 		return 0;
 	}
 	printf("update\n");
@@ -513,7 +513,7 @@ void crtx_cache_gettime_rt(struct crtx_dict_item *item) {
 	
 	ret = clock_gettime(CLOCK_REALTIME, &tp);
 	if (ret) {
-		ERROR("clock_gettime failed: %d\n", ret);
+		CRTX_ERROR("clock_gettime failed: %d\n", ret);
 		return;
 	}
 	
@@ -531,7 +531,7 @@ struct crtx_task *create_response_cache_task(char *id, create_key_cb_t create_ke
 	
 	dc = (struct crtx_cache*) calloc(1, sizeof(struct crtx_cache));
 	
-	ret = pthread_mutex_init(&dc->mutex, 0); ASSERT(ret >= 0);
+	ret = pthread_mutex_init(&dc->mutex, 0); CRTX_ASSERT(ret >= 0);
 	
 	dc->dict = crtx_init_dict(0, 0, 0);
 	dc->dict->id = id;
@@ -587,9 +587,9 @@ static char presence_cache_task(struct crtx_event *event, void *userdata, void *
 	ret = ct->create_key_action(event, &key, &add);
 	if (ret) {
 		if (event->description)
-			DBG("no key created for \"%s\", ignoring\n", event->description);
+			CRTX_DBG("no key created for \"%s\", ignoring\n", event->description);
 		else
-			DBG("no key created for \"%d\", ignoring\n", event->type);
+			CRTX_DBG("no key created for \"%d\", ignoring\n", event->type);
 		crtx_free_dict_item(&key);
 		return 1;
 	}
@@ -601,13 +601,13 @@ static char presence_cache_task(struct crtx_event *event, void *userdata, void *
 	
 	if (add) {
 		if (ditem) {
-			DBG("%s already present\n", key.string);
+			CRTX_DBG("%s already present\n", key.string);
 		} else {
 			crtx_cache_add_entry(ct->cache, &key, event, &event->data);
 		}
 	} else {
 		if (!ditem) {
-			DBG("%s not present\n", key.string);
+			CRTX_DBG("%s not present\n", key.string);
 		} else {
 			crtx_cache_remove_entry(ct->cache, &key);
 		}
@@ -632,7 +632,7 @@ struct crtx_task *crtx_create_presence_cache_task(char *id, create_key_action_cb
 	
 	dc = (struct crtx_cache*) calloc(1, sizeof(struct crtx_cache));
 	
-	ret = pthread_mutex_init(&dc->mutex, 0); ASSERT(ret >= 0);
+	ret = pthread_mutex_init(&dc->mutex, 0); CRTX_ASSERT(ret >= 0);
 	
 	dc->dict = crtx_init_dict(0, 0, 0);
 	dc->dict->id = id;
@@ -676,7 +676,7 @@ char crtx_load_cache(struct crtx_cache *cache, char *path) {
 	
 	ret = crtx_dict_json_from_file(&cache->dict, path, cache->dict->id);
 	if (!ret) {
-		DBG("loading cache dict %s failed\n", cache->dict->id);
+		CRTX_DBG("loading cache dict %s failed\n", cache->dict->id);
 		return 0;
 	}
 	

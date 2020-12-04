@@ -34,7 +34,7 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 	
 	r = wqueue->write(wqueue, wqueue->write_userdata);
 	if (r != EAGAIN && r != ENOBUFS) {
-		VDBG("write done %s %d\n", strerror(r), r);
+		CRTX_VDBG("write done %s %d\n", strerror(r), r);
 // 		wqueue->base.evloop_fd.crtx_event_flags = 0;
 // 		
 // 		eloop = crtx_get_event_loop();
@@ -135,7 +135,7 @@ int crtx_add_writequeue2listener(struct crtx_writequeue_listener *writequeue, st
 	
 	r = crtx_setup_listener("writequeue", writequeue);
 	if (r) {
-		ERROR("create_listener(writequeue) failed: %s\n", strerror(-r));
+		CRTX_ERROR("create_listener(writequeue) failed: %s\n", strerror(-r));
 		return r;
 	}
 	
@@ -202,7 +202,7 @@ int writequeue_main(int argc, char **argv) {
 	
 	ret = pipe2(pipe_fds, O_NONBLOCK); // 0 read, 1 write
 	if (ret < 0) {
-		ERROR("creating control pipe failed: %s\n", strerror(errno));
+		CRTX_ERROR("creating control pipe failed: %s\n", strerror(errno));
 	}
 	
 	wqueue.write_fd = pipe_fds[1];
@@ -210,13 +210,13 @@ int writequeue_main(int argc, char **argv) {
 	
 	ret = crtx_setup_listener("writequeue", &wqueue);
 	if (ret) {
-		ERROR("create_listener(writequeue) failed: %s\n", strerror(-ret));
+		CRTX_ERROR("create_listener(writequeue) failed: %s\n", strerror(-ret));
 		exit(1);
 	}
 	
 	ret = crtx_start_listener(&wqueue.base);
 	if (ret) {
-		ERROR("starting writequeue listener failed\n");
+		CRTX_ERROR("starting writequeue listener failed\n");
 		return 1;
 	}
 	

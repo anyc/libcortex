@@ -28,7 +28,7 @@ int crtx_netconf_query_interfaces(struct crtx_netconf_listener *netconf_lstnr) {
 	{
 		r = nl_send_simple(netconf_lstnr->libnl_lstnr.sock, RTM_GETLINK, NLM_F_REQUEST | NLM_F_DUMP, &rt_hdr, sizeof(rt_hdr));
 		if (r < 0) {
-			ERROR("nl_send_simple failed: %d\n", r);
+			CRTX_ERROR("nl_send_simple failed: %d\n", r);
 			return 1;
 		}
 		
@@ -44,7 +44,7 @@ int crtx_netconf_query_interfaces(struct crtx_netconf_listener *netconf_lstnr) {
 	{
 		r = nl_send_simple(netconf_lstnr->libnl_lstnr.sock, RTM_GETNEIGH, NLM_F_REQUEST | NLM_F_DUMP, &rt_hdr, sizeof(rt_hdr));
 		if (r < 0) {
-			ERROR("nl_send_simple failed: %d\n", r);
+			CRTX_ERROR("nl_send_simple failed: %d\n", r);
 			return 1;
 		}
 		
@@ -60,7 +60,7 @@ int crtx_netconf_query_interfaces(struct crtx_netconf_listener *netconf_lstnr) {
 	{
 		r = nl_send_simple(netconf_lstnr->libnl_lstnr.sock, RTM_GETADDR, NLM_F_REQUEST | NLM_F_DUMP, &rt_hdr, sizeof(rt_hdr));
 		if (r < 0) {
-			ERROR("nl_send_simple failed: %d\n", r);
+			CRTX_ERROR("nl_send_simple failed: %d\n", r);
 			return 1;
 		}
 		
@@ -179,7 +179,7 @@ static char netconf_start_listener(struct crtx_listener_base *listener) {
 	
 	ret = crtx_start_listener(&netconf_lstnr->libnl_lstnr.base);
 	if (ret) {
-		ERROR("starting libnl listener failed\n");
+		CRTX_ERROR("starting libnl listener failed\n");
 		return ret;
 	}
 	
@@ -228,7 +228,7 @@ struct crtx_listener_base *crtx_setup_netconf_listener(void *options) {
 	// 	lbase = create_listener("libnl", &netconf_lstnr->libnl_lstnr);
 	ret = crtx_setup_listener("libnl", &netconf_lstnr->libnl_lstnr);
 	if (ret) {
-		ERROR("create_listener(libnl) failed\n");
+		CRTX_ERROR("create_listener(libnl) failed\n");
 		return 0;
 	}
 	
@@ -280,7 +280,7 @@ int netconf_main(int argc, char **argv) {
 	// 	lbase = create_listener("netconf", &netconf_lstnr);
 	r = crtx_setup_listener("netconf", &netconf_lstnr);
 	if (r) {
-		ERROR("create_listener(netconf) failed\n");
+		CRTX_ERROR("create_listener(netconf) failed\n");
 		exit(1);
 	}
 	
@@ -292,7 +292,7 @@ int netconf_main(int argc, char **argv) {
 	
 	r = crtx_start_listener(&netconf_lstnr.base);
 	if (r) {
-		ERROR("starting netconf listener failed: %s (%d)\n", strerror(-r), r);
+		CRTX_ERROR("starting netconf listener failed: %s (%d)\n", strerror(-r), r);
 		return 1;
 	}
 	

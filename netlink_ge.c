@@ -47,7 +47,7 @@ int crtx_genl_msg2dict(struct nl_msg *msg, void *arg) {
 	
 	r = crtx_create_event(&event);
 	if (r) {
-		ERROR("crtx_create_event in crtx_genl_msg2dict failed: %s", strerror(-r));
+		CRTX_ERROR("crtx_create_event in crtx_genl_msg2dict failed: %s", strerror(-r));
 		return r;
 	}
 	event->description = "netlink/genl";
@@ -265,13 +265,13 @@ int netlink_main(int argc, char **argv) {
 	
 	r = crtx_setup_listener("genl", &genl);
 	if (r) {
-		ERROR("create_listener(genl) failed\n");
+		CRTX_ERROR("create_listener(genl) failed\n");
 		exit(1);
 	}
 	
 	r = crtx_start_listener(&genl.base);
 	if (r) {
-		ERROR("starting genl listener failed\n");
+		CRTX_ERROR("starting genl listener failed\n");
 		return 1;
 	}
 	

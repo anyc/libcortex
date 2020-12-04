@@ -36,17 +36,17 @@ static char timer_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	
 	s = read(tlist->fd, &exp, sizeof(uint64_t));
 	if (s == -1 && errno == EINTR) {
-		DBG("timerfd thread interrupted\n");
+		CRTX_DBG("timerfd thread interrupted\n");
 		return 0;
 	}
 	if (s != sizeof(uint64_t)) {
-		ERROR("reading from timerfd failed: %zd != %" PRIu64 " %s (%d)\n", s, exp, strerror(errno), errno);
+		CRTX_ERROR("reading from timerfd failed: %zd != %" PRIu64 " %s (%d)\n", s, exp, strerror(errno), errno);
 		return 0;
 	}
 	
 	s = crtx_create_event(&event);
 	if (s) {
-		ERROR("crtx_create_event failed: %s\n", strerror(s));
+		CRTX_ERROR("crtx_create_event failed: %s\n", strerror(s));
 		return 1;
 	}
 	
@@ -64,7 +64,7 @@ static char update_listener(struct crtx_listener_base *base) {
 	
 	tlist = (struct crtx_timer_listener *) base;
 	
-	DBG("timer: update fd %d (%ld.%09lds %ld.%09lds clockId %d)\n", tlist->fd,
+	CRTX_DBG("timer: update fd %d (%ld.%09lds %ld.%09lds clockId %d)\n", tlist->fd,
 			tlist->newtimer.it_value.tv_sec, tlist->newtimer.it_value.tv_nsec, 
 			tlist->newtimer.it_interval.tv_sec, tlist->newtimer.it_interval.tv_nsec,
 			tlist->clockid
@@ -72,7 +72,7 @@ static char update_listener(struct crtx_listener_base *base) {
 	
 	ret = timerfd_settime(tlist->fd, tlist->settime_flags, &tlist->newtimer, NULL);
 	if (ret == -1) {
-		ERROR("timerfd_settime failed: %s\n", strerror(errno));
+		CRTX_ERROR("timerfd_settime failed: %s\n", strerror(errno));
 		return ret;
 	}
 	
@@ -94,7 +94,7 @@ struct crtx_listener_base *crtx_setup_timer_listener(void *options) {
 	if (tlist->base.start_listener != &update_listener) {
 		tlist->fd = timerfd_create(tlist->clockid, 0);
 		if (tlist->fd == -1) {
-			ERROR("timerfd_create failed: %s\n", strerror(errno));
+			CRTX_ERROR("timerfd_create failed: %s\n", strerror(errno));
 			return 0;
 		}
 		
@@ -154,7 +154,7 @@ struct crtx_timer_retry_listener *crtx_timer_retry_listener(struct crtx_listener
 	
 	r = crtx_setup_listener("timer", tlist);
 	if (r) {
-		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
+		CRTX_ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		
 		free(retry_lstnr);
 		
@@ -200,7 +200,7 @@ int crtx_timer_get_listener(struct crtx_timer_listener *tlist,
 	
 	r = crtx_setup_listener("timer", tlist);
 	if (r) {
-		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
+		CRTX_ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		return 0;
 	}
 	
@@ -234,7 +234,7 @@ int crtx_timer_oneshot(time_t offset_sec,
 	
 	r = crtx_setup_listener("timer", tlist);
 	if (r) {
-		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
+		CRTX_ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		return 0;
 	}
 	
@@ -283,7 +283,7 @@ int timer_main(int argc, char **argv) {
 	
 	r = crtx_setup_listener("timer", &tlist);
 	if (r) {
-		ERROR("create_listener(timer) failed: %s\n", strerror(-r));
+		CRTX_ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 		exit(1);
 	}
 	

@@ -56,7 +56,7 @@ static char can_fd_event_handler(struct crtx_event *event, void *userdata, void 
 		
 		r = crtx_create_event(&nevent);
 		if (r) {
-			ERROR("crtx_create_event failed: %s\n", strerror(r));
+			CRTX_ERROR("crtx_create_event failed: %s\n", strerror(r));
 		} else {
 			nevent->description = "can";
 			crtx_event_set_raw_data(nevent, 'p', frame, sizeof(frame), 0);
@@ -182,7 +182,7 @@ static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 	if (!clist->is_virtual_can) {
 		rtnl_link_can_get_bitrate(clist->link, &bitrate);
 		
-		DBG("current bitrate: %u\n", bitrate);
+		CRTX_DBG("current bitrate: %u\n", bitrate);
 	} else {
 		bitrate = clist->bitrate;
 	}
@@ -195,14 +195,14 @@ static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 			int caps;
 			caps = capng_get_caps_process();
 			if (caps != 0) {
-				ERROR("retrieving capabilities failed\n");
+				CRTX_ERROR("retrieving capabilities failed\n");
 			} else {
 				if (!capng_have_capability(CAPNG_EFFECTIVE, CAP_NET_ADMIN)) {
 					char *buf;
 					
-					ERROR("interface \"%s\" needs to be reconfigured and it looks like you do not have the required privileges (CAP_NET_ADMIN).\n", if_name);
+					CRTX_ERROR("interface \"%s\" needs to be reconfigured and it looks like you do not have the required privileges (CAP_NET_ADMIN).\n", if_name);
 					buf = capng_print_caps_text(CAPNG_PRINT_BUFFER, CAPNG_EFFECTIVE);
-					DBG("effective caps: %s\n", buf);
+					CRTX_DBG("effective caps: %s\n", buf);
 					free(buf);
 				}
 			}
@@ -216,7 +216,7 @@ static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 			rtnl_link_set_type(newlink, "can");
 			
 			if (bitrate != clist->bitrate) {
-				DBG("will change bitrate from %u to %u\n", bitrate, clist->bitrate);
+				CRTX_DBG("will change bitrate from %u to %u\n", bitrate, clist->bitrate);
 				
 				r = rtnl_link_can_set_bitrate(newlink, clist->bitrate);
 				if (r) {
@@ -244,14 +244,14 @@ static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 		int caps;
 		caps = capng_get_caps_process();
 		if (caps != 0) {
-			ERROR("retrieving capabilities failed\n");
+			CRTX_ERROR("retrieving capabilities failed\n");
 		} else {
 			if (!capng_have_capability(CAPNG_EFFECTIVE, CAP_NET_ADMIN)) {
 				char *buf;
 				
-				ERROR("interface \"%s\" needs to be reconfigured and it looks like you do not have the required privileges (CAP_NET_ADMIN).\n", if_name);
+				CRTX_ERROR("interface \"%s\" needs to be reconfigured and it looks like you do not have the required privileges (CAP_NET_ADMIN).\n", if_name);
 				buf = capng_print_caps_text(CAPNG_PRINT_BUFFER, CAPNG_EFFECTIVE);
-				DBG("effective caps: %s\n", buf);
+				CRTX_DBG("effective caps: %s\n", buf);
 				free(buf);
 			}
 		}
@@ -267,7 +267,7 @@ static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 			
 			rtnl_link_unset_flags(newlink, IFF_UP);
 			
-			DBG("restarting interface\n");
+			CRTX_DBG("restarting interface\n");
 			
 			r = rtnl_link_change(clist->socket, clist->link, newlink, 0);
 			if (r < 0) {
@@ -287,7 +287,7 @@ static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 		rtnl_link_set_type(newlink, "can");
 		
 		if (bitrate != clist->bitrate) {
-			DBG("will change bitrate from %u to %u\n", bitrate, clist->bitrate);
+			CRTX_DBG("will change bitrate from %u to %u\n", bitrate, clist->bitrate);
 			
 			r = rtnl_link_can_set_bitrate(newlink, clist->bitrate);
 			if (r) {
@@ -346,7 +346,7 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 	
 	clist->sockfd = socket(PF_CAN, SOCK_RAW, clist->protocol);
 	if (clist->sockfd == -1) {
-		ERROR("opening can socket failed: %s\n", strerror(errno));
+		CRTX_ERROR("opening can socket failed: %s\n", strerror(errno));
 		return 0;
 	}
 	
@@ -360,17 +360,17 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 		if (clist->recv_buffer_size > 0) {
 			r = getsockopt(clist->sockfd, SOL_SOCKET, SO_RCVBUF, &recvBufSize, &intSize);
 			if (r != 0) {
-				ERROR("unable to read receive buffer size\n");
+				CRTX_ERROR("unable to read receive buffer size\n");
 			}
 			
 			r = setsockopt(clist->sockfd, SOL_SOCKET, SO_RCVBUF,  &clist->recv_buffer_size, sizeof(clist->recv_buffer_size));
 			if (r != 0) {
-				ERROR("unable to change receive buffer size\n");
+				CRTX_ERROR("unable to change receive buffer size\n");
 			}
 			
 			r = getsockopt(clist->sockfd, SOL_SOCKET, SO_RCVBUF, &clist->recv_buffer_size, &intSize);
 			if (r != 0) {
-				ERROR("unable to read receive buffer size\n");
+				CRTX_ERROR("unable to read receive buffer size\n");
 			}
 			
 			printf("changing receive buffer from %d to %d\n", recvBufSize, clist->recv_buffer_size);
@@ -379,17 +379,17 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 		if (clist->send_buffer_size > 0) {
 			r = getsockopt(clist->sockfd, SOL_SOCKET, SO_SNDBUF, &sendBufSize, &intSize);
 			if (r != 0) {
-				ERROR("unable to read send buffer size\n");
+				CRTX_ERROR("unable to read send buffer size\n");
 			}
 			
 			r = setsockopt(clist->sockfd, SOL_SOCKET, SO_SNDBUF,  &clist->send_buffer_size, sizeof(clist->send_buffer_size));
 			if (r != 0) {
-				ERROR("unable to change send buffer size\n");
+				CRTX_ERROR("unable to change send buffer size\n");
 			}
 			
 			r = getsockopt(clist->sockfd, SOL_SOCKET, SO_SNDBUF, &clist->send_buffer_size, &intSize);
 			if (r != 0) {
-				ERROR("unable to read send buffer size\n");
+				CRTX_ERROR("unable to read send buffer size\n");
 			}
 			
 			printf("changing send buffer from %d to %d\n", sendBufSize, clist->send_buffer_size);
@@ -512,13 +512,13 @@ int can_main(int argc, char **argv) {
 	
 	ret = crtx_setup_listener("can", &clist);
 	if (ret) {
-		ERROR("create_listener(can) failed: %s\n", strerror(-ret));
+		CRTX_ERROR("create_listener(can) failed: %s\n", strerror(-ret));
 		return 0;
 	}
 	
 	ret = crtx_start_listener(&clist.base);
 	if (ret) {
-		ERROR("starting can listener failed\n");
+		CRTX_ERROR("starting can listener failed\n");
 		return 0;
 	}
 	

@@ -38,7 +38,7 @@ int crtx_avahi_resolve_service(struct crtx_avahi_service *service) {
 						"ResolveService"
 						);
 	if (r < 0) {
-		ERROR("Failed to create method call: %s %s\n", error.name, error.message);
+		CRTX_ERROR("Failed to create method call: %s %s\n", error.name, error.message);
 		return r;
 	}
 	
@@ -52,7 +52,7 @@ int crtx_avahi_resolve_service(struct crtx_avahi_service *service) {
 	
 	r = sd_bus_call(slist->bus, m, -1, &error, &reply); 
 	if (r < 0) {
-		ERROR("Failed to issue method call: %s %s\n", error.name, error.message);
+		CRTX_ERROR("Failed to issue method call: %s %s\n", error.name, error.message);
 		return r;
 	}
 	
@@ -111,7 +111,7 @@ char crtx_avahi_publish_service(struct crtx_avahi_service *service) {
 	
 	r = sd_bus_call(slist->bus, m, -1, &error, &reply);
 	if (r < 0) {
-		ERROR("Failed to issue method call: %s %s\n", error.name, error.message);
+		CRTX_ERROR("Failed to issue method call: %s %s\n", error.name, error.message);
 		return r;
 	}
 	
@@ -131,7 +131,7 @@ char crtx_avahi_publish_service(struct crtx_avahi_service *service) {
 									"AddService"
 								);
 	if (r < 0) {
-		ERROR("Failed to issue method call: %s %s\n", error.name, error.message);
+		CRTX_ERROR("Failed to issue method call: %s %s\n", error.name, error.message);
 		return r;
 	}
 	
@@ -148,7 +148,7 @@ char crtx_avahi_publish_service(struct crtx_avahi_service *service) {
 	
 	r = sd_bus_call(slist->bus, m, -1, &error, 0); 
 	if (r < 0) {
-		ERROR("Failed to issue method call: %s %s\n", error.name, error.message);
+		CRTX_ERROR("Failed to issue method call: %s %s\n", error.name, error.message);
 		return r;
 	}
 	
@@ -167,7 +167,7 @@ char crtx_avahi_publish_service(struct crtx_avahi_service *service) {
 	
 	r = sd_bus_call(slist->bus, m, -1, &error, 0);
 	if (r < 0) {
-		ERROR("Failed to issue method call: %s %s\n", error.name, error.message);
+		CRTX_ERROR("Failed to issue method call: %s %s\n", error.name, error.message);
 		return r;
 	}
 	
@@ -196,7 +196,7 @@ char crtx_avahi_remove_service(struct crtx_avahi_service *service) {
 	
 	r = sd_bus_call(slist->bus, m, -1, &error, &reply);
 	if (r < 0) {
-		ERROR("Failed to issue method call: %s %s\n", error.name, error.message);
+		CRTX_ERROR("Failed to issue method call: %s %s\n", error.name, error.message);
 		return r;
 	}
 	
@@ -213,7 +213,7 @@ char crtx_avahi_service(struct crtx_event *event) {
 			case 'a': return crtx_avahi_publish_service(s);
 			case 'r': return crtx_avahi_remove_service(s);
 			default:
-				ERROR("error, unknown crtx_avahi_service action %c\n", s->action);
+				CRTX_ERROR("error, unknown crtx_avahi_service action %c\n", s->action);
 				return -1;
 		}
 	} else
@@ -237,13 +237,13 @@ char crtx_avahi_service(struct crtx_event *event) {
 		
 		r = crtx_get_value(event->data.dict, "name", 's', &s.name, sizeof(s.name));
 		if (!r) {
-			ERROR("crtx_avahi_service dict requires a \"name\" entry\n");
+			CRTX_ERROR("crtx_avahi_service dict requires a \"name\" entry\n");
 			return -1;
 		}
 		
 		r = crtx_get_value(event->data.dict, "type", 's', &s.type, sizeof(s.type));
 		if (!r) {
-			ERROR("crtx_avahi_service dict requires a \"type\" entry, e.g., _http._tcp\n");
+			CRTX_ERROR("crtx_avahi_service dict requires a \"type\" entry, e.g., _http._tcp\n");
 			return -1;
 		}
 		
@@ -257,13 +257,13 @@ char crtx_avahi_service(struct crtx_event *event) {
 		
 		r = crtx_get_value(event->data.dict, "port", 'u', &s.port, sizeof(s.port));
 		if (!r) {
-			ERROR("crtx_avahi_service dict requires a \"port\" entry\n");
+			CRTX_ERROR("crtx_avahi_service dict requires a \"port\" entry\n");
 			return -1;
 		}
 		
 		r = crtx_get_value(event->data.dict, "action", 's', &action, sizeof(action));
 		if (!r) {
-			ERROR("crtx_avahi_service dict requires a \"action\" entry, e.g., \"add\" or \"remove\"\n");
+			CRTX_ERROR("crtx_avahi_service dict requires a \"action\" entry, e.g., \"add\" or \"remove\"\n");
 			return -1;
 		}
 		
@@ -272,7 +272,7 @@ char crtx_avahi_service(struct crtx_event *event) {
 		} else if (!strcmp(action, "remove")) {
 			crtx_avahi_remove_service(&s);
 		} else {
-			ERROR("invalid crtx_avahi_service action: %s\n", action);
+			CRTX_ERROR("invalid crtx_avahi_service action: %s\n", action);
 			return -1;
 		}
 	}
@@ -323,7 +323,7 @@ static char sdbus_to_avahi_handler(struct crtx_event *event, void *userdata, voi
 	
 	r = crtx_create_event(&avahi_event); //, service, 0);
 	if (r) {
-		ERROR("crtx_create_event(avahi) failed: %s\n", strerror(-r));
+		CRTX_ERROR("crtx_create_event(avahi) failed: %s\n", strerror(-r));
 		
 		return r;
 	}
@@ -361,7 +361,7 @@ static char init_service_browser(struct crtx_avahi_listener *alist) {
 	
 	r = sd_bus_call(alist->sdlist.bus, m, -1, &error, &reply);
 	if (r < 0) {
-		ERROR("Failed to issue method call: %s %s\n", error.name, error.message);
+		CRTX_ERROR("Failed to issue method call: %s %s\n", error.name, error.message);
 		return r;
 	}
 	
@@ -409,7 +409,7 @@ struct crtx_listener_base *crtx_setup_avahi_listener(void *options) {
 	
 	ret = crtx_setup_listener("sdbus", &alist->sdlist);
 	if (ret) {
-		ERROR("create_listener(udev) failed\n");
+		CRTX_ERROR("create_listener(udev) failed\n");
 		return 0;
 	}
 	alist->sdbase = &alist->sdlist.base;
@@ -418,7 +418,7 @@ struct crtx_listener_base *crtx_setup_avahi_listener(void *options) {
 	
 	ret = crtx_start_listener(alist->sdbase);
 	if (ret) {
-		ERROR("starting sdbus listener failed\n");
+		CRTX_ERROR("starting sdbus listener failed\n");
 		return 0;
 	}
 	
@@ -478,7 +478,7 @@ int avahi_main(int argc, char **argv) {
 	
 	err = crtx_setup_listener("avahi", &alist);
 	if (err) {
-		ERROR("create_listener(alist) failed: %d\n", err);
+		CRTX_ERROR("create_listener(alist) failed: %d\n", err);
 		// TODO
 		return err;
 	}
@@ -487,7 +487,7 @@ int avahi_main(int argc, char **argv) {
 	
 	err = crtx_start_listener(&alist.base);
 	if (err) {
-		ERROR("starting avahi listener failed\n");
+		CRTX_ERROR("starting avahi listener failed\n");
 		return err;
 	}
 	

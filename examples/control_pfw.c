@@ -256,7 +256,7 @@ static char pfw_on_hit_host(struct crtx_cache_task *rc, struct crtx_dict_item *k
 			// generate key with IP
 			ret = pfw_rcache_create_key_ip(event, &ip);
 			if (!ret) {
-				ERROR("cannot create key for IP cache\n");
+				CRTX_ERROR("cannot create key for IP cache\n");
 				return 1;
 			}
 			
@@ -265,7 +265,7 @@ static char pfw_on_hit_host(struct crtx_cache_task *rc, struct crtx_dict_item *k
 // 			timeout = crtx_get_item(c_entry->ds, "timeout");
 		}
 	} else
-		ERROR("pfw_on_hit_host received ditem.type %c != 'D'\n", c_entry->type);
+		CRTX_ERROR("pfw_on_hit_host received ditem.type %c != 'D'\n", c_entry->type);
 	
 	return orig_ret;
 }
@@ -378,7 +378,7 @@ char pfw_start(unsigned int queue_num, unsigned int default_mark) {
 		
 		blist = create_listener("timer", &tlist);
 		if (!blist) {
-			ERROR("create_listener(timer) failed\n");
+			CRTX_ERROR("create_listener(timer) failed\n");
 			exit(1);
 		}
 		
