@@ -249,7 +249,7 @@ static char libvirt_event_handler(struct crtx_event *event, void *userdata, void
 		crtx_event_get_payload(event, 0, 0, &dict);
 		
 		if (!dict) {
-			DBG("unknown event data\n");
+			CRTX_DBG("unknown event data\n");
 			return 0;
 		}
 		
@@ -258,7 +258,7 @@ static char libvirt_event_handler(struct crtx_event *event, void *userdata, void
 		type = crtx_get_string(dict, "type");
 		
 		if (!type) {
-			DBG("unknown event data for %s\n", vm_name);
+			CRTX_DBG("unknown event data for %s\n", vm_name);
 			return 0;
 		}
 		
@@ -276,7 +276,7 @@ static char libvirt_event_handler(struct crtx_event *event, void *userdata, void
 				if (!vm_name)
 					vm_name = virDomainGetName(dom);
 			} else
-				DBG("received domain id is larger than INT_MAX\n");
+				CRTX_DBG("received domain id is larger than INT_MAX\n");
 		}
 		
 		if (dom == 0 && vm_name) {

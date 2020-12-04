@@ -21,7 +21,6 @@
 #include "core.h"
 #include "cache.h"
 #include "nf_queue.h"
-#include "controls.h"
 #include "dict.h"
 #include "timer.h"
 
@@ -63,7 +62,7 @@
 #endif
 
 // listener for the nf_queue
-struct crtx_nfq_listener nfq_list;
+struct crtx_nf_queue_listener nfq_list;
 struct crtx_listener_base *nfq_list_base;
 
 // listener for the timer events
@@ -251,7 +250,7 @@ static char pfw_on_hit_host(struct crtx_cache_task *rc, struct crtx_dict_item *k
 		if (!cache_ip || CRTX_DICT_GET_NUMBER(cache_ip) == 1) {
 // 			struct crtx_dict_item *timeout, *ip_c_entry;
 			
-			DBG("create IP cache entry\n");
+			CRTX_DBG("create IP cache entry\n");
 			
 			// generate key with IP
 			ret = pfw_rcache_create_key_ip(event, &ip);
@@ -302,6 +301,8 @@ char pfw_start(unsigned int queue_num, unsigned int default_mark) {
 	struct ifaddrs *addrs, *tmp;
 	struct pfw_ip_ll *iit;
 	char *s;
+	int r;
+	
 	
 	getifaddrs(&addrs);
 	tmp = addrs;
@@ -339,14 +340,15 @@ char pfw_start(unsigned int queue_num, unsigned int default_mark) {
 	nfq_list.queue_num = queue_num;
 	nfq_list.default_mark = default_mark;
 	
-	nfq_list_base = create_listener("nf_queue", &nfq_list);
-	if (!nfq_list_base) {
+	r = crtx_setup_listener("nf_queue", &nfq_list);
+	if (r) {
 		printf("cannot create nq_queue listener\n");
 		return 0;
 	}
+	nfq_list_base = &nfq_list.base;
 	
 	
-	crtx_create_task(nfq_list.parent.graph, 0, "pfw_print_packet", &pfw_print_packet, 0);
+	crtx_create_task(nfq_list.base.graph, 0, "pfw_print_packet", &pfw_print_packet, 0);
 	
 	{
 		// resolved IP
@@ -356,7 +358,7 @@ char pfw_start(unsigned int queue_num, unsigned int default_mark) {
 		
 		crtx_load_cache(TASK2CACHETASK(rcache_resolve)->cache, PFW_DATA_DIR);
 		
-		add_task(nfq_list.parent.graph, rcache_resolve);
+		add_task(nfq_list.base.graph, rcache_resolve);
 	}
 	
 	{
@@ -376,11 +378,12 @@ char pfw_start(unsigned int queue_num, unsigned int default_mark) {
 		tlist.settime_flags = 0; // absolute (TFD_TIMER_ABSTIME), or relative (0) time, see: man timerfd_settime()
 // 		tlist.newtimer = &newtimer;
 		
-		blist = create_listener("timer", &tlist);
-		if (!blist) {
+		r = crtx_setup_listener("timer", &tlist);
+		if (r) {
 			CRTX_ERROR("create_listener(timer) failed\n");
 			exit(1);
 		}
+		blist = &tlist.base;
 		
 		crtx_create_task(blist->graph, 0, "resolve_ips", pfw_resolve_IPs_timer, TASK2CACHETASK(rcache_resolve));
 		
@@ -395,7 +398,7 @@ char pfw_start(unsigned int queue_num, unsigned int default_mark) {
 		
 		crtx_load_cache(TASK2CACHETASK(rcache_ip)->cache, PFW_DATA_DIR);
 		
-		add_task(nfq_list.parent.graph, rcache_ip);
+		add_task(nfq_list.base.graph, rcache_ip);
 	}
 	
 	{
@@ -407,12 +410,12 @@ char pfw_start(unsigned int queue_num, unsigned int default_mark) {
 		
 		crtx_load_cache(TASK2CACHETASK(rcache_host)->cache, PFW_DATA_DIR);
 		
-		add_task(nfq_list.parent.graph, rcache_host);
+		add_task(nfq_list.base.graph, rcache_host);
 	}
 	
 	crtx_start_listener(nfq_list_base);
 	
-// 	print_tasks(nfq_list.parent.graph);
+// 	print_tasks(nfq_list.base.graph);
 	
 	return 1;
 }
@@ -442,9 +445,9 @@ void finish() {
 	free_response_cache(((struct crtx_cache_task*) rcache_host->userdata)->cache);
 	free_response_cache(((struct crtx_cache_task*) rcache_ip->userdata)->cache);
 	free_response_cache(((struct crtx_cache_task*) rcache_resolve->userdata)->cache);
-	free_task(rcache_host);
-	free_task(rcache_ip);
-	free_task(rcache_resolve);
+	crtx_free_task(rcache_host);
+	crtx_free_task(rcache_ip);
+	crtx_free_task(rcache_resolve);
 	
 	for (ipi = local_ips; ipi; ipi=ipin) {
 		ipin=ipi->next;

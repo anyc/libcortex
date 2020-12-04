@@ -49,7 +49,7 @@ static char exec_script_handler(struct crtx_event *event, void *userdata, void *
 	mask_size = cmd_size - (pos - cmd);
 	ret = crtx_inotify_mask2string(in_event->mask, pos, &mask_size);
 	
-	DBG("executing cmd %s\n", cmd);
+	CRTX_DBG("executing cmd %s\n", cmd);
 	system(cmd);
 	
 	free(cmd);
@@ -73,7 +73,7 @@ char init() {
 	crtx_get_value(config, "transforms", 'D', &transforms, sizeof(void*));
 	
 	if (!monitors) {
-		DBG("control_inotify_batch: no monitors in config\n");
+		CRTX_DBG("control_inotify_batch: no monitors in config\n");
 		return 1;
 	}
 	

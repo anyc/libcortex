@@ -6,6 +6,8 @@
  *
  */
 
+#include "intern.h"
+
 #define CRTX_DICT_GET_NUMBER(dict_item) ( \
 	(dict_item)->type == 'u' ? (dict_item)->uint32 : \
 	(dict_item)->type == 'i' ? (dict_item)->int32 : \

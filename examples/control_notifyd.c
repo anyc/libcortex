@@ -24,11 +24,10 @@
 
 #include "core.h"
 #include "socket.h"
-#include "sd_bus_notifications.h"
+#include "sdbus_notifications.h"
 
 #define PREFIX "notification_daemon"
 
-static struct crtx_listener_base *sock_list;
 static struct crtx_socket_listener sock_listener;
 // static struct crtx_sd_bus_notification_listener notify_listener;
 
@@ -36,6 +35,9 @@ static char *sock_path = 0;
 static void *notifier_data = 0;
 
 char init() {
+	int r;
+	
+	
 	printf("starting notifyd example plugin\n");
 	
 	// open a TCPv4 server socket,
@@ -68,8 +70,8 @@ char init() {
 		sock_listener.service = sock_path;
 	}
 	
-	sock_list = create_listener("socket_server", &sock_listener);
-	if (!sock_list) {
+	r = crtx_setup_listener("socket_server", &sock_listener);
+	if (r) {
 		printf("cannot create fanotify listener\n");
 		return 0;
 	}
@@ -85,10 +87,10 @@ char init() {
 }
 
 void finish() {
-	crtx_free_listener(sock_list);
+	crtx_free_listener(&sock_listener.base);
 // 	free_listener(notify_list);
 	
-	crtx_finish_notification_listeners(notifier_data);
+	crtx_finish_notification_listeners(&notifier_data);
 	
 	if (sock_path)
 		free(sock_path);

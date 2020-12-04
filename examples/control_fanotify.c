@@ -35,12 +35,11 @@
 #include "dict.h"
 #include "socket.h"
 #include "fanotify.h"
-#include "sd_bus_notifications.h"
+#include "sdbus_notifications.h"
+#include "intern.h"
 
 #define PREFIX "notification_daemon"
 
-struct crtx_listener_base *fa;
-struct crtx_listener_base *sock_list;
 struct crtx_fanotify_listener listener;
 struct crtx_socket_listener sock_listener;
 
@@ -54,6 +53,8 @@ static char fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 	struct crtx_event *notif_event;
 	struct crtx_dict *data, *actions_dict;
 	size_t title_len, buf_len;
+	int r;
+	
 	
 	metadata = (struct fanotify_event_metadata *) event->data.pointer;
 	
@@ -87,7 +88,12 @@ static char fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 			"actions", actions_dict, 0, 0
 			);
 		
-		notif_event = crtx_create_event(CRTX_EVT_NOTIFICATION, 0, 0);
+		r = crtx_create_event(&notif_event);
+		if (r) {
+			CRTX_ERROR("crtx_create_event() failed: %s\n", strerror(-r));
+			return r;
+		}
+		notif_event->description = CRTX_EVT_NOTIFICATION;
 		notif_event->data.dict = data;
 		
 		if (metadata->mask & FAN_OPEN_PERM) {
@@ -97,7 +103,7 @@ static char fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 		}
 		
 		// process event
-		add_event(sock_listener.outbox, notif_event);
+		crtx_add_event(sock_listener.outbox, notif_event);
 		
 		if (metadata->mask & FAN_OPEN_PERM) {
 			struct fanotify_response access;
@@ -132,6 +138,8 @@ static char fanotify_event_handler(struct crtx_event *event, void *userdata, voi
 
 char init() {
 	char *fanotify_path;
+	int r;
+	
 	
 	printf("starting fanotify example plugin\n");
 	
@@ -174,13 +182,13 @@ char init() {
 		sock_listener.service = sock_path;
 	}
 	
-	sock_list = create_listener("socket_client", &sock_listener);
-	if (!sock_list) {
+	r = crtx_setup_listener("socket_client", &sock_listener);
+	if (r) {
 		printf("cannot create sock_listener\n");
 		return 0;
 	}
 	
-	crtx_start_listener(sock_list);
+	crtx_start_listener(&sock_listener.base);
 	
 	/*
 	 * setup the fanotiy listener
@@ -206,16 +214,16 @@ char init() {
 	else
 		listener.path = "."; // current working directory
 	
-	fa = create_listener("fanotify", &listener);
-	if (!fa) {
+	r = crtx_setup_listener("fanotify", &listener);
+	if (r) {
 		printf("cannot create fanotify listener\n");
 		return 0;
 	}
 	
 	// add function that will process a fanotify event
-	crtx_create_task(fa->graph, 0, "fanotify_event_handler", &fanotify_event_handler, fa);
+	crtx_create_task(listener.base.graph, 0, "fanotify_event_handler", &fanotify_event_handler, &listener.base);
 	
-	crtx_start_listener(fa);
+	crtx_start_listener(&listener.base);
 	
 	printf("fanotify path \"%s\", sending events to \"%s\"\n", fanotify_path, sock_path);
 	
@@ -223,8 +231,8 @@ char init() {
 }
 
 void finish() {
-	crtx_free_listener(sock_list);
-	crtx_free_listener(fa);
+	crtx_free_listener(&sock_listener.base);
+	crtx_free_listener(&listener.base);
 	
 	if (sock_path)
 		free(sock_path);
