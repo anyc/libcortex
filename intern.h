@@ -10,8 +10,8 @@ extern "C" {
  *
  */
 
-#define STRINGIFYB(x) #x
-#define STRINGIFY(x) STRINGIFYB(x)
+#define CRTX_STRINGIFYB(x) #x
+#define CRTX_STRINGIFY(x) CRTX_STRINGIFYB(x)
 
 #define CRTX_VLEVEL_SILENT 0
 #define CRTX_VLEVEL_ERR 1
@@ -38,9 +38,9 @@ extern "C" {
 #define CRTX_ERROR(fmt, ...) do { crtx_printf(CRTX_VLEVEL_ERR, "\x1b[31m"); crtx_printf(CRTX_VLEVEL_ERR, fmt, ##__VA_ARGS__); crtx_printf(CRTX_VLEVEL_ERR, "\x1b[0m"); char *d = 0; printf("%c", *d); } while (0)
 #endif
 
-#define CRTX_ASSERT(x) do { if (!(x)) { CRTX_ERROR(__FILE__ ":" STRINGIFY(__LINE__) " assertion failed: " #x "\n"); exit(1); } } while (0)
+#define CRTX_ASSERT(x) do { if (!(x)) { CRTX_ERROR(__FILE__ ":" CRTX_STRINGIFY(__LINE__) " assertion failed: " #x "\n"); exit(1); } } while (0)
 
-#define CRTX_ASSERT_STR(x, msg, ...) do { if (!(x)) { CRTX_ERROR(__FILE__ ":" STRINGIFY(__LINE__) " " msg " " #x "failed\n", __VA_ARGS__); exit(1); } } while (0)
+#define CRTX_ASSERT_STR(x, msg, ...) do { if (!(x)) { CRTX_ERROR(__FILE__ ":" CRTX_STRINGIFY(__LINE__) " " msg " " #x "failed\n", __VA_ARGS__); exit(1); } } while (0)
 
 #if __STDC_VERSION__ >= 201112L
 #define CRTX_STATIC_ASSERT(X, msg) _Static_assert(X, msg)
@@ -48,7 +48,7 @@ extern "C" {
 #define CRTX_STATIC_ASSERT(X, msg) ({ extern int __attribute__((error("assertion failed: '" #X "' - " #msg))) crtx_static_assert(); ((X)?0:crtx_static_assert()),0; })
 #endif
 
-#define POPCOUNT32(x) __builtin_popcount(x)
+#define CRTX_POPCOUNT32(x) __builtin_popcount(x)
 
 #define CRTX_DEFINE_ALLOC_FUNCTION(lstnr) \
 	struct crtx_ ## lstnr ## _listener * crtx_alloc_ ## lstnr ## _listener() { \

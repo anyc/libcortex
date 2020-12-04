@@ -130,7 +130,7 @@ void inotify_to_dict(struct crtx_event *event, struct crtx_dict_item *item) {
 	iev = (struct inotify_event*) event->data.pointer;
 	len = strlen(iev->name);
 	
-	mlen = POPCOUNT32(iev->mask);
+	mlen = CRTX_POPCOUNT32(iev->mask);
 	mask_signature = (char*) malloc(mlen + 1);
 	memset(mask_signature, 's', mlen);
 	mask_signature[mlen] = 0;

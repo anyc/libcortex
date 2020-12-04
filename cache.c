@@ -258,7 +258,7 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *cache, struct cr
 	struct crtx_dict_item *c_entry;
 	struct crtx_dict_item *value_item;
 	
-// 	CRTX_DBG("new cache entry "); crtx_print_dict_item(key, 0); DBG("\n");
+// 	CRTX_DBG("new cache entry "); crtx_print_dict_item(key, 0); CRTX_DBG("\n");
 	
 // 	crtx_print_dict_item(key, 0);
 	
@@ -434,7 +434,7 @@ void crtx_cache_remove_entry(struct crtx_cache *cache, struct crtx_dict_item *ke
 	struct crtx_cache *dc = cache;
 	struct crtx_dict_item *c_entry;
 	
-// 	CRTX_DBG("new cache entry "); crtx_print_dict_item(key, 0); DBG("\n");
+// 	CRTX_DBG("new cache entry "); crtx_print_dict_item(key, 0); CRTX_DBG("\n");
 	
 	if (!dc->entries)
 		return;

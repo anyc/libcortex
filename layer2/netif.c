@@ -30,11 +30,9 @@ int crtx_netif_query_interfaces(struct crtx_netif_listener *netif_lstnr) {
 
 static char netif_state_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_netif_listener *netif_lstnr;
-// 	struct crtx_libnl_listener *libnl;
 	int r;
 	
 	netif_lstnr = (struct crtx_netif_listener *) userdata;
-// 	libnl = (struct crtx_libnl_listener *) event->origin;
 	
 	if (event->data.type == 'u' && event->data.uint32 == CRTX_LSTNR_STARTED) {
 		nl_socket_add_memberships(netif_lstnr->libnl_lstnr.sock, RTNLGRP_LINK, 0);
@@ -125,7 +123,6 @@ static void netif_shutdown_listener(struct crtx_listener_base *listener) {
 
 struct crtx_listener_base *crtx_setup_netif_listener(void *options) {
 	struct crtx_netif_listener *netif_lstnr;
-// 	struct crtx_listener_base *lbase;
 	struct crtx_libnl_callback *cbit;
 	int ret;
 	
@@ -137,7 +134,6 @@ struct crtx_listener_base *crtx_setup_netif_listener(void *options) {
 	}
 	netif_lstnr->libnl_lstnr.callbacks = libnl_callbacks;
 	
-// 	lbase = create_listener("libnl", &netif_lstnr->libnl_lstnr);
 	ret = crtx_setup_listener("libnl", &netif_lstnr->libnl_lstnr);
 	if (ret) {
 		CRTX_ERROR("create_listener(libnl) failed\n");

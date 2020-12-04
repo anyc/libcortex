@@ -424,39 +424,6 @@ struct crtx_event_loop* crtx_get_main_event_loop() {
 	return crtx_root->event_loop;
 }
 
-// int crtx_evloop_add_el_fd(struct crtx_evloop_fd *el_fd) {
-// 	struct crtx_event_loop *event_loop;
-// 	
-// 	event_loop = crtx_get_main_event_loop();
-// 
-// 	if (!event_loop) {
-// 		CRTX_ERROR("no event loop for fd %d\n", el_fd->fd);
-// 		return -1;
-// 	}
-// 	
-// 	el_fd->evloop = event_loop;
-// 	
-// 	LOCK(event_loop->listener->dependencies_lock);
-// 	LOCK(el_fd->listener->dependencies_lock);
-// 	
-// // 	crtx_ll_append_new(&event_loop->listener->rev_dependencies, el_fd->listener);
-// // 	crtx_ll_append_new(&el_fd->listener->dependencies, event_loop->listener);
-// 	
-// 	event_loop->mod_fd(event_loop, el_fd);
-// 	
-// 	UNLOCK(el_fd->listener->dependencies_lock);
-// 	UNLOCK(event_loop->listener->dependencies_lock);
-// 	
-// 	return 0;
-// }
-// 
-// int crtx_evloop_set_el_fd(struct crtx_evloop_fd *el_fd) {
-// 	el_fd->evloop->mod_fd(el_fd->evloop, el_fd);
-// 	
-// 	return 0;
-// }
-
-
 int crtx_evloop_queue_graph(struct crtx_event_loop *evloop, struct crtx_graph *graph) {
 	struct crtx_event_loop_control_pipe ecp;
 	

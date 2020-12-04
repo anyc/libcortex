@@ -100,24 +100,13 @@ static int uevents_read_cb(struct crtx_netlink_raw_listener *nl_listener, int fd
 	
 	crtx_create_event(&event);
 	
-// 	event->data.string = crtx_stracpy(buf, &ulen);
-// 	event->data.string = (char *) malloc(ulen+1);
 	s = (char *) malloc(ulen+1);
 	memcpy(s, buf, ulen);
 	s[ulen] = 0;
-// 	event->data.size = ulen + 1;
-// 	event->data.type = 's';
+	
 	crtx_event_set_raw_data(event, 's', s, ulen, 0);
 	
-// 	event->data.flags = CRTX_DIF_DONT_FREE_DATA;
-	
-// 	reference_event_release(event);
-	
 	crtx_add_event(ulist->base.graph, event);
-	
-// 	wait_on_event(event);
-	
-// 	dereference_event_release(event);
 	
 	return 0;
 }

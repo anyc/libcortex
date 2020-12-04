@@ -46,7 +46,6 @@ static void on_free_evdev_listener_data(struct crtx_listener_base *data, void *u
 }
 
 int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct udev_device *dev) {
-// 	struct crtx_listener_base *lbase;
 	struct crtx_evdev_listener *el;
 	char ret;
 	struct crtx_dll *dll;
@@ -82,7 +81,6 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 	el->base.free_cb = on_free_evdev_listener_data;
 	el->base.free_cb_userdata = dyn_evdev;
 	
-// 	lbase = create_listener("evdev", el);
 	ret = crtx_setup_listener("evdev", el);
 	if (ret) {
 		CRTX_ERROR("create_listener(evdev) failed\n");
@@ -100,18 +98,6 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 	
 	crtx_create_task(el->base.graph, 0, "dyn_evdev_handler", dyn_evdev->handler, dyn_evdev->handler_userdata);
 	
-// 		printf("dll %p %p %p\n", dll, el, lbase->graph->listener);
-	
-// 	event = crtx_create_event("NEW_DEVICE");
-// 	dict = crtx_create_dict("",
-// 			"
-// 			);
-// 	crtx_event_set_dict_data(event, dict, 0);
-	
-	// 	reference_event_release(event);
-	
-// 	crtx_add_event(el->base.graph, event);
-	
 	ret = crtx_start_listener(&el->base);
 	if (ret) {
 		CRTX_ERROR("starting evdev listener failed\n");
@@ -128,7 +114,7 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 
 static char udev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct udev_device *dev;
-//  	const char *devpath;
+//	const char *devpath;
 	struct crtx_dynamic_evdev_listener *dyn_evdev;
 	const char *action;
 	
@@ -139,7 +125,7 @@ static char udev_test_handler(struct crtx_event *event, void *userdata, void **s
 	action = udev_device_get_action(dev);
 	
 	if (!action || !strcmp(action, "add")) {
-//  		devpath = udev_device_get_property_value(dev, "DEVNAME");
+//  	devpath = udev_device_get_property_value(dev, "DEVNAME");
 		
 		add_evdev_listener(dyn_evdev, dev);
 	}
@@ -180,7 +166,6 @@ static void shutdown_listener(struct crtx_listener_base *data) {
 }
 
 struct crtx_listener_base *crtx_setup_dynamic_evdev_listener(void *options) {
-// 	struct crtx_listener_base *udev_lbase;
 	struct crtx_dynamic_evdev_listener *dyn_evdev;
 	int ret;
 	
@@ -192,7 +177,6 @@ struct crtx_listener_base *crtx_setup_dynamic_evdev_listener(void *options) {
 	dyn_evdev->udev_lstnr.sys_dev_filter = udev_input_filters;
 	dyn_evdev->udev_lstnr.query_existing = 1;
 	
-// 	udev_lbase = create_listener("udev", &dyn_evdev->udev_lstnr);
 	ret = crtx_setup_listener("udev", &dyn_evdev->udev_lstnr);
 	if (ret) {
 		CRTX_ERROR("create_listener(udev) failed\n");

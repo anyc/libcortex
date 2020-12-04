@@ -21,7 +21,6 @@
 
 void evdev_event_before_release_cb(struct crtx_event *event, void *userdata) {
 	free(crtx_event_get_ptr(event));
-// 	crtx_event_set_data(event, 0, 0, 0);
 	crtx_event_set_raw_data(event, 'p', 0, 0, 0);
 }
 
@@ -34,58 +33,17 @@ static void send_event(struct crtx_evdev_listener *el, struct input_event *ev, c
 	
 	crtx_create_event(&event);
 	crtx_event_set_raw_data(event, 'p', new_ev, sizeof(struct input_event), 0);
-// 	event->data.flags |= CRTX_DIF_DONT_FREE_DATA;
 	event->cb_before_release = &evdev_event_before_release_cb;
 	
-// 	reference_event_release(event);
-	
 	crtx_add_event(el->base.graph, event);
-	
-// 	wait_on_event(event);
-	
-// 	dereference_event_release(event);
 }
 
-// void *evdev_tmain(void *data) {
-// 	struct crtx_evdev_listener *el;
-// 	struct input_event ev;
-// 	int ret;
-// 	
-// 	el = (struct crtx_evdev_listener*) data;
-// 	
-// 	while (!el->stop) {
-// 		do {
-// 			ret = libevdev_next_event(el->device, LIBEVDEV_READ_FLAG_NORMAL|LIBEVDEV_READ_FLAG_BLOCKING, &ev);
-// 			if (ret == LIBEVDEV_READ_STATUS_SYNC) {
-// // 				printf("::::::::::::::::::::: dropped ::::::::::::::::::::::\n");
-// 				while (ret == LIBEVDEV_READ_STATUS_SYNC) {
-// 					send_event(el, &ev, 1);
-// 					
-// 					ret = libevdev_next_event(el->device, LIBEVDEV_READ_FLAG_SYNC, &ev);
-// 				}
-// // 				printf("::::::::::::::::::::: re-synced ::::::::::::::::::::::\n");
-// 			} else if (ret == LIBEVDEV_READ_STATUS_SUCCESS) {
-// 				send_event(el, &ev, 0);
-// 			}
-// 		} while (ret == LIBEVDEV_READ_STATUS_SYNC || ret == LIBEVDEV_READ_STATUS_SUCCESS || ret == -EAGAIN);
-// 		
-// 		if (ret != LIBEVDEV_READ_STATUS_SUCCESS && ret != -EAGAIN) {
-// 			fprintf(stderr, "Failed to handle events on %s: %s\n", el->device_path, strerror(-ret));
-// 			break;
-// 		}
-// 	}
-// 	
-// 	return 0;
-// }
-
 static char evdev_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	struct crtx_evloop_callback *el_cb;
 	struct crtx_evdev_listener *evdev;
 	struct input_event ev;
 	int ret;
 	
 	
-// 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 	evdev = (struct crtx_evdev_listener *) userdata;
 	
 	do {
@@ -152,16 +110,6 @@ struct crtx_listener_base *crtx_setup_evdev_listener(void *options) {
 	
 	evdev->base.shutdown = &crtx_shutdown_evdev_listener;
 	
-// 	new_eventgraph(&evdev->base.graph, 0, evdev_msg_etype);
-	
-// 	evdev->base.thread = get_thread(evdev_tmain, evdev, 0);
-// 	evdev->base.thread->do_stop = &stop_thread;
-	
-// 	evdev->base.evloop_fd.fd = evdev->fd;
-// 	evdev->base.evloop_fd.data = evdev;
-// 	evdev->base.evloop_fd.crtx_event_flags = EVLOOP_READ;
-// 	evdev->base.evloop_fd.event_handler = &evdev_fd_event_handler;
-// 	evdev->base.evloop_fd.event_handler_name = "evdev fd handler";
 	crtx_evloop_init_listener(&evdev->base,
 						evdev->fd,
 						EVLOOP_READ,

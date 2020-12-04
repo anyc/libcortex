@@ -12,22 +12,12 @@
 #include "pipe.h"
 
 static char pipe_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	struct crtx_event *nevent;
 	struct crtx_pipe_listener *lstnr;
-// 	struct crtx_evloop_callback *el_cb;
 	
 	lstnr = (struct crtx_pipe_listener *) userdata;
 	
-// 	el_cb = event->data.pointer;
-// 	printf("fd %d %d\n", el_cb->fd_entry->fd, lstnr->fds[0]);
-	
-// 	nevent = crtx_create_event(lstnr->event_type);
 	crtx_event_set_raw_data(event, 'i', lstnr->fds[CRTX_READ_END], sizeof(int), 0);
 	return lstnr->fd_event_handler(event, lstnr->fd_event_handler_data, 0);
-	
-// 	crtx_add_event(lstnr->base.graph, nevent);
-	
-// 	return 0;
 }
 
 static void on_error_cb(struct crtx_evloop_callback *el_cb, void *data) {
@@ -71,7 +61,6 @@ struct crtx_listener_base *crtx_setup_pipe_listener(void *options) {
 						EVLOOP_READ,
 						0,
 						&pipe_fd_event_handler, lstnr,
-// 						lstnr->fd_event_handler, lstnr->fd_event_handler_data,
 						&on_error_cb, lstnr
 					);
 	

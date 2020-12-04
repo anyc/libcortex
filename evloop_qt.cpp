@@ -40,8 +40,8 @@ static enum MyQSocketNotifier::Type crtx_event_flags2qt_flags(int crtx_event_fla
 	if (crtx_event_flags & EVLOOP_TIMEOUT)
 		crtx_event_flags = crtx_event_flags & (~EVLOOP_TIMEOUT);
 	
-	if (POPCOUNT32(crtx_event_flags) != 1) {
-		CRTX_ERROR("evloop_qt: invalid amount of event flags %u != 1 (%d)\n", POPCOUNT32(crtx_event_flags), crtx_event_flags);
+	if (CRTX_POPCOUNT32(crtx_event_flags) != 1) {
+		CRTX_ERROR("evloop_qt: invalid amount of event flags %u != 1 (%d)\n", CRTX_POPCOUNT32(crtx_event_flags), crtx_event_flags);
 	}
 	
 	if (crtx_event_flags & EVLOOP_READ)

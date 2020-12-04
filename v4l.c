@@ -456,13 +456,6 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 	 */
 	query_ctrls(lstnr);
 	
-// 	lstnr->base.evloop_fd.fd = lstnr->fd;
-// 	lstnr->base.evloop_fd.data = lstnr;
-// 	lstnr->base.evloop_fd.event_handler = &v4l_fd_event_handler;
-// 	lstnr->base.evloop_fd.event_handler_name = "v4l fd handler";
-// 	lstnr->base.evloop_fd.crtx_event_flags = EPOLLPRI | EVLOOP_READ;
-// 	lstnr->base.evloop_fd.error_cb = &on_error_cb;
-// 	lstnr->base.evloop_fd.error_cb_data = lstnr;
 	crtx_evloop_init_listener(&lstnr->base,
 						lstnr->fd,
 						EVLOOP_SPECIAL | EVLOOP_READ,
