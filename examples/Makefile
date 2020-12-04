@@ -6,7 +6,7 @@ LDFLAGS+=-L$(libcrtx_path)
 
 LDLIBS+=-lcrtx
 
-EXAMPLES=libvirt-usb-hotplug
+EXAMPLES=libvirt-usb-hotplug control_inotify_notify control_fanotify control_notifyd control_pfw
 
 all: $(EXAMPLES)
 

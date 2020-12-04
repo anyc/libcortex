@@ -13,12 +13,14 @@
 #include <libvirt/libvirt.h>
 #include <libxml/parser.h>
 
+#include "intern.h"
 #include "core.h"
 #include "udev.h"
 #include "dict_inout_json.h"
 #include "libvirt.h"
 #include "timer.h"
 #include "cache.h"
+#include "dict.h"
 
 
 char * req_usb_attrs[] = {
@@ -124,7 +126,7 @@ static char udev_event_handler(struct crtx_event *event, void *userdata, void **
 	char *action;
 	
 	
-	dict = crtx_udev_raw2dict(event, r2ds, 1);
+	dict = crtx_udev_raw2dict((struct udev_device *) crtx_event_get_ptr(event), r2ds, 1);
 	
 	// upgrade event payload
 	crtx_event_set_dict_data(event, dict, 0);
@@ -177,20 +179,20 @@ static char udev_event_handler(struct crtx_event *event, void *userdata, void **
 	}
 	
 	if (!vm_name) {
-		INFO("no VM found for device %s:%s (%s)\n", vendor, product, action);
+		CRTX_INFO("no VM found for device %s:%s (%s)\n", vendor, product, action);
 		return 0;
 	} else {
-		INFO("event %s device %s:%s for VM \"%s\"\n", action, vendor, product, vm_name);
+		CRTX_INFO("event %s device %s:%s for VM \"%s\"\n", action, vendor, product, vm_name);
 	}
 	
 	dom = virDomainLookupByName(lvlist.conn, vm_name);
 	if (dom == NULL) {
-		ERROR("Failed to find Domain \"%s\"\n", vm_name);
+		CRTX_ERROR("Failed to find Domain \"%s\"\n", vm_name);
 		return 0;
 	}
 	
 	if (!virDomainIsActive(dom)) {
-		INFO("domain %s not active\n", vm_name);
+		CRTX_INFO("domain %s not active\n", vm_name);
 		
 		virDomainFree(dom);
 		return 0;
@@ -198,26 +200,26 @@ static char udev_event_handler(struct crtx_event *event, void *userdata, void **
 	
 	if (!strcmp(action, "add") || !strcmp(action, "initial")) {
 		if (is_dev_attached(dom, vendor, product)) {
-			INFO("dev already present\n");
+			CRTX_INFO("dev already present\n");
 		} else {
-			INFO("adding\n");
+			CRTX_INFO("adding\n");
 			snprintf(xml, sizeof(template)+4, template, vendor, product);
 			
 			ret = virDomainAttachDevice(dom, xml);
 			if (ret < 0) {
-				ERROR("virDomainAttachDevice failed: %d\n", ret);
+				CRTX_ERROR("virDomainAttachDevice failed: %d\n", ret);
 			}
 		}
 	} else if (!strcmp(action, "remove")) {
 		if (!is_dev_attached(dom, vendor, product)) {
-			INFO("dev not present\n");
+			CRTX_INFO("dev not present\n");
 		} else {
-			INFO("removing\n");
+			CRTX_INFO("removing\n");
 			snprintf(xml, sizeof(template)+4, template, vendor, product);
 			
 			ret = virDomainDetachDevice(dom, xml);
 			if (ret < 0) {
-				ERROR("virDomainDetachDevice failed: %d\n", ret);
+				CRTX_ERROR("virDomainDetachDevice failed: %d\n", ret);
 			}
 		}
 	}
@@ -229,15 +231,15 @@ static char udev_event_handler(struct crtx_event *event, void *userdata, void **
 
 static char libvirt_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	// first handle events that indicate a change of our listener state
-	if (!strcmp(event->type, "listener_state")) {
+	if (!strcmp(event->description, "listener_state")) {
 		if (event->data.uint32 == CRTX_LSTNR_STARTED) {
-			crtx_stop_listener(&retry_lstnr->timer_lstnr.parent);
+			crtx_stop_listener(&retry_lstnr->timer_lstnr.base);
 		}
 		if (event->data.uint32 == CRTX_LSTNR_STOPPED) {
-			crtx_start_listener(&retry_lstnr->timer_lstnr.parent);
+			crtx_start_listener(&retry_lstnr->timer_lstnr.base);
 		}
 	} else
-	if (!strcmp(event->type, "domain_event")) {
+	if (!strcmp(event->description, "domain_event")) {
 		const char *vm_name;
 		char *type;
 		virDomainPtr dom;
@@ -285,7 +287,7 @@ static char libvirt_event_handler(struct crtx_event *event, void *userdata, void
 			}
 		}
 		
-		INFO("VM \"%s\": %s\n", vm_name, type);
+		CRTX_INFO("VM \"%s\": %s\n", vm_name, type);
 		
 		// we are only interested in starting VMs as stopped VMs forget their
 		// dynamically attached devices automatically
@@ -341,19 +343,19 @@ static char libvirt_event_handler(struct crtx_event *event, void *userdata, void
 						
 						if (!strcmp(v, cache_vendor) && !strcmp(p, cache_product)) {
 							if (is_dev_attached(dom, v, p)) {
-								INFO("dev already present\n");
+								CRTX_INFO("dev already present\n");
 							} else {
 								char xml[sizeof(template)+4];
 								int ret;
 								
 								
-								INFO("adding %s:%s to \"%s\"\n", v, p, vm_name);
+								CRTX_INFO("adding %s:%s to \"%s\"\n", v, p, vm_name);
 								
 								snprintf(xml, sizeof(template)+4, template, v, p);
 								
 								ret = virDomainAttachDevice(dom, xml);
 								if (ret < 0) {
-									ERROR("virDomainAttachDevice failed: %d\n", ret);
+									CRTX_ERROR("virDomainAttachDevice failed: %d\n", ret);
 								}
 							}
 						}
@@ -381,7 +383,7 @@ static char create_key_action_cb(struct crtx_event *event, struct crtx_dict_item
 	usb_dict = crtx_get_dict(data_dict, "usb-usb_device");
 	
 	if (!usb_dict) {
-		ERROR("cannot create key for udev event, crtx_get_dict \"usb-usb_device\" failed\n");
+		CRTX_ERROR("cannot create key for udev event, crtx_get_dict \"usb-usb_device\" failed\n");
 		crtx_print_dict_item(&event->data, 0);
 		return 1;
 	}
@@ -390,7 +392,7 @@ static char create_key_action_cb(struct crtx_event *event, struct crtx_dict_item
 	product = crtx_get_string(usb_dict, "ID_MODEL_ID");
 	
 	if (!vendor || !product) {
-		ERROR("cannot create key for udev event\n");
+		CRTX_ERROR("cannot create key for udev event\n");
 		crtx_print_dict_item(&event->data, 0);
 		return 1;
 	}
@@ -402,7 +404,7 @@ static char create_key_action_cb(struct crtx_event *event, struct crtx_dict_item
 	
 	action = crtx_get_string(data_dict, "ACTION");
 	if (!action) {
-		ERROR("no field ACTION in dict\n");
+		CRTX_ERROR("no field ACTION in dict\n");
 		crtx_print_dict(data_dict);
 		return 1;
 	}
@@ -420,8 +422,6 @@ static char create_key_action_cb(struct crtx_event *event, struct crtx_dict_item
 
 int main(int argc, char **argv) {
 	struct crtx_udev_listener ulist;
-	struct crtx_listener_base *lbase;
-	struct crtx_listener_base *virt_base;
 	struct crtx_task *cache_task;
 	int ret;
 	
@@ -446,24 +446,24 @@ int main(int argc, char **argv) {
 	else
 		lvlist.hypervisor = argv[1];
 	
-	virt_base = create_listener("libvirt", &lvlist);
-	if (!virt_base) {
-		ERROR("create_listener(libvirt) failed\n");
+	ret = crtx_setup_listener("libvirt", &lvlist);
+	if (ret) {
+		CRTX_ERROR("create_listener(libvirt) failed\n");
 		exit(1);
 	}
 	
 	// send state changes also to the normal event graph
-	virt_base->state_graph = virt_base->graph;
+	lvlist.base.state_graph = lvlist.base.graph;
 	
 	// add our callback function
-	crtx_create_task(virt_base->graph, 0, "libvirt_test", libvirt_event_handler, 0);
+	crtx_create_task(lvlist.base.graph, 0, "libvirt_test", libvirt_event_handler, 0);
 	
 	// add a retry listener that will restart the libvirt listener every 5 seconds
 	// if starting a connection fails. Attach the retry listener to lvlist.parent
 	// as it will also receive state changes.
-	retry_lstnr = crtx_timer_retry_listener(&lvlist.parent, 5);
+	retry_lstnr = crtx_timer_retry_listener(&lvlist.base, 5);
 	
-	crtx_start_listener(virt_base);
+	crtx_start_listener(&lvlist.base);
 	
 	
 	
@@ -476,13 +476,13 @@ int main(int argc, char **argv) {
 	ulist.sys_dev_filter = test_filters;
 	ulist.query_existing = 1;
 	
-	lbase = create_listener("udev", &ulist);
-	if (!lbase) {
-		ERROR("create_listener(udev) failed\n");
+	ret = crtx_setup_listener("udev", &ulist);
+	if (ret) {
+		CRTX_ERROR("create_listener(udev) failed\n");
 		exit(1);
 	}
 	
-	crtx_create_task(lbase->graph, 10, "udev_test", udev_event_handler, 0);
+	crtx_create_task(ulist.base.graph, 10, "udev_test", udev_event_handler, 0);
 	
 	// create a presence cache that will maintain a list of present USB devices
 	cache_task = crtx_create_presence_cache_task("udev_cache", create_key_action_cb);
@@ -490,11 +490,11 @@ int main(int argc, char **argv) {
 	
 	// add cache task to the udev event graph
 	udev_cache_task = (struct crtx_cache_task*) cache_task->userdata;
-	add_task(lbase->graph, cache_task);
+	add_task(ulist.base.graph, cache_task);
 	
-	ret = crtx_start_listener(lbase);
+	ret = crtx_start_listener(&ulist.base);
 	if (!ret) {
-		ERROR("starting udev listener failed\n");
+		CRTX_ERROR("starting udev listener failed\n");
 		return 1;
 	}
 	
@@ -503,11 +503,11 @@ int main(int argc, char **argv) {
 	
 	// cleanup
 	crtx_free_presence_cache_task(cache_task);
-	crtx_free_listener(lbase);
+	crtx_free_listener(&ulist.base);
 	
 	crtx_finish();
 	
-	crtx_free_dict(cfg_dict);
+	crtx_dict_unref(cfg_dict);
 	
 	return 0;
 }
