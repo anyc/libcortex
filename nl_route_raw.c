@@ -20,7 +20,7 @@ char crtx_nl_route_send_req(struct crtx_nl_route_raw_listener *nlr_list, struct 
 	
 // 	printf("send %d\n", nlr_list->nl_listener.sockfd);
 	
-	ret = send(nlr_list->nl_listener.sockfd, n, n->nlmsg_len, 0);
+	ret = send(nlr_list->nl_listener.fd, n, n->nlmsg_len, 0);
 	if (ret < 0) {
 		CRTX_ERROR("error while sending netlink request: %s\n", strerror(errno));
 		return 0;
