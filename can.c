@@ -62,9 +62,11 @@ static char can_fd_event_handler(struct crtx_event *event, void *userdata, void 
 			crtx_add_event(clist->base.graph, nevent);
 		}
 	} else {
-		// consume and discard the data
-		struct can_frame static_frame;
-		read(clist->sockfd, &static_frame, sizeof(struct can_frame));
+		if (clist->discard_unused_data) {
+			// consume and discard the data
+			struct can_frame static_frame;
+			read(clist->sockfd, &static_frame, sizeof(struct can_frame));
+		}
 	}
 	
 	return 0;
