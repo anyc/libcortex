@@ -216,6 +216,39 @@ static char stop_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
+static char fork_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	(void) sessiondata;
+	
+	struct crtx_popen_listener *plstnr;
+// 	int rc;
+	
+	
+	plstnr = (struct crtx_popen_listener*) userdata;
+	
+	crtx_stop_listener(&plstnr->base);
+	
+// 	if (event->type == CRTX_FORK_ET_CHILD_STOPPED) {
+// 		rc = event->data.int32;
+// 		
+// 		VDBG("child done with rc %d\n", rc);
+// 		
+// 		if (rc == 0) {
+// 			INFO("process stopped\n");
+// 		} else {
+// 			ERROR("process failed with %d\n", rc);
+// 		}
+// 	} else
+// 	if (event->type == CRTX_FORK_ET_CHILD_KILLED) {
+// 		rc = event->data.int32;
+// 		
+// 		ERROR("process aborted by signal %d\n", rc);
+// 	} else {
+// 		ERROR("unexpected event in webserver_event_handler\n");
+// 	}
+	
+	return 0;
+}
+
 struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 	struct crtx_popen_listener *plstnr;
 	int rv;
@@ -235,6 +268,8 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 		CRTX_ERROR("create_listener(fork) failed\n");
 		return 0;
 	}
+	
+	crtx_create_task(plstnr->fork_lstnr.base.graph, 0, "popen_fork_event_handler", &fork_event_handler, plstnr);
 	
 // 	plstnr->stdin_lstnr.fd_event_handler = pipe_event_handler;
 // 	plstnr->stdin_lstnr.fd_event_handler_data = &plstnr->stdin_lstnr;

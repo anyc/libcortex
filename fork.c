@@ -171,7 +171,7 @@ static char stop_listener(struct crtx_listener_base *listener) {
 	flstnr = (struct crtx_fork_listener *) listener;
 	
 	if (flstnr->pid > 0) {
-		printf("sendkill %d\n", flstnr->pid);
+		CRTX_VDBG("sendkill %d\n", flstnr->pid);
 
 		r = kill(flstnr->pid, SIGTERM);
 		if (r != 0) {

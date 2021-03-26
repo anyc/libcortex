@@ -352,7 +352,7 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 	
 	if (clist->send_buffer_size > 0 || clist->recv_buffer_size > 0) {
 		int sendBufSize, recvBufSize;
-		int intSize;
+		socklen_t intSize;
 		
 		
 		intSize = sizeof(int);
