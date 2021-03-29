@@ -118,7 +118,7 @@ static char do_fork(struct crtx_event *event, void *userdata, void **sessiondata
 		return -1;
 	} else 
 	if (flstnr->pid == 0) {
-		CRTX_DBG("child (%d) shutdown after fork\n", getpid());
+		CRTX_DBG("child (%d), will reinit after fork\n", getpid());
 		
 		crtx_root->reinit_after_shutdown = 1;
 		crtx_root->reinit_cb = &reinit_cb;
@@ -128,7 +128,7 @@ static char do_fork(struct crtx_event *event, void *userdata, void **sessiondata
 	if (flstnr->pid > 0) {
 // 		struct crtx_event *event;
 		
-		CRTX_DBG("fork done - parent %d\n", flstnr->pid);
+		CRTX_DBG("fork done - parent continues %d\n", flstnr->pid);
 		
 // 		crtx_create_event(&event);
 // 		event.type = CRTX_FORK_ET_FORK_DONE_PARENT;

@@ -343,8 +343,9 @@ char buffer[BUF_SIZE];
 
 static char popen_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	if (event->type == CRTX_FORK_ET_CHILD_STOPPED || event->type == CRTX_FORK_ET_CHILD_KILLED) {
-		printf("child done with rc %d, shutdown parent\n", event->data.int32);
-		crtx_init_shutdown();
+		printf("child (%zu) done with rc %d, shutdown parent\n", (size_t) userdata, event->data.int32);
+		if (userdata == 0)
+			crtx_init_shutdown();
 	} else {
 		printf("unexpected event\n");
 	}
@@ -363,14 +364,30 @@ static void stdout_cb(int fd, void *userdata) {
 	ssize_t r;
 	char buf[256];
 	
-	printf("read from %d\n", fd);
+	printf("P1: read from %d\n", fd);
 	r = read(fd, buf, sizeof(buf)-1);
 	if (r < 0) {
 		CRTX_ERROR("read from signal selfpipe %d failed: %s\n", fd, strerror(r));
 		return;
 	}
 	buf[r] = 0;
-	printf("STDOUT: %s\n", buf);
+	printf("P1 STDOUT: %s\n", buf);
+	
+	return;
+}
+
+static void stdout_cb2(int fd, void *userdata) {
+	ssize_t r;
+	char buf[256];
+	
+	printf("P2: read from %d\n", fd);
+	r = read(fd, buf, sizeof(buf)-1);
+	if (r < 0) {
+		CRTX_ERROR("read from signal selfpipe %d failed: %s\n", fd, strerror(r));
+		return;
+	}
+	buf[r] = 0;
+	printf("P2: STDOUT: %s\n", buf);
 	
 	return;
 }
@@ -407,19 +424,23 @@ void pre_exec(struct crtx_popen_listener *plstnr, void *pre_exec_userdata) {
 
 int popen_main(int argc, char **argv) {
 	struct crtx_popen_listener plist;
+	struct crtx_popen_listener plist2;
 	int ret;
 	
 	
 	crtx_init();
 	crtx_handle_std_signals();
 	
-// 	memset(&plist, 0, sizeof(struct crtx_popen_listener));
 	crtx_popen_clear_lstnr(&plist);
+	crtx_popen_clear_lstnr(&plist2);
 	
 	plist.stderr = STDERR_FILENO;
+	plist2.stderr = STDERR_FILENO;
+	
+	// setup process 1
 	
 	plist.filepath = "/bin/sh";
-	plist.argv = (char*[]) {plist.filepath, "-c", "id; echo stdout_test; echo stderr_test >&2; pwd; exit 1;", 0};
+	plist.argv = (char*[]) {plist.filepath, "-c", "id; echo stdout_test; echo stderr_test >&2; pwd; sleep 5; exit 1;", 0};
 // 	plist.filename = "id";
 	if (getuid() == 0) {
 		plist.fork_lstnr.user = "nobody";
@@ -441,9 +462,34 @@ int popen_main(int argc, char **argv) {
 	
 	crtx_create_task(plist.fork_lstnr.base.graph, 0, "popen_event", &popen_event_handler, 0);
 	
+	
+	// setup process 2
+	
+	plist2.filepath = "/bin/sh";
+	plist2.argv = (char*[]) {plist.filepath, "-c", "sleep 2; echo \"plist2\"; exit 0;", 0};
+	
+	plist2.stdout_cb = &stdout_cb2;
+	
+	ret = crtx_setup_listener("popen", &plist2);
+	if (ret) {
+		CRTX_ERROR("create_listener(popen) failed\n");
+		return 0;
+	}
+	
+	crtx_create_task(plist2.fork_lstnr.base.graph, 0, "popen_event", &popen_event_handler, (void*) 1);
+	
+	
+	// start processes
+	
 	ret = crtx_start_listener(&plist.base);
 	if (ret) {
 		CRTX_ERROR("starting popen listener failed\n");
+		return 0;
+	}
+	
+	ret = crtx_start_listener(&plist2.base);
+	if (ret) {
+		CRTX_ERROR("starting second popen listener failed\n");
 		return 0;
 	}
 	
