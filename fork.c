@@ -128,7 +128,7 @@ static char do_fork(struct crtx_event *event, void *userdata, void **sessiondata
 	if (flstnr->pid > 0) {
 // 		struct crtx_event *event;
 		
-		CRTX_DBG("fork done - parent continues %d\n", flstnr->pid);
+		CRTX_DBG("fork done - parent continues, child: %d\n", flstnr->pid);
 		
 // 		crtx_create_event(&event);
 // 		event.type = CRTX_FORK_ET_FORK_DONE_PARENT;

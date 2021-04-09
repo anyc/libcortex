@@ -168,7 +168,7 @@ static int crtx_epoll_manage_fd(struct crtx_event_loop *evloop, struct crtx_evlo
 		// after a fork, we close all file handles but we don't want to remove
 		// them from an epoll instance as it would remove the file handle for
 		// the parent process as well.
-		if (!evloop->after_fork_close)
+		if (!evloop->after_fork_close && evloop_fd->fd)
 			crtx_epoll_del_fd_intern(epl, evloop_fd->fd);
 		
 		free(evloop_fd->el_data);

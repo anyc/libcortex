@@ -365,14 +365,18 @@ static int socket_callback(CURL *easy, curl_socket_t curl_socket, int what, CURL
 	struct crtx_curl_listener *clist;
 	
 	
-	CRTX_DBG("new curl socket event: %d\n", what);
+	CRTX_DBG("new curl socket event: \"%s\" (fd %d)\n",
+		(what == CURL_POLL_REMOVE) ? "remove": (what == CURL_POLL_IN) ? "in": (what == CURL_POLL_OUT) ? "out": (what == CURL_POLL_INOUT) ? "inout": "unknown",
+		curl_socket);
 	
 	curl_easy_getinfo(easy, CURLINFO_PRIVATE, &clist);
 	
 	if (what == CURL_POLL_REMOVE) {
 		socketp->el_cb.crtx_event_flags = 0;
 		
-// 		crtx_evloop_set_el_fd(&socketp->el_fd);
+		// CURL might have closed the fd before we get this callback
+		socketp->el_cb.fd_entry->fd = 0;
+		
 		crtx_evloop_disable_cb(&socketp->el_cb);
 	} else {
 		if(!socketp) {
