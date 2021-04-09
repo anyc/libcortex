@@ -139,6 +139,37 @@ static char do_fork(struct crtx_event *event, void *userdata, void **sessiondata
 	return 0;
 }
 
+static void fork_sigchld_cb(pid_t pid, int status, void *userdata) {
+	struct crtx_fork_listener *lstnr;
+	
+	
+	lstnr = (struct crtx_fork_listener *) userdata;
+	
+	if (pid == lstnr->pid) {
+		struct crtx_event *new_event;
+		
+		lstnr->pid = 0;
+		
+		crtx_stop_listener(&lstnr->base);
+		
+		crtx_create_event(&new_event);
+		
+		if (WIFEXITED(status)) {
+			new_event->type = CRTX_FORK_ET_CHILD_STOPPED;
+			crtx_event_set_raw_data(new_event, 'i', WEXITSTATUS(status), sizeof(status), 0);
+		} else
+			if (WIFSIGNALED(status)) {
+				new_event->type = CRTX_FORK_ET_CHILD_KILLED;
+				crtx_event_set_raw_data(new_event, 'i', WTERMSIG(status), sizeof(status), 0);
+			}
+			
+			crtx_add_event(lstnr->base.graph, new_event);
+	} else {
+		// if the process receives a signal from a child, all signal handlers
+		// are notified and the callbacks have to determine, if it is for them
+	}
+}
+
 static char start_listener(struct crtx_listener_base *lstnr) {
 	struct crtx_fork_listener *flstnr;
 // 	int ret;
@@ -153,6 +184,8 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 // 		CRTX_ERROR("starting signal listener failed\n");
 // 		return ret;
 // 	}
+	
+	flstnr->sigchld_data = crtx_signals_add_child_handler(&fork_sigchld_cb, flstnr);
 	
 	flstnr->base.default_el_cb.event_handler = &do_fork;
 	flstnr->base.default_el_cb.event_handler_data = flstnr;
@@ -171,7 +204,7 @@ static char stop_listener(struct crtx_listener_base *listener) {
 	flstnr = (struct crtx_fork_listener *) listener;
 	
 	if (flstnr->pid > 0) {
-		CRTX_VDBG("sendkill %d\n", flstnr->pid);
+		printf("sendkill %d\n", flstnr->pid);
 
 		r = kill(flstnr->pid, SIGTERM);
 		if (r != 0) {
@@ -183,36 +216,6 @@ static char stop_listener(struct crtx_listener_base *listener) {
 	crtx_signals_rem_child_handler(flstnr->sigchld_data);
 	
 	return 0;
-}
-
-static void fork_sigchld_cb(pid_t pid, int status, void *userdata) {
-	struct crtx_fork_listener *lstnr;
-	
-	
-	lstnr = (struct crtx_fork_listener *) userdata;
-	
-	if (pid == lstnr->pid) {
-		lstnr->pid = 0;
-		crtx_stop_listener(&lstnr->base);
-		
-		struct crtx_event *new_event;
-		
-		crtx_create_event(&new_event);
-		
-		if (WIFEXITED(status)) {
-			new_event->type = CRTX_FORK_ET_CHILD_STOPPED;
-			crtx_event_set_raw_data(new_event, 'i', WEXITSTATUS(status), sizeof(status), 0);
-		} else
-		if (WIFSIGNALED(status)) {
-			new_event->type = CRTX_FORK_ET_CHILD_KILLED;
-			crtx_event_set_raw_data(new_event, 'i', WTERMSIG(status), sizeof(status), 0);
-		}
-		
-		crtx_add_event(lstnr->base.graph, new_event);
-	} else {
-		// if the process receives a signal from a child, all signal handlers
-		// are notified and the callbacks have to determine, if it is for them
-	}
 }
 
 struct crtx_listener_base *crtx_setup_fork_listener(void *options) {
@@ -233,8 +236,6 @@ struct crtx_listener_base *crtx_setup_fork_listener(void *options) {
 // 		CRTX_ERROR("create_listener(signal) failed\n");
 // 		return 0;
 // 	}
-	
-	lstnr->sigchld_data = crtx_signals_add_child_handler(&fork_sigchld_cb, lstnr);
 	
 // 	crtx_create_task(lstnr->signal_lstnr.base.graph, 0, "sigchld_handler", &sigchild_event_handler, 0);
 	
