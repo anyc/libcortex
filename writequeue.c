@@ -58,18 +58,24 @@ struct crtx_listener_base *crtx_setup_writequeue_listener(void *options) {
 							wqueue->write_fd,
 							EVLOOP_WRITE,
 							0,
-							&fd_event_handler,
-							wqueue,
+							&fd_event_handler, wqueue,
 							0, 0
 						);
 	} else {
-		crtx_evloop_init_listener(&wqueue->base,
+		crtx_evloop_create_fd_entry(&wqueue->base.evloop_fd, &wqueue->evloop_cb,
 							wqueue->write_fd,
 							EVLOOP_WRITE,
 							0,
 							&fd_event_handler, wqueue,
 							0, 0
 			);
+// 		crtx_evloop_init_listener(&wqueue->base,
+// 							wqueue->write_fd,
+// 							EVLOOP_WRITE,
+// 							0,
+// 							&fd_event_handler, wqueue,
+// 							0, 0
+// 			);
 	}
 	
 	return &wqueue->base;

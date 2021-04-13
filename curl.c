@@ -374,10 +374,11 @@ static int socket_callback(CURL *easy, curl_socket_t curl_socket, int what, CURL
 	if (what == CURL_POLL_REMOVE) {
 		socketp->el_cb.crtx_event_flags = 0;
 		
-		// CURL might have closed the fd before we get this callback
-		socketp->el_cb.fd_entry->fd = 0;
-		
 		crtx_evloop_disable_cb(&socketp->el_cb);
+		
+		// CURL closes the fd before we get this callback
+		// TODO is this still required?
+		// socketp->el_cb.fd_entry->fd = 0;
 	} else {
 		if(!socketp) {
 			socketp = (struct crtx_curl_socket*) calloc(1, sizeof(struct crtx_curl_socket));

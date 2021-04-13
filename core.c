@@ -453,8 +453,10 @@ static void free_listener_intern(struct crtx_listener_base *listener) {
 // 	listener->state = CRTX_LSTNR_SHUTDOWN;
 // 	UNLOCK(listener->state_mutex);
 	
-	if (listener->graph && listener->graph->listener == listener)
+	if (listener->graph && listener->graph->listener == listener) {
 		crtx_free_graph(listener->graph);
+		listener->graph = 0;
+	}
 	
 // 	if (listener->eloop_thread) {
 // 		crtx_wait_on_signal(&listener->eloop_thread->finished);

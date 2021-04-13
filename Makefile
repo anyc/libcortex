@@ -201,7 +201,22 @@ install:
 	$(INSTALL) -m 644 *.h $(DESTDIR)$(includedir)/cortex/
 	ln -s cortex $(DESTDIR)$(includedir)/crtx
 	$(INSTALL) -m 644 layer2/*.h $(DESTDIR)$(includedir)/cortex/layer2/
-	
 
+deb:
+	bash -c 'TMP="$(shell mktemp -d)"; \
+	echo $${TMP}; \
+	$(MAKE) $(MAKEFILE) install DEBUG_FLAGS=$(DEBUG_FLAGS) DESTDIR=$${TMP}; \
+	mkdir $${TMP}/DEBIAN; \
+	echo -e "Package: libcortex$(shell echo "$(MAJOR_VERSION)" | sed "s/\.//")\\n\
+	Version: $(MAJOR_VERSION).$(MINOR_VERSION).$(shell git rev-parse --short HEAD)\\n\
+	Section: base\\n\
+	Priority: optional\\n\
+	Architecture: all\\n\
+	Replaces: libcortex\\n\
+	Maintainer: unknown@unknown.com\\n\
+	Description: libcortex" > $${TMP}/DEBIAN/control; \
+	cat $${TMP}/DEBIAN/control; \
+	dpkg-deb --build $${TMP} libcortex$(shell echo "$(MAJOR_VERSION)" | sed "s/\.//")-$(MAJOR_VERSION).$(MINOR_VERSION).$(shell git rev-parse --short HEAD).deb; \
+	rm -r $${TMP}; '
 
 -include $(local_mk_rules)
