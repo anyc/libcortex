@@ -34,6 +34,8 @@ void crtx_writequeue_start(struct crtx_writequeue_listener *wqueue);
 void crtx_writequeue_stop(struct crtx_writequeue_listener *wqueue);
 CRTX_DECLARE_ALLOC_FUNCTION(writequeue)
 
+int crtx_writequeue_default_write_callback(struct crtx_writequeue_listener *wqueue, void *userdata);
+
 void crtx_writequeue_init();
 void crtx_writequeue_finish();
 

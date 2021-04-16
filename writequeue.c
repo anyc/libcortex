@@ -20,6 +20,51 @@
 #include "epoll.h"
 #include "writequeue.h"
 
+
+int crtx_writequeue_default_write_callback(struct crtx_writequeue_listener *writequeue_lstnr, void *userdata) {
+	struct crtx_ll **writequeue;
+	struct crtx_ll *it, *tmp;
+	ssize_t err;
+	size_t c;
+	
+	writequeue = (struct crtx_ll **) userdata;
+	
+	
+	// send all events in our write queue
+	c = 0;
+	errno = 0;
+	it = *writequeue;
+	while (it) {
+		err = write(writequeue_lstnr->write_fd, it->payload, it->size);
+		if (err < 0 || ((unsigned) err != it->size) ) {
+			if (errno != EAGAIN && errno != ENOBUFS) {
+				size_t i=0;
+				for (tmp = it; tmp; tmp=tmp->next) {i+=1;}
+				
+				ERROR("write error (%d): %s (queue length: %zu)\n", err, strerror(errno), i);
+			} else {
+				size_t i=0;
+				for (tmp = it; tmp; tmp=tmp->next) {i+=1;}
+				
+				WARN("writequeue suspended (errno: %s, queue length: %zu)\n", (errno==EAGAIN)?"EAGAIN":"ENOBUFS", i);
+			}
+			break;
+		}
+		
+		// we do not use crtx_ll_unlink() as this is a bit faster in this case
+		tmp = it;
+		it = it->next;
+		free(tmp);
+		
+		c += 1;
+	}
+	
+	*writequeue = it;
+	
+	// if errno != EAGAIN the writequeue will stop itself
+	return errno;
+}
+
 static char fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_writequeue_listener *wqueue;
 	int r;
