@@ -92,7 +92,7 @@ $(local_mk):
 
 clean:
 	$(MAKE) -C layer2 clean LAYER2_MODULES="$(LAYER2_MODULES)"
-	rm -rf *.o $(APP) core_modules.h $(TESTS) $(SHAREDLIB) libcrtx*.so*
+	rm -rf *.o $(APP) core_modules.h $(TESTS) $(SHAREDLIB) libcrtx*.so* libcortex*.deb
 
 debug:
 	$(MAKE) $(MAKEFILE) DEBUG_FLAGS="-g -g3 -gdwarf-2 -DDEBUG -Wall -Werror"
@@ -216,7 +216,7 @@ deb:
 	Maintainer: unknown@unknown.com\\n\
 	Description: libcortex" > $${TMP}/DEBIAN/control; \
 	cat $${TMP}/DEBIAN/control; \
-	dpkg-deb --build $${TMP} libcortex$(shell echo "$(MAJOR_VERSION)" | sed "s/\.//")-$(MAJOR_VERSION).$(MINOR_VERSION).$(shell git rev-parse --short HEAD).deb; \
+	dpkg-deb --build $${TMP} libcortex$(shell echo "$(MAJOR_VERSION)" | sed "s/\.//")-$(MAJOR_VERSION).$(MINOR_VERSION).$(shell git rev-parse --short HEAD)_all.deb; \
 	rm -r $${TMP}; '
 
 -include $(local_mk_rules)
