@@ -58,6 +58,10 @@ struct crtx_evloop_callback {
 
 struct crtx_listener_base;
 
+// This structure contains the necessary information for a file descriptor
+// that will be added to the event loop. There can be one or more crtx_evloop_callback
+// structures for this structure where each callback can be responsible for a different
+// type of event for this file descripter (e.g., read or write).
 struct crtx_evloop_fd {
 	struct crtx_ll ll;
 	

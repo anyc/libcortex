@@ -6,14 +6,14 @@
 #ifdef CRTX_TEST
 // for pipe2()
 #define _GNU_SOURCE
-#include <fcntl.h>
-#include <unistd.h>
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "intern.h"
 #include "core.h"
@@ -41,12 +41,12 @@ int crtx_writequeue_default_write_callback(struct crtx_writequeue_listener *writ
 				size_t i=0;
 				for (tmp = it; tmp; tmp=tmp->next) {i+=1;}
 				
-				ERROR("write error (%d): %s (queue length: %zu)\n", err, strerror(errno), i);
+				CRTX_ERROR("write error (%d): %s (%d, queue length: %zu)\n", writequeue_lstnr->write_fd, strerror(errno), err, i);
 			} else {
 				size_t i=0;
 				for (tmp = it; tmp; tmp=tmp->next) {i+=1;}
 				
-				WARN("writequeue suspended (errno: %s, queue length: %zu)\n", (errno==EAGAIN)?"EAGAIN":"ENOBUFS", i);
+				CRTX_DBG("writequeue suspended (errno: %s, queue length: %zu)\n", (errno==EAGAIN)?"EAGAIN":"ENOBUFS", i);
 			}
 			break;
 		}
@@ -71,35 +71,47 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 	
 	wqueue = (struct crtx_writequeue_listener *) userdata;
 	
+	crtx_lock_listener(&wqueue->base);
+	
 	r = wqueue->write(wqueue, wqueue->write_userdata);
 	if (r != EAGAIN && r != ENOBUFS) {
-		CRTX_VDBG("write done %s %d\n", strerror(r), r);
+		CRTX_VDBG("write fd %d paused, error \"%s\" (%d)\n", wqueue->write_fd, strerror(r), r);
 		
 		crtx_writequeue_stop(wqueue);
 	}
+	
+	crtx_unlock_listener(&wqueue->base);
 	
 	return 0;
 }
 
 void crtx_writequeue_start(struct crtx_writequeue_listener *wqueue) {
-	if (wqueue->read_listener)
-		wqueue->evloop_cb.fd_entry->fd = wqueue->read_listener->evloop_fd.fd;
-	
-	crtx_evloop_enable_cb(&wqueue->evloop_cb);
+	crtx_evloop_enable_cb(&wqueue->base.default_el_cb);
 }
 
 void crtx_writequeue_stop(struct crtx_writequeue_listener *wqueue) {
-	crtx_evloop_disable_cb(&wqueue->evloop_cb);
+	crtx_evloop_disable_cb(&wqueue->base.default_el_cb);
 }
 
 struct crtx_listener_base *crtx_setup_writequeue_listener(void *options) {
 	struct crtx_writequeue_listener *wqueue;
+	int r, flags;
 	
 	
 	wqueue = (struct crtx_writequeue_listener *) options;
 	
+	flags = fcntl(wqueue->write_fd, F_GETFL, 0);
+	r = fcntl(wqueue->write_fd, F_SETFL, flags | O_NONBLOCK);
+	if (r != 0) {
+		CRTX_ERROR("fcntl(%d, O_NONBLOCK) failed: %s\n", wqueue->write_fd, strerror(errno));
+		return 0;
+	}
+	
+	// if we are associated with a listener that will only read from the file descriptor
+	// we have to add our crtx_evloop_callback structure to the crtx_evloop_fd structure
+	// of the read_listener
 	if (wqueue->read_listener) {
-		crtx_evloop_create_fd_entry(&wqueue->read_listener->evloop_fd, &wqueue->evloop_cb,
+		crtx_evloop_create_fd_entry(&wqueue->read_listener->evloop_fd, &wqueue->base.default_el_cb,
 							wqueue->write_fd,
 							EVLOOP_WRITE,
 							0,
@@ -107,7 +119,7 @@ struct crtx_listener_base *crtx_setup_writequeue_listener(void *options) {
 							0, 0
 						);
 	} else {
-		crtx_evloop_create_fd_entry(&wqueue->base.evloop_fd, &wqueue->evloop_cb,
+		crtx_evloop_create_fd_entry(&wqueue->base.evloop_fd, &wqueue->base.default_el_cb,
 							wqueue->write_fd,
 							EVLOOP_WRITE,
 							0,

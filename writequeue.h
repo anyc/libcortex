@@ -19,8 +19,6 @@ struct crtx_writequeue_listener {
 	
 	struct crtx_listener_base *read_listener;
 	
-	struct crtx_evloop_callback evloop_cb;
-	
 	int write_fd;
 	
 	crtx_wq_write_cb write;

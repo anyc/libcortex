@@ -2164,11 +2164,21 @@ void crtx_set_main_event_loop(const char *event_loop) {
 	crtx_root->chosen_event_loop = event_loop;
 }
 
+// DEPRECATED
 void crtx_lock_listener_source(struct crtx_listener_base *lbase) {
 	LOCK(lbase->source_lock);
 }
 
+// DEPRECATED
 void crtx_unlock_listener_source(struct crtx_listener_base *lbase) {
+	UNLOCK(lbase->source_lock);
+}
+
+void crtx_lock_listener(struct crtx_listener_base *lbase) {
+	LOCK(lbase->source_lock);
+}
+
+void crtx_unlock_listener(struct crtx_listener_base *lbase) {
 	UNLOCK(lbase->source_lock);
 }
 
