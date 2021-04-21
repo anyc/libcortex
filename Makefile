@@ -181,17 +181,11 @@ layer2: $(SHAREDLIB)
 layer2_tests: $(SHAREDLIB)
 	$(MAKE) -C layer2 tests LAYER2_MODULES="$(LAYER2_MODULES)"
 
-install:
+install: install-lib install-devel
+
+install-devel:
 	$(INSTALL) -m 755 -d $(DESTDIR)$(libdir)
 	$(INSTALL) -m 755 -d $(DESTDIR)$(plugindir)
-	
-	$(INSTALL) -m 755 libcrtx.so.* $(DESTDIR)$(libdir)
-	$(INSTALL) -m 755 libcrtx_*.so.* $(DESTDIR)$(plugindir)
-	cp -P libcrtx.so $(DESTDIR)$(libdir)
-	cp -P libcrtx_*.so $(DESTDIR)$(plugindir)
-	
-	# devel
-	
 	$(INSTALL) -m 755 -d $(DESTDIR)$(includedir)/cortex/
 	$(INSTALL) -m 755 -d $(DESTDIR)$(includedir)/cortex/layer2/
 	
@@ -202,10 +196,21 @@ install:
 	ln -s cortex $(DESTDIR)$(includedir)/crtx
 	$(INSTALL) -m 644 layer2/*.h $(DESTDIR)$(includedir)/cortex/layer2/
 
-deb:
+install-lib:
+	$(INSTALL) -m 755 -d $(DESTDIR)$(libdir)
+	$(INSTALL) -m 755 -d $(DESTDIR)$(plugindir)
+	
+	$(INSTALL) -m 755 libcrtx.so.* $(DESTDIR)$(libdir)
+	$(INSTALL) -m 755 libcrtx_*.so.* $(DESTDIR)$(plugindir)
+	
+
+deb: deb-lib deb-devel
+	
+
+deb-lib:
 	bash -c 'TMP="$(shell mktemp -d)"; \
 	echo $${TMP}; \
-	$(MAKE) $(MAKEFILE) install DEBUG_FLAGS=$(DEBUG_FLAGS) DESTDIR=$${TMP}; \
+	$(MAKE) $(MAKEFILE) install-lib DEBUG_FLAGS=$(DEBUG_FLAGS) DESTDIR=$${TMP}; \
 	mkdir $${TMP}/DEBIAN; \
 	echo -e "Package: libcortex$(shell echo "$(MAJOR_VERSION)" | sed "s/\.//")\\n\
 	Version: $(MAJOR_VERSION).$(MINOR_VERSION).$(shell git rev-parse --short HEAD)\\n\
@@ -218,5 +223,25 @@ deb:
 	cat $${TMP}/DEBIAN/control; \
 	dpkg-deb --build $${TMP} libcortex$(shell echo "$(MAJOR_VERSION)" | sed "s/\.//")-$(MAJOR_VERSION).$(MINOR_VERSION).$(shell git rev-parse --short HEAD)_all.deb; \
 	rm -r $${TMP}; '
+	
+	dpkg-deb -c libcortex$(shell echo "$(MAJOR_VERSION)" | sed "s/\.//")-$(MAJOR_VERSION).$(MINOR_VERSION).$(shell git rev-parse --short HEAD)_all.deb
+
+deb-devel:
+	bash -c 'TMP="$(shell mktemp -d)"; \
+	echo $${TMP}; \
+	$(MAKE) $(MAKEFILE) install-devel DEBUG_FLAGS=$(DEBUG_FLAGS) DESTDIR=$${TMP}; \
+	mkdir $${TMP}/DEBIAN; \
+	echo -e "Package: libcortex-devel\\n\
+	Version: $(MAJOR_VERSION).$(MINOR_VERSION).$(shell git rev-parse --short HEAD)\\n\
+	Section: base\\n\
+	Priority: optional\\n\
+	Architecture: all\\n\
+	Maintainer: unknown@unknown.com\\n\
+	Description: libcortex-devel" > $${TMP}/DEBIAN/control; \
+	cat $${TMP}/DEBIAN/control; \
+	dpkg-deb --build $${TMP} libcortex-devel_$(MAJOR_VERSION).$(MINOR_VERSION).$(shell git rev-parse --short HEAD)_all.deb; \
+	rm -r $${TMP}; '
+	
+	dpkg-deb -c libcortex-devel_$(MAJOR_VERSION).$(MINOR_VERSION).$(shell git rev-parse --short HEAD)_all.deb
 
 -include $(local_mk_rules)
