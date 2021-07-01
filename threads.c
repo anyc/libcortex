@@ -80,6 +80,8 @@ int crtx_wait_on_signal(struct crtx_signals *s, struct timespec *ts) {
 		return r;
 	}
 	
+	err = 0;
+	
 // 	if (s->bitflag_idx == -1) {
 // 		while (!*s->condition)
 // 			pthread_cond_wait(&s->cond, &s->mutex);

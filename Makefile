@@ -145,13 +145,13 @@ dllist.o: llist.c
 $(SHAREDLIB): LDLIBS+=$(foreach o,$(STATIC_TOOLS) $(STATIC_MODULES), $(LDLIBS_$(o)) )
 $(SHAREDLIB): $(OBJS)
 	$(CC) -shared -o $@.$(SO_VERSION) $(OBJS) $(LDFLAGS) $(LDLIBS) -Wl,-soname,$@.$(SO_VERSION)
-	[ -e $@ ] || ln -s $@.$(SO_VERSION) $@
+	ln -sf $@.$(SO_VERSION) $@
 
 # libcrtx_%.so: $(OBJS_$(patsubst libcrtx_%.so,%,$@))
 libcrtx_%.so: LDLIBS+=$(LDLIBS_$(patsubst libcrtx_%.so,%,$@)) $(foreach d,$(DEPS_$(patsubst libcrtx_%.so,%,$@)),$(if $(findstring $(d),$(DYN_MODULES)),$(LDLIBS_$(d))) )
 libcrtx_%.so: %.o $(SHAREDLIB)
 	$(CC) -shared $(LDFLAGS) $< -o $@.$(SO_VERSION) -L. $(LDLIBS) -lcrtx -Wl,-soname,$@.$(SO_VERSION)
-	[ -e $@ ] || ln -s $@.$(SO_VERSION) $@
+	ln -sf $@.$(SO_VERSION) $@
 
 plugins: $(SHAREDLIB) $(DYN_MODULES_LIST)
 
