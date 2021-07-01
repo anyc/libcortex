@@ -11,6 +11,7 @@
 #include <stddef.h>
 #include <inttypes.h>
 #include <errno.h>
+#include <syslog.h>
  
 // for get_username()
 #include <unistd.h>
@@ -39,6 +40,7 @@ char *crtx_evt_outbox[] = { CRTX_EVT_OUTBOX, 0 };
 
 char crtx_verbosity = CRTX_VLEVEL_INFO;
 char crtx_pid_prefix = 0;
+char crtx_use_syslog = 0;
 
 char *crtx_stracpy(const char *str, size_t *str_length) {
 	char *r;
@@ -70,15 +72,25 @@ char *crtx_stracpy(const char *str, size_t *str_length) {
 
 void crtx_printf_va(char level, char const *format, va_list va) {
 	if (level == CRTX_VLEVEL_ERR) {
-		if (crtx_pid_prefix)
-			fprintf(stderr, "[%d] ", getpid());
-		vfprintf(stderr, format, va);
+		if (crtx_use_syslog) {
+			syslog(LOG_ERR, "CRTX: ");
+			vsyslog(LOG_ERR, format, va);
+		} else {
+			if (crtx_pid_prefix)
+				fprintf(stderr, "[%d] ", getpid());
+			vfprintf(stderr, format, va);
+		}
 	} else {
 		if (level <= crtx_verbosity) {
-			if (crtx_pid_prefix)
-				fprintf(stdout, "[%d] ", getpid());
-			vfprintf(stdout, format, va);
-			fflush(stdout);
+			if (crtx_use_syslog) {
+				syslog(LOG_NOTICE, "CRTX: ");
+				vsyslog(LOG_NOTICE, format, va);
+			} else {
+				if (crtx_pid_prefix)
+					fprintf(stdout, "[%d] ", getpid());
+				vfprintf(stdout, format, va);
+				fflush(stdout);
+			}
 		}
 	}
 }
@@ -2188,6 +2200,10 @@ int crtx_handle_std_signals() {
 
 void crtx_trigger_event_processing(struct crtx_listener_base *lstnr) {
 	crtx_evloop_trigger_callback(lstnr->evloop_fd.evloop, &lstnr->default_el_cb);
+}
+
+void crtx_trigger_event_callback(struct crtx_evloop_callback *evloop_cb) {
+	crtx_evloop_trigger_callback(evloop_cb->fd_entry->evloop, evloop_cb);
 }
 
 int crtx_get_version(unsigned int *major, unsigned int *minor) {
