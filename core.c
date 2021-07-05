@@ -2199,6 +2199,16 @@ int crtx_handle_std_signals() {
 }
 
 void crtx_trigger_event_processing(struct crtx_listener_base *lstnr) {
+	// for example, a client might want to trigger a write before the writequeue
+	// has been started for the first time
+	if (!lstnr->evloop_fd.evloop) {
+		lstnr->evloop_fd.evloop = crtx_get_main_event_loop();
+		if (!lstnr->evloop_fd.evloop) {
+			ERROR("no event loop for fd %d\n", lstnr->evloop_fd.fd);
+			return;
+		}
+	}
+	
 	crtx_evloop_trigger_callback(lstnr->evloop_fd.evloop, &lstnr->default_el_cb);
 }
 
