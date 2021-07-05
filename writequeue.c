@@ -78,6 +78,8 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 		CRTX_VDBG("write fd %d paused, error \"%s\" (%d)\n", wqueue->write_fd, strerror(r), r);
 		
 		crtx_writequeue_stop(wqueue);
+	} else {
+		crtx_writequeue_start(wqueue);
 	}
 	
 	crtx_unlock_listener(&wqueue->base);
@@ -85,6 +87,8 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 	return 0;
 }
 
+// this function should be called if we want to be notified by the kernel when
+// we can try again to submit data
 void crtx_writequeue_start(struct crtx_writequeue_listener *wqueue) {
 	crtx_evloop_enable_cb(&wqueue->base.default_el_cb);
 }
