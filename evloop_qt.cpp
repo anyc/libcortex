@@ -142,7 +142,7 @@ static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evl
 					
 					r = crtx_setup_listener("timer", tlist);
 					if (r) {
-						ERROR("create_listener(timer) failed: %s\n", strerror(-r));
+						CRTX_ERROR("create_listener(timer) failed: %s\n", strerror(-r));
 						return r;
 					}
 					

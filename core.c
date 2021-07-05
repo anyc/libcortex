@@ -2204,7 +2204,7 @@ void crtx_trigger_event_processing(struct crtx_listener_base *lstnr) {
 	if (!lstnr->evloop_fd.evloop) {
 		lstnr->evloop_fd.evloop = crtx_get_main_event_loop();
 		if (!lstnr->evloop_fd.evloop) {
-			ERROR("no event loop for fd %d\n", lstnr->evloop_fd.fd);
+			CRTX_ERROR("no event loop for fd %d\n", lstnr->evloop_fd.fd);
 			return;
 		}
 	}
