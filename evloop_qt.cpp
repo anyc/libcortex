@@ -97,48 +97,60 @@ static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evl
 	QMetaObject::Connection connection;
 	
 	for (el_cb=evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
-		if (!el_cb->active && el_cb->el_data) {
-			notifier = (MyQSocketNotifier*) el_cb->el_data;
-			delete notifier;
-			
-			el_cb->el_data = 0;
-			
-			continue;
-		}
+// 		if (!el_cb->active && el_cb->el_data) {
+// 			notifier = (MyQSocketNotifier*) el_cb->el_data;
+// 			delete notifier;
+// 			
+// 			el_cb->el_data = 0;
+// 			
+// 			continue;
+// 		}
 		
-		if (el_cb->el_data)
-			continue;
+// 		if (el_cb->el_data)
+// 			continue;
 		
-// 		DBG("el-qt mod %d\n", evloop_fd->fd);
+// 		printf("el-qt mod %d %d\n", evloop_fd->fd, el_cb->active);
 // 		crtx_event_flags2str(stdout, el_cb->crtx_event_flags);
+// 		printf("\n");
 		
-		if (el_cb->crtx_event_flags & EVLOOP_TIMEOUT) {
-			struct crtx_timer_listener *tlist;
-			int r;
+		if (el_cb->el_data) {
+			notifier = (MyQSocketNotifier*) el_cb->el_data;
 			
+			if (notifier->isEnabled() != el_cb->active)
+				notifier->setEnabled(el_cb->active);
 			
-			tlist = (struct crtx_timer_listener*) malloc(sizeof(struct crtx_timer_listener));
-			
-			memset(tlist, 0, sizeof(struct crtx_timer_listener));
-			
-			tlist->newtimer.it_value.tv_sec = el_cb->timeout.tv_sec;
-			tlist->newtimer.it_value.tv_nsec = el_cb->timeout.tv_nsec;
-			
-			CRTX_VDBG("setup evloop timeout: %ld %ld\n", el_cb->timeout.tv_sec,el_cb->timeout.tv_nsec );
-			
-			tlist->clockid = CRTX_DEFAULT_CLOCK;
-// 			tlist->settime_flags = TFD_TIMER_ABSTIME;
-			
-			tlist->oneshot_callback = timeout_event_handler;
-			tlist->oneshot_data = el_cb;
-			
-			r = crtx_setup_listener("timer", tlist);
-			if (r) {
-				CRTX_ERROR("create_listener(timer) failed: %s\n", strerror(-r));
-				return r;
+			if (el_cb->active) {
+				if (el_cb->crtx_event_flags & EVLOOP_TIMEOUT) {
+					struct crtx_timer_listener *tlist;
+					int r;
+					
+					
+					tlist = (struct crtx_timer_listener*) malloc(sizeof(struct crtx_timer_listener));
+					
+					memset(tlist, 0, sizeof(struct crtx_timer_listener));
+					
+					tlist->newtimer.it_value.tv_sec = el_cb->timeout.tv_sec;
+					tlist->newtimer.it_value.tv_nsec = el_cb->timeout.tv_nsec;
+					
+					CRTX_VDBG("setup evloop timeout: %ld %ld\n", el_cb->timeout.tv_sec,el_cb->timeout.tv_nsec );
+					
+					tlist->clockid = CRTX_DEFAULT_CLOCK;
+					// 			tlist->settime_flags = TFD_TIMER_ABSTIME;
+					
+					tlist->oneshot_callback = timeout_event_handler;
+					tlist->oneshot_data = el_cb;
+					
+					r = crtx_setup_listener("timer", tlist);
+					if (r) {
+						ERROR("create_listener(timer) failed: %s\n", strerror(-r));
+						return r;
+					}
+					
+					crtx_start_listener(&tlist->base);
+				}
 			}
 			
-			crtx_start_listener(&tlist->base);
+			continue;
 		}
 		
 		notifier = new MyQSocketNotifier(evloop_fd->fd, crtx_event_flags2qt_flags(el_cb->crtx_event_flags));
