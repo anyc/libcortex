@@ -35,7 +35,7 @@ clean:
 $(libcrtx_dir)/libcrtx_%.so: LDLIBS+=$(foreach d,$(DEPS_$(patsubst libcrtx_%.so,%,$@)),$(LDLIBS_$d))
 $(libcrtx_dir)/libcrtx_%.so: %.o
 	$(CC) -shared $(LDFLAGS) $< -o $@.$(SO_VERSION) $(LDLIBS) -L. -lcrtx -Wl,-soname,$(shell basename $@.$(SO_VERSION))
-	ln -s $(shell basename $@.$(SO_VERSION)) $(libcrtx_dir)/$(shell basename $@)
+	ln -sf $(shell basename $@.$(SO_VERSION)) $(libcrtx_dir)/$(shell basename $@)
 	
 	#[ ! -f ../$@ ] && ln -s layer2/$@ ../$@ || true
 # 	mv layer2/$@ ../$@

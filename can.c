@@ -38,34 +38,58 @@ static char can_fd_event_handler(struct crtx_event *event, void *userdata, void 
 	struct can_frame *frame;
 	struct crtx_event *nevent;
 	struct crtx_can_listener *clist;
-	int r;
+	ssize_t r;
 	
-	
+	int c=-1;
 	clist = (struct crtx_can_listener *) userdata;
 	
 	// only create event if there are tasks in the queue
 	if (clist->base.graph->tasks) {
-		frame = (struct can_frame *) malloc(sizeof(struct can_frame));
-		r = read(clist->sockfd, frame, sizeof(struct can_frame));
-		if (r != sizeof(struct can_frame)) {
-			fprintf(stderr, "wrong can frame size: %d\n", r);
-			return 1;
-		}
-		
-		r = crtx_create_event(&nevent);
-		if (r) {
-			CRTX_ERROR("crtx_create_event failed: %s\n", strerror(r));
-		} else {
-			nevent->description = "can";
-			crtx_event_set_raw_data(nevent, 'p', frame, sizeof(frame), 0);
+		while (1) {
+			frame = (struct can_frame *) malloc(sizeof(struct can_frame));
+			c+=1;
+			r = read(clist->sockfd, frame, sizeof(struct can_frame));
+			if (r < 0) {
+				if (errno == EAGAIN || errno == EWOULDBLOCK) {
+					free(frame);
+					break;
+				} else {
+					CRTX_ERROR("read can frame failed: %s\n", strerror(errno));
+					free(frame);
+					return 1;
+				}
+			} else
+			if (r != sizeof(struct can_frame)) {
+				CRTX_ERROR("wrong can frame size: %d\n", r);
+				free(frame);
+				return 1;
+			}
 			
-			crtx_add_event(clist->base.graph, nevent);
+			r = crtx_create_event(&nevent);
+			if (r) {
+				CRTX_ERROR("crtx_create_event failed: %s\n", strerror(r));
+				free(frame);
+			} else {
+				nevent->description = "can";
+				crtx_event_set_raw_data(nevent, 'p', frame, sizeof(frame), 0);
+				
+				crtx_add_event(clist->base.graph, nevent);
+			}
+			
+			if (!clist->nonblocking) {
+				break;
+			}
 		}
 	} else {
 		if (clist->discard_unused_data) {
-			// consume and discard the data
-			struct can_frame static_frame;
-			read(clist->sockfd, &static_frame, sizeof(struct can_frame));
+			while (1) {
+				// consume and discard the data
+				struct can_frame static_frame;
+				r = read(clist->sockfd, &static_frame, sizeof(struct can_frame));
+				if (r != sizeof(struct can_frame)) {
+					break;
+				}
+			}
 		}
 	}
 	

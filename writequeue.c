@@ -76,10 +76,11 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 	r = wqueue->write(wqueue, wqueue->write_userdata);
 	if (r != EAGAIN && r != ENOBUFS) {
 		CRTX_VDBG("write fd %d paused, error \"%s\" (%d)\n", wqueue->write_fd, strerror(r), r);
-		
 		crtx_writequeue_stop(wqueue);
 	} else {
-		crtx_writequeue_start(wqueue);
+		if (!wqueue->base.default_el_cb.active) {
+			crtx_writequeue_start(wqueue);
+		}
 	}
 	
 	crtx_unlock_listener(&wqueue->base);

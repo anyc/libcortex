@@ -20,6 +20,7 @@ struct crtx_can_listener {
 	char try_to_keep_if_up;
 	char is_virtual_can;
 	char discard_unused_data;
+	char nonblocking;
 	unsigned int bitrate;
 	int protocol;
 	int send_buffer_size;
