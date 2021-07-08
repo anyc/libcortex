@@ -20,6 +20,8 @@
 #include <netlink/route/link.h>
 #include <netlink/route/link/can.h>
 
+#include <linux/can/raw.h>
+
 #include "intern.h"
 #include "core.h"
 #include "can.h"
@@ -462,6 +464,13 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 			print_can_state(can_state);
 		}
 	}
+	
+	/* TODO cangen does this to remove the default filter (?) from the kernel */
+// 	setsockopt(clist->sockfd, SOL_CAN_RAW, CAN_RAW_FILTER, NULL, 0);
+	
+// 	int loopback = 0;
+// 	setsockopt(clist->sockfd, SOL_CAN_RAW, CAN_RAW_LOOPBACK,
+// 			   &loopback, sizeof(loopback));
 	
 	if (!clist->setup_if_only) {
 		r = bind(clist->sockfd, (struct sockaddr *)&clist->addr, sizeof(clist->addr));

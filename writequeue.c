@@ -46,6 +46,8 @@ int crtx_writequeue_default_write_callback(struct crtx_writequeue_listener *writ
 				size_t i=0;
 				for (tmp = it; tmp; tmp=tmp->next) {i+=1;}
 				
+				err = errno;
+				
 				CRTX_DBG("writequeue suspended (errno: %s, queue length: %zu)\n", (errno==EAGAIN)?"EAGAIN":"ENOBUFS", i);
 			}
 			break;
@@ -62,7 +64,7 @@ int crtx_writequeue_default_write_callback(struct crtx_writequeue_listener *writ
 	*writequeue = it;
 	
 	// if errno != EAGAIN the writequeue will stop itself
-	return errno;
+	return err;
 }
 
 static char fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
