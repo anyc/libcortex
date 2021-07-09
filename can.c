@@ -322,6 +322,18 @@ static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 			}
 		}
 		
+		if (0) {
+			unsigned int new_txqlen, txqlen;
+			
+			new_txqlen = 1000;
+			txqlen = rtnl_link_get_txqlen(clist->link);
+			if (txqlen != new_txqlen) {
+				rtnl_link_set_txqlen(newlink, new_txqlen);
+				
+				CRTX_DBG("changing tx queue length from %u to %u\n", txqlen, new_txqlen);
+			}
+		}
+		
 		rtnl_link_set_flags(newlink, IFF_UP);
 		
 		r = rtnl_link_change(clist->socket, clist->link, newlink, 0);
