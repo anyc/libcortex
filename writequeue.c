@@ -37,18 +37,23 @@ int crtx_writequeue_default_write_callback(struct crtx_writequeue_listener *writ
 	while (it) {
 		err = write(writequeue_lstnr->write_fd, it->payload, it->size);
 		if (err < 0 || ((unsigned) err != it->size) ) {
-			if (errno != EAGAIN && errno != ENOBUFS) {
-				size_t i=0;
-				for (tmp = it; tmp; tmp=tmp->next) {i+=1;}
-				
-				CRTX_ERROR("write error (%d): %s (%d, queue length: %zu)\n", writequeue_lstnr->write_fd, strerror(errno), err, i);
-			} else {
+			if (errno == EAGAIN || errno == EWOULDBLOCK)  {
 				size_t i=0;
 				for (tmp = it; tmp; tmp=tmp->next) {i+=1;}
 				
 				err = errno;
 				
-				CRTX_DBG("writequeue suspended (errno: %s, queue length: %zu)\n", (errno==EAGAIN)?"EAGAIN":"ENOBUFS", i);
+				CRTX_DBG("writequeue suspended (errno: %s, queue length: %zu)\n", (errno==EAGAIN)?"EAGAIN":"EWOULDBLOCK", i);
+			} else {
+				size_t i=0;
+				for (tmp = it; tmp; tmp=tmp->next) {i+=1;}
+				
+				CRTX_ERROR("write error (%d): %s (%d, queue length: %zu)\n", writequeue_lstnr->write_fd, strerror(errno), err, i);
+				
+				if (errno == ENOBUFS) {
+					// TODO start a timer?
+					crtx_trigger_event_processing(&writequeue_lstnr->base);
+				}
 			}
 			break;
 		}
