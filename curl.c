@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <fcntl.h>
 
 #include "intern.h"
 #include "core.h"
@@ -374,8 +375,10 @@ static int socket_callback(CURL *easy, curl_socket_t curl_socket, int what, CURL
 	if (what == CURL_POLL_REMOVE) {
 		socketp->el_cb.crtx_event_flags = 0;
 		
-		// CURL closes the fd before we get this callback
-		socketp->el_fd.fd = 0;
+		if (fcntl(socketp->el_fd.fd, F_GETFD) == -1) {
+			// CURL sometimes closes the fd before we get this callback
+			socketp->el_fd.fd = 0;
+		}
 		
 		crtx_evloop_disable_cb(&socketp->el_cb);
 	} else {
