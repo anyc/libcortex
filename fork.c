@@ -120,6 +120,26 @@ static char do_fork(struct crtx_event *event, void *userdata, void **sessiondata
 	if (flstnr->pid == 0) {
 		CRTX_DBG("child (%d), will reinit after fork\n", getpid());
 		
+		// We must not send the terminate signal to the children of our parent,
+		// but we still need to free the fork listeners. Hence, we set the
+		// process id of the fork listeners to zero and they will be freed
+		// later with the other listeners.
+		{
+			struct crtx_ll *lit;
+			struct crtx_listener_base *lbase;
+			struct crtx_fork_listener *fork_lstnr;
+			
+			for (lit = crtx_root->listeners; lit; lit=lit->next) {
+				lbase = (struct crtx_listener_base*) lit->data;
+				
+				if (!strcmp(lbase->id, "fork")) {
+					fork_lstnr = (struct crtx_fork_listener*) lbase;
+					
+					fork_lstnr->pid = 0;
+				}
+			}
+		}
+		
 		crtx_root->reinit_after_shutdown = 1;
 		crtx_root->reinit_cb = &reinit_cb;
 		crtx_root->reinit_cb_data = flstnr;
@@ -204,13 +224,15 @@ static char stop_listener(struct crtx_listener_base *listener) {
 	flstnr = (struct crtx_fork_listener *) listener;
 	
 	if (flstnr->pid > 0) {
-		printf("sendkill %d\n", flstnr->pid);
+		CRTX_DBG("sending SIGTERM to pid %d\n", flstnr->pid);
 
 		r = kill(flstnr->pid, SIGTERM);
 		if (r != 0) {
-			CRTX_ERROR("killing pid %d failed: %s\n", flstnr->pid, strerror(errno));
+			CRTX_ERROR("kill() pid %d failed: %s\n", flstnr->pid, strerror(errno));
 			return 1;
 		}
+	} else {
+		CRTX_VDBG("fork lstnr has no pid set\n");
 	}
 	
 	crtx_signals_rem_child_handler(flstnr->sigchld_data);
