@@ -29,6 +29,8 @@ int crtx_writequeue_default_write_callback(struct crtx_writequeue_listener *writ
 	
 	writequeue = (struct crtx_ll **) userdata;
 	
+	if (!writequeue)
+		return 0;
 	
 	// send all events in our write queue
 	c = 0;
