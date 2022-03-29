@@ -44,6 +44,37 @@ Other modules:
  * v4l
  * xcb_randr
 
+Why do I need an event loop?
+----------------------------
+
+A regular process of an application is single-threaded. If such an application is
+event-driven, i.e. waits on events from external sources and processes them,
+the `main()` function of the application usually does some initialization and then
+calls a special function from a corresponding library that will not return until
+the application should terminate. The name of this function usually contains
+"loop" or "process" in some form. This function starts a so-called event loop.
+Instead of polling the event source, an event loop implementation usually instructs
+the operating system kernel to notify the application if an event occurred and
+then the application sleeps until it is notified by the kernel. When the application
+is awake again, the event loop will execute a callback function previously
+registered by the application for the corresponding type of event.
+
+Every library that provides access to a certain event source usually provides
+such an interface. However, if the application should process events from more
+than one event source, this approach is not feasible anymore as we cannot execute
+multiple loop functions with one thread. One solution is to start a separate thread
+for every event source that each will call the loop function of the corresponding
+library. However, using multiple threads might cause additional source code
+complexity due to the required thread synchronization and finding synchronization
+bugs in multi-threaded applications can become a time-intensive effort if the
+bugs occur only in rare circumstances.
+
+If events do not have to be processed in parallel to achieve minimal latency,
+another approach can be used: instead of starting an own event loop for every
+event source, a generic event loop is started and the single event sources are
+registered with this loop. Libcortex implements such a generic event loop but
+also provides a simple interface to start listening on some common event sources
+in a (Linux) operating system.
 
 Example
 -------
@@ -87,9 +118,10 @@ char *udev_filters[] = {
 static char udev_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *dict;
 	
-	// optional helper function that converts udev events into a key-value dictionary
+	// optional helper function that converts udev events into a key=value dictionary
 	dict = crtx_udev_raw2dict((struct udev_device *) crtx_event_get_ptr(event), r2ds, 0);
 	
+	// print the key=value tuples that show information like the corresponding device file in /dev
 	crtx_print_dict(dict);
 	
 	crtx_dict_unref(dict);
