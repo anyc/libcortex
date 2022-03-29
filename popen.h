@@ -37,12 +37,13 @@ struct crtx_popen_listener {
 	void *stdout_cb_data;
 	void *stderr_cb_data;
 	
-	char *filepath; // execute the executable with this file path
-	char *filename; // execute an executable with this filename (e.g., in $PATH)
+	const char *filepath; // execute the executable with this file path
+	const char *filename; // execute an executable with this filename (e.g., in $PATH)
 	char **argv;
 	char **envp;
-	char *chdir;
+	const char *chdir;
 	
+	// execute callback just before execv'ing the given command
 	void (*pre_exec)(struct crtx_popen_listener *plstnr, void *pre_exec_userdata);
 	void *pre_exec_userdata;
 };

@@ -71,9 +71,9 @@ void reinit_cb(void *reinit_cb_data) {
 	
 	if (plstnr->argv == 0) {
 		if (plstnr->filepath) {
-			plstnr->argv = (char*[]) { plstnr->filepath, 0 };
+			plstnr->argv = (char*[]) { (char*) plstnr->filepath, 0 };
 		} else {
-			plstnr->argv = (char*[]) { plstnr->filename, 0 };
+			plstnr->argv = (char*[]) { (char*) plstnr->filename, 0 };
 		}
 	}
 	
