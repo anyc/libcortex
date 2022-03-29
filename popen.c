@@ -77,6 +77,11 @@ void reinit_cb(void *reinit_cb_data) {
 		}
 	}
 	
+	if (plstnr->envp == 0) {
+		// required for portability
+		plstnr->envp = (char*[]) { 0 };
+	}
+	
 	if (plstnr->chdir) {
 		rv = chdir(plstnr->chdir);
 		if (rv < 0) {
