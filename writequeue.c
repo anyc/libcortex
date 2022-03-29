@@ -48,7 +48,7 @@ int crtx_writequeue_default_write_callback(struct crtx_writequeue_listener *writ
 				size_t i=0;
 				for (tmp = it; tmp; tmp=tmp->next) {i+=1;}
 				
-				CRTX_ERROR("write error (%d): %s (%d, queue length: %zu)\n", writequeue_lstnr->write_fd, strerror(errno), err, i);
+				CRTX_ERROR("write error (%d): %s (%zd, queue length: %zu)\n", writequeue_lstnr->write_fd, strerror(errno), err, i);
 				
 				if (errno == ENOBUFS) {
 					// TODO start a timer?
