@@ -204,6 +204,19 @@ void crtx_evloop_callback(struct crtx_evloop_callback *el_cb) {
 	}
 }
 
+void crtx_evloop_fwd_error2event_cb(struct crtx_evloop_callback *el_cb, void *data) {
+	crtx_evloop_callback(el_cb);
+}
+
+void crtx_evloop_update_default_fd(struct crtx_listener_base *listener, int fd) {
+	if (listener->default_el_cb.active)
+		crtx_evloop_disable_cb(&listener->default_el_cb);
+	
+	listener->evloop_fd.fd = fd;
+	
+	crtx_evloop_enable_cb(&listener->default_el_cb);
+}
+
 int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd, struct crtx_evloop_callback *el_cb,
 						  int fd,
 						  int event_flags,
@@ -221,8 +234,13 @@ int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd, struct crtx_ev
 	el_cb->event_handler = event_handler;
 	el_cb->event_handler_data = event_handler_data;
 	el_cb->fd_entry = evloop_fd;
-	el_cb->error_cb = error_cb;
-	el_cb->error_cb_data = error_cb_data;
+	if (error_cb) {
+		el_cb->error_cb = error_cb;
+		el_cb->error_cb_data = error_cb_data;
+	} else {
+		el_cb->error_cb = &crtx_evloop_fwd_error2event_cb;
+		el_cb->error_cb_data = 0;
+	}
 	
 	crtx_ll_append((struct crtx_ll**) &evloop_fd->callbacks, &el_cb->ll);
 	
@@ -260,6 +278,8 @@ int crtx_evloop_init_listener(struct crtx_listener_base *listener,
 int crtx_evloop_enable_cb(struct crtx_evloop_callback *el_cb) {
 	struct crtx_evloop_fd *el_fd;
 	
+	if (el_cb->active)
+		return 0;
 	
 	el_fd = el_cb->fd_entry;
 	

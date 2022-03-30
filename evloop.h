@@ -26,6 +26,9 @@ extern "C" {
 #define EVLOOP_SPECIAL (1<<2)
 #define EVLOOP_EDGE_TRIGGERED (1<<3)
 #define EVLOOP_TIMEOUT (1<<4)
+#define EVLOOP_ERROR (1<<4)
+#define EVLOOP_HUP (1<<4)
+#define EVLOOP_RDHUP (1<<4)
 
 struct crtx_evloop_fd;
 struct crtx_evloop_callback;
@@ -139,6 +142,7 @@ int crtx_evloop_init_listener(struct crtx_listener_base *listener,
 						crtx_evloop_error_cb_t error_cb,
 						void *error_cb_data
 					);
+void crtx_evloop_update_default_fd(struct crtx_listener_base *listener, int fd);
 int crtx_evloop_enable_cb(struct crtx_evloop_callback *el_cb);
 int crtx_evloop_disable_cb(struct crtx_evloop_callback *el_cb);
 int crtx_evloop_remove_cb(struct crtx_evloop_callback *el_cb);

@@ -97,6 +97,12 @@ static int epoll_flags2crtx_event_flags(int epoll_flags) {
 		ret |= EVLOOP_SPECIAL;
 	if (epoll_flags & EPOLLET)
 		ret |= EVLOOP_EDGE_TRIGGERED;
+	if (epoll_flags & EPOLLERR)
+		ret |= EVLOOP_ERROR;
+	if (epoll_flags & EPOLLHUP)
+		ret |= EVLOOP_HUP;
+	if (epoll_flags & EPOLLRDHUP)
+		ret |= EVLOOP_RDHUP;
 	
 	return ret;
 }
@@ -267,10 +273,13 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 					CRTX_DBG("epoll returned EPOLLRDHUP for fd %d\n", evloop_fd->fd);
 				
 				for (el_cb = evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
-					if (el_cb->error_cb)
+					if (el_cb->error_cb) {
+						el_cb->triggered_flags = epoll_flags2crtx_event_flags(epl->events[i].events);
+						
 						el_cb->error_cb(el_cb, el_cb->error_cb_data);
-					else
+					} else {
 						CRTX_DBG("no error_cb for fd %d\n", el_cb->fd_entry->fd);
+					}
 				}
 			} else {
 				for (el_cb=evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
