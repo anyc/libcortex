@@ -26,14 +26,6 @@ static char timer_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	
 	tlist = (struct crtx_timer_listener *) userdata;
 	
-	if (tlist->oneshot_callback) {
-		tlist->oneshot_callback(0, tlist->oneshot_data, 0);
-		
-		crtx_free_listener(&tlist->base);
-		
-		return 1;
-	}
-	
 	s = read(tlist->fd, &exp, sizeof(uint64_t));
 	if (s == -1 && errno == EINTR) {
 		CRTX_DBG("timerfd thread interrupted\n");
@@ -44,16 +36,22 @@ static char timer_fd_event_handler(struct crtx_event *event, void *userdata, voi
 		return 0;
 	}
 	
-	s = crtx_create_event(&event);
-	if (s) {
-		CRTX_ERROR("crtx_create_event failed: %s\n", strerror(s));
-		return 1;
+	if (tlist->direct_callback) {
+		tlist->direct_callback(0, tlist->direct_userdata, 0);
+		
+// 		crtx_free_listener(&tlist->base);
+	} else {
+		s = crtx_create_event(&event);
+		if (s) {
+			CRTX_ERROR("crtx_create_event failed: %s\n", strerror(s));
+			return 1;
+		}
+		
+		event->description = CRTX_EVT_TIMER;
+		crtx_event_set_raw_data(event, 'U', exp, sizeof(exp), 0);
+		
+		crtx_add_event(tlist->base.graph, event);
 	}
-	
-	event->description = CRTX_EVT_TIMER;
-	crtx_event_set_raw_data(event, 'U', exp, sizeof(exp), 0);
-	
-	crtx_add_event(tlist->base.graph, event);
 	
 	return 1;
 }
@@ -207,20 +205,40 @@ int crtx_timer_get_listener(struct crtx_timer_listener *tlist,
 	return 0;
 }
 
+static char timer_oneshot_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_timer_oneshot *oneshot;
+	
+	oneshot = (struct crtx_timer_oneshot *) userdata;
+	
+	oneshot->oneshot_callback(oneshot->oneshot_data);
+	
+	#if CRTX_HAVE_MOD_PIPE
+	crtx_selfpipe_enqueue_cb(&crtx_selfpipe_cb_free_lstnr, oneshot);
+	#else
+	// TODO show error?
+	#endif
+	
+	return 0;
+}
+
+void oneshot_free_cb(struct crtx_listener_base *base, void *userdata) {
+	free(userdata);
+}
+
 int crtx_timer_oneshot(time_t offset_sec,
 						long offset_nsec,
 						int clockid,
-						crtx_handle_task_t callback,
+						void (*callback)(void *userdata),
 						void *callback_userdata
 						)
 {
 	struct crtx_timer_listener *tlist;
+	struct crtx_timer_oneshot *oneshot;
 	int r;
 	
 	
-	tlist = (struct crtx_timer_listener*) malloc(sizeof(struct crtx_timer_listener));
-	
-	memset(tlist, 0, sizeof(struct crtx_timer_listener));
+	oneshot = (struct crtx_timer_oneshot*) calloc(1, sizeof(struct crtx_timer_oneshot));
+	tlist = &oneshot->tlstnr;
 	
 	tlist->newtimer.it_value.tv_sec = offset_sec;
 	tlist->newtimer.it_value.tv_nsec = offset_nsec;
@@ -229,8 +247,15 @@ int crtx_timer_oneshot(time_t offset_sec,
 		tlist->clockid = CLOCK_REALTIME;
 	else
 		tlist->clockid = clockid;
-	tlist->oneshot_callback = callback;
-	tlist->oneshot_data = callback_userdata;
+	
+	tlist->direct_callback = &timer_oneshot_event_handler;
+	tlist->direct_userdata = oneshot;
+	
+	tlist->base.free_cb = oneshot_free_cb;
+	tlist->base.free_cb_userdata = oneshot;
+	
+	oneshot->oneshot_callback = callback;
+	oneshot->oneshot_data = callback_userdata;
 	
 	r = crtx_setup_listener("timer", tlist);
 	if (r) {

@@ -21,15 +21,19 @@ struct crtx_timer_listener {
 	struct crtx_listener_base base;
 	
 	int fd;
-// 	char stop;
-// 	char oneshot;
-	crtx_handle_task_t oneshot_callback;
-	void *oneshot_data;
-	
+	crtx_handle_task_t direct_callback;
+	void *direct_userdata;
 	
 	int clockid;
 	struct itimerspec newtimer;
 	int settime_flags;
+};
+
+struct crtx_timer_oneshot {
+	struct crtx_timer_listener tlstnr;
+	
+	void (*oneshot_callback)(void *data);
+	void *oneshot_data;
 };
 
 struct crtx_timer_retry_listener {
@@ -52,7 +56,7 @@ int crtx_timer_get_listener(struct crtx_timer_listener *tlist,
 int crtx_timer_oneshot(time_t offset_sec,
 					   long offset_nsec,
 					   int clockid,
-					   crtx_handle_task_t callback,
+					   void (*callback)(void *),
 					   void *callback_userdata
 					);
 

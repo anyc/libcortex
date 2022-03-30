@@ -137,8 +137,8 @@ static int crtx_evloop_qt_mod_fd(struct crtx_event_loop *evloop, struct crtx_evl
 					tlist->clockid = CRTX_DEFAULT_CLOCK;
 					// 			tlist->settime_flags = TFD_TIMER_ABSTIME;
 					
-					tlist->oneshot_callback = timeout_event_handler;
-					tlist->oneshot_data = el_cb;
+					tlist->direct_callback = timeout_event_handler;
+					tlist->direct_userdata = el_cb;
 					
 					r = crtx_setup_listener("timer", tlist);
 					if (r) {
