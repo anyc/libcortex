@@ -2344,3 +2344,7 @@ int crtx_selfpipe_enqueue_cb(void (*cb)(void*), void *cb_data) {
 }
 #endif
 
+void crtx_lstnr_handle_fd_closed(struct crtx_listener_base *lstnr) {
+	crtx_evloop_handle_fd_closed(&lstnr->evloop_fd);
+}
+

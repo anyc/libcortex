@@ -209,12 +209,30 @@ void crtx_evloop_fwd_error2event_cb(struct crtx_evloop_callback *el_cb, void *da
 }
 
 void crtx_evloop_update_default_fd(struct crtx_listener_base *listener, int fd) {
-	if (listener->default_el_cb.active)
-		crtx_evloop_disable_cb(&listener->default_el_cb);
+	crtx_evloop_disable_cb(&listener->default_el_cb);
 	
 	listener->evloop_fd.fd = fd;
 	
-	crtx_evloop_enable_cb(&listener->default_el_cb);
+	if (fd >= 0)
+		crtx_evloop_enable_cb(&listener->default_el_cb);
+}
+
+void crtx_evloop_handle_fd_closed(struct crtx_evloop_fd *evloop_fd) {
+	struct crtx_evloop_callback *el_cb;
+	
+	CRTX_DBG("received notification fd %d was closed\n", evloop_fd->fd);
+	
+	for (el_cb=evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
+		if (!el_cb->active)
+			continue;
+		
+		el_cb->active = 0;
+	}
+	
+	evloop_fd->fd = -1;
+	
+	if (evloop_fd->evloop)
+		evloop_fd->evloop->mod_fd(evloop_fd->evloop, evloop_fd);
 }
 
 int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd, struct crtx_evloop_callback *el_cb,
@@ -278,8 +296,6 @@ int crtx_evloop_init_listener(struct crtx_listener_base *listener,
 int crtx_evloop_enable_cb(struct crtx_evloop_callback *el_cb) {
 	struct crtx_evloop_fd *el_fd;
 	
-	if (el_cb->active)
-		return 0;
 	
 	el_fd = el_cb->fd_entry;
 	

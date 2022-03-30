@@ -155,7 +155,7 @@ int crtx_evloop_trigger_callback(struct crtx_event_loop *evloop, struct crtx_evl
 
 void crtx_event_flags2str(FILE *fd, unsigned int flags);
 
-// int crtx_evloop_finish(struct crtx_event_loop *evloop);
+void crtx_evloop_handle_fd_closed(struct crtx_evloop_fd *evloop_fd);
 
 #ifdef __cplusplus
 }
