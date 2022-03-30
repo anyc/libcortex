@@ -92,7 +92,7 @@ $(local_mk):
 
 clean:
 	$(MAKE) -C layer2 clean LAYER2_MODULES="$(LAYER2_MODULES)"
-	rm -rf *.o $(APP) core_modules.h $(TESTS) $(SHAREDLIB) libcrtx*.so* libcortex*.deb
+	rm -rf *.o $(APP) core_modules.h config.h $(TESTS) $(SHAREDLIB) libcrtx*.so* libcortex*.deb
 
 debug:
 	$(MAKE) $(MAKEFILE) DEBUG_FLAGS="-g -g3 -gdwarf-2 -DDEBUG -Wall -Werror"
@@ -129,6 +129,10 @@ core_modules.h: $(local_mk)
 	for m in $(STATIC_MODULES); do echo -e "\t{\"$${m}\", &crtx_setup_$${m}_listener}," >> $@; done
 	echo -e "\t{0, 0}," >> $@
 	echo "};" >> $@
+
+config.h: $(local_mk)
+	echo "" > $@
+	for m in $(STATIC_MODULES); do echo -e "#define CRTX_HAVE_MOD_$$(echo $${m} | tr a-z A-Z) 1" >> $@; done
 
 dllist.o: CFLAGS+=-DCRTX_DLL
 dllist.o: llist.c

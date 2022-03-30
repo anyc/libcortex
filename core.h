@@ -13,6 +13,7 @@ extern "C" {
 #include <stdint.h>
 #include <regex.h>
 
+#include "config.h"
 #include "threads.h"
 #include "dict.h"
 #include "linkedlist.h"
@@ -299,6 +300,8 @@ struct crtx_root {
 	
 	int global_fd_flags;
 	
+	struct crtx_listener_base *selfpipe_lstnr;
+	
 	#ifndef CRTX_REDUCED_SIZE
 	/* reserved to avoid ABI breakage */
 	void *reserved1;
@@ -414,6 +417,10 @@ void crtx_shutdown_after_fork();
 struct crtx_thread * crtx_start_detached_event_loop();
 
 int crtx_get_version(unsigned int *major, unsigned int *minor);
+
+
+void crtx_selfpipe_cb_free_lstnr(void *data);
+int crtx_selfpipe_enqueue_cb(void (*cb)(void*), void *cb_data);
 
 #ifdef __cplusplus
 }

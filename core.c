@@ -23,6 +23,7 @@
 #include "intern.h"
 #include "core.h"
 #include "dict.h"
+#include "pipe.h"
 
 
 #ifndef CRTX_PLUGIN_DIR
@@ -2225,3 +2226,121 @@ int crtx_get_version(unsigned int *major, unsigned int *minor) {
 	
 	return 0;
 }
+
+#if CRTX_HAVE_MOD_PIPE
+void crtx_selfpipe_cb_free_lstnr(void *data) {
+	struct crtx_listener_base *lstnr;
+	
+	lstnr = (struct crtx_listener_base *) data;
+	
+	CRTX_DBG("selfpipe free listener %p\n", lstnr);
+	
+	crtx_free_listener(lstnr);
+}
+
+static char selfpipe_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_pipe_listener *selfpipe_lstnr;
+	ssize_t r;
+	void (*cb)(void*);
+	void *cb_data;
+	char value;
+	
+	
+	selfpipe_lstnr = (struct crtx_pipe_listener *) crtx_root->selfpipe_lstnr;
+	
+	r = read(selfpipe_lstnr->fds[0], &value, sizeof(value));
+	if (r < 0) {
+		CRTX_ERROR("read from selfpipe %d failed: %s\n", selfpipe_lstnr->fds[0], strerror(r));
+		return r;
+	}
+	if (r != sizeof(value)) {
+		CRTX_ERROR("read invalid data from signal selfpipe %d: %zd != %zd\n", selfpipe_lstnr->fds[0], r, sizeof(value));
+		return -EBADE;
+	}
+	
+	if (value != 1) {
+		CRTX_ERROR("received unexpected value over selfpipe: %d\n", value);
+		return -EBADE;
+	}
+	
+	r = read(selfpipe_lstnr->fds[0], &cb, sizeof(void*));
+	if (r < 0) {
+		CRTX_ERROR("read from selfpipe %d failed: %s\n", selfpipe_lstnr->fds[0], strerror(r));
+		return r;
+	}
+	if (r != sizeof(void*)) {
+		CRTX_ERROR("read invalid data from signal selfpipe %d: %zd != %zd\n", selfpipe_lstnr->fds[0], r, sizeof(void*));
+		return -EBADE;
+	}
+	
+	r = read(selfpipe_lstnr->fds[0], &cb_data, sizeof(void*));
+	if (r < 0) {
+		CRTX_ERROR("read from selfpipe %d failed: %s\n", selfpipe_lstnr->fds[0], strerror(r));
+		return r;
+	}
+	if (r != sizeof(void*)) {
+		CRTX_ERROR("read invalid data from signal selfpipe %d: %zd != %zd\n", selfpipe_lstnr->fds[0], r, sizeof(void*));
+		return -EBADE;
+	}
+	
+	cb(cb_data);
+	
+	return 0;
+}
+
+static int selfpipe_setup(struct crtx_root *root) {
+	if (!crtx_root->selfpipe_lstnr) {
+		struct crtx_pipe_listener *selfpipe_lstnr;
+		int rv;
+		
+		crtx_root->selfpipe_lstnr = (struct crtx_listener_base *) calloc(1, sizeof(struct crtx_pipe_listener));
+		selfpipe_lstnr = (struct crtx_pipe_listener *) crtx_root->selfpipe_lstnr;
+		
+		selfpipe_lstnr->fd_event_handler = &selfpipe_event_handler;
+		
+		rv = crtx_setup_listener("pipe", crtx_root->selfpipe_lstnr);
+		if (rv) {
+			CRTX_ERROR("create_listener(selfpipe) failed\n");
+			return rv;
+		}
+		
+		rv = crtx_start_listener(crtx_root->selfpipe_lstnr);
+		if (rv) {
+			CRTX_ERROR("starting selfpipe listener failed\n");
+			return rv;
+		}
+	}
+	
+	return 0;
+}
+
+int crtx_selfpipe_enqueue_cb(void (*cb)(void*), void *cb_data) {
+	ssize_t rv;
+	char value;
+	
+	
+	selfpipe_setup(crtx_root);
+	
+	value = 1;
+	rv = write(((struct crtx_pipe_listener *) crtx_root->selfpipe_lstnr)->fds[1], &value, sizeof(value));
+	if (rv != sizeof(value)) {
+		CRTX_ERROR("write1 to selfpipe failed: %zd %zu\n", rv, sizeof(value));
+		return 1;
+	}
+	
+	rv = write(((struct crtx_pipe_listener *) crtx_root->selfpipe_lstnr)->fds[1], &cb, sizeof(void*));
+	if (rv != sizeof(void*)) {
+		CRTX_ERROR("write2 to selfpipe failed: %zd %zu\n", rv, sizeof(void*));
+		return 1;
+	}
+	
+	write(((struct crtx_pipe_listener *) crtx_root->selfpipe_lstnr)->fds[1], &cb_data, sizeof(void*));
+	if (rv != sizeof(void*)) {
+		CRTX_ERROR("write3 to selfpipe failed: %zd %zu\n", rv, sizeof(void*));
+		return 1;
+	}
+	
+	return 0;
+}
+#endif
+
