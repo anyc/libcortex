@@ -22,9 +22,9 @@ OBJS+=core.o \
 	dict.o \
 	llist.o dllist.o evloop.o
 
-AVAILABLE_TESTS=avahi can curl epoll evdev evloop_qt fork libnl libvirt netlink_ge \
-	nl_route_raw popen pulseaudio sdbus sip timer udev uevents v4l xcb_randr \
-	writequeue
+AVAILABLE_TESTS=avahi can curl epoll evdev evloop_qt fork libnl libvirt mqtt \
+	netlink_ge nl_route_raw popen pulseaudio sdbus sip timer udev uevents \
+	v4l xcb_randr writequeue
 
 CFLAGS+=$(DEBUG_FLAGS) -D_FILE_OFFSET_BITS=64 -fPIC -DCRTX_PLUGIN_DIR=\"$(plugindir)\"
 CXXFLAGS+=$(DEBUG_FLAGS)
@@ -36,7 +36,7 @@ LDLIBS+=-lpthread -ldl
 
 .PHONY: clean
 
-all: $(local_mk) core_modules.h plugins shared layer2 crtx_include_dir
+all: $(local_mk) core_modules.h config.h plugins shared layer2 crtx_include_dir
 
 #
 # module-specific flags
@@ -51,7 +51,7 @@ STATIC_TOOLS+=cache dict_inout dict_inout_json event_comm socket threads
 STATIC_MODULES+=fanotify fork inotify netlink_raw nl_route_raw uevents socket_raw \
 	timer writequeue pipe popen
 DYN_MODULES+=avahi can curl evdev evloop_qt libnl libvirt netlink_ge nf_queue \
-	pulseaudio readline sdbus sip udev v4l xcb_randr sdbus_notifications
+	pulseaudio readline sdbus sip udev v4l xcb_randr sdbus_notifications mqtt
 
 LAYER2_MODULES?=dynamic_evdev forked_curl netif netconf
 

@@ -70,3 +70,6 @@ LDLIBS_xcb_randr+=$(shell $(PKG_CONFIG) --libs xcb xcb-randr)
 
 CXXFLAGS_evloop_qt+=$(shell $(PKG_CONFIG) --cflags Qt5Core) -fPIC -std=c++11
 LDLIBS_evloop_qt+=$(shell $(PKG_CONFIG) --libs Qt5Core)
+
+CFLAGS_mqtt+=$(shell $(PKG_CONFIG) --cflags libmosquitto)
+LDLIBS_mqtt+=$(shell $(PKG_CONFIG) --libs libmosquitto)
