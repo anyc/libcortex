@@ -163,20 +163,22 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 	
 	if (listener->start_listener) {
 		ret = listener->start_listener(listener);
-		if (ret < 0 && listener->state_graph) {
+		if (ret < 0) {
 			CRTX_ERROR("start_listener failed\n");
 			
 			listener->state = CRTX_LSTNR_STOPPED;
 			
-			ret = crtx_create_event(&event);
-			if (ret) {
-				CRTX_ERROR("crtx_create_event failed: %s\n", strerror(ret));
-			} else {
-				event->description = "listener_state";
-				event->data.type = 'u';
-				event->data.uint32 = CRTX_LSTNR_STOPPED;
-				
-				crtx_add_event(listener->state_graph, event);
+			if (listener->state_graph) {
+				ret = crtx_create_event(&event);
+				if (ret) {
+					CRTX_ERROR("crtx_create_event failed: %s\n", strerror(ret));
+				} else {
+					event->description = "listener_state";
+					event->data.type = 'u';
+					event->data.uint32 = CRTX_LSTNR_STOPPED;
+					
+					crtx_add_event(listener->state_graph, event);
+				}
 			}
 			
 			UNLOCK(listener->state_mutex);
