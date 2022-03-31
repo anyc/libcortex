@@ -20,7 +20,6 @@
 
 void crtx_mqtt_default_connect_callback(struct mosquitto *mosq, void *userdata, int rc) {
 	struct crtx_mqtt_listener *mlstnr;
-	struct crtx_event *event;
 	int rv;
 	
 	
@@ -28,6 +27,9 @@ void crtx_mqtt_default_connect_callback(struct mosquitto *mosq, void *userdata, 
 	
 	if (rc)
 		CRTX_DBG("MQTT connect callback error: %s (%d)\n", mosquitto_strerror(rc), rc);
+
+#if 0
+	struct crtx_event *event;
 	
 	rv = crtx_create_event(&event);
 	if (rv) {
@@ -41,11 +43,16 @@ void crtx_mqtt_default_connect_callback(struct mosquitto *mosq, void *userdata, 
 	crtx_fill_data_item(&event->data, 'i', 0, rc, sizeof(rc), 0);
 	
 	crtx_add_event(mlstnr->base.graph, event);
+#else
+	rv = crtx_push_new_event(&mlstnr->base, 0, CRTX_MQTT_EVT_CONNECT_ID, CRTX_MQTT_EVT_CONNECT, 'i', 0, rc, sizeof(rc), 0);
+	if (rv) {
+		CRTX_ERROR("crtx_push_new_event failed: %s\n", strerror(rv));
+	}
+#endif
 }
 
 void crtx_mqtt_default_disconnect_callback(struct mosquitto *mosq, void *userdata, int rc) {
 	struct crtx_mqtt_listener *mlstnr;
-	struct crtx_event *event;
 	int rv;
 	
 	
@@ -53,6 +60,9 @@ void crtx_mqtt_default_disconnect_callback(struct mosquitto *mosq, void *userdat
 	
 	if (rc)
 		CRTX_ERROR("MQTT disconnect callback error: %s (%d)\n", mosquitto_strerror(rc), rc);
+
+#if 0
+	struct crtx_event *event;
 	
 	rv = crtx_create_event(&event);
 	if (rv) {
@@ -66,15 +76,23 @@ void crtx_mqtt_default_disconnect_callback(struct mosquitto *mosq, void *userdat
 	crtx_fill_data_item(&event->data, 'i', 0, rc, sizeof(rc), 0);
 	
 	crtx_add_event(mlstnr->base.graph, event);
+#else
+	rv = crtx_push_new_event(&mlstnr->base, 0, CRTX_MQTT_EVT_DISCONNECT_ID, CRTX_MQTT_EVT_DISCONNECT, 'i', 0, rc, sizeof(rc), 0);
+	if (rv) {
+		CRTX_ERROR("crtx_push_new_event failed: %s\n", strerror(rv));
+	}
+#endif
 }
 
 void crtx_mqtt_default_log_callback(struct mosquitto *mosq, void *userdata, int level, const char *msg) {
 	struct crtx_mqtt_listener *mlstnr;
-	struct crtx_event *event;
 	int rv;
 	
 	
 	mlstnr = (struct crtx_mqtt_listener *) userdata;
+	
+#if 0
+	struct crtx_event *event;
 	
 	rv = crtx_create_event(&event);
 	if (rv) {
@@ -91,15 +109,27 @@ void crtx_mqtt_default_log_callback(struct mosquitto *mosq, void *userdata, int 
 					   );
 	
 	crtx_add_event(mlstnr->base.graph, event);
+#else
+	rv = crtx_push_new_event(&mlstnr->base, 0, CRTX_MQTT_EVT_LOG_ID, CRTX_MQTT_EVT_LOG,
+						'D', "is",
+						"level", level, sizeof(level), 0,
+						"msg", msg, (size_t) 0, CRTX_DIF_CREATE_DATA_COPY
+					);
+	if (rv) {
+		CRTX_ERROR("crtx_push_new_event failed: %s\n", strerror(rv));
+	}
+#endif
 }
 
 void crtx_mqtt_default_message_callback(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *message) {
 	struct crtx_mqtt_listener *mlstnr;
-	struct crtx_event *event;
 	int rv;
 	
 	
 	mlstnr = (struct crtx_mqtt_listener *) userdata;
+	
+#if 0
+	struct crtx_event *event;
 	
 	rv = crtx_create_event(&event);
 	if (rv) {
@@ -113,6 +143,12 @@ void crtx_mqtt_default_message_callback(struct mosquitto *mosq, void *userdata, 
 	crtx_fill_data_item(&event->data, 's', message->topic, message->payload, message->payloadlen, CRTX_DIF_CREATE_KEY_COPY | CRTX_DIF_CREATE_DATA_COPY);
 	
 	crtx_add_event(mlstnr->base.graph, event);
+#else
+	rv = crtx_push_new_event(&mlstnr->base, 0, CRTX_MQTT_EVT_MSG_ID, CRTX_MQTT_EVT_MSG, 's', message->topic, message->payload, message->payloadlen, CRTX_DIF_CREATE_KEY_COPY | CRTX_DIF_CREATE_DATA_COPY);
+	if (rv) {
+		CRTX_ERROR("crtx_push_new_event failed: %s\n", strerror(rv));
+	}
+#endif
 }
 
 static char mqtt_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {

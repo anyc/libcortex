@@ -950,6 +950,66 @@ int crtx_create_event(struct crtx_event **event) {
 	return 0;
 }
 
+int crtx_push_new_event(struct crtx_listener_base *lstnr, struct crtx_event **event,
+						CRTX_EVENT_TYPE_VARTYPE event_type, char *event_description,
+						char data_type, char *data_key_or_sign,
+						...
+					   )
+{
+	va_list va;
+	char rv;
+	struct crtx_event *levent;
+	struct crtx_dict *dict;
+	
+	
+	rv = crtx_create_event(&levent);
+	if (rv) {
+		CRTX_ERROR("crtx_create_event failed: %s\n", strerror(rv));
+		return rv;
+	}
+
+	levent->type = event_type;
+	levent->description = event_description;
+
+// 	crtx_fill_data_item_va2(&levent->data, 'i', 0, rc, sizeof(rc), 0);
+	
+	if (data_type) {
+		va_start(va, data_key_or_sign);
+		
+		if (data_type == 'D') {
+			dict = crtx_create_dict_va(data_key_or_sign, &va);
+			if (!dict) {
+				CRTX_ERROR("crtx_create_dict_va() failed: %d\n", rv);
+				free_event(levent);
+				return rv;
+			}
+			
+			rv = crtx_fill_data_item(&levent->data, data_type, 0, dict);
+			if (rv) {
+				CRTX_ERROR("crtx_fill_data_item() failed: %d\n", rv);
+				free_event(levent);
+				return rv;
+			}
+		} else {
+			rv = crtx_fill_data_item_va2(&levent->data, data_type, data_key_or_sign, &va);
+			if (rv) {
+				CRTX_ERROR("crtx_fill_data_item_va2() failed: %d\n", rv);
+				free_event(levent);
+				return rv;
+			}
+		}
+		
+		va_end(va);
+	}
+	
+	crtx_add_event(lstnr->graph, levent);
+	
+	if (event)
+		*event = levent;
+	
+	return 0;
+}
+
 void reference_event_release(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
@@ -1844,6 +1904,9 @@ int crtx_finish() {
 	for (i=0; i < crtx_root->n_plugins; i++) {
 		crtx_root->plugins->finish();
 	}
+	
+	if (crtx_root->selfpipe_lstnr)
+		free(crtx_root->selfpipe_lstnr);
 	
 	CRTX_DBG("finished shutdown\n");
 	

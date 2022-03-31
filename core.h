@@ -355,6 +355,10 @@ int crtx_init_listener_base(struct crtx_listener_base *lstnr);
 // void free_listener(struct crtx_listener_base *listener);
 void crtx_free_listener(struct crtx_listener_base *listener);
 int crtx_create_event(struct crtx_event **event);
+int crtx_push_new_event(struct crtx_listener_base *lstnr, struct crtx_event **event,
+						CRTX_EVENT_TYPE_VARTYPE event_type, char *description,
+						char data_type, char *data_key_or_sign,
+						...);
 struct crtx_task *crtx_create_task(struct crtx_graph *graph, unsigned char position, const char *id, crtx_handle_task_t handler, void *userdata);
 // void crtx_claim_next_event(struct crtx_dll **graph, struct crtx_dll **event);
 void crtx_process_event(struct crtx_graph *graph, struct crtx_dll *queue_entry);
