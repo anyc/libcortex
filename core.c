@@ -2009,6 +2009,24 @@ void crtx_event_set_dict_data(struct crtx_event *event, struct crtx_dict *data_d
 	UNLOCK(event->mutex);
 }
 
+void crtx_event_set_dict(struct crtx_event *event, char *signature, ...) {
+	struct crtx_dict *dict;
+	va_list va;
+	
+	
+	va_start(va, signature);
+	
+	dict = crtx_create_dict_va(signature, &va);
+	
+	LOCK(event->mutex);
+	
+	crtx_fill_data_item(&event->data, 'D', 0, dict);
+	
+	UNLOCK(event->mutex);
+	
+	va_end(va);
+}
+
 char crtx_event_raw2dict(struct crtx_event *event, void *user_data) {
 	struct crtx_dict_item *raw2dict;
 	crtx_raw_to_dict_t raw2dict_fct;

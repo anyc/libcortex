@@ -91,6 +91,7 @@ struct crtx_dict_item * crtx_alloc_item(struct crtx_dict *dict);
 struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, struct crtx_dict_transformation *transf);
 struct crtx_dict_item * crtx_get_item(struct crtx_dict *ds, const char *key);
 struct crtx_dict * crtx_init_dict(char *signature, uint32_t sign_length, size_t payload_size);
+struct crtx_dict * crtx_create_dict_va(char *signature, va_list *va);
 struct crtx_dict * crtx_create_dict(char *signature, ...);
 char  crtx_fill_data_item(struct crtx_dict_item *di, unsigned char type, char *key, ...);
 char crtx_fill_data_item_va2(struct crtx_dict_item *di, unsigned char type, char *key, va_list *va);

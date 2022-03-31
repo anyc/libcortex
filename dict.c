@@ -396,22 +396,19 @@ int crtx_append_to_dict(struct crtx_dict **dictionary, char *signature, ...) {
  * key, value, value_size, flags
  * ...)
  */
-struct crtx_dict * crtx_create_dict(char *signature, ...) {
+struct crtx_dict * crtx_create_dict_va(char *signature, va_list *va) {
 	struct crtx_dict *ds;
 	struct crtx_dict_item *di;
 	char *s, ret;
-	va_list va;
 	uint32_t sign_length;
 	
 	sign_length = strlen(signature);
 	ds = crtx_init_dict(signature, sign_length, 0);
 	
-	va_start(va, signature);
-	
 	s = signature;
 	di = ds->items;
 	while (*s) {
-		ret = crtx_fill_data_item_va(di, *s, &va);
+		ret = crtx_fill_data_item_va(di, *s, va);
 		if (ret < 0)
 			return 0;
 		
@@ -421,6 +418,18 @@ struct crtx_dict * crtx_create_dict(char *signature, ...) {
 	}
 	di--;
 	di->flags |= CRTX_DIF_LAST_ITEM;
+	
+	return ds;
+}
+
+struct crtx_dict * crtx_create_dict(char *signature, ...) {
+	struct crtx_dict *ds;
+	va_list va;
+	
+	
+	va_start(va, signature);
+	
+	ds = crtx_create_dict_va(signature, &va);
 	
 	va_end(va);
 	
