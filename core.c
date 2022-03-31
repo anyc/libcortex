@@ -1841,6 +1841,10 @@ int crtx_finish() {
 	crtx_root->n_graphs = 0;
 	UNLOCK(crtx_root->graphs_mutex);
 	
+	for (i=0; i < crtx_root->n_plugins; i++) {
+		crtx_root->plugins->finish();
+	}
+	
 	CRTX_DBG("finished shutdown\n");
 	
 	return 0;
