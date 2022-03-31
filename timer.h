@@ -59,6 +59,7 @@ int crtx_timer_oneshot(time_t offset_sec,
 					   void (*callback)(void *),
 					   void *callback_userdata
 					);
+int crtx_timer_retry_listener_os(struct crtx_listener_base *lstnr, unsigned int seconds, unsigned long nanoseconds);
 
 struct crtx_listener_base *crtx_setup_timer_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(timer)

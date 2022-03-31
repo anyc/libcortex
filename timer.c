@@ -170,6 +170,27 @@ void crtx_timer_retry_listener_free(struct crtx_timer_retry_listener *retry_lstn
 	free(retry_lstnr);
 }
 
+static void retry_listener_os_cb(void *userdata) {
+	struct crtx_listener_base *lstnr;
+	
+	
+	lstnr = (struct crtx_listener_base *) userdata;
+	
+	crtx_start_listener(lstnr);
+}
+
+int crtx_timer_retry_listener_os(struct crtx_listener_base *lstnr, unsigned int seconds, unsigned long nanoseconds) {
+	int rv;
+	
+	
+	rv = crtx_timer_oneshot(seconds, nanoseconds, -1, &retry_listener_os_cb, lstnr);
+	if (rv) {
+		CRTX_ERROR("retry listener oneshot timer creation failed: %d\n", rv);
+	}
+	
+	return rv;
+}
+
 
 /*
  * convenience functions
