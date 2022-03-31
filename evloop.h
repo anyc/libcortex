@@ -26,9 +26,9 @@ extern "C" {
 #define EVLOOP_SPECIAL (1<<2)
 #define EVLOOP_EDGE_TRIGGERED (1<<3)
 #define EVLOOP_TIMEOUT (1<<4)
-#define EVLOOP_ERROR (1<<4)
-#define EVLOOP_HUP (1<<4)
-#define EVLOOP_RDHUP (1<<4)
+#define EVLOOP_ERROR (1<<5)
+#define EVLOOP_HUP (1<<6)
+#define EVLOOP_RDHUP (1<<7)
 
 struct crtx_evloop_fd;
 struct crtx_evloop_callback;

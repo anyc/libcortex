@@ -315,6 +315,10 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 					if (CRTX_timespec2uint64(&el_cb->timeout) < now) {
 						CRTX_VDBG("epoll timeout #%zu %d\n", i, evloop_fd->fd);
 						
+						el_cb->timeout_enabled = 0;
+						el_cb->timeout.tv_sec = 0;
+						el_cb->timeout.tv_nsec = 0;
+						
 						if (!el_cb->active)
 							continue;
 						

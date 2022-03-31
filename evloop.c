@@ -29,6 +29,9 @@ void crtx_event_flags2str(FILE *f, unsigned int flags) {
 	RETFLAG(EVLOOP_SPECIAL);
 	RETFLAG(EVLOOP_EDGE_TRIGGERED);
 	RETFLAG(EVLOOP_TIMEOUT);
+	RETFLAG(EVLOOP_ERROR);
+	RETFLAG(EVLOOP_HUP);
+	RETFLAG(EVLOOP_RDHUP);
 }
 
 void crtx_evloop_set_timeout(struct crtx_evloop_callback *el_cb, struct timespec *timeout) {
