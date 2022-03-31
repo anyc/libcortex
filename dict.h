@@ -36,7 +36,7 @@ struct crtx_dict_item {
 	unsigned char flags;
 	
 	char *key;
-	size_t size;
+	size_t size; // memory size - except for strings it is the strlen (for user convenience)
 	
 	union {
 // 		uint8_t uint8; // c
@@ -50,7 +50,7 @@ struct crtx_dict_item {
 		ssize_t ssizet; // Z
 		
 		char *string; // s
-		void *pointer; // p		
+		void *pointer; // p
 		struct crtx_dict *dict; // D
 // 		char payload[0]; // P
 	};
