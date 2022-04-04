@@ -395,6 +395,18 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 			} else {
 				epoll_timeout_ms = timeout / 1000000;
 			}
+			
+			#ifndef CRTX_EPOLL_BUSY_WAIT_SUB_MSEC_TIMEOUT
+			/*
+			 * If $timeout is smaller than 1ms and epoll_timeout_ms == 0, the
+			 * code would call epoll_wait() in a busy loop until the real timeout
+			 * is reached. If smaller timeouts are really needed for low latency,
+			 * a separate timer should be used.
+			 */
+			if (epoll_timeout_ms == 0) {
+				epoll_timeout_ms = 1;
+			}
+			#endif
 		} else {
 			epoll_timeout_ms = epl->timeout;
 		}
