@@ -259,9 +259,16 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 			PRINTFLAG(EPOLLHUP);
 			CRTX_VDBG("\n");
 			
+			int rv;
 			int bytesAvailable = 0;
-			ioctl(evloop_fd->fd, FIONREAD, &bytesAvailable);
-			CRTX_VDBG("available data: %u bytes\n", bytesAvailable);
+			rv = ioctl(evloop_fd->fd, FIONREAD, &bytesAvailable);
+			if (!rv) {
+				CRTX_VDBG("available data: %u bytes\n", bytesAvailable);
+			} else {
+				// this is not really necessary but it avoids confusion if somebody monitors errno
+				errno = 0;
+			}
+			
 			#endif
 			
 			if (epl->events[i].events & EPOLLERR || epl->events[i].events & EPOLLRDHUP || epl->events[i].events & EPOLLHUP) {
