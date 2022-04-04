@@ -547,6 +547,8 @@ void crtx_free_listener(struct crtx_listener_base *listener) {
 		listener->shutdown(listener);
 	} else {
 		if (listener->evloop_fd.fd >= 0) {
+			CRTX_DBG("auto-closing %d during shutdown %s\n", listener->evloop_fd.fd, listener->id);
+			
 			close(listener->evloop_fd.fd);
 			listener->evloop_fd.fd = 0;
 		}
@@ -1902,6 +1904,8 @@ int crtx_finish() {
 	UNLOCK(crtx_root->graphs_mutex);
 	
 	for (i=0; i < crtx_root->n_plugins; i++) {
+		CRTX_DBG("finish \"%s\"\n", crtx_root->plugins->plugin_name);
+		
 		crtx_root->plugins->finish();
 	}
 	

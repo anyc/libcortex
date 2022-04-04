@@ -59,7 +59,7 @@ void crtx_mqtt_default_disconnect_callback(struct mosquitto *mosq, void *userdat
 	mlstnr = (struct crtx_mqtt_listener *) userdata;
 	
 	if (rc)
-		CRTX_ERROR("MQTT disconnect callback error: %s (%d)\n", mosquitto_strerror(rc), rc);
+		CRTX_ERROR("MQTT disconnect callback error: %s (%d, fd %d)\n", mosquitto_strerror(rc), rc, mlstnr->base.evloop_fd.fd);
 
 #if 0
 	struct crtx_event *event;
@@ -162,7 +162,7 @@ static char mqtt_fd_event_handler(struct crtx_event *event, void *userdata, void
 	mlstnr = (struct crtx_mqtt_listener *) userdata;
 	
 	if (crtx_verbosity >= CRTX_VLEVEL_DBG) {
-		printf("mqtt event "); crtx_event_flags2str(stdout, el_cb->triggered_flags); printf("\n");
+		CRTX_DBG("mqtt event "); crtx_event_flags2str(stdout, el_cb->triggered_flags); printf("\n");
 	}
 	
 	if (el_cb->triggered_flags & EVLOOP_READ) {
@@ -199,6 +199,8 @@ static char start_listener(struct crtx_listener_base *listener) {
 	
 	
 	mlstnr = (struct crtx_mqtt_listener *) listener;
+	
+	CRTX_DBG("mosquitto_connect(%p, %s, %u, %u)\n", mlstnr->mosq, mlstnr->host, mlstnr->port, mlstnr->keepalive);
 	
 	rv = mosquitto_connect(mlstnr->mosq, mlstnr->host, mlstnr->port, mlstnr->keepalive);
 	if (rv) {

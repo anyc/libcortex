@@ -167,7 +167,7 @@ static int crtx_epoll_manage_fd(struct crtx_event_loop *evloop, struct crtx_evlo
 			crtx_ll_append((struct crtx_ll**) &evloop->fds, &evloop_fd->ll);
 		}
 	} else {
-		CRTX_VDBG("epoll del %d (%p)\n", evloop_fd->fd, evloop);
+		CRTX_VDBG("epoll del %d (%d %p)\n", evloop_fd->fd, evloop->after_fork_close, evloop);
 		
 		crtx_ll_unlink((struct crtx_ll**) &evloop->fds, (struct crtx_ll*) &evloop_fd->ll);
 		
@@ -366,6 +366,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 // 				if (el_cb->timeout.tv_sec > 0 || el_cb->timeout.tv_nsec > 0) {
 				if (el_cb->timeout_enabled) {
 					if (CRTX_timespec2uint64(&el_cb->timeout) <= now) {
+						CRTX_VDBG("timeout set by already timed-out %s\n", evloop_fd->listener->id);
 						timeout_set = 1;
 						timeout = 0;
 						break;
@@ -374,6 +375,8 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 					if (CRTX_timespec2uint64(&el_cb->timeout) - now < timeout) {
 						timeout_set = 1;
 						timeout = CRTX_timespec2uint64(&el_cb->timeout) - now;
+						
+						CRTX_VDBG("timeout set by %s %" PRIu64 "\n", evloop_fd->listener->id, timeout);
 					}
 				}
 			}
