@@ -54,6 +54,13 @@ extern "C" {
 	struct crtx_ ## lstnr ## _listener * crtx_alloc_ ## lstnr ## _listener() { \
 		return calloc(1, sizeof(struct crtx_ ## lstnr ## _listener)); \
 	}
+#define CRTX_DEFINE_CALLOC_FUNCTION(lstnr) \
+	struct crtx_ ## lstnr ## _listener * crtx_ ## lstnr ## _calloc_listener() { \
+		struct crtx_ ## lstnr ## _listener *tmp; \
+		tmp = calloc(1, sizeof(struct crtx_ ## lstnr ## _listener)); \
+		crtx_ ## lstnr ## _clear_listener(tmp); \
+		return tmp; \
+	}
 	
 #ifdef __cplusplus
 }
