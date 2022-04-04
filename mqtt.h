@@ -43,8 +43,8 @@ struct crtx_mqtt_listener {
 };
 
 struct crtx_listener_base *crtx_setup_mqtt_listener(void *options);
-void crtx_mqtt_clear_lstnr(struct crtx_mqtt_listener *lstnr);
-CRTX_DECLARE_ALLOC_FUNCTION(mqtt)
+void crtx_mqtt_clear_listener(struct crtx_mqtt_listener *lstnr);
+CRTX_DECLARE_CALLOC_FUNCTION(mqtt)
 
 void crtx_mqtt_init();
 void crtx_mqtt_finish();

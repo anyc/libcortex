@@ -209,7 +209,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 		if (mlstnr->reconnect)
 			crtx_timer_retry_listener_os(&mlstnr->base, 1, 0);
 		
-		return rv;
+		return -rv;
 	}
 	
 	evtypes = EVLOOP_TIMEOUT | EVLOOP_READ;
@@ -280,11 +280,11 @@ struct crtx_listener_base *crtx_setup_mqtt_listener(void *options) {
 	return &mlstnr->base;
 }
 
-void crtx_mqtt_clear_lstnr(struct crtx_mqtt_listener *lstnr) {
+void crtx_mqtt_clear_listener(struct crtx_mqtt_listener *lstnr) {
 	memset(lstnr, 0, sizeof(struct crtx_mqtt_listener));
 }
 
-CRTX_DEFINE_ALLOC_FUNCTION(mqtt)
+CRTX_DEFINE_CALLOC_FUNCTION(mqtt)
 
 void crtx_mqtt_init() {
 	mosquitto_lib_init();
@@ -345,7 +345,7 @@ int main(int argc, char **argv) {
 	crtx_init();
 	crtx_handle_std_signals();
 	
-	crtx_mqtt_clear_lstnr(&mlist);
+	crtx_mqtt_clear_listener(&mlist);
 	
 	mlist.host = "localhost";
 	mlist.port = 1883;
