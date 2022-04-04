@@ -1543,6 +1543,20 @@ void crtx_shutdown_after_fork() {
 	
 	crtx_evloop_stop(crtx_root->event_loop);
 	
+	// close all file descriptors here as we must not send anything anymore especially
+	// no "goodbye" messages to network peers
+	struct crtx_ll *lit = crtx_root->listeners;
+	struct crtx_listener_base* lstnr;
+	while (lit) {
+		lstnr = (struct crtx_listener_base*) lit->data;
+		if (lstnr) {
+			close(lstnr->evloop_fd.fd);
+			lstnr->evloop_fd.fd = -1;
+		}
+		
+		lit = lit->next;
+	}
+	
 	// create a new event loop that handles shutdown
 	crtx_root->event_loop = 0;
 	crtx_get_main_event_loop();
