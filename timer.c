@@ -80,8 +80,9 @@ static char update_listener(struct crtx_listener_base *base) {
 static void shutdown_listener(struct crtx_listener_base *base) {
 	base->start_listener = 0;
 	
-	close(base->evloop_fd.fd);
-	base->evloop_fd.fd = 0;
+	if (base->evloop_fd.fd >= 0)
+		close(base->evloop_fd.fd);
+	base->evloop_fd.fd = -1;
 }
 
 struct crtx_listener_base *crtx_setup_timer_listener(void *options) {

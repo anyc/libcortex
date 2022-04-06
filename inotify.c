@@ -273,7 +273,8 @@ void crtx_shutdown_inotify_listener(struct crtx_listener_base *data) {
 
 static void stop_thread(struct crtx_thread *thread, void *data) {
 	stop = 1;
-	close(inotify_fd);
+	if (inotify_fd >= 0)
+		close(inotify_fd);
 }
 
 static char start_listener(struct crtx_listener_base *listener) {
@@ -406,6 +407,7 @@ void crtx_inotify_finish() {
 		
 		free(listeners);
 		listeners = 0;
-		close(inotify_fd);
+		if (inotify_fd >= 0)
+			close(inotify_fd);
 	}
 }

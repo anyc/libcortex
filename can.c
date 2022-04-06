@@ -108,7 +108,8 @@ static void shutdown_listener(struct crtx_listener_base *data) {
 	nl_socket_free(clist->socket);
 	clist->socket = 0;
 	
-	close(clist->sockfd);
+	if (clist->sockfd >= 0)
+		close(clist->sockfd);
 	
 // 	shutdown(inlist->server_sockfd, SHUT_RDWR);
 }
@@ -379,7 +380,7 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 	
 	clist = (struct crtx_can_listener*) lstnr;
 	
-	if (clist->sockfd)
+	if (clist->sockfd >= 0)
 		return 0;
 	
 	clist->sockfd = socket(PF_CAN, SOCK_RAW, clist->protocol);

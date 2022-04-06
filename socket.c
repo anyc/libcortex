@@ -186,7 +186,8 @@ static void *socket_connection_tmain(void *data) {
 	
 	// TODO handle aborted connection if events are still processed
 	
-	close(args->sockfd);
+	if (args->sockfd >= 0)
+		close(args->sockfd);
 	
 	return 0;
 }
@@ -224,7 +225,8 @@ static void *socket_server_tmain(void *data) {
 		if (bind(listeners->sockfd, rit->ai_addr, rit->ai_addrlen) == 0)
 			break;
 		
-		close(listeners->sockfd);
+		if (listeners->sockfd >= 0)
+			close(listeners->sockfd);
 	}
 	
 	if (rit == 0) {
@@ -255,7 +257,8 @@ static void *socket_server_tmain(void *data) {
 		args->thread = crtx_thread_assign_job(&args->thread_job);
 		crtx_thread_start_job(args->thread);
 	}
-	close(listeners->sockfd);
+	if (listeners->sockfd >= 0)
+		close(listeners->sockfd);
 	
 	return 0;
 }

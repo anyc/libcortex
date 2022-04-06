@@ -76,6 +76,9 @@ void crtx_shutdown_evdev_listener(struct crtx_listener_base *data) {
 	
 	el = (struct crtx_evdev_listener*) data;
 	libevdev_free(el->device);
+	
+	if (evdev->fd >= 0)
+		close(evdev->fd);
 }
 
 struct crtx_listener_base *crtx_setup_evdev_listener(void *options) {

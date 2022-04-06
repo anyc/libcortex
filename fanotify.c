@@ -110,7 +110,8 @@ static void stop_thread(struct crtx_thread *thread, void *data) {
 	falist = (struct crtx_fanotify_listener*) data;
 	
 	falist->stop = 1;
-	close(falist->fanotify_fd);
+	if (falist->fanotify_fd >= 0)
+		close(falist->fanotify_fd);
 	
 	crtx_threads_interrupt_thread(thread);
 }

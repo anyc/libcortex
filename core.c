@@ -414,13 +414,13 @@ int crtx_stop_listener(struct crtx_listener_base *listener) {
 	}
 	UNLOCK(listener->dependencies_lock);
 	
-	if (listener->evloop_fd.fd >= 0) {
+// 	if (listener->evloop_fd.fd >= 0) {
 // 		crtx_root->event_loop.del_fd(
 // 			&crtx_root->event_loop,
 // 			&listener->evloop_fd);
 		
 		crtx_evloop_disable_cb(&listener->default_el_cb);
-	}
+// 	}
 	
 	if (listener->eloop_thread) {
 // 		listener->thread->stop = 1;
@@ -1549,7 +1549,7 @@ void crtx_shutdown_after_fork() {
 	struct crtx_listener_base* lstnr;
 	while (lit) {
 		lstnr = (struct crtx_listener_base*) lit->data;
-		if (lstnr) {
+		if (lstnr && lstnr->evloop_fd.fd >= 0) {
 			close(lstnr->evloop_fd.fd);
 			lstnr->evloop_fd.fd = -1;
 		}

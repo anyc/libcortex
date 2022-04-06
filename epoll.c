@@ -511,9 +511,11 @@ static void shutdown_epoll_listener(struct crtx_listener_base *lbase) {
 	
 	free(epl->events);
 	
-	CRTX_VDBG("close epoll fd %d\n", epl->epoll_fd);
-	
-	close(epl->epoll_fd);
+	if (epl->epoll_fd >= 0) {
+		CRTX_VDBG("close epoll fd %d\n", epl->epoll_fd);
+		
+		close(epl->epoll_fd);
+	}
 }
 
 static char stop_epoll_listener(struct crtx_listener_base *lbase) {

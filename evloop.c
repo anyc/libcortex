@@ -503,8 +503,10 @@ int crtx_evloop_release(struct crtx_event_loop *evloop) {
 	
 // 	printf("release ctrl pipe\n");
 	
-	close(evloop->ctrl_pipe[1]);
-	close(evloop->ctrl_pipe[0]);
+	if (evloop->ctrl_pipe[1] >= 0)
+		close(evloop->ctrl_pipe[1]);
+	if (evloop->ctrl_pipe[0] >= 0)
+		close(evloop->ctrl_pipe[0]);
 	
 	crtx_ll_unlink(&crtx_root->event_loops, &evloop->ll);
 	

@@ -131,7 +131,8 @@ static void shutdown_listener(struct crtx_listener_base *data) {
 		return;
 	}
 	
-	close(slistener->fd);
+	if (slistener->fd >= 0)
+		close(slistener->fd);
 }
 #endif
 

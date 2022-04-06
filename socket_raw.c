@@ -169,7 +169,8 @@ void shutdown_socket_raw_listener(struct crtx_listener_base *data) {
 	
 	slist = (struct crtx_socket_raw_listener*) data;
 	
-	close(slist->sockfd);
+	if (slist->sockfd >= 0)
+		close(slist->sockfd);
 }
 
 // struct crtx_listener_base *crtx_setup_socket_raw_server_listener(void *options) {

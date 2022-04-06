@@ -216,7 +216,8 @@ static void shutdown_listener(struct crtx_listener_base *data) {
 	
 	clist = (struct crtx_v4l_listener*) data;
 	
-	close(clist->fd);
+	if (clist->fd >= 0)
+		close(clist->fd);
 }
 
 static char start_listener(struct crtx_listener_base *listener) {
