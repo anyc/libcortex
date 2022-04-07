@@ -210,6 +210,11 @@ static char start_listener(struct crtx_listener_base *listener) {
 }
 
 static char stop_listener(struct crtx_listener_base *listener) {
+	struct crtx_popen_listener *plstnr;
+	
+	
+	plstnr = (struct crtx_popen_listener *) listener;
+	
 // 	int rv;
 	
 // 	rv = crtx_stop_listener(&plstnr->fork_lstnr.base);
@@ -218,7 +223,33 @@ static char stop_listener(struct crtx_listener_base *listener) {
 // 		return rv;
 // 	}
 	
+	if (plstnr->stdout_cb)
+		crtx_stop_listener(&plstnr->stdout_lstnr.base);
+	if (plstnr->stderr_cb)
+		crtx_stop_listener(&plstnr->stderr_lstnr.base);
+	
 	return 0;
+}
+
+static void shutdown_listener(struct crtx_listener_base *listener) {
+	struct crtx_popen_listener *plstnr;
+	
+	
+	plstnr = (struct crtx_popen_listener *) listener;
+	
+	if (plstnr->stdout_cb) {
+		crtx_free_listener(&plstnr->stdout_lstnr.base);
+		// only close the write end on child side
+		if (plstnr->fork_lstnr.pid != 0)
+			close(plstnr->stdout);
+	}
+	if (plstnr->stderr_cb) {
+		crtx_free_listener(&plstnr->stderr_lstnr.base);
+		if (plstnr->fork_lstnr.pid != 0)
+			close(plstnr->stderr);
+	}
+	
+	return;
 }
 
 static char fork_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
@@ -263,6 +294,7 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 	
 	plstnr->base.start_listener = &start_listener;
 	plstnr->base.stop_listener = &stop_listener;
+	plstnr->base.shutdown = &shutdown_listener;
 	
 	
 	plstnr->fork_lstnr.reinit_cb = &reinit_cb;
