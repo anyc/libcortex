@@ -399,6 +399,7 @@ static int socket_callback(CURL *easy, curl_socket_t curl_socket, int what, CURL
 					0, 0
 					);
 			socketp->el_cb.active = 1;
+			socketp->el_fd.listener = clist;
 			
 			update_socket_fd(socketp, what);
 			
