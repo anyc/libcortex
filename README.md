@@ -5,7 +5,7 @@ libcortex
 libcortex provides an event loop implementation and follows a "batteries included"
 approach, ie. it already contains the specific code to monitor certain event sources.
 
-The code for the different event sources are built into separate plugins that
+The code for the different event sources is split into separate plugins that
 are loaded on-demand during runtime. Hence, only the required plugins for a
 use-case are loaded and only their dependencies have to be met.
 
@@ -34,11 +34,13 @@ Other modules:
  * fanotify
  * inotify
  * libvirt
+ * mqtt
  * netlink_ge
  * netlink_raw
  * nf_queue
  * nf_route_raw
  * pulseaudio
+ * sd_journal
  * sip
  * uevents
  * v4l
@@ -73,7 +75,7 @@ If events do not have to be processed in parallel to achieve minimal latency,
 another approach can be used: instead of starting an own event loop for every
 event source, a generic event loop is started and the single event sources are
 registered with this loop. Libcortex implements such a generic event loop but
-also provides a simple interface to start listening on some common event sources
+also provides a simple interface to start listening to some common event sources
 in a (Linux) operating system.
 
 Example
