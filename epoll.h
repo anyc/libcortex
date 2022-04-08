@@ -28,6 +28,9 @@ struct crtx_epoll_listener {
 	char stop;
 };
 
+int crtx_epoll_flags2crtx_event_flags(int epoll_flags);
+int crtx_event_flags2epoll_flags(int crtx_event_flags);
+
 struct crtx_listener_base *crtx_setup_epoll_listener(void *options);
 void crtx_epoll_init();
 void crtx_epoll_finish();

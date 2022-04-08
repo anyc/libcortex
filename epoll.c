@@ -67,7 +67,7 @@ static int crtx_epoll_del_fd_intern(struct crtx_epoll_listener *epl, int fd) {
 	return 0;
 }
 
-static int crtx_event_flags2epoll_flags(int crtx_event_flags) {
+int crtx_event_flags2epoll_flags(int crtx_event_flags) {
 	int ret;
 	
 	
@@ -84,7 +84,7 @@ static int crtx_event_flags2epoll_flags(int crtx_event_flags) {
 	return ret;
 }
 
-static int epoll_flags2crtx_event_flags(int epoll_flags) {
+int crtx_epoll_flags2crtx_event_flags(int epoll_flags) {
 	int ret;
 	
 	
@@ -281,7 +281,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 				
 				for (el_cb = evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
 					if (el_cb->error_cb) {
-						el_cb->triggered_flags = epoll_flags2crtx_event_flags(epl->events[i].events);
+						el_cb->triggered_flags = crtx_epoll_flags2crtx_event_flags(epl->events[i].events);
 						
 						el_cb->error_cb(el_cb, el_cb->error_cb_data);
 					} else {
@@ -293,7 +293,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 					if (!el_cb->active)
 						continue;
 					
-					el_cb->triggered_flags = epoll_flags2crtx_event_flags(epl->events[i].events);
+					el_cb->triggered_flags = crtx_epoll_flags2crtx_event_flags(epl->events[i].events);
 					
 					crtx_evloop_callback(el_cb);
 					
