@@ -2453,3 +2453,15 @@ void crtx_lstnr_handle_fd_closed(struct crtx_listener_base *lstnr) {
 	crtx_evloop_handle_fd_closed(&lstnr->evloop_fd);
 }
 
+void crtx_print_event(struct crtx_event *event, FILE *f) {
+	if (!f)
+		f = stdout;
+	
+	if (event->type)
+		fprintf(f, "type: %d\n", event->type);
+	if (event->description)
+		fprintf(f, "desc: %s\n", event->description);
+	
+	crtx_dict_item_print(&event->data, 0, f);
+}
+

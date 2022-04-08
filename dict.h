@@ -131,4 +131,7 @@ char crtx_dict_new_item(struct crtx_dict *dict, unsigned char type, char *key, .
 
 char crtx_is_string_in_dict(struct crtx_dict *dict, char *str);
 
+void crtx_dict_item_print(struct crtx_dict_item *di, unsigned char level, FILE *f);
+void crtx_dict_print(struct crtx_dict *ds, FILE *f);
+
 #endif

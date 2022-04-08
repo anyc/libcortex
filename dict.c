@@ -490,6 +490,74 @@ void crtx_free_dict(struct crtx_dict *ds) {
 	free(ds);
 }
 
+void crtx_dict_print_rec(struct crtx_dict *ds, unsigned char level, FILE *f);
+void crtx_dict_item_print(struct crtx_dict_item *di, unsigned char level, FILE *f) {
+	if (!f)
+		f = stdout;
+	
+	fprintf(f, "%s = ", di->key?di->key:"\"\"");
+	
+	switch (di->type) {
+		case 'u': fprintf(f, "(uint32_t) %u", di->uint32); break;
+		case 'i': fprintf(f, "(int32_t) %d", di->int32); break;
+		case 's': fprintf(f, "(char*) \"%s\"", di->string); break;
+		case 'p': fprintf(f, "(void*) %p", di->pointer); break;
+		case 'U': fprintf(f, "(uint64_t) %" PRIu64, di->uint64); break;
+		case 'I': fprintf(f, "(int64_t) %" PRId64, di->int64); break;
+		case 'd': fprintf(f, "(double) %f", di->double_fp); break;
+		case 'z': fprintf(f, "(size_t) %zu", di->sizet); break;
+		case 'Z': fprintf(f, "(ssize_t) %zu", di->ssizet); break;
+		case 'D':
+			if (di->dict)
+				crtx_dict_print_rec(di->dict, level+1, f);
+			else
+				fprintf(f, "(null)\n");
+			break;
+		default: CRTX_ERROR("print_dict: unknown type '%c'\n", di->type); break;
+	}
+}
+
+void crtx_dict_print_rec(struct crtx_dict *ds, unsigned char level, FILE *f) {
+	char *s;
+	struct crtx_dict_item *di;
+	uint8_t i,j;
+	
+	if (!ds) {
+		CRTX_ERROR("error, trying to print non-existing dict\n");
+		return;
+	}
+	
+	fprintf(f, "(dict) %s (%zu==%u)\n", ds->signature?ds->signature:"\"\"", ds->signature?strlen(ds->signature):0, ds->signature_length);
+	
+	i=0;
+	s = ds->signature;
+	di = ds->items;
+	
+	while ( s?*s:1 && (!s)? i<ds->signature_length:1 ) {
+		for (j=0;j<level;j++) fprintf(f, "   "); // indent
+		
+		fprintf(f, "%u: ", i);
+		
+		crtx_dict_item_print(di, level, f);
+		if (di->type != 'D')
+			fprintf(f, "\n");
+		
+		if (s && *s != di->type)
+			CRTX_ERROR("error type %c != %c\n", *s, di->type);
+		
+		if (s) s++;
+		di++;
+		i++;
+	}
+}
+
+void crtx_dict_print(struct crtx_dict *ds, FILE *f) {
+	crtx_dict_print_rec(ds, 1, f);
+}
+
+
+
+
 void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level);
 void crtx_print_dict_item(struct crtx_dict_item *di, unsigned char level) {
 	CRTX_INFO("%s = ", di->key?di->key:"\"\"");
@@ -513,7 +581,7 @@ void crtx_print_dict_item(struct crtx_dict_item *di, unsigned char level) {
 			break;
 		default: CRTX_ERROR("print_dict: unknown type '%c'\n", di->type); break;
 	}
-	
+
 }
 
 void crtx_print_dict_rec(struct crtx_dict *ds, unsigned char level) {

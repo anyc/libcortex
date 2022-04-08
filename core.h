@@ -426,9 +426,10 @@ struct crtx_thread * crtx_start_detached_event_loop();
 
 int crtx_get_version(unsigned int *major, unsigned int *minor);
 
-
 void crtx_selfpipe_cb_free_lstnr(void *data);
 int crtx_selfpipe_enqueue_cb(void (*cb)(void*), void *cb_data);
+
+void crtx_print_event(struct crtx_event *event, FILE *f);
 
 #ifdef __cplusplus
 }
