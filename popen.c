@@ -147,9 +147,11 @@ static char start_listener(struct crtx_listener_base *listener) {
 	
 	plstnr = (struct crtx_popen_listener *) listener;
 	
+	// this listener has no event sources, it depends on other sub-listeners
 	plstnr->base.mode = CRTX_NO_PROCESSING_MODE;
 	
 	if (plstnr->stdin == -1) {
+		// is someone interestesd in the stdin from the child process?
 		if (plstnr->stdin_cb) {
 			rv = crtx_start_listener(&plstnr->stdin_lstnr.base);
 			if (rv) {
@@ -170,6 +172,14 @@ static char start_listener(struct crtx_listener_base *listener) {
 		} else {
 			plstnr->stdin = STDIN_FILENO;
 		}
+	} else {
+		if (plstnr->stdin != STDIN_FILENO) {
+			rv = crtx_start_listener(&plstnr->stdin_lstnr.base);
+			if (rv) {
+				CRTX_ERROR("starting stdin pipe listener failed\n");
+				return rv;
+			}
+		}
 	}
 	
 	if (plstnr->stdout == -1) {
@@ -184,6 +194,14 @@ static char start_listener(struct crtx_listener_base *listener) {
 		} else {
 			plstnr->stdout = STDOUT_FILENO;
 		}
+	} else {
+		if (plstnr->stdout != STDOUT_FILENO) {
+			rv = crtx_start_listener(&plstnr->stdout_lstnr.base);
+			if (rv) {
+				CRTX_ERROR("starting stdout pipe listener failed\n");
+				return rv;
+			}
+		}
 	}
 	
 	if (plstnr->stderr == -1) {
@@ -197,6 +215,14 @@ static char start_listener(struct crtx_listener_base *listener) {
 			plstnr->stderr_lstnr.fds[CRTX_WRITE_END] = -1;
 		} else {
 			plstnr->stderr = STDERR_FILENO;
+		}
+	} else {
+		if (plstnr->stderr != STDERR_FILENO) {
+			rv = crtx_start_listener(&plstnr->stderr_lstnr.base);
+			if (rv) {
+				CRTX_ERROR("starting stderr pipe listener failed\n");
+				return rv;
+			}
 		}
 	}
 	
