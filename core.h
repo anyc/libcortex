@@ -424,7 +424,7 @@ void crtx_shutdown_after_fork();
 
 struct crtx_thread * crtx_start_detached_event_loop();
 
-int crtx_get_version(unsigned int *major, unsigned int *minor);
+int crtx_get_version(unsigned int *major, unsigned int *minor, unsigned int *revision);
 
 void crtx_selfpipe_cb_free_lstnr(void *data);
 int crtx_selfpipe_enqueue_cb(void (*cb)(void*), void *cb_data);

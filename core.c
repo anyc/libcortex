@@ -2322,12 +2322,14 @@ void crtx_trigger_event_callback(struct crtx_evloop_callback *evloop_cb) {
 	crtx_evloop_trigger_callback(evloop_cb->fd_entry->evloop, evloop_cb);
 }
 
-int crtx_get_version(unsigned int *major, unsigned int *minor) {
+int crtx_get_version(unsigned int *major, unsigned int *minor, unsigned int *revision) {
 	if (!major || !minor)
 		return -EINVAL;
 	
 	*major = MAJOR_VERSION;
 	*minor = MINOR_VERSION;
+	if (revision)
+		*revision = REVISION;
 	
 	return 0;
 }
