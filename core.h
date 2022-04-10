@@ -353,6 +353,7 @@ char wait_on_event(struct crtx_event *event);
 int crtx_create_listener(const char *id, void *options) __attribute__((deprecated));
 int crtx_setup_listener(const char *id, void *options);
 int crtx_init_listener_base(struct crtx_listener_base *lstnr);
+struct crtx_listener_base *crtx_calloc_listener_base(void);
 
 // void free_listener(struct crtx_listener_base *listener);
 void crtx_free_listener(struct crtx_listener_base *listener);

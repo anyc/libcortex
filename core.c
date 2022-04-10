@@ -272,6 +272,10 @@ int crtx_update_listener(struct crtx_listener_base *listener) {
 // 	free_listener( (struct crtx_listener_base*) userdata);
 // }
 
+struct crtx_listener_base *crtx_calloc_listener_base(void) {
+	return (struct crtx_listener_base *) calloc(1, sizeof(struct crtx_listener_base));
+}
+
 int crtx_init_listener_base(struct crtx_listener_base *lbase) {
 // 	lbase->id = id;
 	
@@ -300,39 +304,45 @@ int crtx_setup_listener(const char *id, void *options) {
 	if (id == 0)
 		return -EINVAL;
 	
-	CRTX_DBG("new listener %s\n", id);
-	
-	static_lstnr = 1;
-	lbase = 0;
-	l = static_listener_repository;
-	while (l && l->id) {
-		while (l->id) {
-			if (!strcmp(l->id, id)) {
-				crtx_init_listener_base( (struct crtx_listener_base *) options );
-				
-				lbase = l->create(options);
-				
-				if (!lbase) {
-					CRTX_ERROR("creating listener \"%s\" failed: create procedure failed\n", id);
-					return 1; // TODO get error code from create()
-				}
-				
-				break;
-			}
-			l++;
-		}
-		if (lbase)
-			break;
+	if (id[0] != 0) {
+		CRTX_DBG("new listener %s\n", id);
 		
-		if (static_lstnr) {
-			l = crtx_root->listener_repository;
-			static_lstnr = 0;
+		static_lstnr = 1;
+		lbase = 0;
+		l = static_listener_repository;
+		while (l && l->id) {
+			while (l->id) {
+				if (!strcmp(l->id, id)) {
+					crtx_init_listener_base( (struct crtx_listener_base *) options );
+					
+					lbase = l->create(options);
+					
+					if (!lbase) {
+						CRTX_ERROR("creating listener \"%s\" failed: create procedure failed\n", id);
+						return 1; // TODO get error code from create()
+					}
+					
+					break;
+				}
+				l++;
+			}
+			if (lbase)
+				break;
+			
+			if (static_lstnr) {
+				l = crtx_root->listener_repository;
+				static_lstnr = 0;
+			}
 		}
-	}
-	
-	if (!lbase) {
-		CRTX_ERROR("creating listener \"%s\" failed: not found\n", id);
-		return -ENOENT;
+		
+		if (!lbase) {
+			CRTX_ERROR("creating listener \"%s\" failed: not found\n", id);
+			return -ENOENT;
+		}
+	} else {
+		lbase = (struct crtx_listener_base *) options;
+		
+		crtx_init_listener_base(lbase);
 	}
 	
 	lbase->id = id;
