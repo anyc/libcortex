@@ -3,7 +3,7 @@ libcortex
 =========
 
 libcortex provides an event loop implementation and follows a "batteries included"
-approach, ie. it already contains the specific code to monitor certain event sources.
+approach, i.e. it already contains the specific code to monitor certain event sources.
 
 The code for the different event sources is split into separate plugins that
 are loaded on-demand during runtime. Hence, only the required plugins for a
@@ -17,7 +17,6 @@ Please note, not all plugins are actively used and many are not yet feature-comp
 Hence, check the corresponding source files if your use-case is already supported.
 
 Actively used:
- * can
  * curl
  * fork
  * libnl
@@ -30,6 +29,7 @@ Actively used:
 
 Other modules:
  * avahi
+ * can
  * evdev
  * fanotify
  * inotify
