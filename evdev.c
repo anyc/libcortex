@@ -115,7 +115,7 @@ struct crtx_listener_base *crtx_setup_evdev_listener(void *options) {
 	
 	crtx_evloop_init_listener(&evdev->base,
 						evdev->fd,
-						EVLOOP_READ,
+						CRTX_EVLOOP_READ,
 						0,
 						&evdev_fd_event_handler,
 						evdev,

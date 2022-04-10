@@ -289,7 +289,7 @@ int crtx_sd_bus_message_read_string(sd_bus_message *m, char **p) {
 int crtx_sdbus_get_events(sd_bus *bus) {
 	int f, result;
 	
-	result = 0; // | EVLOOP_EDGE_TRIGGERED;
+	result = 0; // | CRTX_EVLOOP_EDGE_TRIGGERED;
 	
 	f = sd_bus_get_events(bus);
 	if (f < 0) {
@@ -297,11 +297,11 @@ int crtx_sdbus_get_events(sd_bus *bus) {
 		return f;
 	}
 	if (f & POLLIN) {
-		result |= EVLOOP_READ;
+		result |= CRTX_EVLOOP_READ;
 		f = f & (~POLLIN);
 	}
 	if (f & POLLOUT) {
-		result |= EVLOOP_WRITE;
+		result |= CRTX_EVLOOP_WRITE;
 		f = f & (~POLLOUT);
 	}
 	if (f & POLLERR) {
@@ -350,8 +350,8 @@ static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct cr
 		CRTX_VDBG("POLLHUP set by sdbus on fd %d\n", sd_bus_get_fd(sdlist->bus));
 	}
 	
-	el_cb->crtx_event_flags |= EVLOOP_TIMEOUT;
-	new_flags |= EVLOOP_TIMEOUT;
+	el_cb->crtx_event_flags |= CRTX_EVLOOP_TIMEOUT;
+	new_flags |= CRTX_EVLOOP_TIMEOUT;
 	
 	if (el_cb->crtx_event_flags != new_flags) {
 		printf("TODO sdbus update_evloop_settings() %d != %d\n", el_cb->crtx_event_flags, new_flags);

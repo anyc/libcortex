@@ -21,6 +21,7 @@ extern "C" {
 
 #define CRTX_timespec2uint64(ts) ((uint64_t)(ts)->tv_sec * 1000000000ULL + (ts)->tv_nsec)
 
+// deprecated, use with CRTX_ prefix
 #define EVLOOP_READ (1<<0)
 #define EVLOOP_WRITE (1<<1)
 #define EVLOOP_SPECIAL (1<<2)
@@ -29,6 +30,15 @@ extern "C" {
 #define EVLOOP_ERROR (1<<5)
 #define EVLOOP_HUP (1<<6)
 #define EVLOOP_RDHUP (1<<7)
+
+#define CRTX_EVLOOP_READ (1<<0)
+#define CRTX_EVLOOP_WRITE (1<<1)
+#define CRTX_EVLOOP_SPECIAL (1<<2)
+#define CRTX_EVLOOP_EDGE_TRIGGERED (1<<3)
+#define CRTX_EVLOOP_TIMEOUT (1<<4)
+#define CRTX_EVLOOP_ERROR (1<<5)
+#define CRTX_EVLOOP_HUP (1<<6)
+#define CRTX_EVLOOP_RDHUP (1<<7)
 
 struct crtx_evloop_fd;
 struct crtx_evloop_callback;

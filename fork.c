@@ -210,7 +210,7 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 	flstnr->base.default_el_cb.event_handler = &do_fork;
 	flstnr->base.default_el_cb.event_handler_data = flstnr;
 	
-	flstnr->base.default_el_cb.crtx_event_flags = EVLOOP_SPECIAL;
+	flstnr->base.default_el_cb.crtx_event_flags = CRTX_EVLOOP_SPECIAL;
 	crtx_evloop_trigger_callback(crtx_root->event_loop, &flstnr->base.default_el_cb);
 	
 	return 0;

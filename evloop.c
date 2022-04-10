@@ -24,14 +24,14 @@ struct crtx_event_loop *crtx_event_loops = 0;
 void crtx_event_flags2str(FILE *f, unsigned int flags) {
 	#define RETFLAG(flag) { if (flags & flag) fprintf(f, "%s ", #flag); }
 	
-	RETFLAG(EVLOOP_READ);
-	RETFLAG(EVLOOP_WRITE);
-	RETFLAG(EVLOOP_SPECIAL);
-	RETFLAG(EVLOOP_EDGE_TRIGGERED);
-	RETFLAG(EVLOOP_TIMEOUT);
-	RETFLAG(EVLOOP_ERROR);
-	RETFLAG(EVLOOP_HUP);
-	RETFLAG(EVLOOP_RDHUP);
+	RETFLAG(CRTX_EVLOOP_READ);
+	RETFLAG(CRTX_EVLOOP_WRITE);
+	RETFLAG(CRTX_EVLOOP_SPECIAL);
+	RETFLAG(CRTX_EVLOOP_EDGE_TRIGGERED);
+	RETFLAG(CRTX_EVLOOP_TIMEOUT);
+	RETFLAG(CRTX_EVLOOP_ERROR);
+	RETFLAG(CRTX_EVLOOP_HUP);
+	RETFLAG(CRTX_EVLOOP_RDHUP);
 }
 
 void crtx_evloop_set_timeout(struct crtx_evloop_callback *el_cb, struct timespec *timeout) {
@@ -173,7 +173,7 @@ void crtx_evloop_callback(struct crtx_evloop_callback *el_cb) {
 		 * mode) and we will create multiple events here for the same data in the fd	
 		 */
 		
-// 		if (el_cb->crtx_event_flags & EVLOOP_EDGE_TRIGGERED)
+// 		if (el_cb->crtx_event_flags & CRTX_EVLOOP_EDGE_TRIGGERED)
 		
 		if (el_cb->event_handler) {
 			el_cb->event_handler(event, el_cb->event_handler_data, 0);
@@ -380,7 +380,7 @@ int crtx_evloop_create(struct crtx_event_loop *evloop) {
 	} else {
 		crtx_evloop_create_fd_entry(&evloop->ctrl_pipe_evloop_handler, &evloop->default_el_cb,
 								evloop->ctrl_pipe[0],
-								EVLOOP_READ,
+								CRTX_EVLOOP_READ,
 								0,
 								&evloop_ctrl_pipe_handler,
 								0,

@@ -87,7 +87,7 @@ struct crtx_listener_base *crtx_setup_libnl_listener(void *options) {
 	
 	crtx_evloop_init_listener(&libnl_lstnr->base,
 						0,
-						EVLOOP_READ,
+						CRTX_EVLOOP_READ,
 						0,
 						&libnl_fd_event_handler,
 						libnl_lstnr,

@@ -162,7 +162,7 @@ struct crtx_listener_base *crtx_setup_genl_listener(void *options) {
 	
 	crtx_evloop_init_listener(&genlist->base,
 						nl_socket_get_fd(genlist->sock),
-						EVLOOP_READ,
+						CRTX_EVLOOP_READ,
 						0,
 						&genl_fd_event_handler,
 						genlist,

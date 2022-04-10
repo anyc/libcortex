@@ -196,7 +196,7 @@ static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void 
 		
 		crtx_add_event(clist->base.graph, nevent);
 	} else
-	if (el_cb->triggered_flags & EVLOOP_READ) {
+	if (el_cb->triggered_flags & CRTX_EVLOOP_READ) {
 		r = crtx_create_event(&nevent);
 		if (r) {
 			CRTX_ERROR("crtx_create_event() failed: %s\n", strerror(-r));
@@ -459,7 +459,7 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 	
 	crtx_evloop_init_listener(&lstnr->base,
 						lstnr->fd,
-						EVLOOP_SPECIAL | EVLOOP_READ,
+						CRTX_EVLOOP_SPECIAL | CRTX_EVLOOP_READ,
 						0,
 						&v4l_fd_event_handler,
 						lstnr,

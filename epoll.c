@@ -72,13 +72,13 @@ int crtx_event_flags2epoll_flags(int crtx_event_flags) {
 	
 	
 	ret = 0;
-	if (crtx_event_flags & EVLOOP_READ)
+	if (crtx_event_flags & CRTX_EVLOOP_READ)
 		ret |= EPOLLIN;
-	if (crtx_event_flags & EVLOOP_WRITE)
+	if (crtx_event_flags & CRTX_EVLOOP_WRITE)
 		ret |= EPOLLOUT;
-	if (crtx_event_flags & EVLOOP_SPECIAL)
+	if (crtx_event_flags & CRTX_EVLOOP_SPECIAL)
 		ret |= EPOLLPRI;
-	if (crtx_event_flags & EVLOOP_EDGE_TRIGGERED)
+	if (crtx_event_flags & CRTX_EVLOOP_EDGE_TRIGGERED)
 		ret |= EPOLLET;
 	
 	return ret;
@@ -90,19 +90,19 @@ int crtx_epoll_flags2crtx_event_flags(int epoll_flags) {
 	
 	ret = 0;
 	if (epoll_flags & EPOLLIN)
-		ret |= EVLOOP_READ;
+		ret |= CRTX_EVLOOP_READ;
 	if (epoll_flags & EPOLLOUT)
-		ret |= EVLOOP_WRITE;
+		ret |= CRTX_EVLOOP_WRITE;
 	if (epoll_flags & EPOLLPRI)
-		ret |= EVLOOP_SPECIAL;
+		ret |= CRTX_EVLOOP_SPECIAL;
 	if (epoll_flags & EPOLLET)
-		ret |= EVLOOP_EDGE_TRIGGERED;
+		ret |= CRTX_EVLOOP_EDGE_TRIGGERED;
 	if (epoll_flags & EPOLLERR)
-		ret |= EVLOOP_ERROR;
+		ret |= CRTX_EVLOOP_ERROR;
 	if (epoll_flags & EPOLLHUP)
-		ret |= EVLOOP_HUP;
+		ret |= CRTX_EVLOOP_HUP;
 	if (epoll_flags & EPOLLRDHUP)
-		ret |= EVLOOP_RDHUP;
+		ret |= CRTX_EVLOOP_RDHUP;
 	
 	return ret;
 }
@@ -329,7 +329,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 						if (!el_cb->active)
 							continue;
 						
-						el_cb->triggered_flags = EVLOOP_TIMEOUT;
+						el_cb->triggered_flags = CRTX_EVLOOP_TIMEOUT;
 						
 						crtx_evloop_callback(el_cb);
 						
@@ -716,7 +716,7 @@ int epoll_main(int argc, char **argv) {
 	
 	crtx_evloop_create_fd_entry(&evloop_fd, &default_el_cb,
 						testpipe[0],
-						EVLOOP_READ,
+						CRTX_EVLOOP_READ,
 						0,
 						&epoll_test_handler,
 						0,

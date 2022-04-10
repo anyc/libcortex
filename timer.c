@@ -99,7 +99,7 @@ struct crtx_listener_base *crtx_setup_timer_listener(void *options) {
 		
 		crtx_evloop_init_listener(&tlist->base,
 							tlist->fd,
-						EVLOOP_READ,
+						CRTX_EVLOOP_READ,
 						0,
 						&timer_fd_event_handler,
 						tlist,

@@ -106,7 +106,7 @@ static int create_sub_lstnr(struct crtx_socket_raw_listener **listener, struct c
 	
 	crtx_evloop_init_listener(&lstnr->base,
 							lstnr->sockfd,
-							EVLOOP_READ,
+							CRTX_EVLOOP_READ,
 							0,
 							lstnr->read_cb,
 							lstnr,
@@ -234,7 +234,7 @@ int crtx_init_socket_raw_server_listener(struct crtx_socket_raw_listener *sliste
 		
 		crtx_evloop_init_listener(&slistener->base,
 						slistener->sockfd,
-						EVLOOP_READ,
+						CRTX_EVLOOP_READ,
 						0,
 						&socket_raw_accept_handler,
 						slistener,
@@ -244,7 +244,7 @@ int crtx_init_socket_raw_server_listener(struct crtx_socket_raw_listener *sliste
 	if (slistener->type == SOCK_DGRAM) {
 		crtx_evloop_init_listener(&slistener->base,
 						slistener->sockfd,
-						EVLOOP_READ,
+						CRTX_EVLOOP_READ,
 						0,
 						slistener->read_cb,
 						slistener,
@@ -312,13 +312,13 @@ int crtx_init_socket_raw_client_listener(struct crtx_socket_raw_listener *sliste
 	slistener->base.shutdown = &shutdown_socket_raw_listener;
 	
 // 	slistener->base.evloop_fd.fd = slistener->sockfd;
-// 	// 	slistener->base.evloop_fd.crtx_event_flags = EVLOOP_READ;
+// 	// 	slistener->base.evloop_fd.crtx_event_flags = CRTX_EVLOOP_READ;
 // 	slistener->base.evloop_fd.data = slistener;
 // 	slistener->base.evloop_fd.event_handler = &client_read_handler;
 // 	slistener->base.evloop_fd.event_handler_name = "client_read_handler";
 	crtx_evloop_init_listener(&slistener->base,
 						slistener->sockfd,
-						EVLOOP_READ,
+						CRTX_EVLOOP_READ,
 						0,
 						&client_read_handler,
 						slistener,

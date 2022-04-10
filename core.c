@@ -1524,7 +1524,7 @@ void crtx_init_shutdown() {
 // 	}
 	
 // 	crtx_root->shutdown_el_cb.event_handler = &shutdown_event_callback;
-// 	crtx_root->shutdown_el_cb.crtx_event_flags = EVLOOP_SPECIAL;
+// 	crtx_root->shutdown_el_cb.crtx_event_flags = CRTX_EVLOOP_SPECIAL;
 // 	crtx_evloop_trigger_callback(crtx_root->event_loop, &crtx_root->shutdown_el_cb);
 	
 // 	CRTX_VDBG("asd %p %d\n",&crtx_root->shutdown_el_cb, crtx_root->shutdown_el_cb.crtx_event_flags);

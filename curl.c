@@ -308,13 +308,13 @@ static char fd_event_callback(struct crtx_event *event, void *userdata, void **s
 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 	socketp = (struct crtx_curl_socket *) userdata;
 	
-	if (el_cb->triggered_flags & EVLOOP_TIMEOUT) {
+	if (el_cb->triggered_flags & CRTX_EVLOOP_TIMEOUT) {
 		timeout_handler(0, 0, 0);
 	} else {
 		action = 0;
-		if (el_cb->triggered_flags & EVLOOP_READ)
+		if (el_cb->triggered_flags & CRTX_EVLOOP_READ)
 			action |= CURL_CSELECT_IN;
-		if (el_cb->triggered_flags & EVLOOP_WRITE)
+		if (el_cb->triggered_flags & CRTX_EVLOOP_WRITE)
 			action |= CURL_CSELECT_OUT;
 		
 		curlr = curl_multi_socket_action(crtx_curlm, socketp->socket_fd, action, &still_running);
@@ -346,13 +346,13 @@ static char timeout_handler(struct crtx_event *event, void *userdata, void **ses
 static int update_socket_fd(struct crtx_curl_socket *s, int what) {
 	switch (what) {
 		case CURL_POLL_IN:
-			s->el_cb.crtx_event_flags = EVLOOP_READ;
+			s->el_cb.crtx_event_flags = CRTX_EVLOOP_READ;
 			break;
 		case CURL_POLL_OUT:
-			s->el_cb.crtx_event_flags = EVLOOP_WRITE;
+			s->el_cb.crtx_event_flags = CRTX_EVLOOP_WRITE;
 			break;
 		case CURL_POLL_INOUT:
-			s->el_cb.crtx_event_flags = EVLOOP_READ | EVLOOP_WRITE;
+			s->el_cb.crtx_event_flags = CRTX_EVLOOP_READ | CRTX_EVLOOP_WRITE;
 			break;
 		default:
 			CRTX_ERROR("unexpected \"what\" value in curl socket callback: %d\n", what);

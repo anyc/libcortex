@@ -165,7 +165,7 @@ static char mqtt_fd_event_handler(struct crtx_event *event, void *userdata, void
 		CRTX_DBG("mqtt event "); crtx_event_flags2str(stdout, el_cb->triggered_flags); printf("\n");
 	}
 	
-	if (el_cb->triggered_flags & EVLOOP_READ) {
+	if (el_cb->triggered_flags & CRTX_EVLOOP_READ) {
 		rv = mosquitto_loop_read(mlstnr->mosq, 1);
 		if (rv == MOSQ_ERR_CONN_LOST) {
 			crtx_lstnr_handle_fd_closed(&mlstnr->base);
@@ -175,7 +175,7 @@ static char mqtt_fd_event_handler(struct crtx_event *event, void *userdata, void
 				crtx_timer_retry_listener_os(&mlstnr->base, 1, 0);
 		}
 	}
-	if (el_cb->triggered_flags & EVLOOP_WRITE)
+	if (el_cb->triggered_flags & CRTX_EVLOOP_WRITE)
 		mosquitto_loop_write(mlstnr->mosq, 1);
 	
 	mosquitto_loop_misc(mlstnr->mosq);
@@ -184,7 +184,7 @@ static char mqtt_fd_event_handler(struct crtx_event *event, void *userdata, void
 	
 	crtx_evloop_set_timeout_rel(el_cb, 1000000);
 	
-	flags = EVLOOP_TIMEOUT | EVLOOP_READ | (mosquitto_want_write(mlstnr->mosq)?EVLOOP_WRITE:0);
+	flags = CRTX_EVLOOP_TIMEOUT | CRTX_EVLOOP_READ | (mosquitto_want_write(mlstnr->mosq)?CRTX_EVLOOP_WRITE:0);
 	if (flags != el_cb->crtx_event_flags) {
 		el_cb->crtx_event_flags = flags;
 		crtx_evloop_enable_cb(el_cb);
@@ -212,9 +212,9 @@ static char start_listener(struct crtx_listener_base *listener) {
 		return -rv;
 	}
 	
-	evtypes = EVLOOP_TIMEOUT | EVLOOP_READ;
+	evtypes = CRTX_EVLOOP_TIMEOUT | CRTX_EVLOOP_READ;
 	if (mosquitto_want_write(mlstnr->mosq)) {
-		evtypes |= EVLOOP_WRITE;
+		evtypes |= CRTX_EVLOOP_WRITE;
 	}
 	
 	crtx_evloop_init_listener(&mlstnr->base,

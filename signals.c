@@ -340,7 +340,7 @@ static int update_signals(struct crtx_signals_listener *signal_lstnr) {
 		
 		crtx_evloop_init_listener(&signal_lstnr->base,
 							signal_lstnr->fd,
-							EVLOOP_READ,
+							CRTX_EVLOOP_READ,
 							0,
 							&signalfd_event_handler,
 							signal_lstnr,
