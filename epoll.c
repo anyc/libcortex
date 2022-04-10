@@ -592,7 +592,7 @@ static int evloop_create(struct crtx_event_loop *evloop) {
 }
 
 static int evloop_release(struct crtx_event_loop *evloop) {
-	crtx_free_listener(evloop->listener);
+	crtx_shutdown_listener(evloop->listener);
 	free(evloop->listener);
 	
 	return 0;

@@ -118,7 +118,7 @@ char init() {
 	
 	crtx_finish_notification_listeners(notifier_data);
 	
-	crtx_free_listener(&listener.base);
+	crtx_shutdown_listener(&listener.base);
 }
 
 CRTX_TEST_MAIN(init);

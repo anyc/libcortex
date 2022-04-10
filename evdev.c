@@ -198,7 +198,7 @@ int evdev_main(int argc, char **argv) {
 	
 	crtx_loop();
 	
-	crtx_free_listener(&el.base);
+	crtx_shutdown_listener(&el.base);
 	
 	return 0;
 }

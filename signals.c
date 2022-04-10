@@ -671,7 +671,7 @@ void crtx_signals_init() {
 
 void crtx_signals_finish() {
 	if (main_initialized) {
-		crtx_free_listener(&main_lstnr.base);
+		crtx_shutdown_listener(&main_lstnr.base);
 	}
 	
 	if (main_lstnr.signals)

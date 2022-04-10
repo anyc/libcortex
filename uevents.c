@@ -116,7 +116,7 @@ static void shutdown_uevents_listener(struct crtx_listener_base *lbase) {
 	
 	ulist = (struct crtx_uevents_listener*) lbase;
 	
-	crtx_free_listener(&ulist->nl_listener.base);
+	crtx_shutdown_listener(&ulist->nl_listener.base);
 	ulist->base.graph = 0;
 }
 

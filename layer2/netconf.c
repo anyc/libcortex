@@ -204,7 +204,7 @@ static void netconf_shutdown_listener(struct crtx_listener_base *listener) {
 	
 	netconf_lstnr = (struct crtx_netconf_listener*) listener;
 	
-	crtx_free_listener(&netconf_lstnr->libnl_lstnr.base);
+	crtx_shutdown_listener(&netconf_lstnr->libnl_lstnr.base);
 	netconf_lstnr->libnl_lstnr.base.graph = 0;
 }
 
@@ -298,7 +298,7 @@ int netconf_main(int argc, char **argv) {
 	
 	crtx_loop();
 	
-	crtx_free_listener(&netconf_lstnr.base);
+	crtx_shutdown_listener(&netconf_lstnr.base);
 	
 	return 0;
 }

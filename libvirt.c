@@ -276,7 +276,7 @@ static void elw_timer_cleanup(struct libvirt_eventloop_wrapper *wrap) {
 	if (wrap->ff)
 		wrap->ff(wrap->opaque);
 	
-// 	crtx_free_listener(&wrap->timer_listener.base);
+// 	crtx_shutdown_listener(&wrap->timer_listener.base);
 	
 	crtx_ll_unlink(&timeout_list, wrap->llentry);
 	free(wrap->llentry);
@@ -449,7 +449,7 @@ static int elw_virEventRemoveTimeoutFunc(int timer) {
 	
 // 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->base, &wrap->evloop_fd);
 
-	crtx_free_listener(&wrap->timer_listener.base);
+	crtx_shutdown_listener(&wrap->timer_listener.base);
 	
 // 	crtx_ll_unlink(&timeout_list, it);
 // 	free(it);

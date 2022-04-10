@@ -454,7 +454,7 @@ void finish() {
 		free(ipi);
 	}
 	
-	crtx_free_listener(nfq_list_base);
+	crtx_shutdown_listener(nfq_list_base);
 }
 
 #ifdef PFW_STANDALONE

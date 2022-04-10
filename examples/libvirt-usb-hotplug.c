@@ -503,7 +503,7 @@ int main(int argc, char **argv) {
 	
 	// cleanup
 	crtx_free_presence_cache_task(cache_task);
-	crtx_free_listener(&ulist.base);
+	crtx_shutdown_listener(&ulist.base);
 	
 	crtx_finish();
 	

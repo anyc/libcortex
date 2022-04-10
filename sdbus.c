@@ -607,7 +607,7 @@ void crtx_sdbus_finish() {
 	
 	for (i=0; i < CRTX_SDBUS_TYPE_MAX; i++) {
 		if (default_listeners[i].bus)
-			crtx_free_listener(&default_listeners[i].base);
+			crtx_shutdown_listener(&default_listeners[i].base);
 	}
 }
 

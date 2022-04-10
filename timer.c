@@ -39,7 +39,7 @@ static char timer_fd_event_handler(struct crtx_event *event, void *userdata, voi
 	if (tlist->direct_callback) {
 		tlist->direct_callback(0, tlist->direct_userdata, 0);
 		
-// 		crtx_free_listener(&tlist->base);
+// 		crtx_shutdown_listener(&tlist->base);
 	} else {
 		s = crtx_create_event(&event);
 		if (s) {

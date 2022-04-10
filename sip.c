@@ -311,7 +311,7 @@ int sip_main(int argc, char **argv) {
 	
 	crtx_loop();
 	
-	crtx_free_listener(&slist.base);
+	crtx_shutdown_listener(&slist.base);
 	
 	return 0;  
 }

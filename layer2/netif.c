@@ -117,7 +117,7 @@ static void netif_shutdown_listener(struct crtx_listener_base *listener) {
 	
 	netif_lstnr = (struct crtx_netif_listener*) listener;
 	
-	crtx_free_listener(&netif_lstnr->libnl_lstnr.base);
+	crtx_shutdown_listener(&netif_lstnr->libnl_lstnr.base);
 	netif_lstnr->libnl_lstnr.base.graph = 0;
 }
 
@@ -202,7 +202,7 @@ int netif_main(int argc, char **argv) {
 	
 	crtx_loop();
 	
-	crtx_free_listener(&netif_lstnr.base);
+	crtx_shutdown_listener(&netif_lstnr.base);
 	
 	return 0;
 }

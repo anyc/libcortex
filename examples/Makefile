@@ -6,7 +6,7 @@ LDFLAGS+=-L$(libcrtx_path)
 
 LDLIBS+=-lcrtx
 
-EXAMPLES=libvirt-usb-hotplug
+EXAMPLES?=libvirt-usb-hotplug named_pipe
 
 all: $(EXAMPLES)
 

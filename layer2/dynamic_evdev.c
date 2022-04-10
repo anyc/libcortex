@@ -102,7 +102,7 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 	if (ret) {
 		CRTX_ERROR("starting evdev listener failed\n");
 		
-		crtx_free_listener(&el->base);
+		crtx_shutdown_listener(&el->base);
 		
 		return 1;
 	}
@@ -155,13 +155,13 @@ static void shutdown_listener(struct crtx_listener_base *data) {
 	
 	dyn_evdev = (struct crtx_dynamic_evdev_listener *) data;
 	
-	crtx_free_listener((struct crtx_listener_base *) &dyn_evdev->udev_lstnr);
+	crtx_shutdown_listener((struct crtx_listener_base *) &dyn_evdev->udev_lstnr);
 	
 	for (eit=dyn_evdev->evdev_listeners;eit;eit=eitn) {
 		eitn = eit->next;
 		el = eit->data;
 		
-		crtx_free_listener(&el->base);
+		crtx_shutdown_listener(&el->base);
 	}
 }
 
@@ -530,7 +530,7 @@ int dynamic_evdev_main(int argc, char **argv) {
 	endwin();
 	#endif
 	
-	crtx_free_listener(&dyn_evdev.base);
+	crtx_shutdown_listener(&dyn_evdev.base);
 	
 	return 0;
 }

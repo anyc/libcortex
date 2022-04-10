@@ -401,7 +401,7 @@ int crtx_evloop_create(struct crtx_event_loop *evloop) {
 // int crtx_evloop_finish(struct crtx_event_loop *evloop) {
 // 	evloop->stop(evloop);
 // 	
-// 	crtx_free_listener(evloop->listener);
+// 	crtx_shutdown_listener(evloop->listener);
 // 	
 // 	close(evloop->ctrl_pipe[1]);
 // 	

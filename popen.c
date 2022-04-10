@@ -264,13 +264,13 @@ static void shutdown_listener(struct crtx_listener_base *listener) {
 	plstnr = (struct crtx_popen_listener *) listener;
 	
 	if (plstnr->stdout_cb) {
-		crtx_free_listener(&plstnr->stdout_lstnr.base);
+		crtx_shutdown_listener(&plstnr->stdout_lstnr.base);
 		// only close the write end on child side
 		if (plstnr->fork_lstnr.pid != 0)
 			close(plstnr->stdout);
 	}
 	if (plstnr->stderr_cb) {
-		crtx_free_listener(&plstnr->stderr_lstnr.base);
+		crtx_shutdown_listener(&plstnr->stderr_lstnr.base);
 		if (plstnr->fork_lstnr.pid != 0)
 			close(plstnr->stderr);
 	}
