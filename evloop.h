@@ -39,6 +39,7 @@ extern "C" {
 #define CRTX_EVLOOP_ERROR (1<<5)
 #define CRTX_EVLOOP_HUP (1<<6)
 #define CRTX_EVLOOP_RDHUP (1<<7)
+#define CRTX_EVLOOP_ALL (((1<<8)-1) & (~CRTX_EVLOOP_EDGE_TRIGGERED))
 
 struct crtx_evloop_fd;
 struct crtx_evloop_callback;
