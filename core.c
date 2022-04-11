@@ -2477,3 +2477,32 @@ void crtx_print_event(struct crtx_event *event, FILE *f) {
 	crtx_dict_item_print(&event->data, 0, f);
 }
 
+int crtx_listener_add_fd(struct crtx_listener_base *listener,
+						int fd,
+						int event_flags,
+						uint64_t timeout_us,
+						crtx_handle_task_t event_handler,
+						void *event_handler_data,
+						crtx_evloop_error_cb_t error_cb,
+						void *error_cb_data
+						)
+{
+	int rv;
+	
+	rv = crtx_evloop_init_listener(listener,
+			fd,
+			event_flags,
+			listener->graph,
+			event_handler,
+			event_handler_data,
+			error_cb,
+			error_cb_data
+		);
+	if (rv < 0) {
+		return rv;
+	}
+	
+	crtx_evloop_set_timeout_rel(&listener->default_el_cb, timeout_us);
+	
+	return 0;
+}

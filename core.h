@@ -354,6 +354,15 @@ int crtx_create_listener(const char *id, void *options) __attribute__((deprecate
 int crtx_setup_listener(const char *id, void *options);
 int crtx_init_listener_base(struct crtx_listener_base *lstnr);
 struct crtx_listener_base *crtx_calloc_listener_base(void);
+int crtx_listener_add_fd(struct crtx_listener_base *listener,
+						 int fd,
+						 int event_flags,
+						 uint64_t timeout_us,
+						 crtx_handle_task_t event_handler,
+						 void *event_handler_data,
+						 crtx_evloop_error_cb_t error_cb,
+						 void *error_cb_data
+		);
 
 void crtx_shutdown_listener(struct crtx_listener_base *listener);
 int crtx_create_event(struct crtx_event **event);
