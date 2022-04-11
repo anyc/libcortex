@@ -6,6 +6,7 @@
 cortexd
 socket_client
 examples/libvirt-usb-hotplug
+examples/named_pipe
 core_modules.h
 include
 config.h
