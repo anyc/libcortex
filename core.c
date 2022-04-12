@@ -2451,7 +2451,7 @@ int crtx_selfpipe_enqueue_cb(void (*cb)(void*), void *cb_data) {
 		return 1;
 	}
 	
-	write(((struct crtx_pipe_listener *) crtx_root->selfpipe_lstnr)->fds[1], &cb_data, sizeof(void*));
+	rv = write(((struct crtx_pipe_listener *) crtx_root->selfpipe_lstnr)->fds[1], &cb_data, sizeof(void*));
 	if (rv != sizeof(void*)) {
 		CRTX_ERROR("write3 to selfpipe failed: %zd %zu\n", rv, sizeof(void*));
 		return 1;

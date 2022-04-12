@@ -183,6 +183,8 @@ static char selfpipe_event_handler(struct crtx_event *event, void *userdata, voi
 // classic signal handler for CRTX_SIGNAL_SELFPIPE listeners
 static void selfpipe_signal_handler(int signum) {
 	struct signal_map *smap;
+	int rv;
+	
 	
 	if (crtx_verbosity > 0) {
 		smap = crtx_get_signal_info(signum);
@@ -192,7 +194,11 @@ static void selfpipe_signal_handler(int signum) {
 			CRTX_DBG("received signal %d\n", signum);
 	}
 	
-	write(main_lstnr.pipe_lstnr.fds[1], &signum, sizeof(int));
+	rv = write(main_lstnr.pipe_lstnr.fds[1], &signum, sizeof(int));
+	if (rv != sizeof(int)) {
+		CRTX_ERROR("write to selfpipe (signal) failed: %d %zu\n", rv, sizeof(int));
+		return;
+	}
 }
 #endif
 

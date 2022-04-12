@@ -466,22 +466,33 @@ struct crtx_event_loop* crtx_get_main_event_loop() {
 
 int crtx_evloop_queue_graph(struct crtx_event_loop *evloop, struct crtx_graph *graph) {
 	struct crtx_event_loop_control_pipe ecp;
+	int rv;
+	
 	
 	memset(&ecp, 0, sizeof(struct crtx_event_loop_control_pipe));
 	
 	ecp.graph = graph;
-	write(evloop->ctrl_pipe[1], &ecp, sizeof(struct crtx_event_loop_control_pipe));
+	rv = write(evloop->ctrl_pipe[1], &ecp, sizeof(struct crtx_event_loop_control_pipe));
+	if (rv != sizeof(struct crtx_event_loop_control_pipe)) {
+		CRTX_ERROR("write to selfpipe (queue_graph) failed: %d %zu\n", rv, sizeof(struct crtx_event_loop_control_pipe));
+		return 1;
+	}
 	
 	return 0;
 }
 
 int crtx_evloop_trigger_callback(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb) {
 	struct crtx_event_loop_control_pipe ecp;
+	int rv;
 	
 	memset(&ecp, 0, sizeof(struct crtx_event_loop_control_pipe));
 	
 	ecp.el_cb = el_cb;
-	write(evloop->ctrl_pipe[1], &ecp, sizeof(struct crtx_event_loop_control_pipe));
+	rv = write(evloop->ctrl_pipe[1], &ecp, sizeof(struct crtx_event_loop_control_pipe));
+	if (rv != sizeof(struct crtx_event_loop_control_pipe)) {
+		CRTX_ERROR("write to selfpipe (queue_graph) failed: %d %zu\n", rv, sizeof(struct crtx_event_loop_control_pipe));
+		return 1;
+	}
 	
 	return 0;
 }
