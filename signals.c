@@ -75,8 +75,9 @@ static void signal_handler(int signum) {
 	struct crtx_event *event;
 	struct signal_map *smap;
 	
+	
+	smap = crtx_get_signal_info(signum);
 	if (crtx_verbosity > 0) {
-		smap = crtx_get_signal_info(signum);
 		if (smap)
 			CRTX_DBG("received signal %s (%d)\n", smap->name, signum);
 		else

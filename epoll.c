@@ -320,7 +320,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 			for (el_cb = evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
 				if (el_cb->timeout.tv_sec > 0 || el_cb->timeout.tv_nsec > 0) {
 					if (CRTX_timespec2uint64(&el_cb->timeout) < now) {
-						CRTX_VDBG("epoll timeout #%zu %d\n", i, evloop_fd->fd);
+						CRTX_VDBG("epoll timeout %d\n", evloop_fd->fd);
 						
 						el_cb->timeout_enabled = 0;
 						el_cb->timeout.tv_sec = 0;

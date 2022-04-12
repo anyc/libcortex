@@ -35,6 +35,7 @@ int crtx_writequeue_default_write_callback(struct crtx_writequeue_listener *writ
 	// send all events in our write queue
 	c = 0;
 	errno = 0;
+	err = 0;
 	it = *writequeue;
 	while (it) {
 		err = write(writequeue_lstnr->write_fd, it->payload, it->size);
