@@ -79,7 +79,8 @@ void reinit_cb(void *reinit_cb_data) {
 	
 	if (plstnr->envp == 0) {
 		// required for portability
-		plstnr->envp = (char*[]) { 0 };
+		plstnr->envp = (char**) malloc(sizeof(char*)*1);
+		plstnr->envp[0] = 0;
 	}
 	
 	if (plstnr->chdir) {
