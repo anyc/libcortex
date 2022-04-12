@@ -357,7 +357,7 @@ struct crtx_listener_base *crtx_calloc_listener_base(void);
 int crtx_listener_add_fd(struct crtx_listener_base *listener,
 						 int fd,
 						 int event_flags,
-						 uint64_t timeout_us,
+						 int64_t timeout_us,
 						 crtx_handle_task_t event_handler,
 						 void *event_handler_data,
 						 crtx_evloop_error_cb_t error_cb,
