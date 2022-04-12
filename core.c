@@ -996,7 +996,7 @@ int crtx_push_new_event(struct crtx_listener_base *lstnr, struct crtx_event **ev
 				return rv;
 			}
 			
-			rv = crtx_fill_data_item(&levent->data, data_type, 0, dict);
+			rv = crtx_fill_data_item(&levent->data, data_type, 0, dict, 0, 0);
 			if (rv) {
 				CRTX_ERROR("crtx_fill_data_item() failed: %d\n", rv);
 				free_event(levent);
