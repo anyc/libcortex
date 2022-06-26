@@ -26,6 +26,10 @@ static char pool_stop = 0;
  * signals
  */
 
+struct crtx_signals *crtx_alloc_signal() {
+	return malloc(sizeof(struct crtx_signals));
+}
+
 void crtx_init_signal(struct crtx_signals *s) {
 	int ret;
 // 	pthread_condattr_t attr;
@@ -154,8 +158,14 @@ void crtx_dereference_signal(struct crtx_signals *s) {
 		CRTX_ERROR("signal referance < 0\n");
 	else
 		s->n_refs -= 1;
-	if (s->n_refs == 0)
+	if (s->n_refs == 0) {
+		// there should be no one that can receive this signal
 		SIGNAL_BCAST(s->ref_cond);
+		UNLOCK(s->ref_mutex);
+		
+		crtx_shutdown_signal(s);
+		return;
+	}
 	
 	UNLOCK(s->ref_mutex);
 }
@@ -377,4 +387,19 @@ void crtx_threads_finish() {
 		free(t);
 	}
 	
+}
+
+struct crtx_thread * crtx_get_own_thread() {
+	pthread_t pthread;
+	struct crtx_thread *t;
+	
+	
+	pthread = pthread_self();
+	
+	for (t=pool; t; t = t->next) {
+		if (t->handle == pthread)
+			return t;
+	}
+	
+	return 0;
 }

@@ -780,7 +780,12 @@ struct crtx_listener_base *crtx_setup_nl_route_raw_listener(void *options) {
 	return &nlr_list->base;
 }
 
+void crtx_nl_route_raw_clear_listener(struct crtx_nl_route_raw_listener *lstnr) {
+	memset(lstnr, 0, sizeof(struct crtx_nl_route_raw_listener));
+}
+
 CRTX_DEFINE_ALLOC_FUNCTION(nl_route_raw)
+CRTX_DEFINE_CALLOC_FUNCTION(nl_route_raw)
 
 void crtx_nl_route_raw_init() {
 }
@@ -886,7 +891,7 @@ char crtx_get_own_ip_addresses() {
 	ret = crtx_start_listener(&nlr_list.base);
 	if (ret) {
 		CRTX_ERROR("starting nl_route_raw listener failed\n");
-		return 1;
+		return -1;
 	}
 	
 	// request a list of addresses
@@ -916,7 +921,7 @@ char crtx_get_own_ip_addresses() {
 // 	crtx_free_task(ip_cache_task);
 	free_response_cache_task(ctask);
 	
-	return 1;
+	return 0;
 }
 
 int netlink_raw_main(int argc, char **argv) {

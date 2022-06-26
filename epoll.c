@@ -434,7 +434,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 		}
 		
 		if (epl->n_rdy_events < 0) {
-			CRTX_ERROR("epoll_wait failed: %s\n", strerror(errno));
+			CRTX_ERROR("epoll_wait failed: %s (fd %d, events %p, max %zu, %d ms)\n", strerror(errno), epl->epoll_fd, epl->events, epl->max_n_events, epoll_timeout_ms);
 			break;
 		}
 		
@@ -474,7 +474,7 @@ static int evloop_stop(struct crtx_event_loop *evloop) {
 	struct crtx_epoll_listener *epl;
 	ssize_t ret;
 	
-// 	printf("evloop stop %d %d\n", evloop->ctrl_pipe[0], evloop->ctrl_pipe[1]);
+	CRTX_VDBG("sending stop to epoll pipe %d %d\n", evloop->ctrl_pipe[0], evloop->ctrl_pipe[1]);
 	
 	epl = (struct crtx_epoll_listener *) evloop->listener;
 	epl->stop = 1;

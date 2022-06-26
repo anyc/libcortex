@@ -389,6 +389,9 @@ int crtx_evloop_create(struct crtx_event_loop *evloop) {
 							);
 		evloop->ctrl_pipe_evloop_handler.listener = evloop->listener;
 		
+		// set this here so crtx_evloop_enable_cb will not call crtx_get_main_event_loop()
+		evloop->default_el_cb.fd_entry->evloop = evloop;
+		
 		crtx_evloop_enable_cb(&evloop->default_el_cb);
 	}
 	

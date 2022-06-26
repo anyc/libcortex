@@ -271,6 +271,7 @@ struct crtx_root {
 	MUTEX_TYPE graph_queue_mutex;
 	
 // 	char after_fork_close;
+	char initialized;
 	char shutdown;
 	char reinit_after_shutdown;
 	struct crtx_evloop_callback shutdown_el_cb;
@@ -303,6 +304,8 @@ struct crtx_root {
 	int global_fd_flags;
 	
 	struct crtx_listener_base *selfpipe_lstnr;
+	
+	MUTEX_TYPE mutex;
 	
 	#ifndef CRTX_REDUCED_SIZE
 	/* reserved to avoid ABI breakage */

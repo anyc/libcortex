@@ -37,6 +37,7 @@ char crtx_nl_route_send_req(struct crtx_nl_route_raw_listener *nl_listener, stru
 
 struct crtx_listener_base *crtx_setup_nl_route_raw_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(nl_route_raw)
+CRTX_DECLARE_CALLOC_FUNCTION(nl_route_raw)
 
 void crtx_nl_route_raw_init();
 void crtx_nl_route_raw_finish();

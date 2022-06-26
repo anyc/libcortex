@@ -80,6 +80,7 @@ struct crtx_thread {
 };
 
 
+struct crtx_signals *crtx_alloc_signal();
 void crtx_init_signal(struct crtx_signals *signal);
 int crtx_wait_on_signal(struct crtx_signals *s, struct timespec *ts);
 void crtx_send_signal(struct crtx_signals *s, char brdcst);
@@ -92,6 +93,7 @@ char crtx_signal_is_active(struct crtx_signals *s);
 struct crtx_thread *crtx_thread_assign_job(struct crtx_thread_job_description *job);
 void crtx_thread_start_job(struct crtx_thread *t);
 struct crtx_thread *spawn_thread(char create);
+struct crtx_thread * crtx_get_own_thread();
 
 void crtx_threads_stop(struct crtx_thread *t);
 void crtx_threads_stop_all();

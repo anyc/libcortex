@@ -1462,8 +1462,6 @@ int crtx_loop_onetime() {
 }
 
 static void *evloop_detached_main(void *data) {
-	// 	crtx_epoll_main(crtx_root->event_loop.listener);
-	
 	crtx_evloop_start(crtx_root->event_loop);
 	
 	return 0;
@@ -1539,7 +1537,8 @@ void crtx_init_shutdown() {
 // 				all_stopped = 0;
 		}
 	
-	crtx_root->event_loop->phase_out = 1;
+	if (crtx_root->event_loop)
+		crtx_root->event_loop->phase_out = 1;
 	
 	// just wake-up the event loop
 // 	crtx_evloop_trigger_callback(crtx_get_main_event_loop(), 0);
@@ -1819,6 +1818,11 @@ int crtx_init() {
 	unsigned int i;
 	
 	
+	if (crtx_root->initialized)
+		return 0;
+	
+	crtx_root->initialized = 1;
+	
 	if (getenv("CRTX_VERBOSITY"))
 		crtx_verbosity = atoi(getenv("CRTX_VERBOSITY"));
 	
@@ -1827,7 +1831,7 @@ int crtx_init() {
 	
 // 	memset(crtx_root, 0, sizeof(struct crtx_root));
 	
-	CRTX_DBG("initialized cortex (PID: %d)\n", getpid());
+	CRTX_DBG("initializing libcortex (PID: %d)\n", getpid());
 	
 	crtx_root->shutdown = 0;
 // 	crtx_root->no_threads = 1;
@@ -1876,7 +1880,12 @@ int crtx_init() {
 
 int crtx_finish() {
 	unsigned int i;
-// 	struct crtx_ll *it, *itn;
+	struct crtx_ll *it, *itn;
+	
+	if (!crtx_root->initialized)
+		return 0;
+	
+	crtx_root->initialized = 0;
 	
 	crtx_init_shutdown();
 	
