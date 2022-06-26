@@ -8,14 +8,18 @@ LDLIBS+=-lcrtx
 
 EXAMPLES?=libvirt-usb-hotplug named_pipe
 
-all: $(EXAMPLES)
+all: $(EXAMPLES) ipquery
 
 libvirt-usb-hotplug: CFLAGS+=$(shell pkg-config --cflags libvirt) $(shell xml2-config --cflags)
 libvirt-usb-hotplug: LDLIBS+=$(shell pkg-config --libs libvirt) $(shell xml2-config --libs) -lcrtx_udev
 libvirt-usb-hotplug: libvirt-usb-hotplug.c
 
+ipquery:
+	make -C ipquery
+
 clean:
 	rm -f *.o $(EXAMPLES)
+	make -C ipquery clean
 
 run_%: %
 	LD_LIBRARY_PATH=$(libcrtx_path) ./$<
