@@ -1481,11 +1481,28 @@ static void *evloop_detached_main(void *data) {
 // 	return get_thread(event_loop_tmain, 0, 1);
 // }
 
+int crtx_separate_evloop_thread() {
+	struct crtx_thread *t;
+	
+	if (!crtx_root->evloop_thread)
+		return 0;
+	
+	t = crtx_get_own_thread();
+	
+	if (t == crtx_root->evloop_thread)
+		return 0;
+	
+	return 1;
+}
+
 struct crtx_thread * crtx_start_detached_event_loop() {
 	if (!crtx_root->evloop_thread) {
+		if (!crtx_root->event_loop)
+			crtx_get_main_event_loop();
+		
 		crtx_root->evloop_thread = crtx_thread_assign_job(&crtx_root->evloop_job);
 		
-		// 		crtx_reference_signal(&crtx_root->evloop_thread->finished);
+		crtx_reference_signal(&crtx_root->evloop_thread->finished);
 		
 		crtx_thread_start_job(crtx_root->evloop_thread);
 	}
@@ -1868,8 +1885,30 @@ int crtx_finish() {
 	crtx_threads_stop_all();
 	crtx_flush_events();
 	
-	while (crtx_root->listeners) {
-		crtx_shutdown_listener((struct crtx_listener_base*) crtx_root->listeners->data);
+// 	while (crtx_root->listeners) {
+// // 		struct crtx_ll *ev_iter;
+// // 		int skip = 0;
+// // 		for (ev_iter = crtx_root->event_loops; ev_iter; ev_iter = ev_iter->next) {
+// // 			if (((struct crtx_event_loop*) ev_iter->data)->listener == crtx_root->listeners->data) {
+// // 				skip = 1;
+// // 				break;
+// // 			}
+// // 		}
+// // 		if (skip)
+// // 			continue;
+// 		
+// 		crtx_shutdown_listener((struct crtx_listener_base*) crtx_root->listeners->data);
+// 	}
+	
+	for (it = crtx_root->listeners; it; it = itn) {
+		itn = it->next;
+		
+		if (crtx_root->event_loop && crtx_root->event_loop->listener == it->data) {
+			CRTX_VDBG("skip eloop listener\n");
+			continue;
+		}
+		
+		crtx_shutdown_listener((struct crtx_listener_base*) it->data);
 	}
 	
 // 	if (crtx_root->event_loop) {
@@ -1886,6 +1925,15 @@ int crtx_finish() {
 // 		
 // 		free(it);
 // 	}
+	
+	if (crtx_root->evloop_thread) {
+		crtx_evloop_stop(crtx_root->event_loop);
+		crtx_threads_stop(crtx_root->evloop_thread);
+		
+		crtx_wait_on_signal(&crtx_root->evloop_thread->finished, 0);
+		crtx_dereference_signal(&crtx_root->evloop_thread->finished);
+	}
+	
 	while (crtx_root->event_loops) {
 		crtx_evloop_stop((struct crtx_event_loop*) crtx_root->event_loops);
 		crtx_evloop_release((struct crtx_event_loop*) crtx_root->event_loops);
