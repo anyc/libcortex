@@ -207,7 +207,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 	
 	nfq_list = (struct crtx_nf_queue_listener*) data;
 	
-	if (!is_graph_empty(nfq_list->base.graph, 0)) {
+	if (crtx_graph_has_task(nfq_list->base.graph)) {
 		struct crtx_nfq_packet *pkt;
 		struct crtx_event *event;
 		size_t msg_size;

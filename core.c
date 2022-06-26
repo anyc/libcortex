@@ -754,7 +754,7 @@ void *crtx_process_graph_tmain(void *arg) {
 	return 0;
 }
 
-void add_task(struct crtx_graph *graph, struct crtx_task *task) {
+void crtx_add_task(struct crtx_graph *graph, struct crtx_task *task) {
 	struct crtx_task *ti, *last;
 	
 	task->graph = graph;
@@ -791,6 +791,10 @@ void add_task(struct crtx_graph *graph, struct crtx_task *task) {
 	}
 }
 
+void add_task(struct crtx_graph *graph, struct crtx_task *task) {
+	crtx_add_task(graph, task);
+}
+
 struct crtx_task *crtx_create_task(struct crtx_graph *graph, unsigned char position, const char *id, crtx_handle_task_t handler, void *userdata) {
 	struct crtx_task * task;
 	
@@ -824,8 +828,8 @@ struct crtx_task *crtx_create_task(struct crtx_graph *graph, unsigned char posit
 // 	eit->next = 0;
 // }
 
-char is_graph_empty(struct crtx_graph *graph, char *event_type) {
-	return (graph->tasks == 0);
+char crtx_graph_has_task(struct crtx_graph *graph) {
+	return (graph->tasks != 0);
 }
 
 // void graph_on_thread_finish(struct crtx_thread *thread, void *data) {
@@ -839,6 +843,10 @@ void graph_consumer_stop(struct crtx_thread *t, void *data) {
 	
 	graph->stop = 1;
 	pthread_cond_broadcast(&graph->queue_cond);
+}
+
+int crtx_is_graph_empty(struct crtx_graph *graph) {
+	return (graph->equeue == 0);
 }
 
 void crtx_wait_on_graph_empty(struct crtx_graph *graph) {

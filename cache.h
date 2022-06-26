@@ -80,4 +80,7 @@ char crtx_cache_update_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item 
 struct crtx_task *crtx_create_presence_cache_task(char *id, create_key_action_cb_t create_key);
 void crtx_free_presence_cache_task(struct crtx_task *task);
 
+int crtx_create_response_cache_task(struct crtx_task **task, char *id, create_key_cb_t create_key);
+void crtx_free_response_cache_task(struct crtx_task *task);
+
 #endif

@@ -573,6 +573,20 @@ void free_response_cache_task(struct crtx_cache_task *ct) {
 	free(ct);
 }
 
+int crtx_create_response_cache_task(struct crtx_task **task, char *id, create_key_cb_t create_key) {
+	*task = create_response_cache_task(id, create_key);
+	if (!*task)
+		return -1;
+	
+	return 0;
+}
+
+void crtx_free_response_cache_task(struct crtx_task *task) {
+	struct crtx_cache_task *ct;
+	
+	ct = (struct crtx_cache_task *) task->userdata;
+	free_response_cache_task(ct);
+}
 
 
 

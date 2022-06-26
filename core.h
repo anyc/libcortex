@@ -339,6 +339,7 @@ int crtx_free_graph(struct crtx_graph *egraph);
 
 // void get_eventgraph(struct crtx_graph **crtx_graph, char **event_types, unsigned int n_event_types);
 void add_task(struct crtx_graph *graph, struct crtx_task *task);
+void crtx_add_task(struct crtx_graph *graph, struct crtx_task *task);
 void add_event_type(char *event_type);
 void add_raw_event(struct crtx_event *event);
 void crtx_add_event(struct crtx_graph *graph, struct crtx_event *event);
@@ -391,7 +392,8 @@ void dereference_event_release(struct crtx_event *event);
 
 // void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event);
 char *get_username();
-char is_graph_empty(struct crtx_graph *graph, char *event_type);
+char crtx_graph_has_task(struct crtx_graph *graph);
+int crtx_is_graph_empty(struct crtx_graph *graph);
 // void *crtx_copy_raw_data(struct crtx_event_data *data);
 
 void crtx_init_notification_listeners(void **data);
@@ -421,6 +423,7 @@ void crtx_wait_on_graph_empty(struct crtx_graph *graph);
 struct crtx_listener_repository* crtx_get_new_listener_repo_entry();
 
 void crtx_set_main_event_loop(const char *event_loop);
+int crtx_separate_evloop_thread();
 
 void crtx_lock_listener_source(struct crtx_listener_base *lbase);
 void crtx_unlock_listener_source(struct crtx_listener_base *lbase);
