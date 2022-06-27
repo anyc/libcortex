@@ -12,11 +12,11 @@ struct crtx_cache;
 struct crtx_cache_entry;
 struct crtx_cache_task;
 
-typedef char (*create_key_cb_t)(struct crtx_event *event, struct crtx_dict_item *key);
+typedef int (*create_key_cb_t)(struct crtx_event *event, struct crtx_dict_item *key);
 typedef struct crtx_dict_item * (*match_cb_t)(struct crtx_cache *rc, struct crtx_dict_item *key, struct crtx_event *event);
-typedef char (*hit_cb_t)(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry);
-typedef void (*miss_cb_t)(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event);
-typedef char (*add_cb_t)(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event);
+typedef int (*hit_cb_t)(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry);
+typedef int (*miss_cb_t)(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry);
+typedef int (*add_cb_t)(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event);
 typedef void (*get_time_cb_t)(struct crtx_dict_item *item);
 
 
@@ -39,6 +39,12 @@ struct crtx_cache {
 	get_time_cb_t get_time;
 	
 	pthread_mutex_t mutex;
+	
+	struct crtx_cache_task *ct;
+	
+	#ifndef CRTX_REDUCED_SIZE
+	void *reserved1;
+	#endif
 };
 
 struct crtx_cache_task {
@@ -50,6 +56,11 @@ struct crtx_cache_task {
 	miss_cb_t on_miss;
 	add_cb_t on_add; // can prevent adding entries to the cache
 	
+	void *userdata;
+	
+	#ifndef CRTX_REDUCED_SIZE
+	void *reserved1;
+	#endif
 };
 
 typedef char (*create_key_action_cb_t)(struct crtx_event *event, struct crtx_dict_item *key, char *add);
@@ -70,17 +81,19 @@ struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache *rc, struct cr
 struct crtx_dict_item * rcache_match_cb_t_strcmp(struct crtx_cache *rc, struct crtx_dict_item *key, struct crtx_event *event);
 struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *entry_data);
 char crtx_load_cache(struct crtx_cache *cache, char *path);
-char crtx_cache_no_add(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event);
-char crtx_cache_on_hit(struct crtx_cache_task *rc, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry);
+int crtx_cache_no_add(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event);
+int crtx_cache_on_hit(struct crtx_cache_task *rc, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry);
 // void crtx_flush_entries(struct crtx_cache *dc);
 
-void crtx_cache_add_on_miss(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event);
-char crtx_cache_update_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry);
+int crtx_cache_add_on_miss(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry);
+int crtx_cache_update_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry);
 
 struct crtx_task *crtx_create_presence_cache_task(char *id, create_key_action_cb_t create_key);
 void crtx_free_presence_cache_task(struct crtx_task *task);
 
 int crtx_create_response_cache_task(struct crtx_task **task, char *id, create_key_cb_t create_key);
 void crtx_free_response_cache_task(struct crtx_task *task);
+
+void crtx_cache_remove_entry(struct crtx_cache *cache, struct crtx_dict_item *key);
 
 #endif
