@@ -703,6 +703,10 @@ struct crtx_dict_item * crtx_get_item(struct crtx_dict *ds, const char *key) {
 	return 0;
 }
 
+struct crtx_dict_item * crtx_dict_get_item(struct crtx_dict *ds, const char *key) {
+	return crtx_get_item(ds, key);
+}
+
 struct crtx_dict_item * crtx_get_item_by_idx(struct crtx_dict *ds, size_t idx) {
 	return &ds->items[idx];
 }
@@ -913,6 +917,10 @@ char *crtx_get_string(struct crtx_dict *ds, const char *key) {
 	return ret?s:0;
 }
 
+char *crtx_dict_get_string(struct crtx_dict *ds, const char *key) {
+	return crtx_get_string(ds, key);
+}
+
 /**
  * parse format string and substitute %-specifiers with values from the dictionary
  * %[key]item_type %[key](format string for sub-dictionary)
@@ -1065,7 +1073,7 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 			 * copy character
 			 */
 			
-			if (*rlen >= (*alloc)-1) {
+			while ((*rlen) + 1 >= *alloc) {
 				*alloc += 24;
 				*result = (char*) realloc(*result, *alloc);
 			}
@@ -1081,7 +1089,37 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 		f++;
 	}
 	
+	// null terminate string
+	while ((*rlen) + 1 >= *alloc) {
+		*alloc += 1;
+		*result = (char*) realloc(*result, *alloc);
+	}
+	(*result)[*rlen] = 0;
+	(*rlen)++;
+	
 	return 1;
+}
+
+int crtx_dict_snaprintf(char **result, size_t *rlen, size_t *alloc, char *format, struct crtx_dict *ds) {
+	int rc;
+	size_t l_alloc, l_rlen;
+	
+	if (alloc == 0 && rlen == 0) {
+		*result = 0;
+	}
+	
+	if (alloc == 0) {
+		alloc = &l_alloc;
+		l_alloc = 0;
+	}
+	if (rlen == 0) {
+		rlen = &l_rlen;
+		l_rlen = 0;
+	}
+	
+	rc = dict_printf(ds, format, result, rlen, alloc);
+	
+	return (rc != 1);
 }
 
 struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, struct crtx_dict_transformation *transf) {
@@ -1371,6 +1409,25 @@ void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src,
 // 	
 // 	return dict;
 // }
+
+struct crtx_dict *crtx_dict_create_copy(struct crtx_dict *orig) {
+	struct crtx_dict *dict;
+	struct crtx_dict_item *oitem, *nitem;
+	
+	
+	dict = crtx_init_dict(orig->signature, orig->signature_length, 0);
+	
+	oitem = crtx_get_first_item(orig);
+	while (oitem) {
+		nitem = crtx_alloc_item(dict);
+		
+		crtx_dict_copy_item(nitem, oitem, 0);
+		
+		oitem = crtx_get_next_item(orig, oitem);
+	}
+	
+	return dict;
+}
 
 // void crtx_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src) {
 // 	if (src->key && src->flags & CRTX_DIF_ALLOCATED_KEY) {

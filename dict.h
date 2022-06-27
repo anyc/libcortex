@@ -90,6 +90,7 @@ struct crtx_transform_dict_handler {
 struct crtx_dict_item * crtx_alloc_item(struct crtx_dict *dict);
 struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, struct crtx_dict_transformation *transf);
 struct crtx_dict_item * crtx_get_item(struct crtx_dict *ds, const char *key);
+struct crtx_dict_item * crtx_dict_get_item(struct crtx_dict *ds, const char *key);
 struct crtx_dict * crtx_init_dict(char *signature, uint32_t sign_length, size_t payload_size);
 struct crtx_dict * crtx_create_dict_va(char *signature, va_list *va);
 struct crtx_dict * crtx_create_dict(char *signature, ...);
@@ -105,6 +106,7 @@ struct crtx_dict_item *crtx_get_next_item(struct crtx_dict *ds, struct crtx_dict
 // char crtx_add_item(struct crtx_dict **dict, char type, ...);
 
 char *crtx_get_string(struct crtx_dict *ds, const char *key);
+char *crtx_dict_get_string(struct crtx_dict *ds, const char *key);
 struct crtx_dict *crtx_get_dict(struct crtx_dict *ds, const char *key);
 
 struct crtx_task *crtx_create_transform_task(struct crtx_graph *in_graph, char *name, struct crtx_transform_dict_handler *trans);
@@ -128,10 +130,12 @@ char crtx_dict_locate_value(struct crtx_dict *dict, const char *path, char type,
 char *crtx_dict_locate_string(struct crtx_dict *dict, const char *path);
 void crtx_dict_remove_item(struct crtx_dict *dict, char *key);
 char crtx_dict_new_item(struct crtx_dict *dict, unsigned char type, char *key, ...);
+struct crtx_dict *crtx_dict_create_copy(struct crtx_dict *orig);
 
 char crtx_is_string_in_dict(struct crtx_dict *dict, char *str);
 
 void crtx_dict_item_print(struct crtx_dict_item *di, unsigned char level, FILE *f);
 void crtx_dict_print(struct crtx_dict *ds, FILE *f);
+int crtx_dict_snaprintf(char **result, size_t *rlen, size_t *alloc, char *format, struct crtx_dict *ds);
 
 #endif

@@ -2259,6 +2259,17 @@ void crtx_event_get_payload(struct crtx_event *event, char *id, void **raw_point
 	}
 }
 
+struct crtx_dict *crtx_event_get_dict(struct crtx_event *event) {
+	struct crtx_dict *dict;
+	
+	crtx_event_get_payload(event, 0, 0, &dict);
+	if (!dict) {
+		return 0;
+	}
+	
+	return dict;
+}
+
 struct crtx_dict_item *crtx_event_get_item_by_key(struct crtx_event *event, char *id, char *key) {
 	struct crtx_dict *dict;
 	

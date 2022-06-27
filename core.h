@@ -411,6 +411,7 @@ void crtx_event_set_raw_data(struct crtx_event *event, unsigned char type, ...);
 void crtx_event_set_dict_data(struct crtx_event *event, struct crtx_dict *data_dict, unsigned char n_additional_fields);
 char crtx_event_raw2dict(struct crtx_event *event, void *user_data);
 void crtx_event_get_payload(struct crtx_event *event, char *id, void **raw_pointer, struct crtx_dict **dict);
+struct crtx_dict *crtx_event_get_dict(struct crtx_event *event);
 struct crtx_dict_item *crtx_event_get_item_by_key(struct crtx_event *event, char *id, char *key);
 int crtx_event_get_value_by_key(struct crtx_event *event, char *key, char type, void *buffer, size_t buffer_size);
 void *crtx_event_get_ptr(struct crtx_event *event);
