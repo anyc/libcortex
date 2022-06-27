@@ -1,9 +1,10 @@
 
 libcrtx_path?=../../
 
-CFLAGS+=-I$(libcrtx_path)/include -g -fPIC
+CFLAGS+=-I$(libcrtx_path)/include -g -fPIC -Wall
 
 LDFLAGS+=-L$(libcrtx_path)
+LDLIBS+=-lcrtx
 LIB_LDFLAGS+=-L$(libcrtx_path)
 LIB_LDLIBS+=-lcrtx
 
@@ -30,10 +31,10 @@ clean:
 	rm -f *.o $(NAME) $(LIBFILENAME) $(LIBSOFILENAME)
 
 run:
-	LD_LIBRARY_PATH=$(libcrtx_path):. ./$(NAME)
+	LD_LIBRARY_PATH=$(libcrtx_path):. ./$(NAME) $(ARGS)
 
 gdb:
-	LD_LIBRARY_PATH=$(libcrtx_path):. gdb -args ./$(NAME)
+	@LD_LIBRARY_PATH=$(libcrtx_path):. gdb -args ./$(NAME) $(ARGS)
 
 valgrind:
-	LD_LIBRARY_PATH=$(libcrtx_path):. valgrind --leak-check=full ./$(NAME)
+	@LD_LIBRARY_PATH=$(libcrtx_path):. valgrind --leak-check=full ./$(NAME) $(ARGS)

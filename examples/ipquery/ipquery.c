@@ -3,12 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <crtx/core.h>
-#include <crtx/cache.h>
-#include <crtx/dict.h>
-#include <crtx/nl_route_raw.h>
-
 #include <net/if.h>
+
+#include "ipquery.h"
 
 int ipq_get_interfaces_libc(unsigned int *n_interfaces) {
 	struct if_nameindex *interfaces, *if_iter;
@@ -23,15 +20,9 @@ int ipq_get_interfaces_libc(unsigned int *n_interfaces) {
 	}
 	
 	if_freenameindex(interfaces);
+	
+	return 0;
 }
-
-struct ipq_monitor {
-	struct crtx_nl_route_raw_listener *nlr_list;
-	
-	struct crtx_task *cache_task;
-	
-	struct crtx_signals *initial_response;
-};
 
 static void ipq_trigger_signal(void *data) {
 	struct crtx_signals *signal;
@@ -40,7 +31,7 @@ static void ipq_trigger_signal(void *data) {
 	crtx_send_signal(signal, 0);
 }
 
-static char ipq_get_own_ip_addresses_keygen(struct crtx_event *event, struct crtx_dict_item *key) {
+static int ipq_get_own_ip_addresses_keygen(struct crtx_event *event, struct crtx_dict_item *key) {
 	struct crtx_dict_item *di;
 	struct crtx_dict *dict;
 	
@@ -57,15 +48,58 @@ static char ipq_get_own_ip_addresses_keygen(struct crtx_event *event, struct crt
 	return 0;
 }
 
-
-void ipq_free_monitor(struct ipq_monitor *monitor) {
-	crtx_shutdown_signal(monitor->initial_response);
+static int ipq_cache_update_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
+	struct crtx_dict *dict;
+	struct ipq_monitor *monitor;
 	
-	if (monitor->nlr_list)
-		crtx_shutdown_listener(&monitor->nlr_list->base);
+	
+	monitor = (struct ipq_monitor *) ct->userdata;
+	
+	dict = crtx_event_get_dict(event);
+	
+	if (!strcmp(crtx_dict_get_string(dict, "action"), "add")) {
+		if (monitor->on_update)
+			monitor->on_update(dict);
+		if (monitor->on_add && c_entry)
+			monitor->on_add(dict);
+		
+		if (c_entry)
+			return crtx_cache_update_on_hit(ct, key, event, c_entry);
+	} else
+	if (!strcmp(crtx_dict_get_string(dict, "action"), "del")) {
+		if (monitor->on_update)
+			monitor->on_update(dict);
+		if (monitor->on_remove && c_entry)
+			monitor->on_remove(dict);
+		
+		if (c_entry) {
+			// we keep the entry so we could determine when an IP was removed
+			if (0) {
+				crtx_cache_remove_entry(ct->cache, key);
+			} else {
+				return crtx_cache_update_on_hit(ct, key, event, c_entry);
+			}
+		}
+	}
+	
+	return 0;
+}
+
+static int ipq_cache_on_add_cb(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
+	ipq_cache_update_on_hit(ct, key, event, 0);
+	
+	// always add entry
+	return 1;
+}
+
+static void ipq_free_monitor(struct ipq_monitor *monitor) {
+	crtx_shutdown_signal(monitor->initial_response);
 	
 	if (monitor->cache_task)
 		crtx_free_response_cache_task(monitor->cache_task);
+	
+	if (monitor->nlr_list)
+		crtx_shutdown_listener(&monitor->nlr_list->base);
 	
 	free(monitor);
 }
@@ -77,7 +111,7 @@ struct {
 
 static uint16_t ipq_get_ips_nlmsg_addr_types[] = {RTM_NEWADDR, RTM_DELADDR, 0};
 
-int ipq_get_ips_setup(struct ipq_monitor **monitor_p) {
+int ipq_ips_setup_monitor(struct ipq_monitor **monitor_p) {
 	struct ipq_monitor *monitor;
 	struct crtx_nl_route_raw_listener *nlr_list;
 	int rc;
@@ -118,8 +152,10 @@ int ipq_get_ips_setup(struct ipq_monitor **monitor_p) {
 		
 		ctask = (struct crtx_cache_task*) monitor->cache_task->userdata;
 		
-		ctask->on_hit = &crtx_cache_update_on_hit;
+		ctask->on_hit = &ipq_cache_update_on_hit;
 		ctask->on_miss = &crtx_cache_add_on_miss;
+		ctask->on_add = &ipq_cache_on_add_cb;
+		ctask->userdata = monitor;
 		
 		crtx_add_task(nlr_list->base.graph, monitor->cache_task);
 	}
@@ -127,7 +163,7 @@ int ipq_get_ips_setup(struct ipq_monitor **monitor_p) {
 	return 0;
 }
 
-int ipq_get_ips_start(struct ipq_monitor *monitor) {
+int ipq_ips_start_monitor(struct ipq_monitor *monitor) {
 	int rc;
 	
 	
@@ -151,15 +187,7 @@ int ipq_get_ips_start(struct ipq_monitor *monitor) {
 	return 0;
 }
 
-int ipq_get_ips_stop(struct ipq_monitor *monitor) {
-	if (crtx_separate_evloop_thread()) {
-		crtx_wait_on_signal(monitor->initial_response, 0);
-	} else {
-		while (!crtx_signal_is_active(monitor->initial_response)) {
-			crtx_loop_onetime();
-		}
-	}
-	
+int ipq_ips_stop_monitor(struct ipq_monitor *monitor) {
 	crtx_stop_listener(&monitor->nlr_list->base);
 	
 	if (crtx_separate_evloop_thread()) {
@@ -173,49 +201,71 @@ int ipq_get_ips_stop(struct ipq_monitor *monitor) {
 	return 0;
 }
 
-int ipq_get_ips_finish(struct ipq_monitor *monitor) {
+int ipq_ips_finish_monitor(struct ipq_monitor *monitor) {
 	ipq_free_monitor(monitor);
 	
 	return 0;
 }
 
-int ipq_get_ips(struct crtx_dll **ips) {
+int ipq_get_ips(struct crtx_dict **ips) {
 	int rc;
 	struct ipq_monitor *monitor;
 	
-	crtx_start_detached_event_loop();
+// 	crtx_start_detached_event_loop();
 	
-	rc = ipq_get_ips_setup(&monitor);
+	rc = ipq_ips_setup_monitor(&monitor);
 	if (rc) {
-		ipq_get_ips_finish(monitor);
+		ipq_ips_finish_monitor(monitor);
 		return rc;
 	}
 	
-	rc = ipq_get_ips_start(monitor);
+	rc = ipq_ips_start_monitor(monitor);
 	if (rc) {
-		ipq_get_ips_finish(monitor);
+		ipq_ips_finish_monitor(monitor);
 		return rc;
 	}
 	
-	rc = ipq_get_ips_stop(monitor);
+	if (crtx_separate_evloop_thread()) {
+		crtx_wait_on_signal(monitor->initial_response, 0);
+	} else {
+		while (!crtx_signal_is_active(monitor->initial_response)) {
+			crtx_loop_onetime();
+		}
+	}
+	
+	rc = ipq_ips_stop_monitor(monitor);
 	if (rc) {
-		ipq_get_ips_finish(monitor);
+		ipq_ips_finish_monitor(monitor);
 		return rc;
 	}
 	
-	crtx_print_dict(((struct crtx_cache_task*) monitor->cache_task->userdata)->cache->entries);
+	if (((struct crtx_cache_task*) monitor->cache_task->userdata)->cache->entries) {
+// 		crtx_print_dict(((struct crtx_cache_task*) monitor->cache_task->userdata)->cache->entries);
 	
-	rc = ipq_get_ips_finish(monitor);
+		*ips = crtx_dict_create_copy(((struct crtx_cache_task*) monitor->cache_task->userdata)->cache->entries);
+	}
+	
+	rc = ipq_ips_finish_monitor(monitor);
 	if (rc)
 		return rc;
 	
 	return 0;
 }
 
+int ipq_loop() {
+	crtx_loop();
+	
+	return 0;
+}
+
 int ipq_init() {
 	crtx_init();
+	
+	return 0;
 }
 
 int ipq_finish() {
 	crtx_finish();
+	
+	return 0;
 }
