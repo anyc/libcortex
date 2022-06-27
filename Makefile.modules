@@ -43,6 +43,9 @@ LDLIBS_libvirt+=$(shell $(PKG_CONFIG) --libs libvirt)
 CFLAGS_netlink_ge+=$(shell $(PKG_CONFIG) --cflags libnl-genl-3.0)
 LDLIBS_netlink_ge+=$(shell $(PKG_CONFIG) --libs libnl-genl-3.0)
 
+CFLAGS_nf_queue+=$(shell $(PKG_CONFIG) --cflags libnetfilter_queue)
+LDLIBS_nf_queue+=$(shell $(PKG_CONFIG) --libs libnetfilter_queue)
+
 CFLAGS_libnl+=$(shell $(PKG_CONFIG) --cflags libnl-3.0)
 LDLIBS_libnl+=$(shell $(PKG_CONFIG) --libs libnl-3.0)
 

@@ -365,14 +365,16 @@ void *nfq_tmain(void *data) {
 	}
 	
 	printf("unbinding existing nf_queue handler for AF_INET (if any)\n");
-	if (nfq_unbind_pf(h, AF_INET) < 0) {
-		fprintf(stderr, "error during nfq_unbind_pf()\n");
+	rv = nfq_unbind_pf(h, AF_INET);
+	if (rv < 0) {
+		fprintf(stderr, "error during nfq_unbind_pf(): %s\n", strerror(-rv));
 		return 0;
 	}
 	
 	printf("binding nf _queue as nf_queue handler for AF_INET\n");
-	if (nfq_bind_pf(h, AF_INET) < 0) {
-		fprintf(stderr, "error during nfq_bind_pf()\n");
+	rv = nfq_bind_pf(h, AF_INET);
+	if (rv < 0) {
+		fprintf(stderr, "error during nfq_bind_pf(): %s\n", strerror(-rv));
 		return 0;
 	}
 	
@@ -412,6 +414,7 @@ struct crtx_listener_base *crtx_setup_nf_queue_listener(void *options) {
 // 	new_eventgraph(&nfq_listata->base.graph, 0, nfq_packet_msg_etype);
 	
 // 	nfq_listata->base.thread = get_thread(nfq_tmain, nfq_listata, 0);
+	nfq_listener->base.mode = CRTX_PREFER_THREAD;
 	nfq_listener->base.thread_job.fct = &nfq_tmain;
 	nfq_listener->base.thread_job.fct_data = nfq_listener;
 	nfq_listener->base.start_listener = 0;
