@@ -182,7 +182,7 @@ static void pfw_get_remote_part(struct crtx_dict *ds, char **remote_ip, char **r
 }
 
 /// create a key item for the IP cache from the given event structure
-static char pfw_rcache_create_key_ip(struct crtx_event *event, struct crtx_dict_item *key) {
+static int pfw_rcache_create_key_ip(struct crtx_event *event, struct crtx_dict_item *key) {
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
@@ -205,7 +205,7 @@ static char pfw_rcache_create_key_ip(struct crtx_event *event, struct crtx_dict_
 }
 
 /// create a key item for the hostname cache from the given event structure
-static char pfw_rcache_create_key_hostname(struct crtx_event *event, struct crtx_dict_item *key) {
+static int pfw_rcache_create_key_hostname(struct crtx_event *event, struct crtx_dict_item *key) {
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
@@ -230,7 +230,7 @@ static char pfw_rcache_create_key_hostname(struct crtx_event *event, struct crtx
 	return 0;
 }
 
-static char pfw_on_hit_host(struct crtx_cache_task *rc, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
+static int pfw_on_hit_host(struct crtx_cache_task *rc, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
 	char ret, orig_ret;
 	
 	orig_ret = crtx_cache_on_hit(rc, key, event, c_entry);
@@ -254,9 +254,9 @@ static char pfw_on_hit_host(struct crtx_cache_task *rc, struct crtx_dict_item *k
 			
 			// generate key with IP
 			ret = pfw_rcache_create_key_ip(event, &ip);
-			if (!ret) {
+			if (ret) {
 				CRTX_ERROR("cannot create key for IP cache\n");
-				return 1;
+				return ret;
 			}
 			
 			// add entry to IP cache
@@ -459,7 +459,17 @@ void finish() {
 
 #ifdef PFW_STANDALONE
 int main(int argc, char **argv) {
+	crtx_init();
+	
+	crtx_handle_std_signals();
+	
 	init();
+	
+	crtx_loop();
+	
+	finish();
+	
+	crtx_finish();
 	
 	return 0;
 }

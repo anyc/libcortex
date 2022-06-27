@@ -12,7 +12,7 @@
 
 #include "core.h"
 #include "inotify.h"
-#include "sd_bus_notifications.h"
+#include "sdbus_notifications.h"
 #include "dict_inout_json.h"
 #include "event_comm.h"
 #include "linkedlist.h"
@@ -65,6 +65,7 @@ char init() {
 	uint32_t i,j;
 	char *path;
 	uint32_t in_mask;
+	int rc;
 	
 	crtx_dict_json_from_file(&config, 0, "control_inotify_batch");
 	
@@ -86,7 +87,7 @@ char init() {
 		mask = crtx_get_dict(monitor, "mask");
 		actions = crtx_get_dict(monitor, "actions");
 		
-		INFO("new monitor for path \"%s\"\n", path);
+		CRTX_INFO("new monitor for path \"%s\"\n", path);
 		
 		if (!path || !mask || !actions) {
 			CRTX_ERROR("invalid monitor entry\n");
@@ -106,11 +107,12 @@ char init() {
 		listener->mask = in_mask;
 		
 		// create a listener (queue) for inotify events
-		in_base = create_listener("inotify", listener);
-		if (!in_base) {
-			printf("cannot create inotify listener\n");
+		rc = crtx_setup_listener("inotify", listener);
+		if (rc) {
+			CRTX_ERROR("cannot create inotify listener %d\n", rc);
 			return 0;
 		}
+		in_base = &listener->base;
 		
 		{
 			struct crtx_dict *scripts, *transform_actions;
@@ -217,7 +219,7 @@ void finish() {
 	
 	for (llit=listeners;llit;llit=llitn) {
 		llitn = llit->next;
-		crtx_shutdown_listener(&llit->in_listener->parent);
+		crtx_shutdown_listener(&llit->in_listener->base);
 		free(llit);
 	}
 }

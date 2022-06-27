@@ -173,9 +173,6 @@ tests: $(TESTS) layer2_tests
 %.test: LDLIBS+=$(LDLIBS_${@:.test=}) $(foreach d,${@:.test=} $(DEPS_${@:.test=}),$(if $(findstring $(d),$(DYN_MODULES)),-lcrtx_$(d)))
 %.test: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< -o $@ -L. $(LDFLAGS) $(LDLIBS) -lcrtx
-	
-examples/libcrtx_%.so: examples/control_%.c
-	$(CC) -shared -o $@ -fPIC $< $(LDFLAGS) $(CFLAGS) -I. $(LDLIBS)
 
 crtx_examples:
 	$(MAKE) -C examples
