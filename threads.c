@@ -197,12 +197,36 @@ char crtx_signal_is_active(struct crtx_signals *s) {
  * threads
  */
 
+static void crtx_thread_tmain_cleanup(void *data) {
+	struct crtx_thread *thread = (struct crtx_thread*) data;
+	
+	crtx_send_signal(&thread->finished, 1);
+	
+	if (thread->job->on_finish)
+		thread->job->on_finish(thread, thread->job->on_finish_data);
+	
+	crtx_reset_signal(&thread->finished);
+	
+	LOCK(pool_mutex);
+	crtx_reset_signal(&thread->start);
+	thread->in_use = 0;
+	thread->job = 0;
+// 	thread->fct = 0;
+// 	thread->fct_data = 0;
+// 	thread->on_finish = 0;
+// 	thread->on_finish_data = 0;
+// 	thread->do_stop = 0;
+	UNLOCK(pool_mutex);
+}
+
 static void * crtx_thread_tmain(void *data) {
 	struct crtx_thread *thread = (struct crtx_thread*) data;
 	
 	CRTX_DBG("thread %p started\n", data);
 	
 // 	signal(SIGINT,test);
+	
+	pthread_cleanup_push(&crtx_thread_tmain_cleanup, data);
 	
 	while (!thread->stop) {
 		// we wait until someone has work for us
@@ -215,26 +239,10 @@ static void * crtx_thread_tmain(void *data) {
 		// execute
 		thread->job->fct(thread->job->fct_data);
 		
-		crtx_send_signal(&thread->finished, 1);
-		
-		if (thread->job->on_finish)
-			thread->job->on_finish(thread, thread->job->on_finish_data);
-		
-		crtx_reset_signal(&thread->finished);
-		
-		LOCK(pool_mutex);
-		crtx_reset_signal(&thread->start);
-		thread->in_use = 0;
-		thread->job = 0;
-// 		thread->fct = 0;
-// 		thread->fct_data = 0;
-// 		thread->on_finish = 0;
-// 		thread->on_finish_data = 0;
-// 		thread->do_stop = 0;
-		UNLOCK(pool_mutex);
+		crtx_thread_tmain_cleanup(data);
 	}
 	
-// 	printf("thread %p ends\n", data);
+	pthread_cleanup_pop(0);
 	
 	return 0;
 }
@@ -346,11 +354,17 @@ void crtx_threads_stop(struct crtx_thread *t) {
 // 	if (!t->in_use) {
 	crtx_thread_start_job(t);
 // 	} else {
-		if (t->job->do_stop)
+		if (t->job && t->job->do_stop)
 			t->job->do_stop(t, t->job->fct_data);
 // 	}
 	
 // 	UNLOCK(pool_mutex);
+}
+
+void crtx_threads_cancel(struct crtx_thread *t) {
+	CRTX_VDBG("cancel thread %p\n", t);
+	
+	pthread_cancel(t->handle);
 }
 
 void crtx_threads_stop_all() {

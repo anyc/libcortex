@@ -95,6 +95,7 @@ void crtx_thread_start_job(struct crtx_thread *t);
 struct crtx_thread *spawn_thread(char create);
 struct crtx_thread * crtx_get_own_thread();
 
+void crtx_threads_cancel(struct crtx_thread *t);
 void crtx_threads_stop(struct crtx_thread *t);
 void crtx_threads_stop_all();
 void crtx_threads_interrupt_thread(struct crtx_thread *t);
