@@ -31,7 +31,7 @@ static void ipq_trigger_signal(void *data) {
 	crtx_send_signal(signal, 0);
 }
 
-static int ipq_get_own_ip_addresses_keygen(struct crtx_event *event, struct crtx_dict_item *key) {
+static int ipq_get_own_ip_addresses_keygen(struct crtx_cache *cache, struct crtx_dict_item *key, struct crtx_event *event) {
 	struct crtx_dict_item *di;
 	struct crtx_dict *dict;
 	
@@ -48,12 +48,12 @@ static int ipq_get_own_ip_addresses_keygen(struct crtx_event *event, struct crtx
 	return 0;
 }
 
-static int ipq_cache_update_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
+static int ipq_cache_update_on_hit(struct crtx_cache *cache, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
 	struct crtx_dict *dict;
 	struct ipq_monitor *monitor;
 	
 	
-	monitor = (struct ipq_monitor *) ct->userdata;
+	monitor = (struct ipq_monitor *) cache->userdata;
 	
 	dict = crtx_event_get_dict(event);
 	
@@ -64,7 +64,7 @@ static int ipq_cache_update_on_hit(struct crtx_cache_task *ct, struct crtx_dict_
 			monitor->on_add(dict);
 		
 		if (c_entry)
-			return crtx_cache_update_on_hit(ct, key, event, c_entry);
+			return crtx_cache_update_on_hit(cache, key, event, c_entry);
 	} else
 	if (!strcmp(crtx_dict_get_string(dict, "action"), "del")) {
 		if (monitor->on_update)
@@ -75,9 +75,9 @@ static int ipq_cache_update_on_hit(struct crtx_cache_task *ct, struct crtx_dict_
 		if (c_entry) {
 			// we keep the entry so we could determine when an IP was removed
 			if (0) {
-				crtx_cache_remove_entry(ct->cache, key);
+				crtx_cache_remove_entry(cache, key);
 			} else {
-				return crtx_cache_update_on_hit(ct, key, event, c_entry);
+				return crtx_cache_update_on_hit(cache, key, event, c_entry);
 			}
 		}
 	}
@@ -85,8 +85,8 @@ static int ipq_cache_update_on_hit(struct crtx_cache_task *ct, struct crtx_dict_
 	return 0;
 }
 
-static int ipq_cache_on_add_cb(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
-	ipq_cache_update_on_hit(ct, key, event, 0);
+static int ipq_cache_on_add_cb(struct crtx_cache *cache, struct crtx_dict_item *key, struct crtx_event *event) {
+	ipq_cache_update_on_hit(cache, key, event, 0);
 	
 	// always add entry
 	return 1;
@@ -96,7 +96,7 @@ static void ipq_free_monitor(struct ipq_monitor *monitor) {
 	crtx_shutdown_signal(monitor->initial_response);
 	
 	if (monitor->cache_task)
-		crtx_free_response_cache_task(monitor->cache_task);
+		crtx_free_cache_task(monitor->cache_task);
 	
 	if (monitor->nlr_list)
 		crtx_shutdown_listener(&monitor->nlr_list->base);
@@ -115,7 +115,7 @@ int ipq_ips_setup_monitor(struct ipq_monitor **monitor_p) {
 	struct ipq_monitor *monitor;
 	struct crtx_nl_route_raw_listener *nlr_list;
 	int rc;
-	struct crtx_cache_task *ctask;
+	struct crtx_cache *cache;
 	
 	
 	monitor = (struct ipq_monitor *) calloc(1, sizeof(struct ipq_monitor));
@@ -144,18 +144,18 @@ int ipq_ips_setup_monitor(struct ipq_monitor **monitor_p) {
 	}
 	
 	{
-		rc = crtx_create_response_cache_task(&monitor->cache_task, "ip_cache", ipq_get_own_ip_addresses_keygen);
+		rc = crtx_create_cache_task(&monitor->cache_task, "ip_cache", ipq_get_own_ip_addresses_keygen);
 		if (rc) {
 			ipq_free_monitor(monitor);
 			return rc;
 		}
 		
-		ctask = (struct crtx_cache_task*) monitor->cache_task->userdata;
+		cache = (struct crtx_cache*) monitor->cache_task->userdata;
 		
-		ctask->on_hit = &ipq_cache_update_on_hit;
-		ctask->on_miss = &crtx_cache_add_on_miss;
-		ctask->on_add = &ipq_cache_on_add_cb;
-		ctask->userdata = monitor;
+		cache->on_hit = &ipq_cache_update_on_hit;
+		cache->on_miss = &crtx_cache_add_on_miss;
+		cache->on_add = &ipq_cache_on_add_cb;
+		cache->userdata = monitor;
 		
 		crtx_add_task(nlr_list->base.graph, monitor->cache_task);
 	}
@@ -239,10 +239,10 @@ int ipq_get_ips(struct crtx_dict **ips) {
 		return rc;
 	}
 	
-	if (((struct crtx_cache_task*) monitor->cache_task->userdata)->cache->entries) {
-// 		crtx_print_dict(((struct crtx_cache_task*) monitor->cache_task->userdata)->cache->entries);
+	if (((struct crtx_cache*) monitor->cache_task->userdata)->entries) {
+// 		crtx_print_dict(((struct crtx_cache*) monitor->cache_task->userdata)->entries);
 	
-		*ips = crtx_dict_create_copy(((struct crtx_cache_task*) monitor->cache_task->userdata)->cache->entries);
+		*ips = crtx_dict_create_copy(((struct crtx_cache*) monitor->cache_task->userdata)->entries);
 	}
 	
 	rc = ipq_ips_finish_monitor(monitor);

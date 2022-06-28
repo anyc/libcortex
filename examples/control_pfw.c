@@ -76,7 +76,7 @@ struct crtx_task *rcache_ip;
 struct crtx_task *rcache_resolve;
 
 
-#define TASK2CACHETASK(task) ((struct crtx_cache_task*) (task)->userdata)
+#define TASK2CACHE(task) ((struct crtx_cache*) (task)->userdata)
 
 // linked list that contains the local IPs
 struct pfw_ip_ll {
@@ -87,7 +87,7 @@ struct pfw_ip_ll {
 struct pfw_ip_ll *local_ips = 0;
 
 /// update the IP in the given resolve cache entry
-static void pfw_update_ip_entry(struct crtx_cache_task *ct, struct crtx_dict_item *entry) {
+static void pfw_update_ip_entry(struct crtx_cache *cache, struct crtx_dict_item *entry) {
 	struct addrinfo* result;
 	struct addrinfo* res;
 	int error;
@@ -182,7 +182,7 @@ static void pfw_get_remote_part(struct crtx_dict *ds, char **remote_ip, char **r
 }
 
 /// create a key item for the IP cache from the given event structure
-static int pfw_rcache_create_key_ip(struct crtx_event *event, struct crtx_dict_item *key) {
+static int pfw_rcache_create_key_ip(struct crtx_cache *cache, struct crtx_dict_item *key, struct crtx_event *event) {
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
@@ -205,7 +205,7 @@ static int pfw_rcache_create_key_ip(struct crtx_event *event, struct crtx_dict_i
 }
 
 /// create a key item for the hostname cache from the given event structure
-static int pfw_rcache_create_key_hostname(struct crtx_event *event, struct crtx_dict_item *key) {
+static int pfw_rcache_create_key_hostname(struct crtx_cache *cache, struct crtx_dict_item *key, struct crtx_event *event) {
 	struct crtx_dict *ds;
 	char *remote_ip, *remote_host;
 	
@@ -230,10 +230,10 @@ static int pfw_rcache_create_key_hostname(struct crtx_event *event, struct crtx_
 	return 0;
 }
 
-static int pfw_on_hit_host(struct crtx_cache_task *rc, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
+static int pfw_on_hit_host(struct crtx_cache *cache, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
 	char ret, orig_ret;
 	
-	orig_ret = crtx_cache_on_hit(rc, key, event, c_entry);
+	orig_ret = crtx_cache_on_hit(cache, key, event, c_entry);
 	
 	/*
 	 * The IP cache is configured to not add new entries itself. We add new
@@ -253,14 +253,14 @@ static int pfw_on_hit_host(struct crtx_cache_task *rc, struct crtx_dict_item *ke
 			CRTX_DBG("create IP cache entry\n");
 			
 			// generate key with IP
-			ret = pfw_rcache_create_key_ip(event, &ip);
+			ret = pfw_rcache_create_key_ip(cache, &ip, event);
 			if (ret) {
 				CRTX_ERROR("cannot create key for IP cache\n");
 				return ret;
 			}
 			
 			// add entry to IP cache
-			/* ip_c_entry = */ crtx_cache_add_entry(TASK2CACHETASK(rcache_ip)->cache, &ip, event, 0);
+			/* ip_c_entry = */ crtx_cache_add_entry(TASK2CACHE(rcache_ip), &ip, event, 0);
 // 			timeout = crtx_get_item(c_entry->ds, "timeout");
 		}
 	} else
@@ -270,23 +270,23 @@ static int pfw_on_hit_host(struct crtx_cache_task *rc, struct crtx_dict_item *ke
 }
 
 static char pfw_resolve_IPs_timer(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_cache_task *ct;
+	struct crtx_cache *cache;
 	struct crtx_dict_item *ditem;
 	
-	ct = (struct crtx_cache_task *) userdata;
+	cache = (struct crtx_cache *) userdata;
 	
-	pthread_mutex_lock(&ct->cache->mutex);
+	pthread_mutex_lock(&cache->mutex);
 	
-	ditem = crtx_get_first_item(ct->cache->entries);
+	ditem = crtx_get_first_item(cache->entries);
 	while (ditem) {
-		pfw_update_ip_entry(ct, ditem);
+		pfw_update_ip_entry(cache, ditem);
 		
-		ditem = crtx_get_next_item(ct->cache->entries, ditem);
+		ditem = crtx_get_next_item(cache->entries, ditem);
 	}
 	
-	pthread_mutex_unlock(&ct->cache->mutex);
+	pthread_mutex_unlock(&cache->mutex);
 	
-// 	crtx_print_dict(ct->cache->entries);
+// 	crtx_print_dict(cache->entries);
 	
 	return 1;
 }
@@ -352,13 +352,17 @@ char pfw_start(unsigned int queue_num, unsigned int default_mark) {
 	
 	{
 		// resolved IP
-		rcache_resolve = create_response_cache_task("rcache_resolve", pfw_rcache_create_key_ip);
-		TASK2CACHETASK(rcache_resolve)->on_add = &crtx_cache_no_add;
-		rcache_resolve->id = "rcache_resolve";
+		r = crtx_create_cache_task(&rcache_resolve, "rcache_resolve", pfw_rcache_create_key_ip);
+		if (r) {
+			printf("cannot create resolve cache\n");
+			return 0;
+		}
 		
-		crtx_load_cache(TASK2CACHETASK(rcache_resolve)->cache, PFW_DATA_DIR);
+		TASK2CACHE(rcache_resolve)->on_add = &crtx_cache_no_add;
 		
-		add_task(nfq_list.base.graph, rcache_resolve);
+		crtx_load_cache(TASK2CACHE(rcache_resolve), PFW_DATA_DIR);
+		
+		crtx_add_task(nfq_list.base.graph, rcache_resolve);
 	}
 	
 	{
@@ -385,32 +389,39 @@ char pfw_start(unsigned int queue_num, unsigned int default_mark) {
 		}
 		blist = &tlist.base;
 		
-		crtx_create_task(blist->graph, 0, "resolve_ips", pfw_resolve_IPs_timer, TASK2CACHETASK(rcache_resolve));
+		crtx_create_task(blist->graph, 0, "resolve_ips", pfw_resolve_IPs_timer, TASK2CACHE(rcache_resolve));
 		
 		crtx_start_listener(blist);
 	}
 	
 	{
 		// IP
-		rcache_ip = create_response_cache_task("rcache_ip", pfw_rcache_create_key_ip);
-		TASK2CACHETASK(rcache_ip)->on_add = &crtx_cache_no_add;
-		rcache_ip->id = "rcache_ip";
+		r = crtx_create_cache_task(&rcache_ip, "rcache_ip", pfw_rcache_create_key_ip);
+		if (r) {
+			printf("cannot create ip cache\n");
+			return 0;
+		}
 		
-		crtx_load_cache(TASK2CACHETASK(rcache_ip)->cache, PFW_DATA_DIR);
+		TASK2CACHE(rcache_ip)->on_add = &crtx_cache_no_add;
 		
-		add_task(nfq_list.base.graph, rcache_ip);
+		crtx_load_cache(TASK2CACHE(rcache_ip), PFW_DATA_DIR);
+		
+		crtx_add_task(nfq_list.base.graph, rcache_ip);
 	}
 	
 	{
 		// host
-		rcache_host = create_response_cache_task("rcache_host", pfw_rcache_create_key_hostname);
-		TASK2CACHETASK(rcache_host)->on_hit = &pfw_on_hit_host;
+		r = crtx_create_cache_task(&rcache_host, "rcache_host", pfw_rcache_create_key_hostname);
+		if (r) {
+			printf("cannot create host cache\n");
+			return 0;
+		}
 		
-		rcache_host->id = "rcache_host";
+		TASK2CACHE(rcache_host)->on_hit = &pfw_on_hit_host;
 		
-		crtx_load_cache(TASK2CACHETASK(rcache_host)->cache, PFW_DATA_DIR);
+		crtx_load_cache(TASK2CACHE(rcache_host), PFW_DATA_DIR);
 		
-		add_task(nfq_list.base.graph, rcache_host);
+		crtx_add_task(nfq_list.base.graph, rcache_host);
 	}
 	
 	crtx_start_listener(nfq_list_base);
@@ -442,12 +453,9 @@ char init() {
 void finish() {
 	struct pfw_ip_ll *ipi, *ipin;
 	
-	free_response_cache(((struct crtx_cache_task*) rcache_host->userdata)->cache);
-	free_response_cache(((struct crtx_cache_task*) rcache_ip->userdata)->cache);
-	free_response_cache(((struct crtx_cache_task*) rcache_resolve->userdata)->cache);
-	crtx_free_task(rcache_host);
-	crtx_free_task(rcache_ip);
-	crtx_free_task(rcache_resolve);
+	crtx_free_cache_task(rcache_host);
+	crtx_free_cache_task(rcache_ip);
+	crtx_free_cache_task(rcache_resolve);
 	
 	for (ipi = local_ips; ipi; ipi=ipin) {
 		ipin=ipi->next;

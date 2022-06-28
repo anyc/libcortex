@@ -20,12 +20,11 @@
 #endif
 
 
-struct crtx_dict_item * rcache_match_cb_t_strcmp(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
+struct crtx_dict_item * crtx_cache_match_cb_t_strcmp(struct crtx_cache *cache, struct crtx_dict_item *key, struct crtx_event *event) {
 	struct crtx_dict_item *ditem;
-// 	struct crtx_dict_item *rkey;
 	
 	
-	ditem = crtx_get_first_item(ct->cache->entries);
+	ditem = crtx_get_first_item(cache->entries);
 	
 	while (ditem) {
 		if (key->type == 's' && ditem->key && !strcmp(ditem->key, key->string))
@@ -37,19 +36,19 @@ struct crtx_dict_item * rcache_match_cb_t_strcmp(struct crtx_cache_task *ct, str
 // 			return ditem;
 // 		}
 		
-		ditem = crtx_get_next_item(ct->cache->entries, ditem);
+		ditem = crtx_get_next_item(cache->entries, ditem);
 	}
 	
 	return 0;
 }
 
-struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
+struct crtx_dict_item * crtx_cache_match_cb_t_regex(struct crtx_cache *cache, struct crtx_dict_item *key, struct crtx_event *event) {
 	int ret;
 	struct crtx_dict_item *ditem;
 	struct crtx_dict_item *rkey, *regex;
 	
 	
-	ditem = crtx_get_first_item(ct->cache->entries);
+	ditem = crtx_get_first_item(cache->entries);
 	
 	while (ditem) {
 		regex = crtx_get_item(ditem->dict, "regexp");
@@ -58,7 +57,7 @@ struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache_task *ct, stru
 		
 		if (ditem->type != 'D') {
 			CRTX_ERROR("wrong dictionary structure for complex cache layout: %c != %c\n", ditem->type, 'D');
-			ditem = crtx_get_next_item(ct->cache->entries, ditem);
+			ditem = crtx_get_next_item(cache->entries, ditem);
 			continue;
 		}
 		rkey = crtx_get_item(ditem->dict, "key");
@@ -70,7 +69,7 @@ struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache_task *ct, stru
 			if (rkey && !crtx_cmp_item(key, rkey))
 				return ditem;
 			
-			ditem = crtx_get_next_item(ct->cache->entries, ditem);
+			ditem = crtx_get_next_item(cache->entries, ditem);
 			continue;
 		}
 		
@@ -100,15 +99,14 @@ struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache_task *ct, stru
 // 			return 0;
 		}
 		
-// 		rex++;
-		ditem = crtx_get_next_item(ct->cache->entries, ditem);
+		ditem = crtx_get_next_item(cache->entries, ditem);
 	}
 	
 	return 0;
 }
 
-int crtx_cache_on_hit(struct crtx_cache_task *rc, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
-	if ( !(rc->cache->flags & CRTX_CACHE_SIMPLE_LAYOUT) )
+int crtx_cache_on_hit(struct crtx_cache *cache, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
+	if ( !(cache->flags & CRTX_CACHE_SIMPLE_LAYOUT) )
 		c_entry = crtx_get_item(c_entry->dict, "value");
 	
 	// if there is no value or type == 0, this cache entry is ignored
@@ -139,19 +137,17 @@ struct cache_sessiondata {
 	struct crtx_dict_item *cache_entry;
 };
 
-char response_cache_task(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_cache_task *ct = (struct crtx_cache_task*) userdata;
+char crtx_cache_task_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_cache *cache = (struct crtx_cache*) userdata;
 	struct crtx_dict_item *ditem, *passthrough;
 	char ret;
 	struct cache_sessiondata *sd;
 	
+	
 	sd = (struct cache_sessiondata*) calloc(1, sizeof(struct cache_sessiondata));
 	*sessiondata = sd;
 	
-// 	if (event->data.type == 'p' && !event->data.dict)
-// 		event->data.to_dict(&event->data);
-	
-	ret = ct->create_key(ct, &sd->key, event);
+	ret = cache->create_key(cache, &sd->key, event);
 	if (ret) {
 		if (event->description)
 			CRTX_DBG("no key created for \"%s\", ignoring\n", event->description);
@@ -161,32 +157,30 @@ char response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 		return 1;
 	}
 	
-	
-	if (ct->cache->flags & CRTX_CACHE_SIMPLE_LAYOUT)
-		ct->match_event = &rcache_match_cb_t_strcmp;
+	if (cache->flags & CRTX_CACHE_SIMPLE_LAYOUT)
+		cache->match_event = &crtx_cache_match_cb_t_strcmp;
 	else
-		ct->match_event = &rcache_match_cb_t_regex;
+		cache->match_event = &crtx_cache_match_cb_t_regex;
 	
+	pthread_mutex_lock(&cache->mutex);
 	
-	pthread_mutex_lock(&ct->cache->mutex);
-	
-	ditem = ct->match_event(ct, &sd->key, event);
+	ditem = cache->match_event(cache, &sd->key, event);
 	
 	// update stats
-	if (ditem && !(ct->cache->flags & CRTX_CACHE_SIMPLE_LAYOUT) && !(ct->cache->flags & CRTX_CACHE_NO_EXT_FIELDS)) {
+	if (ditem && !(cache->flags & CRTX_CACHE_SIMPLE_LAYOUT) && !(cache->flags & CRTX_CACHE_NO_EXT_FIELDS)) {
 		struct crtx_dict_item *di, now;
 		uint64_t timeout;
 		
 		timeout = 0;
-		ret = crtx_get_value(ct->cache->config, "timeout", 'U', &timeout, sizeof(timeout));
+		ret = crtx_get_value(cache->config, "timeout", 'U', &timeout, sizeof(timeout));
 		if (ret && timeout > 0) {
-			ct->cache->get_time(&now);
+			cache->get_time(&now);
 			
 			di = crtx_get_item(ditem->dict, "creation");
 			
-// 			printf("%zu \n", now.uint64 - creation->uint64 + timeout);
 			if (di && now.uint64 > di->uint64 + timeout) {
 				struct crtx_dict_item *key_item;
+				
 				CRTX_DBG("dropping cache entry\n");
 				
 				key_item = crtx_get_item(ditem->dict, "key");
@@ -206,9 +200,9 @@ char response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 				
 				di->type = 'U';
 				di->key = "last_match";
-				ct->cache->get_time(di);
+				cache->get_time(di);
 			} else {
-				ct->cache->get_time(di);
+				cache->get_time(di);
 			}
 			
 			di = crtx_get_item(ditem->dict, "n_hits");
@@ -232,11 +226,11 @@ char response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 	if (ditem) {
 		char response_available;
 		
-		response_available = ct->on_hit(ct, &sd->key, event, ditem);
+		response_available = cache->on_hit(cache, &sd->key, event, ditem);
 		
 		sd->cache_entry = ditem;
 		
-		pthread_mutex_unlock(&ct->cache->mutex);
+		pthread_mutex_unlock(&cache->mutex);
 		
 // 		crtx_print_dict(ct->cache->entries);
 		
@@ -247,10 +241,10 @@ char response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 	} else
 		sd->cache_entry = 0;
 	
-	if (ct->on_miss)
-		ct->on_miss(ct, &sd->key, event, 0);
+	if (cache->on_miss)
+		cache->on_miss(cache, &sd->key, event, 0);
 	
-	pthread_mutex_unlock(&ct->cache->mutex);
+	pthread_mutex_unlock(&cache->mutex);
 	
 	return 1;
 }
@@ -266,8 +260,8 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *cache, struct cr
 	
 // 	crtx_print_dict_item(key, 0);
 	
-	if (cache->ct->on_add)
-		if (!cache->ct->on_add(cache->ct, key, event))
+	if (cache->on_add)
+		if (!cache->on_add(cache, key, event))
 			return 0;
 	
 	if (!dc->entries) {
@@ -403,8 +397,8 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *cache, struct cr
 	return c_entry;
 }
 
-char response_cache_task_cleanup(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_cache_task *ct = (struct crtx_cache_task*) userdata;
+static char crtx_cache_task_cleanup(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_cache *cache = (struct crtx_cache*) userdata;
 	struct crtx_dict_item *key;
 	struct cache_sessiondata *sd;
 	
@@ -418,11 +412,11 @@ char response_cache_task_cleanup(struct crtx_event *event, void *userdata, void 
 	}
 	
 	if (!sd->cache_entry && (event->response.pointer || event->response.dict)) {
-		pthread_mutex_lock(&ct->cache->mutex);
+		pthread_mutex_lock(&cache->mutex);
 		
-		crtx_cache_add_entry(ct->cache, key, event, 0);
+		crtx_cache_add_entry(cache, key, event, 0);
 		
-		pthread_mutex_unlock(&ct->cache->mutex);
+		pthread_mutex_unlock(&cache->mutex);
 	}
 	
 	crtx_free_dict_item(key);
@@ -448,20 +442,18 @@ void crtx_cache_remove_entry(struct crtx_cache *cache, struct crtx_dict_item *ke
 	crtx_dict_remove_item(dc->entries, key->string);
 }
 
-int crtx_cache_no_add(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
+int crtx_cache_no_add(struct crtx_cache *cache, struct crtx_dict_item *key, struct crtx_event *event) {
 	return 0;
 }
 
-int crtx_cache_update_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
+int crtx_cache_update_on_hit(struct crtx_cache *cache, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
 	if (c_entry->type != 'D') {
 		CRTX_ERROR("crtx_cache_update_on_hit: %c != D\n", c_entry->type);
 		return 0;
 	}
 	
-// 	crtx_free_dict(c_entry->dict);
 	crtx_dict_unref(c_entry->dict);
 	
-// 	c_entry->dict = crtx_dict_copy(event->data.dict);
 	crtx_dict_ref(event->data.dict);
 	c_entry->dict = event->data.dict;
 	
@@ -469,16 +461,13 @@ int crtx_cache_update_on_hit(struct crtx_cache_task *ct, struct crtx_dict_item *
 	return 0;
 }
 
-int crtx_cache_add_on_miss(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
+int crtx_cache_add_on_miss(struct crtx_cache *cache, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
 	struct crtx_dict_item di;
-// 	printf("add\n");
+	
 	di.type = 'D';
-// 	di.dict = event->data.dict;
 	crtx_event_get_payload(event, 0, 0, &di.dict);
 	
-	crtx_cache_add_entry(ct->cache, key, event, &di);
-	
-// 	crtx_print_dict(ct->cache->entries);
+	crtx_cache_add_entry(cache, key, event, &di);
 	
 	return 0;
 }
@@ -525,9 +514,8 @@ void crtx_cache_gettime_rt(struct crtx_dict_item *item) {
 	item->uint64 = tp.tv_sec * 1000000000 + tp.tv_nsec;
 }
 
-struct crtx_task *create_response_cache_task(char *id, create_key_cb_t create_key) {
+struct crtx_task *create_cache_task(char *id, create_key_cb_t create_key) {
 	struct crtx_cache *dc;
-	struct crtx_cache_task *ct;
 	struct crtx_task *task;
 	int ret;
 	
@@ -544,148 +532,42 @@ struct crtx_task *create_response_cache_task(char *id, create_key_cb_t create_ke
 // 	dc->config = crtx_get_item_by_idx(dc->dict, 0)->dict;
 // 	dc->entries = crtx_get_item_by_idx(dc->dict, 1)->dict;
 	
-	ct = (struct crtx_cache_task*) calloc(1, sizeof(struct crtx_cache_task));
-	ct->create_key = create_key;
-	ct->match_event = &rcache_match_cb_t_strcmp;
-	ct->on_hit = &crtx_cache_on_hit;
-	ct->on_miss = 0;
-	ct->cache = dc;
+// 	ct = (struct crtx_cache_task*) calloc(1, sizeof(struct crtx_cache_task));
+	dc->create_key = create_key;
+	dc->match_event = &crtx_cache_match_cb_t_strcmp;
+	dc->on_hit = &crtx_cache_on_hit;
+	dc->on_miss = 0;
 	
-	dc->ct = ct;
+	dc->task = task;
 	
 	task->id = id;
 	task->position = 90;
-	task->userdata = ct;
-	task->handle = &response_cache_task;
-	task->cleanup = &response_cache_task_cleanup;
+	task->userdata = dc;
+	task->handle = &crtx_cache_task_handler;
+	task->cleanup = &crtx_cache_task_cleanup;
 	
 	return task;
 }
 
-// void crtx_flush_entries(struct crtx_cache *dc) {
-// // 	crtx_free_dict(dc->entries);
-// 	crtx_dict_unref(dc->entries);
-// // 	crtx_get_item_by_idx(dc->dict, 1)->dict = 0;
-// }
-
-void free_response_cache(struct crtx_cache *dc) {
-// 	crtx_flush_entries(dc);
-	crtx_dict_unref(dc->dict);
-	free(dc);
-}
-
-void free_response_cache_task(struct crtx_cache_task *ct) {
-	free_response_cache(ct->cache);
-	free(ct);
-}
-
-int crtx_create_response_cache_task(struct crtx_task **task, char *id, create_key_cb_t create_key) {
-	*task = create_response_cache_task(id, create_key);
+int crtx_create_cache_task(struct crtx_task **task, char *id, create_key_cb_t create_key) {
+	*task = create_cache_task(id, create_key);
 	if (!*task)
 		return -1;
 	
 	return 0;
 }
 
-void crtx_free_response_cache_task(struct crtx_task *task) {
-	struct crtx_cache_task *ct;
-	
-	ct = (struct crtx_cache_task *) task->userdata;
-	free_response_cache_task(ct);
+void crtx_free_cache(struct crtx_cache *cache) {
+	crtx_dict_unref(cache->dict);
+	free(cache);
 }
 
-
-
-
-static char presence_cache_task(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_presence_cache_task *ct = (struct crtx_presence_cache_task*) userdata;
-	struct crtx_dict_item *ditem, key;
-	char ret, add;
+void crtx_free_cache_task(struct crtx_task *task) {
+	struct crtx_cache *cache;
 	
+	cache = (struct crtx_cache *) task->userdata;
+	crtx_free_cache(cache);
 	
-	memset(&key, 0, sizeof(struct crtx_dict_item));
-	ret = ct->create_key_action(event, &key, &add);
-	if (ret) {
-		if (event->description)
-			CRTX_DBG("no key created for \"%s\", ignoring\n", event->description);
-		else
-			CRTX_DBG("no key created for \"%d\", ignoring\n", event->type);
-		crtx_free_dict_item(&key);
-		return 1;
-	}
-// 	printf("asd %s\n", key.string);
-	
-	pthread_mutex_lock(&ct->cache->mutex);
-	
-	ditem = ct->match_event((struct crtx_cache_task*) ct, &key, event);
-	
-	if (add) {
-		if (ditem) {
-			CRTX_DBG("%s already present\n", key.string);
-		} else {
-			crtx_cache_add_entry(ct->cache, &key, event, &event->data);
-		}
-	} else {
-		if (!ditem) {
-			CRTX_DBG("%s not present\n", key.string);
-		} else {
-			crtx_cache_remove_entry(ct->cache, &key);
-		}
-	}
-	
-	pthread_mutex_unlock(&ct->cache->mutex);
-	
-// 	crtx_print_dict(ct->cache->entries);
-	
-	crtx_free_dict_item(&key);
-	
-	return 1;
-}
-
-struct crtx_task *crtx_create_presence_cache_task(char *id, create_key_action_cb_t create_key) {
-	struct crtx_cache *dc;
-	struct crtx_presence_cache_task *ct;
-	struct crtx_task *task;
-	int ret;
-	
-	task = new_task();
-	
-	dc = (struct crtx_cache*) calloc(1, sizeof(struct crtx_cache));
-	
-	ret = pthread_mutex_init(&dc->mutex, 0); CRTX_ASSERT(ret >= 0);
-	
-	dc->dict = crtx_init_dict(0, 0, 0);
-	dc->dict->id = id;
-	dc->flags = CRTX_CACHE_SIMPLE_LAYOUT;
-	
-	// 	dc->config = crtx_get_item_by_idx(dc->dict, 0)->dict;
-	// 	dc->entries = crtx_get_item_by_idx(dc->dict, 1)->dict;
-	
-	ct = (struct crtx_presence_cache_task*) calloc(1, sizeof(struct crtx_presence_cache_task));
-	ct->create_key_action = create_key;
-	ct->match_event = &rcache_match_cb_t_strcmp;
-// 	ct->on_hit = &crtx_cache_on_hit;
-// 	ct->on_miss = &presence_cache_on_miss_cb;
-	ct->cache = dc;
-	ct->get_time = &crtx_cache_gettime_rt;
-	
-	task->id = id;
-	task->position = 90;
-	task->userdata = ct;
-	task->handle = &presence_cache_task;
-// 	task->cleanup = &response_cache_task_cleanup;
-	
-	return task;
-}
-
-void crtx_free_presence_cache_task(struct crtx_task *task) {
-	struct crtx_presence_cache_task *ct;
-	
-	ct = (struct crtx_presence_cache_task *) task->userdata;
-	
-	crtx_dict_unref(ct->cache->dict);
-	free(ct->cache);
-	free(ct);
 	crtx_free_task(task);
 }
 

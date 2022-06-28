@@ -374,9 +374,9 @@ static char libvirt_event_handler(struct crtx_event *event, void *userdata, void
 
 // create the primary key for the presence cache entry and determine if this is
 // an "add" or "remove" event
-static char create_key_action_cb(struct crtx_event *event, struct crtx_dict_item *key, char *add) {
+static char create_key_action_cb(struct crtx_cache *cache, struct crtx_event *event, struct crtx_dict_item *key) {
 	struct crtx_dict *usb_dict, *data_dict;
-	char *vendor, *product, *action;
+	char *vendor, *product;
 	
 	
 	crtx_event_get_payload(event, 0, 0, &data_dict);
@@ -402,22 +402,38 @@ static char create_key_action_cb(struct crtx_event *event, struct crtx_dict_item
 	key->flags = CRTX_DIF_ALLOCATED_KEY;
 	sprintf(key->string, "%s-%s", vendor, product);
 	
-	action = crtx_get_string(data_dict, "ACTION");
+	return 0;
+}
+
+
+static int cache_update_on_hit(struct crtx_cache *cache, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *c_entry) {
+	struct crtx_dict *dict;
+	char *action;
+	
+	
+	dict = crtx_event_get_dict(event);
+	
+	action = crtx_get_string(dict, "ACTION");
 	if (!action) {
 		CRTX_ERROR("no field ACTION in dict\n");
-		crtx_print_dict(data_dict);
+		crtx_print_dict(dict);
 		return 1;
 	}
 	
 	if (!strcmp(action, "add") || !strcmp(action, "initial")) {
-		*add = 1;
-	} else 
-	if (!strcmp(action, "remove")) {
-		*add = 0;
+		if (c_entry)
+			return crtx_cache_update_on_hit(cache, key, event, c_entry);
 	} else
+	if (!strcmp(action, "remove")) {
+		if (c_entry)
+			crtx_cache_remove_entry(cache, key);
+	} else {
 		return 1;
-	
-	return 0;
+	}
+}
+
+static int cache_on_add_cb(struct crtx_cache *cache, struct crtx_dict_item *key, struct crtx_event *event) {
+	return cache_update_on_hit(cache, key, event, 0);
 }
 
 int main(int argc, char **argv) {
@@ -484,13 +500,31 @@ int main(int argc, char **argv) {
 	
 	crtx_create_task(ulist.base.graph, 10, "udev_test", udev_event_handler, 0);
 	
-	// create a presence cache that will maintain a list of present USB devices
-	cache_task = crtx_create_presence_cache_task("udev_cache", create_key_action_cb);
-	cache_task->position = 20;
+// 	// create a presence cache that will maintain a list of present USB devices
+// 	cache_task = crtx_create_presence_cache_task("udev_cache", create_key_action_cb);
+// 	cache_task->position = 20;
+// 	
+// 	// add cache task to the udev event graph
+// 	udev_cache_task = (struct crtx_cache_task*) cache_task->userdata;
+// 	add_task(ulist.base.graph, cache_task);
 	
-	// add cache task to the udev event graph
-	udev_cache_task = (struct crtx_cache_task*) cache_task->userdata;
-	add_task(ulist.base.graph, cache_task);
+	{
+		ret = crtx_create_cache_task(&cache_task, "udev_cache", create_key_action_cb);
+		if (ret) {
+			CRTX_ERROR("crtx_create_cache_task failed\n");
+			return ret;
+		}
+		
+		cache = (struct crtx_cache*) cache_task->userdata;
+		
+		cache->on_hit = &cache_update_on_hit;
+		cache->on_miss = &crtx_cache_add_on_miss;
+		cache->on_add = &cache_on_add_cb;
+// 		cache->userdata = ;
+		cache->flags = CRTX_CACHE_SIMPLE_LAYOUT;
+		
+		crtx_add_task(ulist.base.graph, cache_task);
+	}
 	
 	ret = crtx_start_listener(&ulist.base);
 	if (!ret) {
