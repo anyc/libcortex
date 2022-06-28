@@ -405,6 +405,10 @@ void *nfq_tmain(void *data) {
 void free_nf_queue_listener(struct crtx_listener_base *data, void *userdata) {
 }
 
+void thread_stop(struct crtx_thread *thread, void *data) {
+	crtx_threads_cancel(thread);
+}
+
 struct crtx_listener_base *crtx_setup_nf_queue_listener(void *options) {
 	struct crtx_nf_queue_listener *nfq_listener;
 	
@@ -417,6 +421,7 @@ struct crtx_listener_base *crtx_setup_nf_queue_listener(void *options) {
 	nfq_listener->base.mode = CRTX_PREFER_THREAD;
 	nfq_listener->base.thread_job.fct = &nfq_tmain;
 	nfq_listener->base.thread_job.fct_data = nfq_listener;
+	nfq_listener->base.thread_job.do_stop = &thread_stop;
 	nfq_listener->base.start_listener = 0;
 	
 	return &nfq_listener->base;
