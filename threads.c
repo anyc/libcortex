@@ -123,9 +123,7 @@ finish:
 	return err;
 }
 
-void crtx_send_signal(struct crtx_signals *s, char brdcst) {
-	LOCK(s->mutex);
-	
+void crtx_send_signal_unsafe(struct crtx_signals *s, char brdcst) {
 	if (s->bitflag_idx == -1) {
 		if (!*s->condition)
 			*s->condition = 1;
@@ -139,6 +137,13 @@ void crtx_send_signal(struct crtx_signals *s, char brdcst) {
 	} else {
 		SIGNAL_SINGLE(s->cond);
 	}
+}
+
+
+void crtx_send_signal(struct crtx_signals *s, char brdcst) {
+	LOCK(s->mutex);
+	
+	crtx_send_signal_unsafe(s, brdcst);
 	
 	UNLOCK(s->mutex);
 }
@@ -155,7 +160,7 @@ void crtx_dereference_signal(struct crtx_signals *s) {
 	LOCK(s->ref_mutex);
 	
 	if (s->n_refs == 0)
-		CRTX_ERROR("signal referance < 0\n");
+		CRTX_ERROR("signal reference < 0\n");
 	else
 		s->n_refs -= 1;
 	if (s->n_refs == 0) {
@@ -163,7 +168,11 @@ void crtx_dereference_signal(struct crtx_signals *s) {
 		SIGNAL_BCAST(s->ref_cond);
 		UNLOCK(s->ref_mutex);
 		
-		crtx_shutdown_signal(s);
+		// We not shutdown the signal here as "(de)reference" is only used to
+		// track the signal consumers. The producer might still expect a valid
+		// signal structure after this call.
+		if (0)
+			crtx_shutdown_signal(s);
 		return;
 	}
 	
@@ -200,31 +209,16 @@ char crtx_signal_is_active(struct crtx_signals *s) {
 static void crtx_thread_tmain_cleanup(void *data) {
 	struct crtx_thread *thread = (struct crtx_thread*) data;
 	
-	crtx_send_signal(&thread->finished, 1);
+	// we only send the signal here as this thread might got interrupted
+	// while holding a mutex
 	
-	if (thread->job->on_finish)
-		thread->job->on_finish(thread, thread->job->on_finish_data);
-	
-	crtx_reset_signal(&thread->finished);
-	
-	LOCK(pool_mutex);
-	crtx_reset_signal(&thread->start);
-	thread->in_use = 0;
-	thread->job = 0;
-// 	thread->fct = 0;
-// 	thread->fct_data = 0;
-// 	thread->on_finish = 0;
-// 	thread->on_finish_data = 0;
-// 	thread->do_stop = 0;
-	UNLOCK(pool_mutex);
+	crtx_send_signal_unsafe(&thread->finished, 1);
 }
 
 static void * crtx_thread_tmain(void *data) {
 	struct crtx_thread *thread = (struct crtx_thread*) data;
 	
 	CRTX_DBG("thread %p started\n", data);
-	
-// 	signal(SIGINT,test);
 	
 	pthread_cleanup_push(&crtx_thread_tmain_cleanup, data);
 	
@@ -239,7 +233,23 @@ static void * crtx_thread_tmain(void *data) {
 		// execute
 		thread->job->fct(thread->job->fct_data);
 		
-		crtx_thread_tmain_cleanup(data);
+		crtx_send_signal(&thread->finished, 1);
+		
+		if (thread->job->on_finish)
+			thread->job->on_finish(thread, thread->job->on_finish_data);
+		
+		crtx_reset_signal(&thread->finished);
+		
+		LOCK(pool_mutex);
+		crtx_reset_signal(&thread->start);
+		thread->in_use = 0;
+		thread->job = 0;
+	// 	thread->fct = 0;
+	// 	thread->fct_data = 0;
+	// 	thread->on_finish = 0;
+	// 	thread->on_finish_data = 0;
+	// 	thread->do_stop = 0;
+		UNLOCK(pool_mutex);
 	}
 	
 	pthread_cleanup_pop(0);
