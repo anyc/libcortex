@@ -20,12 +20,12 @@
 #endif
 
 
-struct crtx_dict_item * rcache_match_cb_t_strcmp(struct crtx_cache *rc, struct crtx_dict_item *key, struct crtx_event *event) {
+struct crtx_dict_item * rcache_match_cb_t_strcmp(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
 	struct crtx_dict_item *ditem;
 // 	struct crtx_dict_item *rkey;
 	
 	
-	ditem = crtx_get_first_item(rc->entries);
+	ditem = crtx_get_first_item(ct->cache->entries);
 	
 	while (ditem) {
 		if (key->type == 's' && ditem->key && !strcmp(ditem->key, key->string))
@@ -37,19 +37,19 @@ struct crtx_dict_item * rcache_match_cb_t_strcmp(struct crtx_cache *rc, struct c
 // 			return ditem;
 // 		}
 		
-		ditem = crtx_get_next_item(rc->entries, ditem);
+		ditem = crtx_get_next_item(ct->cache->entries, ditem);
 	}
 	
 	return 0;
 }
 
-struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache *rc, struct crtx_dict_item *key, struct crtx_event *event) {
+struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache_task *ct, struct crtx_dict_item *key, struct crtx_event *event) {
 	int ret;
 	struct crtx_dict_item *ditem;
 	struct crtx_dict_item *rkey, *regex;
 	
 	
-	ditem = crtx_get_first_item(rc->entries);
+	ditem = crtx_get_first_item(ct->cache->entries);
 	
 	while (ditem) {
 		regex = crtx_get_item(ditem->dict, "regexp");
@@ -58,7 +58,7 @@ struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache *rc, struct cr
 		
 		if (ditem->type != 'D') {
 			CRTX_ERROR("wrong dictionary structure for complex cache layout: %c != %c\n", ditem->type, 'D');
-			ditem = crtx_get_next_item(rc->entries, ditem);
+			ditem = crtx_get_next_item(ct->cache->entries, ditem);
 			continue;
 		}
 		rkey = crtx_get_item(ditem->dict, "key");
@@ -70,7 +70,7 @@ struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache *rc, struct cr
 			if (rkey && !crtx_cmp_item(key, rkey))
 				return ditem;
 			
-			ditem = crtx_get_next_item(rc->entries, ditem);
+			ditem = crtx_get_next_item(ct->cache->entries, ditem);
 			continue;
 		}
 		
@@ -101,7 +101,7 @@ struct crtx_dict_item * rcache_match_cb_t_regex(struct crtx_cache *rc, struct cr
 		}
 		
 // 		rex++;
-		ditem = crtx_get_next_item(rc->entries, ditem);
+		ditem = crtx_get_next_item(ct->cache->entries, ditem);
 	}
 	
 	return 0;
@@ -151,7 +151,7 @@ char response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 // 	if (event->data.type == 'p' && !event->data.dict)
 // 		event->data.to_dict(&event->data);
 	
-	ret = ct->create_key(event, &sd->key);
+	ret = ct->create_key(ct, &sd->key, event);
 	if (ret) {
 		if (event->description)
 			CRTX_DBG("no key created for \"%s\", ignoring\n", event->description);
@@ -170,7 +170,7 @@ char response_cache_task(struct crtx_event *event, void *userdata, void **sessio
 	
 	pthread_mutex_lock(&ct->cache->mutex);
 	
-	ditem = ct->match_event(ct->cache, &sd->key, event);
+	ditem = ct->match_event(ct, &sd->key, event);
 	
 	// update stats
 	if (ditem && !(ct->cache->flags & CRTX_CACHE_SIMPLE_LAYOUT) && !(ct->cache->flags & CRTX_CACHE_NO_EXT_FIELDS)) {
@@ -617,7 +617,7 @@ static char presence_cache_task(struct crtx_event *event, void *userdata, void *
 	
 	pthread_mutex_lock(&ct->cache->mutex);
 	
-	ditem = ct->match_event(ct->cache, &key, event);
+	ditem = ct->match_event((struct crtx_cache_task*) ct, &key, event);
 	
 	if (add) {
 		if (ditem) {
