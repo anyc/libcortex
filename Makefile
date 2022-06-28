@@ -93,6 +93,7 @@ $(local_mk):
 
 clean:
 	$(MAKE) -C layer2 clean LAYER2_MODULES="$(LAYER2_MODULES)"
+	$(MAKE) -C examples clean
 	rm -rf *.o $(APP) core_modules.h config.h $(TESTS) $(SHAREDLIB) libcrtx*.so* libcortex*.deb
 
 debug:
