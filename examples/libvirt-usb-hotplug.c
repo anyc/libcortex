@@ -39,7 +39,7 @@ struct crtx_udev_raw2dict_attr_req r2ds[] = {
 struct crtx_dict *cfg_dict = 0;
 struct crtx_libvirt_listener lvlist;
 struct crtx_timer_retry_listener *retry_lstnr;
-struct crtx_cache_task *udev_cache_task;
+struct crtx_cache *udev_cache;
 
 char *test_filters[] = {
 	"usb",
@@ -326,7 +326,7 @@ static char libvirt_event_handler(struct crtx_event *event, void *userdata, void
 					// lookup vendor:product in the presence cache
 					int k;
 					struct crtx_dict *cache_dict;
-					cache_dict = udev_cache_task->cache->entries;
+					cache_dict = udev_cache->entries;
 					for (k=0; k < cache_dict->signature_length; k++) {
 						struct crtx_dict_item *di, *di_data;
 						char r;
@@ -374,7 +374,7 @@ static char libvirt_event_handler(struct crtx_event *event, void *userdata, void
 
 // create the primary key for the presence cache entry and determine if this is
 // an "add" or "remove" event
-static char create_key_action_cb(struct crtx_cache *cache, struct crtx_event *event, struct crtx_dict_item *key) {
+static int create_key_action_cb(struct crtx_cache *cache, struct crtx_dict_item *key, struct crtx_event *event) {
 	struct crtx_dict *usb_dict, *data_dict;
 	char *vendor, *product;
 	
@@ -515,19 +515,19 @@ int main(int argc, char **argv) {
 			return ret;
 		}
 		
-		cache = (struct crtx_cache*) cache_task->userdata;
+		udev_cache = (struct crtx_cache*) cache_task->userdata;
 		
-		cache->on_hit = &cache_update_on_hit;
-		cache->on_miss = &crtx_cache_add_on_miss;
-		cache->on_add = &cache_on_add_cb;
-// 		cache->userdata = ;
-		cache->flags = CRTX_CACHE_SIMPLE_LAYOUT;
+		udev_cache->on_hit = &cache_update_on_hit;
+		udev_cache->on_miss = &crtx_cache_add_on_miss;
+		udev_cache->on_add = &cache_on_add_cb;
+// 		udev_cache->userdata = ;
+		udev_cache->flags = CRTX_CACHE_SIMPLE_LAYOUT;
 		
 		crtx_add_task(ulist.base.graph, cache_task);
 	}
 	
 	ret = crtx_start_listener(&ulist.base);
-	if (!ret) {
+	if (ret) {
 		CRTX_ERROR("starting udev listener failed\n");
 		return 1;
 	}
@@ -536,7 +536,7 @@ int main(int argc, char **argv) {
 	crtx_loop();
 	
 	// cleanup
-	crtx_free_presence_cache_task(cache_task);
+	crtx_free_cache_task(cache_task);
 	crtx_shutdown_listener(&ulist.base);
 	
 	crtx_finish();

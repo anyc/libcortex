@@ -121,13 +121,13 @@ static void elw_fd_cleanup(struct libvirt_eventloop_wrapper* wrap) {
 // static void elw_fd_callback(struct crtx_evloop_fd *evloop_fd) {
 static char elw_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct libvirt_eventloop_wrapper *wrap;
-	struct epoll_event *epoll_event;
+// 	struct epoll_event *epoll_event;
 	
 	struct crtx_evloop_callback *el_cb;
 	
 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 	
-	epoll_event = (struct epoll_event *) el_cb->fd_entry->el_data;
+// 	epoll_event = (struct epoll_event *) el_cb->fd_entry->el_data;
 	
 	wrap = (struct libvirt_eventloop_wrapper*) userdata;
 	
@@ -139,7 +139,7 @@ static char elw_fd_event_handler(struct crtx_event *event, void *userdata, void 
 // 		return;
 // 	}
 	
-	wrap->event_cb(wrap->id, wrap->evloop_fd.fd, elw_virEventPollFromNativeEvents(epoll_event->events), wrap->opaque);
+	wrap->event_cb(wrap->id, wrap->evloop_fd.fd, elw_virEventPollFromNativeEvents(el_cb->triggered_flags), wrap->opaque);
 	
 	if (wrap->delete)
 		elw_fd_cleanup(wrap);
@@ -215,6 +215,8 @@ static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback c
 static void elw_virEventUpdateHandleFunc(int watch, int event) {
 	struct crtx_ll *it;
 	struct libvirt_eventloop_wrapper *wrap;
+	int flags;
+	
 	
 	for (it=event_list; it; it=it->next) {
 		if ( ((struct libvirt_eventloop_wrapper*) it->data)->id == watch)
@@ -227,12 +229,15 @@ static void elw_virEventUpdateHandleFunc(int watch, int event) {
 	}
 	
 	wrap = ((struct libvirt_eventloop_wrapper*) it->data);
-	wrap->default_el_cb.crtx_event_flags = elw_virEventPollToNativeEvents(event);
+	flags = elw_virEventPollToNativeEvents(event);
 	
-	CRTX_DBG("libvirt: update %d flags %d\n", wrap->id, wrap->default_el_cb.crtx_event_flags);
+	CRTX_DBG("libvirt: update id %d flags %d (prev: %d)\n", wrap->id, flags, wrap->default_el_cb.crtx_event_flags);
 	
-// 	crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &wrap->evloop_fd);
-	crtx_evloop_enable_cb(&wrap->default_el_cb);
+	if (flags != wrap->default_el_cb.crtx_event_flags) {
+		wrap->default_el_cb.crtx_event_flags = flags;
+	// 	crtx_root->event_loop.mod_fd(&crtx_root->event_loop, &wrap->evloop_fd);
+		crtx_evloop_enable_cb(&wrap->default_el_cb);
+	}
 }
 
 static int elw_virEventRemoveHandleFunc(int watch) {
@@ -634,6 +639,9 @@ static const char *eventDetailToString(int event, int detail) {
 				case VIR_DOMAIN_EVENT_CRASHED_PANICKED:
 					ret = "Panic";
 					break;
+				case VIR_DOMAIN_EVENT_CRASHED_CRASHLOADED:
+					ret = "Crashloaded";
+					break;
 // 				case VIR_DOMAIN_EVENT_CRASHED_LAST:
 // 					ret = "Last";
 // 					break;
@@ -843,6 +851,7 @@ struct crtx_listener_base *crtx_setup_libvirt_listener(void *options) {
 	
 	lvlist->base.start_listener = start_listener;
 	lvlist->base.stop_listener = stop_listener;
+	lvlist->base.mode = CRTX_NO_PROCESSING_MODE;
 	
 	ret = virInitialize();
 	if (ret < 0) {
