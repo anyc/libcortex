@@ -827,7 +827,7 @@ void msg_done_cb(void *data) {
 }
 
 static uint16_t nlmsg_addr_types[] = {RTM_NEWADDR, RTM_DELADDR, 0};
-static char crtx_get_own_ip_addresses_keygen(struct crtx_event *event, struct crtx_dict_item *key) {
+static int crtx_get_own_ip_addresses_keygen(struct crtx_cache *, struct crtx_dict_item *key, struct crtx_event *event) {
 	struct crtx_dict_item *di;
 	struct crtx_dict *dict;
 	
@@ -853,8 +853,8 @@ static char crtx_get_own_ip_addresses_keygen(struct crtx_event *event, struct cr
 char crtx_get_own_ip_addresses() {
 	struct crtx_nl_route_raw_listener nlr_list;
 	int ret;
-	struct crtx_task *ip_cache_task;
-	struct crtx_cache_task *ctask;
+	struct crtx_task *task;
+	struct crtx_cache *cache;
 	
 	
 // 	crtx_root->force_mode = CRTX_PREFER_THREAD;
@@ -878,14 +878,18 @@ char crtx_get_own_ip_addresses() {
 // 	crtx_create_task(lbase->graph, 0, "netlink_raw_test", netlink_raw_test_handler, 0);
 	
 	{
-		ip_cache_task = create_response_cache_task("ip_cache", crtx_get_own_ip_addresses_keygen);
-		ctask = (struct crtx_cache_task*) ip_cache_task->userdata;
+		ret = crtx_create_cache_task(&task, "ip_cache", crtx_get_own_ip_addresses_keygen);
+		if (ret) {
+			CRTX_ERROR("crtx_create_cache_task() failed: %d\n", ret);
+			return -1;
+		}
 		
-		ctask->on_hit = &crtx_cache_update_on_hit;
-		ctask->on_add = &crtx_cache_no_add;
-		ctask->on_miss = &crtx_cache_add_on_miss;
+		cache = (struct crtx_cache *) task->userdata;
+		cache->on_hit = &crtx_cache_update_on_hit;
+// 		cache->on_add = &crtx_cache_no_add;
+		cache->on_miss = &crtx_cache_add_on_miss;
 		
-		add_task(nlr_list.base.graph, ip_cache_task);
+		add_task(nlr_list.base.graph, task);
 	}
 	
 	ret = crtx_start_listener(&nlr_list.base);
@@ -914,12 +918,11 @@ char crtx_get_own_ip_addresses() {
 	
 	crtx_wait_on_graph_empty(nlr_list.base.graph);
 	
-	crtx_print_dict(ctask->cache->entries);
+	crtx_print_dict(cache->entries);
+	
+	crtx_free_cache_task(task);
 	
 	crtx_shutdown_listener(&nlr_list.base);
-	
-// 	crtx_free_task(ip_cache_task);
-	free_response_cache_task(ctask);
 	
 	return 0;
 }
