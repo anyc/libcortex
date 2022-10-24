@@ -504,7 +504,7 @@ int popen_main(int argc, char **argv) {
 	// setup process 1
 	
 	plist.filepath = "/bin/sh";
-	plist.argv = (char*[]) {plist.filepath, "-c", "id; echo stdout_test; echo stderr_test >&2; pwd; sleep 5; exit 1;", 0};
+	plist.argv = (char*[]) { (char*) plist.filepath, "-c", "id; echo stdout_test; echo stderr_test >&2; pwd; sleep 5; exit 1;", 0};
 // 	plist.filename = "id";
 	if (getuid() == 0) {
 		plist.fork_lstnr.user = "nobody";
@@ -530,7 +530,7 @@ int popen_main(int argc, char **argv) {
 	// setup process 2
 	
 	plist2.filepath = "/bin/sh";
-	plist2.argv = (char*[]) {plist.filepath, "-c", "sleep 2; echo \"plist2\"; exit 0;", 0};
+	plist2.argv = (char*[]) { (char*) plist.filepath, "-c", "sleep 2; echo \"plist2\"; exit 0;", 0};
 	
 	plist2.stdout_cb = &stdout_cb2;
 	
