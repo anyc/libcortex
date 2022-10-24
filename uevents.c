@@ -177,6 +177,7 @@ void crtx_uevents_finish() {
 
 
 #ifdef CRTX_TEST
+struct crtx_uevents_listener ulist;
 
 static char uevents_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char *buf;
@@ -186,11 +187,13 @@ static char uevents_test_handler(struct crtx_event *event, void *userdata, void 
 	
 	buf = event->data.string;
 	
-	printf("RAW:\n");
-	i = 0;
-	while (i<event->data.size) {
-		printf("\"\"\"%s\"\"\"\n", buf+i);
-		i += strlen(buf+i)+1;
+	if (0) {
+		printf("RAW:\n");
+		i = 0;
+		while (i<event->data.size) {
+			printf("%s\n", buf+i);
+			i += strlen(buf+i)+1;
+		}
 	}
 	
 	dict = crtx_uevents_raw2dict(event);
@@ -204,7 +207,6 @@ static char uevents_test_handler(struct crtx_event *event, void *userdata, void 
 }
 
 int netlink_raw_main(int argc, char **argv) {
-	struct crtx_uevents_listener ulist;
 	int ret;
 	
 	
