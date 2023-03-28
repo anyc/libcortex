@@ -1873,7 +1873,11 @@ int crtx_init() {
 		i++;
 	}
 	
-	load_plugins(CRTX_PLUGIN_DIR);
+	if (getenv("CRTX_PLUGIN_DIR")) {
+		load_plugins(getenv("CRTX_PLUGIN_DIR"));
+	} else {
+		load_plugins(CRTX_PLUGIN_DIR);
+	}
 	
 	return 0;
 }
