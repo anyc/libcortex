@@ -361,12 +361,13 @@ struct crtx_listener_base *crtx_calloc_listener_base(void);
 int crtx_listener_add_fd(struct crtx_listener_base *listener,
 						 int fd,
 						 int event_flags,
-						 int64_t timeout_us,
+						 uint64_t timeout_us,
 						 crtx_handle_task_t event_handler,
 						 void *event_handler_data,
 						 crtx_evloop_error_cb_t error_cb,
 						 void *error_cb_data
 		);
+int crtx_listener_get_fd(struct crtx_listener_base *listener);
 
 void crtx_shutdown_listener(struct crtx_listener_base *listener);
 int crtx_create_event(struct crtx_event **event);
