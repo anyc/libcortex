@@ -1,5 +1,5 @@
-#ifndef _CRTX_CAN_H
-#define _CRTX_CAN_H
+#ifndef _CRTX_UIO_H
+#define _CRTX_UIO_H
 
 /*
  * Mario Kicherer (dev@kicherer.org) 2023
