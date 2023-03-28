@@ -14,11 +14,13 @@
 #include <fcntl.h>
 #include <cap-ng.h>
 
+#ifndef CRTX_CAN_NO_IF_SETUP
 #include <net/if.h>
 #include <netlink/netlink.h>
 #include <netlink/socket.h>
 #include <netlink/route/link.h>
 #include <netlink/route/link/can.h>
+#endif
 
 #include <linux/can/raw.h>
 
@@ -103,10 +105,12 @@ static void shutdown_listener(struct crtx_listener_base *data) {
 	
 	clist = (struct crtx_can_listener*) data;
 	
+	#ifndef CRTX_CAN_NO_IF_SETUP
 	rtnl_link_put(clist->link);
 	nl_close(clist->socket);
 	nl_socket_free(clist->socket);
 	clist->socket = 0;
+	#endif
 	
 	if (clist->sockfd >= 0)
 		close(clist->sockfd);
@@ -114,6 +118,7 @@ static void shutdown_listener(struct crtx_listener_base *data) {
 // 	shutdown(inlist->server_sockfd, SHUT_RDWR);
 }
 
+#ifndef CRTX_CAN_NO_IF_SETUP
 static char *print_can_state (uint32_t state)
 {
 	char *text;
@@ -153,7 +158,9 @@ static char *print_can_state (uint32_t state)
 	printf("can state: %s\n", text);
 	return text;
 }
+#endif
 
+#ifndef CRTX_CAN_NO_IF_SETUP
 static int setup_can_if(struct crtx_can_listener *clist, char *if_name) {
 	struct rtnl_link *newlink;
 	int r;
@@ -364,6 +371,7 @@ error_socket:
 	
 	return r;
 }
+#endif
 
 static void on_error_cb(struct crtx_evloop_callback *el_cb, void *data) {
 	struct crtx_can_listener *clist;
@@ -455,6 +463,7 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 		clist->addr.can_family = AF_CAN;
 		clist->addr.can_ifindex = ifr.ifr_ifindex;
 		
+		#ifndef CRTX_CAN_NO_IF_SETUP
 		r = setup_can_if(clist, clist->interface_name);
 		if (r < 0) {
 			close(clist->sockfd);
@@ -476,6 +485,7 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 			
 			print_can_state(can_state);
 		}
+		#endif
 	}
 	
 	/* TODO cangen does this to remove the default filter (?) from the kernel */
@@ -484,7 +494,7 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 // 	int loopback = 0;
 // 	setsockopt(clist->sockfd, SOL_CAN_RAW, CAN_RAW_LOOPBACK,
 // 			   &loopback, sizeof(loopback));
-	
+
 	if (!clist->setup_if_only) {
 		r = bind(clist->sockfd, (struct sockaddr *)&clist->addr, sizeof(clist->addr));
 		if (r != 0) {
@@ -513,6 +523,7 @@ struct crtx_listener_base *crtx_setup_can_listener(void *options) {
 	clist = (struct crtx_can_listener *) options;
 	
 	clist->base.start_listener = &start_listener;
+	clist->sockfd = -1;
 	
 	if (!clist->setup_if_only) {
 		clist->base.shutdown = &shutdown_listener;

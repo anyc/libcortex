@@ -24,9 +24,12 @@ CFLAGS_core+=$(patsubst %,-DSTATIC_%,$(STATIC_MODULES))
 # libosip2	LGPL-2
 # libxcb	MIT
 
-
+ifeq (CAN_NO_IF_SETUP,)
 CFLAGS_can+=$(shell $(PKG_CONFIG) --cflags libnl-3.0 libnl-route-3.0 libcap-ng)
 LDLIBS_can+=$(shell $(PKG_CONFIG) --libs libnl-3.0 libnl-route-3.0 libcap-ng)
+else
+CFLAGS+=-DCRTX_CAN_NO_IF_SETUP
+endif
 
 CFLAGS_curl+=$(shell $(PKG_CONFIG) --cflags libcurl)
 LDLIBS_curl+=$(shell $(PKG_CONFIG) --libs libcurl)
