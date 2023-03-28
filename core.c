@@ -1997,9 +1997,10 @@ int crtx_finish() {
 	UNLOCK(crtx_root->graphs_mutex);
 	
 	for (i=0; i < crtx_root->n_plugins; i++) {
-		CRTX_DBG("finish \"%s\"\n", crtx_root->plugins->plugin_name);
+		CRTX_DBG("finish \"%s\"\n", crtx_root->plugins[i].plugin_name);
 		
-		crtx_root->plugins->finish();
+		if (crtx_root->plugins[i].finish)
+			crtx_root->plugins[i].finish();
 	}
 	
 	if (crtx_root->selfpipe_lstnr)
