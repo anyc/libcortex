@@ -148,6 +148,9 @@ dllist.o: llist.c
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
+# fix race condition
+core.o: core.c core_modules.h config.h
+
 $(SHAREDLIB): LDLIBS+=$(foreach o,$(STATIC_TOOLS) $(STATIC_MODULES), $(LDLIBS_$(o)) )
 $(SHAREDLIB): $(OBJS)
 	$(CC) -shared -o $@.$(SO_VERSION) $(OBJS) $(LDFLAGS) $(LDLIBS) -Wl,-soname,$@.$(SO_VERSION)
