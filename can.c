@@ -12,7 +12,9 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <fcntl.h>
+#ifndef CRTX_CAN_NO_IF_SETUP
 #include <cap-ng.h>
+#endif
 
 #ifndef CRTX_CAN_NO_IF_SETUP
 #include <net/if.h>
