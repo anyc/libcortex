@@ -28,9 +28,9 @@ void reinit_cb(void *reinit_cb_data) {
 	plstnr = (struct crtx_popen_listener *) reinit_cb_data;
 	
 	if (plstnr->filepath)
-		CRTX_DBG("exec \"%s\" (fds %d %d %d)\n", plstnr->filepath, plstnr->stdin, plstnr->stdout, plstnr->stderr);
+		CRTX_DBG("exec \"%s\" (fds %d %d %d)\n", plstnr->filepath, plstnr->fstdin, plstnr->fstdout, plstnr->fstderr);
 	else
-		CRTX_DBG("exec \"%s\" (fds %d %d %d)\n", plstnr->filename, plstnr->stdin, plstnr->stdout, plstnr->stderr);
+		CRTX_DBG("exec \"%s\" (fds %d %d %d)\n", plstnr->filename, plstnr->fstdin, plstnr->fstdout, plstnr->fstderr);
 	
 	if (plstnr->argv) {
 		char **arg;
@@ -42,31 +42,31 @@ void reinit_cb(void *reinit_cb_data) {
 		}
 	}
 	
-	if (plstnr->stdin != STDIN_FILENO) {
-		rv = dup2(plstnr->stdin, STDIN_FILENO);
+	if (plstnr->fstdin != STDIN_FILENO) {
+		rv = dup2(plstnr->fstdin, STDIN_FILENO);
 		if (rv == -1) {
-			CRTX_ERROR("dup2(stdin, %d) failed: %s\n", plstnr->stdin, strerror(errno));
+			CRTX_ERROR("dup2(stdin, %d) failed: %s\n", plstnr->fstdin, strerror(errno));
 			exit(1);
 		}
-		close(plstnr->stdin);
+		close(plstnr->fstdin);
 	}
 	
-	if (plstnr->stdout != STDOUT_FILENO) {
-		rv = dup2(plstnr->stdout, STDOUT_FILENO);
+	if (plstnr->fstdout != STDOUT_FILENO) {
+		rv = dup2(plstnr->fstdout, STDOUT_FILENO);
 		if (rv == -1) {
-			CRTX_ERROR("dup2(stdout, %d) failed: %s\n", plstnr->stdout, strerror(errno));
+			CRTX_ERROR("dup2(stdout, %d) failed: %s\n", plstnr->fstdout, strerror(errno));
 			exit(1);
 		}
-		close(plstnr->stdout);
+		close(plstnr->fstdout);
 	}
 	
-	if (plstnr->stderr != STDERR_FILENO) {
-		rv = dup2(plstnr->stderr, STDERR_FILENO);
+	if (plstnr->fstderr != STDERR_FILENO) {
+		rv = dup2(plstnr->fstderr, STDERR_FILENO);
 		if (rv == -1) {
-			CRTX_ERROR("dup2(stderr, %d) failed: %s\n", plstnr->stderr, strerror(errno));
+			CRTX_ERROR("dup2(stderr, %d) failed: %s\n", plstnr->fstderr, strerror(errno));
 			exit(1);
 		}
-		close(plstnr->stderr);
+		close(plstnr->fstderr);
 	}
 	
 	if (plstnr->argv == 0) {
@@ -151,7 +151,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	// this listener has no event sources, it depends on other sub-listeners
 	plstnr->base.mode = CRTX_NO_PROCESSING_MODE;
 	
-	if (plstnr->stdin == -1) {
+	if (plstnr->fstdin == -1) {
 		// is someone interestesd in the stdin from the child process?
 		if (plstnr->stdin_cb) {
 			rv = crtx_start_listener(&plstnr->stdin_lstnr.base);
@@ -160,7 +160,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 				return rv;
 			}
 			// preserve fd as it would be closed by the after_fork_shutdown otherwise
-			plstnr->stdin = plstnr->stdin_lstnr.fds[CRTX_READ_END];
+			plstnr->fstdin = plstnr->stdin_lstnr.fds[CRTX_READ_END];
 			plstnr->stdin_lstnr.fds[CRTX_READ_END] = -1;
 			
 			plstnr->stdin_wq_lstnr.write_fd = plstnr->stdin_lstnr.fds[CRTX_WRITE_END];
@@ -171,10 +171,10 @@ static char start_listener(struct crtx_listener_base *listener) {
 				return rv;
 			}
 		} else {
-			plstnr->stdin = STDIN_FILENO;
+			plstnr->fstdin = STDIN_FILENO;
 		}
 	} else {
-		if (plstnr->stdin != STDIN_FILENO) {
+		if (plstnr->fstdin != STDIN_FILENO) {
 			rv = crtx_start_listener(&plstnr->stdin_lstnr.base);
 			if (rv) {
 				CRTX_ERROR("starting stdin pipe listener failed\n");
@@ -183,20 +183,20 @@ static char start_listener(struct crtx_listener_base *listener) {
 		}
 	}
 	
-	if (plstnr->stdout == -1) {
+	if (plstnr->fstdout == -1) {
 		if (plstnr->stdout_cb) {
 			rv = crtx_start_listener(&plstnr->stdout_lstnr.base);
 			if (rv) {
 				CRTX_ERROR("starting stdout pipe listener failed\n");
 				return rv;
 			}
-			plstnr->stdout = plstnr->stdout_lstnr.fds[CRTX_WRITE_END];
+			plstnr->fstdout = plstnr->stdout_lstnr.fds[CRTX_WRITE_END];
 			plstnr->stdout_lstnr.fds[CRTX_WRITE_END] = -1;
 		} else {
-			plstnr->stdout = STDOUT_FILENO;
+			plstnr->fstdout = STDOUT_FILENO;
 		}
 	} else {
-		if (plstnr->stdout != STDOUT_FILENO) {
+		if (plstnr->fstdout != STDOUT_FILENO) {
 			rv = crtx_start_listener(&plstnr->stdout_lstnr.base);
 			if (rv) {
 				CRTX_ERROR("starting stdout pipe listener failed\n");
@@ -205,20 +205,20 @@ static char start_listener(struct crtx_listener_base *listener) {
 		}
 	}
 	
-	if (plstnr->stderr == -1) {
+	if (plstnr->fstderr == -1) {
 		if (plstnr->stderr_cb) {
 			rv = crtx_start_listener(&plstnr->stderr_lstnr.base);
 			if (rv) {
 				CRTX_ERROR("starting stderr pipe listener failed\n");
 				return rv;
 			}
-			plstnr->stderr = plstnr->stderr_lstnr.fds[CRTX_WRITE_END];
+			plstnr->fstderr = plstnr->stderr_lstnr.fds[CRTX_WRITE_END];
 			plstnr->stderr_lstnr.fds[CRTX_WRITE_END] = -1;
 		} else {
-			plstnr->stderr = STDERR_FILENO;
+			plstnr->fstderr = STDERR_FILENO;
 		}
 	} else {
-		if (plstnr->stderr != STDERR_FILENO) {
+		if (plstnr->fstderr != STDERR_FILENO) {
 			rv = crtx_start_listener(&plstnr->stderr_lstnr.base);
 			if (rv) {
 				CRTX_ERROR("starting stderr pipe listener failed\n");
@@ -268,12 +268,12 @@ static void shutdown_listener(struct crtx_listener_base *listener) {
 		crtx_shutdown_listener(&plstnr->stdout_lstnr.base);
 		// only close the write end on child side
 		if (plstnr->fork_lstnr.pid != 0)
-			close(plstnr->stdout);
+			close(plstnr->fstdout);
 	}
 	if (plstnr->stderr_cb) {
 		crtx_shutdown_listener(&plstnr->stderr_lstnr.base);
 		if (plstnr->fork_lstnr.pid != 0)
-			close(plstnr->stderr);
+			close(plstnr->fstderr);
 	}
 	
 	return;
@@ -338,7 +338,7 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 // 	plstnr->stdin_lstnr.fd_event_handler = pipe_event_handler;
 // 	plstnr->stdin_lstnr.fd_event_handler_data = &plstnr->stdin_lstnr;
 	
-	if (plstnr->stdin == -1 && plstnr->stdin_cb) {
+	if (plstnr->fstdin == -1 && plstnr->stdin_cb) {
 		rv = crtx_setup_listener("pipe", &plstnr->stdin_lstnr);
 		if (rv) {
 			CRTX_ERROR("create_listener(pipe) failed\n");
@@ -352,7 +352,7 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 		}
 	}
 	
-	if (plstnr->stdout == -1 && plstnr->stdout_cb) {
+	if (plstnr->fstdout == -1 && plstnr->stdout_cb) {
 		plstnr->stdout_lstnr.fd_event_handler = pipe_event_handler;
 	// 	plstnr->stdout_lstnr.fd_event_handler_data = &plstnr->stdout_lstnr;
 		plstnr->stdout_lstnr.fd_event_handler_data = plstnr;
@@ -364,7 +364,7 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 		}
 	}
 	
-	if (plstnr->stderr == -1 && plstnr->stderr_cb) {
+	if (plstnr->fstderr == -1 && plstnr->stderr_cb) {
 		plstnr->stderr_lstnr.fd_event_handler = pipe_event_handler;
 	// 	plstnr->stderr_lstnr.fd_event_handler_data = &plstnr->stderr_lstnr;
 		plstnr->stderr_lstnr.fd_event_handler_data = plstnr;
@@ -384,9 +384,9 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 void crtx_popen_clear_lstnr(struct crtx_popen_listener *lstnr) {
 	memset(lstnr, 0, sizeof(struct crtx_popen_listener));
 	
-	lstnr->stdin = -1;
-	lstnr->stdout = -1;
-	lstnr->stderr = -1;
+	lstnr->fstdin = -1;
+	lstnr->fstdout = -1;
+	lstnr->fstderr = -1;
 	
 	lstnr->chdir = "/";
 }

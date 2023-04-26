@@ -62,9 +62,9 @@ static char update_listener(struct crtx_listener_base *base) {
 	
 	tlist = (struct crtx_timer_listener *) base;
 	
-	CRTX_DBG("timer: update fd %d (%ld.%09lds %ld.%09lds clockId %d)\n", tlist->fd,
-			tlist->newtimer.it_value.tv_sec, tlist->newtimer.it_value.tv_nsec, 
-			tlist->newtimer.it_interval.tv_sec, tlist->newtimer.it_interval.tv_nsec,
+	CRTX_DBG("timer: update fd %d (%lld.%09lds %lld.%09lds clockId %d)\n", tlist->fd,
+			(long long) tlist->newtimer.it_value.tv_sec, tlist->newtimer.it_value.tv_nsec, 
+			(long long) tlist->newtimer.it_interval.tv_sec, tlist->newtimer.it_interval.tv_nsec,
 			tlist->clockid
 		);
 	

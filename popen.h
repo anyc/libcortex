@@ -25,9 +25,9 @@ struct crtx_popen_listener {
 	struct crtx_pipe_listener stdout_lstnr;
 	struct crtx_pipe_listener stderr_lstnr;
 	
-	int stdin;
-	int stdout;
-	int stderr;
+	int fstdin;
+	int fstdout;
+	int fstderr;
 	
 	void (*stdin_cb)(int fd, void *userdata);
 	void (*stdout_cb)(int fd, void *userdata);
