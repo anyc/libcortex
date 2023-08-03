@@ -626,9 +626,11 @@ static const char *eventDetailToString(int event, int detail) {
 				case VIR_DOMAIN_EVENT_PMSUSPENDED_MEMORY:
 					ret = "Memory";
 					break;
+#if LIBVIR_CHECK_VERSION(6,1,0)
 				case VIR_DOMAIN_EVENT_PMSUSPENDED_DISK:
 					ret = "Disk";
 					break;
+#endif
 // 				case VIR_DOMAIN_EVENT_PMSUSPENDED_LAST:
 // 					ret = "Last";
 // 					break;
@@ -639,9 +641,11 @@ static const char *eventDetailToString(int event, int detail) {
 				case VIR_DOMAIN_EVENT_CRASHED_PANICKED:
 					ret = "Panic";
 					break;
+#if LIBVIR_CHECK_VERSION(6,1,0)
 				case VIR_DOMAIN_EVENT_CRASHED_CRASHLOADED:
 					ret = "Crashloaded";
 					break;
+#endif
 // 				case VIR_DOMAIN_EVENT_CRASHED_LAST:
 // 					ret = "Last";
 // 					break;
