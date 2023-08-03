@@ -137,6 +137,11 @@ static char udev_event_handler(struct crtx_event *event, void *userdata, void **
 	product = crtx_get_string(usb_dict, "ID_MODEL_ID");
 	action = crtx_get_string(dict, "ACTION");
 	
+	if (!vendor || !product) {
+		CRTX_DBG("no device ids found\n");
+		return 0;
+	}
+	
 	// find VM for this device in the config dictionary
 	vm_name = 0;
 	{
@@ -201,14 +206,20 @@ static char udev_event_handler(struct crtx_event *event, void *userdata, void **
 	if (!strcmp(action, "add") || !strcmp(action, "initial")) {
 		if (is_dev_attached(dom, vendor, product)) {
 			CRTX_INFO("dev already present\n");
-		} else {
-			CRTX_INFO("adding\n");
+			
 			snprintf(xml, sizeof(template)+4, template, vendor, product);
 			
-			ret = virDomainAttachDevice(dom, xml);
+			ret = virDomainDetachDevice(dom, xml);
 			if (ret < 0) {
-				CRTX_ERROR("virDomainAttachDevice failed: %d\n", ret);
+				CRTX_ERROR("virDomainDetachDevice failed: %d\n", ret);
 			}
+		}
+		CRTX_INFO("adding\n");
+		snprintf(xml, sizeof(template)+4, template, vendor, product);
+		
+		ret = virDomainAttachDevice(dom, xml);
+		if (ret < 0) {
+			CRTX_ERROR("virDomainAttachDevice failed: %d\n", ret);
 		}
 	} else if (!strcmp(action, "remove")) {
 		if (!is_dev_attached(dom, vendor, product)) {
