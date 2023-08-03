@@ -95,7 +95,7 @@ $(local_mk):
 clean:
 	$(MAKE) -C layer2 clean LAYER2_MODULES="$(LAYER2_MODULES)"
 	$(MAKE) -C examples clean
-	rm -rf *.o $(APP) core_modules.h config.h $(TESTS) $(SHAREDLIB) libcrtx*.so* libcortex*.deb
+	rm -f *.o $(APP) core_modules.h config.h $(TESTS) $(SHAREDLIB) libcrtx*.so* libcortex*.deb
 
 debug:
 	$(MAKE) $(MAKEFILE) DEBUG_FLAGS="-g -g3 -gdwarf-2 -DDEBUG -Wall" $(DEBUGARGS)
