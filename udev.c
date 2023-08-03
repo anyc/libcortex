@@ -136,6 +136,13 @@ struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_r
 		struct udev_list_entry *entry;
 		const char *key;
 		
+		value = udev_device_get_action(dev);
+		if (!value) {
+			// if we query existing devices at startup, there is no action field
+			di = crtx_alloc_item(dict);
+			crtx_fill_data_item(di, 's', "ACTION", "initial", strlen("initial"), flags);
+		}
+		
 		udev_list_entry_foreach(entry, udev_device_get_properties_list_entry(dev)) {
 			key = udev_list_entry_get_name(entry);
 			value = udev_list_entry_get_value(entry);
