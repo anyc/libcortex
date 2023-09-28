@@ -36,7 +36,7 @@ LDLIBS+=-lpthread -ldl
 
 .PHONY: clean
 
-all: $(local_mk) core_modules.h config.h plugins shared layer2 crtx_include_dir
+all: $(local_mk) core_modules.h config.h plugins shared crtx_layer2 crtx_include_dir
 
 #
 # module-specific flags
@@ -166,7 +166,7 @@ plugins: $(SHAREDLIB) $(DYN_MODULES_LIST)
 
 
 
-tests: $(TESTS) layer2_tests
+tests: $(TESTS) crtx_layer2_tests
 
 %.test: CFLAGS+=-DCRTX_TEST -g -g3 -gdwarf-2 -DDEBUG -Wall $(CFLAGS_${@:.test=})
 %.test: LDLIBS+=$(LDLIBS_${@:.test=}) $(foreach d,${@:.test=} $(DEPS_${@:.test=}),$(if $(findstring $(d),$(DYN_MODULES)),-lcrtx_$(d))) -Wl,-rpath $(shell pwd)
@@ -180,10 +180,10 @@ tests: $(TESTS) layer2_tests
 crtx_examples:
 	$(MAKE) -C examples
 
-layer2: $(SHAREDLIB)
+crtx_layer2: $(SHAREDLIB)
 	$(MAKE) -C layer2 LAYER2_MODULES="$(LAYER2_MODULES)"
 
-layer2_tests: $(SHAREDLIB)
+crtx_layer2_tests: $(SHAREDLIB) crtx_layer2
 	$(MAKE) -C layer2 tests LAYER2_MODULES="$(LAYER2_MODULES)"
 
 install: install-lib install-devel
