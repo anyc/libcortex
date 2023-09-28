@@ -498,8 +498,8 @@ int popen_main(int argc, char **argv) {
 	crtx_popen_clear_lstnr(&plist);
 	crtx_popen_clear_lstnr(&plist2);
 	
-	plist.stderr = STDERR_FILENO;
-	plist2.stderr = STDERR_FILENO;
+	plist.fstderr = STDERR_FILENO;
+	plist2.fstderr = STDERR_FILENO;
 	
 	// setup process 1
 	
