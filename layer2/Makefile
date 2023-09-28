@@ -3,7 +3,7 @@ libcrtx_dir=../
 
 PKG_CONFIG?=pkg-config
 
-CFLAGS+=-I$(libcrtx_dir) -I$(libcrtx_dir)include -fPIC
+CFLAGS+=$(DEBUG_FLAGS) -I$(libcrtx_dir) -I$(libcrtx_dir)include -fPIC
 LDFLAGS+=-L$(libcrtx_dir)
 
 LAYER2_LISTENER_LIST=$(patsubst %,$(libcrtx_dir)/libcrtx_%.so, $(LAYER2_MODULES))
