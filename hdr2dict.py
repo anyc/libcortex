@@ -4,6 +4,7 @@
 # Mario Kicherer (dev@kicherer.org) 2016
 #
 
+from __future__ import print_function
 import sys, argparse, os
 import clang.cindex
 
@@ -53,7 +54,7 @@ def output_cursor(cursor, level, di, prefix=""):
 			pass
 	
 	if output and cursor.kind == clang.cindex.CursorKind.FIELD_DECL:
-		print ""
+		print("")
 		
 		typ = cursor.type.get_canonical()
 		
@@ -177,8 +178,8 @@ def output_cursor(cursor, level, di, prefix=""):
 					st += cursor.type.spelling+" "
 					st += cursor.type.get_canonical().spelling+" "
 					st += str(cursor.type.get_size())+" "
-				print indent(level) + spelling, '<' + str(kind) + '>'
-				print indent(level+1) + '"'  + displayname + '"' + st
+				print(indent(level) + spelling, '<' + str(kind) + '>')
+				print(indent(level+1) + '"'  + displayname + '"' + st)
 
 def output_cursor_and_children(cursor, level=0, di=None, prefix="", sep=""):
 	global output, struct
@@ -186,7 +187,7 @@ def output_cursor_and_children(cursor, level=0, di=None, prefix="", sep=""):
 	if cursor.spelling and cursor.is_definition():
 		if cursor.spelling == struct and cursor.type.kind == clang.cindex.TypeKind.RECORD:
 			output = True
-			print("char crtx_"+struct+"2dict(struct "+struct+" *ptr, struct crtx_dict **dict_ptr)")
+			print("int crtx_"+struct+"2dict(struct "+struct+" *ptr, struct crtx_dict **dict_ptr)")
 			prefix = "ptr"
 			sep = "->"
 	
@@ -210,13 +211,13 @@ def output_cursor_and_children(cursor, level=0, di=None, prefix="", sep=""):
 			if (not has_children):
 				if output:
 					if prefix != "" and sep == "->" and not (cursor.spelling == struct):
-						print indent(level) + 'if ('+prefix+') {'
+						print(indent(level) + 'if ('+prefix+') {')
 					else:
-						print indent(level) + '{'
+						print(indent(level) + '{')
 					if di is None:
-						#print indent(level+1) + "struct crtx_dict *dict = crtx_init_dict(0, 0, 0);"
-						print indent(level+1) + "struct crtx_dict *dict;"
-						print indent(level+1) + "struct crtx_dict_item *di;\n"
+						#print(indent(level+1) + "struct crtx_dict *dict = crtx_init_dict(0, 0, 0);")
+						print(indent(level+1) + "struct crtx_dict *dict;")
+						print(indent(level+1) + "struct crtx_dict_item *di;\n")
 						#print(indent(level+1) + "if (*dict_ptr) {")
 						#print(indent(level+2) + "dict = *dict_ptr;")
 						#print(indent(level+1) + "} else {")
@@ -226,15 +227,15 @@ def output_cursor_and_children(cursor, level=0, di=None, prefix="", sep=""):
 						#print(indent(level+1) + "}")
 						di = "di";
 					elif di == "di":
-						print indent(level+1) + di + "->dict = crtx_init_dict(0, 0, 0);"
-						print indent(level+1) + "struct crtx_dict *dict = "+di+"->dict;"
+						print(indent(level+1) + di + "->dict = crtx_init_dict(0, 0, 0);")
+						print(indent(level+1) + "struct crtx_dict *dict = "+di+"->dict;")
 						di = "di2";
-						print indent(level+1) + "struct crtx_dict_item *"+di+";"
+						print(indent(level+1) + "struct crtx_dict_item *"+di+";")
 					elif di == "di2":
-						print indent(level+1) + di + "->dict = crtx_init_dict(0, 0, 0);"
-						print indent(level+1) + "struct crtx_dict *dict = "+di+"->dict;"
+						print(indent(level+1) + di + "->dict = crtx_init_dict(0, 0, 0);")
+						print(indent(level+1) + "struct crtx_dict *dict = "+di+"->dict;")
 						di = "di";
-						print indent(level+1) + "struct crtx_dict_item *"+di+";"
+						print(indent(level+1) + "struct crtx_dict_item *"+di+";")
 						
 				has_children = True
 			#if level < args.max_recursion:
@@ -242,9 +243,9 @@ def output_cursor_and_children(cursor, level=0, di=None, prefix="", sep=""):
 		
 		if has_children and output:
 			if cursor.spelling == struct:
-				print indent(level+1) + ''
-				print indent(level+1) + 'return 0;'
-			print indent(level) + '}'
+				print(indent(level+1) + '')
+				print(indent(level+1) + 'return 0;')
+			print(indent(level) + '}')
 		
 		if cursor.kind == clang.cindex.CursorKind.UNION_DECL and output:
 			print(indent(level) + "*/")
@@ -257,12 +258,13 @@ def output_cursor_and_children(cursor, level=0, di=None, prefix="", sep=""):
 
 parser = argparse.ArgumentParser(description='Code generator that converts C structs into cortex dicts')
 parser.add_argument('--max-recursion', type=int, default=1, help='')
-parser.add_argument('--structs', action='append', help='')
+parser.add_argument('-s', '--structs', action='append', help='')
 parser.add_argument('hdr_file', nargs=1, help='')
 
 args = parser.parse_args()
 
 if not args.structs:
+	print("missing struct names", file=sys.stderr)
 	parser.print_help()
 	sys.exit(1)
 
