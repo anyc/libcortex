@@ -2322,6 +2322,32 @@ char *crtx_event_get_string(struct crtx_event *event, char *key) {
 	return crtx_get_string(dict, key);
 }
 
+int crtx_event_get_int(struct crtx_event *event, int *value) {
+	void *ptr;
+	
+	if (event->data.type == 'i') {
+		*value = event->data.int32;
+	} else {
+		return EINVAL;
+	}
+	
+	return 0;
+}
+
+int crtx_event_get_data(struct crtx_event *event, void **data, size_t *size) {
+	void *ptr;
+	
+	if (event->data.type != 'p')
+		return -EINVAL;
+	if (!data)
+		return -EINVAL;
+	
+	*data = event->data.pointer;
+	*size = event->data.size;
+	
+	return 0;
+}
+
 void crtx_register_handler_for_event_type(char *event_type, char *handler_name, crtx_handle_task_t handler_function, void *handler_data) {
 	struct crtx_ll *catit, *entry;
 	

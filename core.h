@@ -418,6 +418,8 @@ int crtx_event_get_value_by_key(struct crtx_event *event, char *key, char type, 
 void *crtx_event_get_ptr(struct crtx_event *event);
 char *crtx_event_get_string(struct crtx_event *event, char *key);
 void crtx_event_set_dict(struct crtx_event *event, char *signature, ...);
+int crtx_event_get_int(struct crtx_event *event, int *value);
+int crtx_event_get_data(struct crtx_event *event, void **data, size_t *size);
 
 void crtx_register_handler_for_event_type(char *event_type, char *handler_name, crtx_handle_task_t handler_function, void *handler_data);
 void crtx_autofill_graph_with_tasks(struct crtx_graph *graph, const char *event_type);
