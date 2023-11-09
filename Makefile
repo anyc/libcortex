@@ -185,7 +185,7 @@ crtx_layer2: $(SHAREDLIB)
 	$(MAKE) -C layer2 LAYER2_MODULES="$(LAYER2_MODULES)" DEBUG_FLAGS="$(DEBUG_FLAGS)"
 
 crtx_layer2_tests: $(SHAREDLIB) crtx_layer2
-	$(MAKE) -C layer2 tests LAYER2_MODULES="$(LAYER2_MODULES)"
+	$(MAKE) -C layer2 tests LAYER2_MODULES="$(LAYER2_MODULES)" plugindir="$(plugindir)"
 
 install: install-lib install-devel
 
