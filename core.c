@@ -2323,8 +2323,6 @@ char *crtx_event_get_string(struct crtx_event *event, char *key) {
 }
 
 int crtx_event_get_int(struct crtx_event *event, int *value) {
-	void *ptr;
-	
 	if (event->data.type == 'i') {
 		*value = event->data.int32;
 	} else {
@@ -2335,8 +2333,6 @@ int crtx_event_get_int(struct crtx_event *event, int *value) {
 }
 
 int crtx_event_get_data(struct crtx_event *event, void **data, size_t *size) {
-	void *ptr;
-	
 	if (event->data.type != 'p')
 		return -EINVAL;
 	if (!data)
