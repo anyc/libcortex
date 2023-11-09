@@ -194,6 +194,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 				if (s) {
 					char *key;
 					
+					key = 0;
 					switch (rth->rta_type) {
 						case IFA_ANYCAST: key = "anycast"; break;
 						case IFA_BROADCAST: key = "broadcast"; break;
@@ -202,8 +203,10 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 						case IFA_LOCAL: key = "local"; break;
 					}
 					
-					slen = strlen(s);
-					crtx_fill_data_item(di, 's', key, crtx_stracpy(s, &slen), slen, 0);
+					if (key) {
+						slen = strlen(s);
+						crtx_fill_data_item(di, 's', key, crtx_stracpy(s, &slen), slen, 0);
+					}
 				}
 				
 				break;
@@ -400,11 +403,13 @@ struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char al
 				snprintf(s, RTA_PAYLOAD(rth)*3, "%02x:%02x:%02x:%02x:%02x:%02x", 
 						 b[0], b[1], b[2], b[3], b[4], b[5]);
 				
+				key = 0;
 				switch (rth->rta_type) {
 					case IFLA_ADDRESS: key = "address"; break;
 					case IFLA_BROADCAST: key = "broadcast"; break;
 				}
-				crtx_fill_data_item(di, 's', key, s, RTA_PAYLOAD(rth)*3-1, 0);
+				if (key)
+					crtx_fill_data_item(di, 's', key, s, RTA_PAYLOAD(rth)*3-1, 0);
 				
 				break;
 				
