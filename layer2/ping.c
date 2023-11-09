@@ -8,9 +8,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sys/ioctl.h>
+#include <linux/sockios.h>
 
 #include <netinet/ip.h>
-#include <linux/icmp.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
@@ -18,8 +19,6 @@
 #include "ping.h"
 
 #define PACKET_LEN 64
-
-enum icmp_type { ICMP_T_ECHO, ICMP_T_GATEWAY, ICMP_T_FRAG, ICMP_T_RESERVED};
 
 struct crtx_dict *crtx_ping_raw2dict_addr(struct icmphdr *ptr, enum icmp_type icmp_type) {
 	struct crtx_dict *dict;
@@ -127,13 +126,11 @@ static int in_cksum(unsigned short *addr, int len)
 	return (~sum & 0xffff);
 }
 
-static char ping_timer_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_ping_listener *ping_lstnr;
+int crtx_ping_send_ping(struct crtx_ping_listener *ping_lstnr) {
 	ssize_t ssize;
 	struct icmphdr *icmp;
+	int rv;
 	
-	
-	ping_lstnr = (struct crtx_ping_listener *) userdata;
 	
 	if (!ping_lstnr->packet) {
 		ping_lstnr->packet = (unsigned char *) calloc(1, PACKET_LEN);
@@ -153,13 +150,38 @@ static char ping_timer_handler(struct crtx_event *event, void *userdata, void **
 	
 	icmp->checksum = in_cksum((unsigned short *)icmp, PACKET_LEN);
 	
+	rv = clock_gettime(CLOCK_REALTIME, &ping_lstnr->sent_ts);
+	if (rv < 0) {
+		CRTX_ERROR("clock_gettime() failed: %s\n", strerror(errno));
+	}
+	
+	if (ping_lstnr->send_hook) {
+		ping_lstnr->send_hook(ping_lstnr, icmp, PACKET_LEN, ping_lstnr->userdata);
+	}
+	
 	ssize = sendto(crtx_listener_get_fd(&ping_lstnr->base), ping_lstnr->packet, PACKET_LEN, 0, (struct sockaddr*)&ping_lstnr->dst, sizeof(struct sockaddr_in));
 	if (ssize != PACKET_LEN) {
 		CRTX_ERROR("ping: sendto failed: %zd != %d\n", ssize, PACKET_LEN);
 		return 1;
 	}
 	
-	CRTX_DBG("ping tx %d\n", ntohs(icmp->un.echo.sequence));
+	return 0;
+}
+
+static char ping_timer_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_ping_listener *ping_lstnr;
+	int rv;
+	
+	
+	ping_lstnr = (struct crtx_ping_listener *) userdata;
+	
+	rv = crtx_ping_send_ping(ping_lstnr);
+	if (rv == 0) {
+		struct icmphdr *icmp;
+		
+		icmp = (struct icmphdr *)ping_lstnr->packet;
+		CRTX_DBG("ping tx %d\n", ntohs(icmp->un.echo.sequence));
+	}
 	
 	return 0;
 }
@@ -167,6 +189,14 @@ static char ping_timer_handler(struct crtx_event *event, void *userdata, void **
 static int send_event(struct crtx_ping_listener *ping_lstnr, int type, struct icmphdr *data, size_t size) {
 	struct crtx_event *new_event;
 	void *copy;
+	int rv;
+	
+	
+	if (ping_lstnr->recv_hook) {
+		rv = ping_lstnr->recv_hook(ping_lstnr, type, data, size, ping_lstnr->userdata);
+		if (rv == 1)
+			return 0;
+	}
 	
 	crtx_create_event(&new_event);
 	
@@ -189,6 +219,9 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 	socklen_t src_len;
 	struct icmphdr *icmp, *orig_icmp;
 	int checksum, pkt_checksum;
+	struct timespec ts;
+	struct timeval tv_ioctl;
+	int rv;
 	
 	
 	ping_lstnr = (struct crtx_ping_listener *) userdata;
@@ -207,6 +240,18 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 		}
 		
 		return 0;
+	}
+	
+	tv_ioctl.tv_sec = 0;
+	tv_ioctl.tv_usec = 0;
+	rv = ioctl(crtx_listener_get_fd(&ping_lstnr->base), SIOCGSTAMP, &tv_ioctl);
+	if (rv) {
+		CRTX_ERROR("ioctl() failed: %s\n", strerror(errno));
+		ts.tv_sec = 0;
+		ts.tv_nsec = 0;
+	} else {
+		ts.tv_sec = tv_ioctl.tv_sec;
+		ts.tv_nsec = tv_ioctl.tv_usec * 1000;
 	}
 	
 	icmp = (struct icmphdr *) (packet + sizeof(struct ip));
@@ -258,7 +303,14 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 		CRTX_DBG("different echo id: %d != %d\n", ntohs(icmp->un.echo.id), ping_lstnr->echo_id);
 		return 0;
 	}
-	CRTX_DBG("ping rx %d\n", ntohs(icmp->un.echo.sequence));
+	
+	if (ntohs(icmp->un.echo.sequence) == ping_lstnr->packets_sent - 1 && (ts.tv_sec != 0 || ts.tv_nsec != 0)) {
+		ping_lstnr->last_rt_time = ( ts.tv_sec - ping_lstnr->sent_ts.tv_sec ) + (double)( ts.tv_nsec - ping_lstnr->sent_ts.tv_nsec ) / 1000000000L;
+	} else {
+		ping_lstnr->last_rt_time = 0;
+	}
+	
+	CRTX_DBG("ping rx %d (RTT %fs)\n", ntohs(icmp->un.echo.sequence), ping_lstnr->last_rt_time);
 	
 	send_event(ping_lstnr, CRTX_PING_ET_PING_SUCCESS, icmp, ssize - sizeof(struct ip));
 	
@@ -386,13 +438,15 @@ static char ping_event_handler(struct crtx_event *event, void *userdata, void **
 		dict = crtx_ping_raw2dict_addr(icmp, ICMP_T_ECHO);
 		
 		crtx_print_dict(dict);
+		crtx_dict_unref(dict);
 		
-		printf("ping %s success\n", ping_lstnr->ip);
+		printf("ping %s success (RTT %fs)\n", ping_lstnr->ip, ping_lstnr->last_rt_time);
 	} else
 	if (event->type == CRTX_PING_ET_PING_UNREACHABLE) {
 		dict = crtx_ping_raw2dict_addr(orig_icmp, ICMP_T_ECHO);
 		
 		crtx_print_dict(dict);
+		crtx_dict_unref(dict);
 		
 		printf("ping %s unreachable code %d seq %d\n", ping_lstnr->ip, icmp->code, ntohs(orig_icmp->un.echo.sequence));
 	} else
@@ -410,7 +464,12 @@ int ping_main(int argc, char **argv) {
 	
 	memset(&ping_lstnr, 0, sizeof(struct crtx_ping_listener));
 	
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s <ip/host>\n", argv[0]);
+		return 1;
+	}
 	ping_lstnr.ip = argv[1];
+	ping_lstnr.check_timeout = 1;
 	
 	// set time for (first) alarm
 	ping_lstnr.timer_lstnr.newtimer.it_value.tv_sec = 1;
