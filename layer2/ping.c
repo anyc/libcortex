@@ -287,6 +287,11 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 				} else {
 					CRTX_DBG("dest unreach %d %d\n", ntohs(orig_icmp->un.echo.sequence), icmp->code);
 					send_event(ping_lstnr, CRTX_PING_ET_PING_UNREACHABLE, icmp, ssize - sizeof(struct ip));
+					
+					if (ntohs(orig_icmp->un.echo.sequence) == ping_lstnr->packets_sent - 1) {
+						ping_lstnr->sent_ts.tv_sec = 0;
+						ping_lstnr->sent_ts.tv_nsec = 0;
+					}
 				}
 			} else {
 				CRTX_ERROR("unexpected size of ICMP_DEST_UNREACH: %zd > %zu\n", ssize, sizeof(struct ip) + sizeof(struct icmphdr) + sizeof(struct ip));
