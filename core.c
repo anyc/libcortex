@@ -2001,6 +2001,10 @@ int crtx_finish() {
 		
 		if (crtx_root->plugins[i].finish)
 			crtx_root->plugins[i].finish();
+		
+		if (crtx_root->plugins[i].handle) {
+			dlclose(crtx_root->plugins[i].handle);
+		}
 	}
 	
 	if (crtx_root->selfpipe_lstnr)
