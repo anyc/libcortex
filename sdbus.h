@@ -71,6 +71,8 @@ struct crtx_sdbus_listener {
 
 void crtx_sdbus_trigger_event_processing(struct crtx_sdbus_listener *lstnr);
 int crtx_sdbus_call(struct crtx_sdbus_listener *lstnr, sd_bus_message *msg, sd_bus_message **reply, uint64_t timeout_us);
+int crtx_sdbus_get_property_async(sd_bus *bus, char *service, char *object_path, char *interface, char *name, sd_bus_message_handler_t callback, void *userdata, uint64_t usec);
+int crtx_sdbus_get_property_async_print_response(sd_bus_message *m, void *userdata, sd_bus_error *ret_error);
 
 int crtx_sd_bus_message_read_string(sd_bus_message *m, char **p);
 char crtx_sdbus_open_bus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name);

@@ -42,6 +42,63 @@ void crtx_sdbus_trigger_event_processing(struct crtx_sdbus_listener *lstnr) {
 	crtx_evloop_trigger_callback(lstnr->base.evloop_fd.evloop, &lstnr->base.default_el_cb);
 }
 
+int crtx_sdbus_get_property_async_print_response(sd_bus_message *m,
+												 void *userdata,
+												 sd_bus_error *ret_error)
+{
+	int rv;
+	const char *contents;
+	
+	
+	rv = sd_bus_message_peek_type(m, NULL, &contents); CRTX_RET_GEZ(rv)
+	rv = sd_bus_message_enter_container(m, 'v', contents); CRTX_RET_GEZ(rv)
+	
+	crtx_sdbus_print_msg(m, contents);
+	
+	rv = sd_bus_message_exit_container(m); CRTX_RET_GEZ(rv)
+	
+	return 0;
+}
+
+int crtx_sdbus_get_property_async(sd_bus *bus, char *service, char *object_path, char *interface, char *name, sd_bus_message_handler_t callback, void *userdata, uint64_t usec) {
+	int rv;
+	sd_bus_message *m, *reply;
+	sd_bus_error error;
+	
+	
+	error = SD_BUS_ERROR_NULL;
+	m = 0;
+	rv = sd_bus_message_new_method_call(bus,
+		&m,
+		service,
+		object_path,
+		"org.freedesktop.DBus.Properties",
+		"Get"
+		);
+	if (rv < 0) {
+		fprintf(stderr, "Failed to create method call: %s %s\n", error.name, error.message);
+		return 0;
+	}
+	
+	rv = sd_bus_message_append_basic(m, 's', interface); CRTX_RET_GEZ(rv)
+	rv = sd_bus_message_append_basic(m, 's', name); CRTX_RET_GEZ(rv)
+	
+	sd_bus_call_async(bus, 0,
+		m,
+		callback,
+		userdata,
+		usec
+		);
+	if (rv < 0) {
+		fprintf(stderr, "DBus call failed: %s %s\n", error.name, error.message);
+		return 0;
+	}
+	
+	sd_bus_message_unref(m);
+	
+	return 0;
+}
+
 struct async_callback {
 	struct crtx_signals signal;
 	
