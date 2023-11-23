@@ -126,6 +126,31 @@ static int in_cksum(unsigned short *addr, int len)
 	return (~sum & 0xffff);
 }
 
+static int send_event(struct crtx_ping_listener *ping_lstnr, int type, struct icmphdr *data, size_t size) {
+	struct crtx_event *new_event;
+	void *copy;
+	int rv;
+	
+	
+	if (ping_lstnr->recv_hook) {
+		rv = ping_lstnr->recv_hook(ping_lstnr, type, data, size, ping_lstnr->userdata);
+		if (rv == 1)
+			return 0;
+	}
+	
+	crtx_create_event(&new_event);
+	
+	copy = malloc(size);
+	memcpy(copy, data, size);
+	
+	new_event->type = type;
+	crtx_event_set_raw_data(new_event, 'p', (char*) copy, size, 0);
+	
+	crtx_add_event(ping_lstnr->base.graph, new_event);
+	
+	return 0;
+}
+
 int crtx_ping_send_ping(struct crtx_ping_listener *ping_lstnr) {
 	ssize_t ssize;
 	struct icmphdr *icmp;
@@ -182,31 +207,6 @@ static char ping_timer_handler(struct crtx_event *event, void *userdata, void **
 		icmp = (struct icmphdr *)ping_lstnr->packet;
 		CRTX_DBG("ping tx %d\n", ntohs(icmp->un.echo.sequence));
 	}
-	
-	return 0;
-}
-
-static int send_event(struct crtx_ping_listener *ping_lstnr, int type, struct icmphdr *data, size_t size) {
-	struct crtx_event *new_event;
-	void *copy;
-	int rv;
-	
-	
-	if (ping_lstnr->recv_hook) {
-		rv = ping_lstnr->recv_hook(ping_lstnr, type, data, size, ping_lstnr->userdata);
-		if (rv == 1)
-			return 0;
-	}
-	
-	crtx_create_event(&new_event);
-	
-	copy = malloc(size);
-	memcpy(copy, data, size);
-	
-	new_event->type = type;
-	crtx_event_set_raw_data(new_event, 'p', (char*) copy, size, 0);
-	
-	crtx_add_event(ping_lstnr->base.graph, new_event);
 	
 	return 0;
 }
