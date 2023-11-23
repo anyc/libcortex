@@ -373,7 +373,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 // 				if (el_cb->timeout.tv_sec > 0 || el_cb->timeout.tv_nsec > 0) {
 				if (el_cb->timeout_enabled) {
 					if (CRTX_timespec2uint64(&el_cb->timeout) <= now) {
-						CRTX_VDBG("timeout set by %s already in the past\n", evloop_fd->listener->id);
+						CRTX_VDBG("timeout set by %s already in the past\n", evloop_fd->listener?evloop_fd->listener->id:"");
 						timeout_set = 1;
 						timeout = 0;
 						break;
@@ -383,7 +383,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 						timeout_set = 1;
 						timeout = CRTX_timespec2uint64(&el_cb->timeout) - now;
 						
-						CRTX_VDBG("timeout set by \"%s\": %" PRIu64 " ns\n", evloop_fd->listener->id, timeout);
+						CRTX_VDBG("timeout set by \"%s\": %" PRIu64 " ns\n", evloop_fd->listener?evloop_fd->listener->id:"", timeout);
 					}
 				}
 			}
