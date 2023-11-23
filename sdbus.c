@@ -13,11 +13,11 @@
 #include "sdbus.h"
 #include "threads.h"
 
-void crtx_sdbus_print_msg(sd_bus_message *m) {
-	const char *sig;
+void crtx_sdbus_print_msg(sd_bus_message *m, const char *sig) {
 	char *val;
 	
-	sig = sd_bus_message_get_signature(m, 1);
+	if (!sig)
+		sig = sd_bus_message_get_signature(m, 1);
 	
 	printf("sd_bus_message %s %s %s %s %s \"%s\"\n",
 		  sd_bus_message_get_path(m),
@@ -36,8 +36,6 @@ void crtx_sdbus_print_msg(sd_bus_message *m) {
 		
 		sig++;
 	}
-	
-	sd_bus_message_rewind(m, 1);
 }
 
 void crtx_sdbus_trigger_event_processing(struct crtx_sdbus_listener *lstnr) {
@@ -500,7 +498,7 @@ static int connected_match_handler(sd_bus_message *m, void *userdata, sd_bus_err
 	char *val;
 	struct crtx_sdbus_listener *sdlist;
 	
-// 	crtx_sdbus_print_msg(m);
+// 	crtx_sdbus_print_msg(m, 0);
 	sig = sd_bus_message_get_signature(m, 1);
 	
 	if (!strcmp(sd_bus_message_get_member(m), "NameAcquired") && sig[0] == 's') {
@@ -620,7 +618,8 @@ static char sdbus_test_handler(struct crtx_event *event, void *userdata, void **
 	
 	m = (sd_bus_message*) crtx_event_get_ptr(event);
 	
-	crtx_sdbus_print_msg(m);
+	crtx_sdbus_print_msg(m, 0);
+	sd_bus_message_rewind(m, 1);
 	
 	return 0;
 }
