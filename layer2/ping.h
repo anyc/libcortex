@@ -21,18 +21,20 @@ extern "C" {
 #define CRTX_PING_ET_PING_SUCCESS		(CRTX_EVENT_TYPE_FAMILY_PING + 1)
 #define CRTX_PING_ET_PING_UNREACHABLE	(CRTX_EVENT_TYPE_FAMILY_PING + 2)
 #define CRTX_PING_ET_PING_ERROR			(CRTX_EVENT_TYPE_FAMILY_PING + 3)
+#define CRTX_PING_ET_PING_TIMEOUT		(CRTX_EVENT_TYPE_FAMILY_PING + 4)
 
 enum icmp_type { ICMP_T_ECHO, ICMP_T_GATEWAY, ICMP_T_FRAG, ICMP_T_RESERVED};
 
 struct crtx_ping_listener {
 	struct crtx_listener_base base;
 	
-	char *ip;
+	const char *ip;
 	uint16_t echo_id;
 	
 	uint16_t packets_sent;
 	struct timespec sent_ts;
 	double last_rt_time;
+	char generate_timeout;
 	
 	struct sockaddr_in dst;
 	struct crtx_timer_listener timer_lstnr;

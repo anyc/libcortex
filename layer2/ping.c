@@ -165,6 +165,10 @@ int crtx_ping_send_ping(struct crtx_ping_listener *ping_lstnr) {
 		}
 	}
 	
+	if (ping_lstnr->generate_timeout && (ping_lstnr->sent_ts.tv_sec || ping_lstnr->sent_ts.tv_nsec)) {
+		send_event(ping_lstnr, CRTX_PING_ET_PING_TIMEOUT, (struct icmphdr *) ping_lstnr->packet, PACKET_LEN);
+	}
+	
 	icmp = (struct icmphdr *)ping_lstnr->packet;
 	icmp->type = ICMP_ECHO;
 	icmp->code = 0;
@@ -309,6 +313,9 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 	} else {
 		ping_lstnr->last_rt_time = 0;
 	}
+	
+	ping_lstnr->sent_ts.tv_sec = 0;
+	ping_lstnr->sent_ts.tv_nsec = 0;
 	
 	CRTX_DBG("ping rx %d (RTT %fs)\n", ntohs(icmp->un.echo.sequence), ping_lstnr->last_rt_time);
 	
@@ -469,7 +476,6 @@ int ping_main(int argc, char **argv) {
 		return 1;
 	}
 	ping_lstnr.ip = argv[1];
-	ping_lstnr.check_timeout = 1;
 	
 	// set time for (first) alarm
 	ping_lstnr.timer_lstnr.newtimer.it_value.tv_sec = 1;
