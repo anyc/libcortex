@@ -60,7 +60,7 @@ int crtx_sdbus_get_property_async_print_response(sd_bus_message *m,
 	return 0;
 }
 
-int crtx_sdbus_get_property_async(sd_bus *bus, char *service, char *object_path, char *interface, char *name, sd_bus_message_handler_t callback, void *userdata, uint64_t usec) {
+int crtx_sdbus_get_property_async(sd_bus *bus, const char *service, const char *object_path, const char *interface, const char *name, sd_bus_message_handler_t callback, void *userdata, uint64_t usec) {
 	int rv;
 	sd_bus_message *m, *reply;
 	sd_bus_error error;
