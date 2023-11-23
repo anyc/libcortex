@@ -392,7 +392,7 @@ struct crtx_listener_base *crtx_setup_ping_listener(void *options) {
 	}
 	
 	if (ping_lstnr->echo_id == 0)
-		ping_lstnr->echo_id = getpid();
+		ping_lstnr->echo_id = getpid()+(size_t)ping_lstnr;
 	
 	crtx_evloop_init_listener(
 		&ping_lstnr->base,
