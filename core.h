@@ -214,6 +214,8 @@ struct crtx_listener_base {
 	unsigned int flags;
 	char free_after_event;
 	
+	void *userdata;
+	
 	#ifndef CRTX_REDUCED_SIZE
 	/* reserved to avoid ABI breakage */
 	void *reserved1;
