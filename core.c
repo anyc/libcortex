@@ -1569,7 +1569,6 @@ void crtx_shutdown_after_fork() {
 	//
 	// this also causes the child eventloop to stop processing further events
 	
-// 	crtx_root->after_fork_close = 1;
 	crtx_root->event_loop->after_fork_close = 1;
 	
 	// we do not process the events in the queue
@@ -2617,4 +2616,8 @@ int crtx_listener_add_fd(struct crtx_listener_base *listener,
 
 int crtx_listener_get_fd(struct crtx_listener_base *listener) {
 	return listener->evloop_fd.fd;
+}
+
+int crtx_is_shutting_down() {
+	return crtx_root->shutdown;
 }

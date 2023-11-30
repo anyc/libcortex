@@ -272,7 +272,6 @@ struct crtx_root {
 	struct crtx_dll *graph_queue;
 	MUTEX_TYPE graph_queue_mutex;
 	
-// 	char after_fork_close;
 	char initialized;
 	char shutdown;
 	char reinit_after_shutdown;
@@ -336,6 +335,7 @@ int crtx_init();
 int crtx_finish();
 void crtx_loop();
 int crtx_loop_onetime();
+int crtx_is_shutting_down();
 
 int crtx_create_graph(struct crtx_graph **crtx_graph, const char *name);
 int crtx_init_graph(struct crtx_graph *crtx_graph, const char *name);
