@@ -35,6 +35,9 @@ struct crtx_fork_listener {
 	void (*pre_fork_callback)(void *cb_data);
 	void *pre_fork_cb_data;
 	
+	void (*post_fork_child_callback)(void *cb_data);
+	void *post_fork_child_cb_data;
+	
 	void *sigchld_data;
 	
 	// TODO testing! If we do this, we might need to prevent shutdown of certain

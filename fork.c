@@ -143,6 +143,9 @@ static char do_fork(struct crtx_event *event, void *userdata, void **sessiondata
 			}
 		}
 		
+		if (flstnr->post_fork_child_callback)
+			flstnr->post_fork_child_callback(flstnr->post_fork_child_cb_data);
+		
 		if (!flstnr->reinit_immediately) {
 			crtx_root->reinit_after_shutdown = 1;
 			crtx_root->reinit_cb = &reinit_cb;
