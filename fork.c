@@ -111,6 +111,9 @@ static char do_fork(struct crtx_event *event, void *userdata, void **sessiondata
 	
 	flstnr = (struct crtx_fork_listener *) userdata;
 	
+	if (flstnr->pre_fork_callback)
+		flstnr->pre_fork_callback(flstnr->pre_fork_cb_data);
+	
 	flstnr->pid = fork();
 	
 	if (flstnr->pid < 0) {
@@ -140,10 +143,15 @@ static char do_fork(struct crtx_event *event, void *userdata, void **sessiondata
 			}
 		}
 		
-		crtx_root->reinit_after_shutdown = 1;
-		crtx_root->reinit_cb = &reinit_cb;
-		crtx_root->reinit_cb_data = flstnr;
-		crtx_shutdown_after_fork();
+		if (!flstnr->reinit_immediately) {
+			crtx_root->reinit_after_shutdown = 1;
+			crtx_root->reinit_cb = &reinit_cb;
+			crtx_root->reinit_cb_data = flstnr;
+			crtx_shutdown_after_fork();
+		} else {
+			// will probably not return as it will likely call exec*()
+			reinit_cb(flstnr);
+		}
 	} else
 	if (flstnr->pid > 0) {
 // 		struct crtx_event *event;

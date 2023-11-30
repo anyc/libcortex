@@ -32,7 +32,15 @@ struct crtx_fork_listener {
 	void (*reinit_cb)(void *cb_data);
 	void *reinit_cb_data;
 	
+	void (*pre_fork_callback)(void *cb_data);
+	void *pre_fork_cb_data;
+	
 	void *sigchld_data;
+	
+	// TODO testing! If we do this, we might need to prevent shutdown of certain
+	// listeners in the child to avoid changing the state of the parent process
+	// as well.
+	char reinit_immediately;
 };
 
 struct crtx_listener_base *crtx_setup_fork_listener(void *options);
