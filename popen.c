@@ -20,6 +20,17 @@
 
 #ifndef CRTX_TEST
 
+void post_fork_child_callback(void *cb_data) {
+	struct crtx_popen_listener *plstnr;
+	
+	
+	plstnr = (struct crtx_popen_listener *) cb_data;
+	
+	// avoid closing fds the child will use as stdin
+	plstnr->stdin_lstnr.fds[CRTX_READ_END] = -1;
+	plstnr->stdin_lstnr.base.evloop_fd.fd = -1;
+}
+
 void reinit_cb(void *reinit_cb_data) {
 	struct crtx_popen_listener *plstnr;
 	int rv;
@@ -154,17 +165,8 @@ static char start_listener(struct crtx_listener_base *listener) {
 	plstnr->base.mode = CRTX_NO_PROCESSING_MODE;
 	
 	if (plstnr->fstdin == -1) {
-			rv = crtx_start_listener(&plstnr->stdin_lstnr.base);
-			if (rv) {
-				CRTX_ERROR("starting stdin pipe listener failed\n");
-				return rv;
-			}
-			// preserve fd as it would be closed by the after_fork_shutdown otherwise
 			plstnr->fstdin = plstnr->stdin_lstnr.fds[CRTX_READ_END];
-			plstnr->stdin_lstnr.fds[CRTX_READ_END] = -1;
-			plstnr->stdin_lstnr.base.evloop_fd.fd = -1;
 			
-			plstnr->stdin_wq_lstnr.write_fd = plstnr->stdin_lstnr.fds[CRTX_WRITE_END];
 			rv = crtx_start_listener(&plstnr->stdin_wq_lstnr.base);
 			if (rv) {
 				CRTX_ERROR("starting writequeue listener failed\n");
@@ -291,6 +293,8 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 	// plstnr->fork_lstnr.reinit_immediately = 1;
 	plstnr->fork_lstnr.reinit_cb = &reinit_cb;
 	plstnr->fork_lstnr.reinit_cb_data = plstnr;
+	plstnr->fork_lstnr.post_fork_child_callback = &post_fork_child_callback;
+	plstnr->fork_lstnr.post_fork_child_cb_data = plstnr;
 	
 	rv = crtx_setup_listener("fork", &plstnr->fork_lstnr);
 	if (rv) {
@@ -303,12 +307,14 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 // 	plstnr->stdin_lstnr.fd_event_handler = pipe_event_handler;
 // 	plstnr->stdin_lstnr.fd_event_handler_data = &plstnr->stdin_lstnr;
 	
-	if (plstnr->fstdin == -1) {
+	if (plstnr->fstdin == -1 && plstnr->stdin_wq_lstnr.write) {
 		rv = crtx_setup_listener("pipe", &plstnr->stdin_lstnr);
 		if (rv) {
 			CRTX_ERROR("create_listener(pipe) failed\n");
 			return 0;
 		}
+		
+		plstnr->stdin_wq_lstnr.write_fd = plstnr->stdin_lstnr.fds[CRTX_WRITE_END];
 		
 		rv = crtx_setup_listener("writequeue", &plstnr->stdin_wq_lstnr);
 		if (rv) {
@@ -367,8 +373,9 @@ void crtx_popen_finish() {
 
 #else /* CRTX_TEST */
 
-#define BUF_SIZE 1024
-char buffer[BUF_SIZE];
+#define TEXT "First text output"
+char buffer[] = TEXT;
+size_t to_write = sizeof(TEXT);
 
 static char popen_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	if (event->type == CRTX_FORK_ET_CHILD_STOPPED || event->type == CRTX_FORK_ET_CHILD_KILLED) {
@@ -425,7 +432,7 @@ static int wq_write(struct crtx_writequeue_listener *wqueue, void *userdata) {
 	ssize_t n_bytes;
 	
 	while (1) {
-		n_bytes = write(wqueue->write_fd, buffer, BUF_SIZE);
+		n_bytes = write(wqueue->write_fd, buffer, to_write);
 		if (n_bytes < 0) {
 			if (errno == EAGAIN || errno == ENOBUFS) {
 				printf("received EAGAIN\n");
@@ -438,6 +445,12 @@ static int wq_write(struct crtx_writequeue_listener *wqueue, void *userdata) {
 				return -errno;
 			}
 		} else {
+			to_write -= n_bytes;
+			if (to_write == 0) {
+				crtx_writequeue_stop(wqueue);
+				close(wqueue->write_fd);
+				break;
+			}
 		}
 	}
 	
@@ -473,8 +486,9 @@ int popen_main(int argc, char **argv) {
 	plist.argv = (char*[]) {
 		(char*) plist.filepath,
 		"-c",
-		// "id; echo stdout_test; echo stderr_test >&2; pwd; sleep 5; exit 1;",
-		"echo stdout_test; sleep 5; exit 1;",
+		// "id; echo stdout_test; echo stderr_test >&2; pwd; echo sleep 5; exit 1;",
+		"id; echo waiting...; cat; sleep 5; echo \"last output\"; exit 1;",
+		// "exec cat",
 		0
 		};
 	
@@ -504,11 +518,11 @@ int popen_main(int argc, char **argv) {
 		return 0;
 	}
 	
-	if (0) {
+	if (1) {
 		// setup process 2
 		
 		plist2.filepath = "/bin/sh";
-		plist2.argv = (char*[]) { (char*) plist.filepath, "-c", "sleep 2; echo \"plist2\"; exit 0;", 0};
+		plist2.argv = (char*[]) { (char*) plist.filepath, "-c", "sleep 2; echo \"intermediate p2 output\"; exit 0;", 0};
 		
 		plist2.stdout_cb = &stdout_cb2;
 		
