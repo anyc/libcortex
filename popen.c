@@ -77,11 +77,13 @@ void reinit_cb(void *reinit_cb_data) {
 		}
 	}
 	
+	/*
 	if (plstnr->envp == 0) {
-		// required for portability
+		// required for portability if an empty environment shall be created
 		plstnr->envp = (char**) malloc(sizeof(char*)*1);
 		plstnr->envp[0] = 0;
 	}
+	*/
 	
 	if (plstnr->chdir) {
 		rv = chdir(plstnr->chdir);
@@ -152,8 +154,6 @@ static char start_listener(struct crtx_listener_base *listener) {
 	plstnr->base.mode = CRTX_NO_PROCESSING_MODE;
 	
 	if (plstnr->fstdin == -1) {
-		// is someone interestesd in the stdin from the child process?
-		if (plstnr->stdin_cb) {
 			rv = crtx_start_listener(&plstnr->stdin_lstnr.base);
 			if (rv) {
 				CRTX_ERROR("starting stdin pipe listener failed\n");
@@ -162,25 +162,14 @@ static char start_listener(struct crtx_listener_base *listener) {
 			// preserve fd as it would be closed by the after_fork_shutdown otherwise
 			plstnr->fstdin = plstnr->stdin_lstnr.fds[CRTX_READ_END];
 			plstnr->stdin_lstnr.fds[CRTX_READ_END] = -1;
+			plstnr->stdin_lstnr.base.evloop_fd.fd = -1;
 			
 			plstnr->stdin_wq_lstnr.write_fd = plstnr->stdin_lstnr.fds[CRTX_WRITE_END];
-		// 	plstnr->stdin_wq_lstnr.write = &wq_write;
 			rv = crtx_start_listener(&plstnr->stdin_wq_lstnr.base);
 			if (rv) {
 				CRTX_ERROR("starting writequeue listener failed\n");
 				return rv;
 			}
-		} else {
-			plstnr->fstdin = STDIN_FILENO;
-		}
-	} else {
-		if (plstnr->fstdin != STDIN_FILENO) {
-			rv = crtx_start_listener(&plstnr->stdin_lstnr.base);
-			if (rv) {
-				CRTX_ERROR("starting stdin pipe listener failed\n");
-				return rv;
-			}
-		}
 	}
 	
 	if (plstnr->fstdout == -1) {
@@ -195,14 +184,6 @@ static char start_listener(struct crtx_listener_base *listener) {
 		} else {
 			plstnr->fstdout = STDOUT_FILENO;
 		}
-	} else {
-		if (plstnr->fstdout != STDOUT_FILENO) {
-			rv = crtx_start_listener(&plstnr->stdout_lstnr.base);
-			if (rv) {
-				CRTX_ERROR("starting stdout pipe listener failed\n");
-				return rv;
-			}
-		}
 	}
 	
 	if (plstnr->fstderr == -1) {
@@ -216,14 +197,6 @@ static char start_listener(struct crtx_listener_base *listener) {
 			plstnr->stderr_lstnr.fds[CRTX_WRITE_END] = -1;
 		} else {
 			plstnr->fstderr = STDERR_FILENO;
-		}
-	} else {
-		if (plstnr->fstderr != STDERR_FILENO) {
-			rv = crtx_start_listener(&plstnr->stderr_lstnr.base);
-			if (rv) {
-				CRTX_ERROR("starting stderr pipe listener failed\n");
-				return rv;
-			}
 		}
 	}
 	
@@ -281,33 +254,25 @@ static void shutdown_listener(struct crtx_listener_base *listener) {
 
 static char fork_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	(void) sessiondata;
-	
 	struct crtx_popen_listener *plstnr;
-// 	int rc;
 	
 	
 	plstnr = (struct crtx_popen_listener*) userdata;
 	
 	crtx_stop_listener(&plstnr->base);
 	
-// 	if (event->type == CRTX_FORK_ET_CHILD_STOPPED) {
-// 		rc = event->data.int32;
-// 		
-// 		VDBG("child done with rc %d\n", rc);
-// 		
-// 		if (rc == 0) {
-// 			INFO("process stopped\n");
-// 		} else {
-// 			ERROR("process failed with %d\n", rc);
-// 		}
-// 	} else
-// 	if (event->type == CRTX_FORK_ET_CHILD_KILLED) {
-// 		rc = event->data.int32;
-// 		
-// 		ERROR("process aborted by signal %d\n", rc);
-// 	} else {
-// 		ERROR("unexpected event in webserver_event_handler\n");
-// 	}
+	if (event->type == CRTX_FORK_ET_CHILD_STOPPED) {
+		plstnr->rc = event->data.int32;
+		
+		CRTX_VDBG("child done with rc %d\n", plstnr->rc);
+	} else
+	if (event->type == CRTX_FORK_ET_CHILD_KILLED) {
+		plstnr->rc = event->data.int32;
+		
+		CRTX_VDBG("child killed with rc %d\n", plstnr->rc);
+	} else {
+		CRTX_ERROR("unexpected event sent by fork listener %d\n", event->type);
+	}
 	
 	return 0;
 }
@@ -323,7 +288,7 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 	plstnr->base.stop_listener = &stop_listener;
 	plstnr->base.shutdown = &shutdown_listener;
 	
-	
+	// plstnr->fork_lstnr.reinit_immediately = 1;
 	plstnr->fork_lstnr.reinit_cb = &reinit_cb;
 	plstnr->fork_lstnr.reinit_cb_data = plstnr;
 	
@@ -338,7 +303,7 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 // 	plstnr->stdin_lstnr.fd_event_handler = pipe_event_handler;
 // 	plstnr->stdin_lstnr.fd_event_handler_data = &plstnr->stdin_lstnr;
 	
-	if (plstnr->fstdin == -1 && plstnr->stdin_cb) {
+	if (plstnr->fstdin == -1) {
 		rv = crtx_setup_listener("pipe", &plstnr->stdin_lstnr);
 		if (rv) {
 			CRTX_ERROR("create_listener(pipe) failed\n");
@@ -481,6 +446,7 @@ static int wq_write(struct crtx_writequeue_listener *wqueue, void *userdata) {
 
 void pre_exec(struct crtx_popen_listener *plstnr, void *pre_exec_userdata) {
 	char *s;
+	printf("still open FDs before fork:\n");
 	asprintf(&s, "ls -lsh /proc/%d/fd/", getpid());
 	system(s);
 	free(s);
@@ -504,11 +470,17 @@ int popen_main(int argc, char **argv) {
 	// setup process 1
 	
 	plist.filepath = "/bin/sh";
-	plist.argv = (char*[]) { (char*) plist.filepath, "-c", "id; echo stdout_test; echo stderr_test >&2; pwd; sleep 5; exit 1;", 0};
-// 	plist.filename = "id";
+	plist.argv = (char*[]) {
+		(char*) plist.filepath,
+		"-c",
+		// "id; echo stdout_test; echo stderr_test >&2; pwd; sleep 5; exit 1;",
+		"echo stdout_test; sleep 5; exit 1;",
+		0
+		};
+	
 	if (getuid() == 0) {
 		plist.fork_lstnr.user = "nobody";
-		plist.fork_lstnr.group = "audio";
+		plist.fork_lstnr.group = "nogroup";
 	}
 	
 	plist.stdin_wq_lstnr.write = &wq_write;
@@ -526,35 +498,33 @@ int popen_main(int argc, char **argv) {
 	
 	crtx_create_task(plist.fork_lstnr.base.graph, 0, "popen_event", &popen_event_handler, 0);
 	
-	
-	// setup process 2
-	
-	plist2.filepath = "/bin/sh";
-	plist2.argv = (char*[]) { (char*) plist.filepath, "-c", "sleep 2; echo \"plist2\"; exit 0;", 0};
-	
-	plist2.stdout_cb = &stdout_cb2;
-	
-	ret = crtx_setup_listener("popen", &plist2);
-	if (ret) {
-		CRTX_ERROR("create_listener(popen) failed\n");
-		return 0;
-	}
-	
-	crtx_create_task(plist2.fork_lstnr.base.graph, 0, "popen_event", &popen_event_handler, (void*) 1);
-	
-	
-	// start processes
-	
 	ret = crtx_start_listener(&plist.base);
 	if (ret) {
 		CRTX_ERROR("starting popen listener failed\n");
 		return 0;
 	}
 	
-	ret = crtx_start_listener(&plist2.base);
-	if (ret) {
-		CRTX_ERROR("starting second popen listener failed\n");
-		return 0;
+	if (0) {
+		// setup process 2
+		
+		plist2.filepath = "/bin/sh";
+		plist2.argv = (char*[]) { (char*) plist.filepath, "-c", "sleep 2; echo \"plist2\"; exit 0;", 0};
+		
+		plist2.stdout_cb = &stdout_cb2;
+		
+		ret = crtx_setup_listener("popen", &plist2);
+		if (ret) {
+			CRTX_ERROR("create_listener(popen) failed\n");
+			return 0;
+		}
+		
+		crtx_create_task(plist2.fork_lstnr.base.graph, 0, "popen_event", &popen_event_handler, (void*) 1);
+		
+		ret = crtx_start_listener(&plist2.base);
+		if (ret) {
+			CRTX_ERROR("starting second popen listener failed\n");
+			return 0;
+		}
 	}
 	
 	crtx_loop();

@@ -28,12 +28,11 @@ struct crtx_popen_listener {
 	int fstdin;
 	int fstdout;
 	int fstderr;
+	int rc;
 	
-	void (*stdin_cb)(int fd, void *userdata);
 	void (*stdout_cb)(int fd, void *userdata);
 	void (*stderr_cb)(int fd, void *userdata);
 	
-	void *stdin_cb_data;
 	void *stdout_cb_data;
 	void *stderr_cb_data;
 	
