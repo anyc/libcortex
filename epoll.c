@@ -199,7 +199,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 	size_t i;
 	struct crtx_evloop_fd *evloop_fd;
 	struct crtx_evloop_callback *el_cb;
-	struct timespec now_ts;
+	struct timespec now_ts, then_ts, max_ts;
 	uint64_t now;
 	uint64_t timeout;
 	int epoll_timeout_ms;
@@ -314,12 +314,11 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 		 */
 		
 		clock_gettime(CRTX_DEFAULT_CLOCK, &now_ts);
-		now = CRTX_timespec2uint64(&now_ts);
 		
 		for (evloop_fd = evloop->fds; evloop_fd; evloop_fd = (struct crtx_evloop_fd *) evloop_fd->ll.next) {
 			for (el_cb = evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
 				if (el_cb->timeout.tv_sec > 0 || el_cb->timeout.tv_nsec > 0) {
-					if (CRTX_timespec2uint64(&el_cb->timeout) < now) {
+					if (CRTX_CMP_TIMESPEC(&el_cb->timeout, &now_ts) < 0) {
 						CRTX_VDBG("epoll timeout %d\n", evloop_fd->fd);
 						
 						el_cb->timeout_enabled = 0;
@@ -356,6 +355,10 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 		 * calculate the next timeout for the epoll_wait() call
 		 */
 		
+		// used as theoretical maximum timestamp
+		max_ts.tv_sec = 1000000000ULL;
+		max_ts.tv_nsec = 1000000000ULL - 1;
+		
 		clock_gettime(CRTX_DEFAULT_CLOCK, &now_ts);
 		now = CRTX_timespec2uint64(&now_ts);
 		
@@ -370,20 +373,34 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 				break;
 			
 			for (el_cb = evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
-// 				if (el_cb->timeout.tv_sec > 0 || el_cb->timeout.tv_nsec > 0) {
 				if (el_cb->timeout_enabled) {
-					if (CRTX_timespec2uint64(&el_cb->timeout) <= now) {
+					if (CRTX_CMP_TIMESPEC(&el_cb->timeout, &now_ts) <= 0) {
 						CRTX_VDBG("timeout set by %s already in the past\n", evloop_fd->listener?evloop_fd->listener->id:"");
 						timeout_set = 1;
 						timeout = 0;
 						break;
-					}
-					
-					if (CRTX_timespec2uint64(&el_cb->timeout) - now < timeout) {
-						timeout_set = 1;
-						timeout = CRTX_timespec2uint64(&el_cb->timeout) - now;
+					} else {
+						// theoretically, CRTX_timespec2uint64() could create a number that is too large for uint64
 						
-						CRTX_VDBG("timeout set by \"%s\": %" PRIu64 " ns\n", evloop_fd->listener?evloop_fd->listener->id:"", timeout);
+						memcpy(&then_ts, &now_ts, sizeof(struct timespec));
+						then_ts.tv_sec += timeout / 1000000000ULL;
+						then_ts.tv_nsec += timeout % 1000000000ULL;
+						if (then_ts.tv_nsec > 1000000000ULL) {
+							then_ts.tv_nsec -= 1000000000ULL;
+							then_ts.tv_sec += 1;
+						}
+						
+						if (CRTX_CMP_TIMESPEC(&el_cb->timeout, &then_ts) < 0) {
+							if (CRTX_CMP_TIMESPEC(&max_ts, &el_cb->timeout) < 0) {
+								timeout_set = 1;
+								timeout = 1000000000ULL * 1000000000ULL;
+							} else {
+								timeout_set = 1;
+								timeout = CRTX_timespec2uint64(&el_cb->timeout) - now;
+							}
+							
+							CRTX_VDBG("timeout set by \"%s\": %" PRIu64 " ns\n", evloop_fd->listener?evloop_fd->listener->id:"", timeout);
+						}
 					}
 				}
 			}

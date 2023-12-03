@@ -19,7 +19,14 @@ extern "C" {
 #define CRTX_DEFAULT_CLOCK CLOCK_BOOTTIME
 #endif
 
-#define CRTX_timespec2uint64(ts) ((uint64_t)(ts)->tv_sec * 1000000000ULL + (ts)->tv_nsec)
+// 
+#define CRTX_timespec2uint64(ts) (((uint64_t)(ts)->tv_sec) * UINT64_C(1000000000) + (ts)->tv_nsec)
+#define CRTX_timespec2us_u64(ts) (((uint64_t)(ts)->tv_sec) * UINT64_C(1000000) + (ts)->tv_nsec/1000)
+#define CRTX_CMP_TIMESPEC(ts1, ts2) \
+	( \
+		( (ts1)->tv_sec - (ts2)->tv_sec ) ? ( (ts1)->tv_sec - (ts2)->tv_sec ) : \
+		( (ts1)->tv_nsec - (ts2)->tv_nsec ) ? ( (ts1)->tv_nsec - (ts2)->tv_nsec ) : 0 \
+		)
 
 // deprecated, use with CRTX_ prefix
 #define EVLOOP_READ (1<<0)
