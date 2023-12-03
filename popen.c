@@ -308,6 +308,8 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 // 	plstnr->stdin_lstnr.fd_event_handler_data = &plstnr->stdin_lstnr;
 	
 	if (plstnr->fstdin == -1 && plstnr->stdin_wq_lstnr.write) {
+		crtx_pipe_clear_lstnr(&plstnr->stdin_lstnr);
+		
 		rv = crtx_setup_listener("pipe", &plstnr->stdin_lstnr);
 		if (rv) {
 			CRTX_ERROR("create_listener(pipe) failed\n");
@@ -324,6 +326,8 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 	}
 	
 	if (plstnr->fstdout == -1 && plstnr->stdout_cb) {
+		crtx_pipe_clear_lstnr(&plstnr->stdout_lstnr);
+		
 		plstnr->stdout_lstnr.fd_event_handler = pipe_event_handler;
 	// 	plstnr->stdout_lstnr.fd_event_handler_data = &plstnr->stdout_lstnr;
 		plstnr->stdout_lstnr.fd_event_handler_data = plstnr;
@@ -336,6 +340,8 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 	}
 	
 	if (plstnr->fstderr == -1 && plstnr->stderr_cb) {
+		crtx_pipe_clear_lstnr(&plstnr->stderr_lstnr);
+		
 		plstnr->stderr_lstnr.fd_event_handler = pipe_event_handler;
 	// 	plstnr->stderr_lstnr.fd_event_handler_data = &plstnr->stderr_lstnr;
 		plstnr->stderr_lstnr.fd_event_handler_data = plstnr;

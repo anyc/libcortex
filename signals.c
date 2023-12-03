@@ -482,6 +482,8 @@ static char start_main_listener(struct crtx_listener_base *listener) {
 		
 		CRTX_DBG("signal mode selfpipe\n");
 		
+		crtx_pipe_clear_lstnr(&slistener->pipe_lstnr);
+		
 		// this lstnr is just a container for the sigaction and pipe listeners
 		slistener->base.mode = CRTX_NO_PROCESSING_MODE;
 		

@@ -2519,6 +2519,7 @@ static int selfpipe_setup(struct crtx_root *root) {
 		crtx_root->selfpipe_lstnr = (struct crtx_listener_base *) calloc(1, sizeof(struct crtx_pipe_listener));
 		selfpipe_lstnr = (struct crtx_pipe_listener *) crtx_root->selfpipe_lstnr;
 		
+		crtx_pipe_clear_lstnr(selfpipe_lstnr);
 		selfpipe_lstnr->fd_event_handler = &selfpipe_event_handler;
 		
 		rv = crtx_setup_listener("pipe", crtx_root->selfpipe_lstnr);
