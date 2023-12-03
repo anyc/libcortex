@@ -422,6 +422,7 @@ static char stop_sub_listener(struct crtx_listener_base *listener) {
 	int i;
 	char skip, changed;
 	struct crtx_signal *sig;
+	struct crtx_dll *lit;
 	
 	
 	signal_lstnr = (struct crtx_signals_listener*) listener;
@@ -432,7 +433,8 @@ static char stop_sub_listener(struct crtx_listener_base *listener) {
 		
 		for (i=0; i < main_lstnr.n_signals; i++) {
 			if (main_lstnr.signals[i].signum == sig->signum) {
-				crtx_dll_unlink_data(&main_lstnr.signals[i].lstnrs, signal_lstnr);
+				lit = crtx_dll_unlink_data(&main_lstnr.signals[i].lstnrs, signal_lstnr);
+				free(lit);
 				
 				if (main_lstnr.signals[i].lstnrs == 0) {
 					// main_lstnr.signals[i].signum = -1;
@@ -726,8 +728,19 @@ void crtx_signals_finish() {
 		crtx_shutdown_listener(&main_lstnr.base);
 	}
 	
-	if (main_lstnr.signals)
+	if (main_lstnr.signals) {
+		int i;
+		struct crtx_dll *tmp;
+		
+		for (i=0; i < main_lstnr.n_signals; i++) {
+			while (main_lstnr.signals[i].lstnrs) {
+				tmp = main_lstnr.signals[i].lstnrs;
+				crtx_dll_unlink(&main_lstnr.signals[i].lstnrs, tmp);
+				free(tmp);
+			}
+		}
 		free(main_lstnr.signals);
+	}
 	
 // 	if (default_signal_lstnr.base.graph && default_signal_lstnr.base.graph->types) {
 // 		free(default_signal_lstnr.base.graph->types);
