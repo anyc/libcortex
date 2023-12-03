@@ -2621,3 +2621,10 @@ int crtx_listener_get_fd(struct crtx_listener_base *listener) {
 int crtx_is_shutting_down() {
 	return crtx_root->shutdown;
 }
+
+int crtx_is_fd_valid(int fd) {
+	return fcntl(fd, F_GETFD) != -1 || errno != EBADF;
+}
+
+
+

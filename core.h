@@ -452,6 +452,8 @@ int crtx_selfpipe_enqueue_cb(void (*cb)(void*), void *cb_data);
 
 void crtx_print_event(struct crtx_event *event, FILE *f);
 
+int crtx_is_fd_valid(int fd);
+
 #ifdef __cplusplus
 }
 #endif
