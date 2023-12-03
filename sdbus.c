@@ -418,7 +418,7 @@ static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct cr
 // 		crtx_evloop_enable_cb(el_cb->fd_entry->evloop, el_cb);
 	}
 	
-	// NOTE sd_bus_get_timeout() provides an absolute timeout timestamp!
+	// NOTE sd_bus_get_timeout() provides an absolute timeout timestamp based on CLOCK_MONOTONIC
 	// 18446744073709551615 == UINT64_MAX
 	r = sd_bus_get_timeout(sdlist->bus, &timeout_us);
 	if (r < 0) {
@@ -429,6 +429,7 @@ static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct cr
 		return r;
 	}
 	
+	// NOTE we use PRId64 although the type is uint64_t to easily see if timeout_us == UINT64_MAX == (uint64_t) -1
 	CRTX_VDBG("sdbus timeout: %"PRId64"\n", timeout_us);
 	crtx_evloop_set_timeout_abs(el_cb, CLOCK_MONOTONIC, timeout_us);
 	
