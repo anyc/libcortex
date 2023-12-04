@@ -171,7 +171,8 @@ struct crtx_listener_repository {
 enum crtx_listener_state { CRTX_LSTNR_UNKNOWN=0, CRTX_LSTNR_STARTING, CRTX_LSTNR_STARTED, CRTX_LSTNR_PAUSED, CRTX_LSTNR_STOPPING, CRTX_LSTNR_STOPPED, CRTX_LSTNR_SHUTTING_DOWN, CRTX_LSTNR_SHUTDOWN }; //CRTX_LSTNR_ABORTED, 
 
 // immediately schedule a call of the fd event handler (e.g., to query flags/timeouts/...)
-#define CRTX_LSTNR_STARTUP_TRIGGER (1<<0)
+#define CRTX_LSTNR_STARTUP_TRIGGER	(1<<0)
+#define CRTX_LSTNR_NO_AUTO_CLOSE 	(1<<1)
 
 struct crtx_listener_base {
 	struct crtx_ll ll;

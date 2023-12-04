@@ -556,7 +556,7 @@ void crtx_shutdown_listener(struct crtx_listener_base *listener) {
 	if (listener->shutdown) {
 		listener->shutdown(listener);
 	} else {
-		if (listener->evloop_fd.fd >= 0) {
+		if (listener->evloop_fd.fd >= 0 && (listener->flags & CRTX_LSTNR_NO_AUTO_CLOSE) == 0) {
 			CRTX_DBG("auto-closing %d during shutdown %s\n", listener->evloop_fd.fd, listener->id);
 			
 			close(listener->evloop_fd.fd);
