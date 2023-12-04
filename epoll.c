@@ -467,7 +467,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 			loop--;
 	}
 	
-	CRTX_DBG("epoll stops (%d %d %d)\n", epl->stop, onetime, evloop->after_fork_close);
+	CRTX_VDBG("epoll stops (%d %d %d)\n", epl->stop, onetime, evloop->after_fork_close);
 	
 	return 0;
 }
