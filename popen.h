@@ -49,6 +49,7 @@ struct crtx_popen_listener {
 
 struct crtx_listener_base *crtx_setup_popen_listener(void *options);
 void crtx_popen_clear_lstnr(struct crtx_popen_listener *lstnr);
+void crtx_popen_close_stdin(struct crtx_popen_listener *lstnr);
 CRTX_DECLARE_ALLOC_FUNCTION(popen)
 
 void crtx_popen_init();
