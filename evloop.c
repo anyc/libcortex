@@ -331,8 +331,10 @@ int crtx_evloop_enable_cb(struct crtx_evloop_callback *el_cb) {
 }
 
 int crtx_evloop_disable_cb(struct crtx_evloop_callback *el_cb) {
-	if (!el_cb->active)
+	if (!el_cb->active) {
+		CRTX_VDBG("crtx_evloop_disable_cb(): not active\n");
 		return 0;
+	}
 	
 	el_cb->active = 0;
 	if (el_cb->fd_entry->evloop)
