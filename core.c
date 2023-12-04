@@ -144,7 +144,7 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 	if (listener->state == CRTX_LSTNR_STARTED) {
 		CRTX_DBG("listener already started\n");
 		UNLOCK(listener->state_mutex);
-		return -EEXIST;
+		return -EINPROGRESS;
 	}
 	
 // 	if (listener->evloop_fd.fd < 0 && !listener->thread_job.fct && !listener->start_listener) {
