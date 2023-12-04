@@ -1583,8 +1583,7 @@ void crtx_shutdown_after_fork() {
 	while (lit) {
 		lstnr = (struct crtx_listener_base*) lit->data;
 		if (lstnr && lstnr->evloop_fd.fd >= 0) {
-			close(lstnr->evloop_fd.fd);
-			lstnr->evloop_fd.fd = -1;
+			crtx_evloop_disable_cb(&lstnr->default_el_cb);
 		}
 		
 		lit = lit->next;
