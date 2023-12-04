@@ -37,6 +37,8 @@ struct crtx_fork_listener {
 	
 	void (*post_fork_child_callback)(void *cb_data);
 	void *post_fork_child_cb_data;
+	void (*post_fork_parent_callback)(void *cb_data);
+	void *post_fork_parent_cb_data;
 	
 	void *sigchld_data;
 	

@@ -165,6 +165,9 @@ static char do_fork(struct crtx_event *event, void *userdata, void **sessiondata
 // 		event.type = CRTX_FORK_ET_FORK_DONE_PARENT;
 // 		
 // 		crtx_add_event(fork_lstnr.base.graph, event);
+		
+		if (flstnr->post_fork_parent_callback)
+			flstnr->post_fork_parent_callback(flstnr->post_fork_parent_cb_data);
 	}
 	
 	return 0;
