@@ -27,18 +27,37 @@ void post_fork_child_callback(void *cb_data) {
 	
 	plstnr = (struct crtx_popen_listener *) cb_data;
 	
-	// libcortex will automatically close its FDs after fork, we set -1 here to
-	// avoid closing fds the child will use as stdin
+	// In the child process, set the fstd* variables to their final value and
+	// set the listener FDs to -1 as libcortex will shutdown all the old listeners
+	// inherited from the parent process and would close their FDs otherwise.
 	
-	plstnr->fstdin = plstnr->stdin_lstnr.fds[CRTX_READ_END];
+	if (plstnr->fstdin == -1) {
+		if (plstnr->stdin_wq_lstnr.write)
+			plstnr->fstdin = plstnr->stdin_lstnr.fds[CRTX_READ_END];
+		else
+			plstnr->fstdin = STDIN_FILENO;
+	}
+	
+	if (plstnr->fstdout == -1) {
+		if (plstnr->stdout_cb)
+			plstnr->fstdout = plstnr->stdout_lstnr.fds[CRTX_WRITE_END];
+		else
+			plstnr->fstdout = STDOUT_FILENO;
+	}
+	
+	if (plstnr->fstderr == -1) {
+		if (plstnr->stderr_cb)
+			plstnr->fstderr = plstnr->stderr_lstnr.fds[CRTX_WRITE_END];
+		else
+			plstnr->fstderr = STDERR_FILENO;
+	}
+	
 	plstnr->stdin_lstnr.fds[CRTX_READ_END] = -1;
 	plstnr->stdin_lstnr.base.evloop_fd.fd = -1;
 	
-	plstnr->fstdout = plstnr->stdout_lstnr.fds[CRTX_WRITE_END];
 	plstnr->stdout_lstnr.fds[CRTX_WRITE_END] = -1;
 	plstnr->stdout_lstnr.base.evloop_fd.fd = -1;
 	
-	plstnr->fstderr = plstnr->stderr_lstnr.fds[CRTX_WRITE_END];
 	plstnr->stderr_lstnr.fds[CRTX_WRITE_END] = -1;
 	plstnr->stderr_lstnr.base.evloop_fd.fd = -1;
 }
@@ -47,42 +66,15 @@ void post_fork_child_callback(void *cb_data) {
 // itself after the fork and it starts the actual executable/command
 void after_fork_reinit_cb(void *reinit_cb_data) {
 	struct crtx_popen_listener *plstnr;
-	int rv, fstdin, fstdout, fstderr;
+	int rv; //, fstdin, fstdout, fstderr;
 	
 	
 	plstnr = (struct crtx_popen_listener *) reinit_cb_data;
 	
-	if (plstnr->fstdin == -1) {
-		if (plstnr->stdin_wq_lstnr.write)
-			fstdin = plstnr->stdin_lstnr.fds[CRTX_READ_END];
-		else
-			fstdin = STDIN_FILENO;
-	} else {
-		fstdin = plstnr->fstdin;
-	}
-	
-	if (plstnr->fstdout == -1) {
-		if (plstnr->stdout_cb)
-			fstdout = plstnr->stdout_lstnr.fds[CRTX_WRITE_END];
-		else
-			fstdout = STDOUT_FILENO;
-	} else {
-		fstdout = plstnr->fstdout;
-	}
-	
-	if (plstnr->fstderr == -1) {
-		if (plstnr->stderr_cb)
-			fstderr = plstnr->stderr_lstnr.fds[CRTX_WRITE_END];
-		else
-			fstderr = STDERR_FILENO;
-	} else {
-		fstderr = plstnr->fstderr;
-	}
-	
 	if (plstnr->filepath)
-		CRTX_DBG("exec \"%s\" (fds %d %d %d)\n", plstnr->filepath, fstdin, fstdout, fstderr);
+		CRTX_DBG("exec \"%s\" (fds %d %d %d)\n", plstnr->filepath, plstnr->fstdin, plstnr->fstdout, plstnr->fstderr);
 	else
-		CRTX_DBG("exec \"%s\" (fds %d %d %d)\n", plstnr->filename, fstdin, fstdout, fstderr);
+		CRTX_DBG("exec \"%s\" (fds %d %d %d)\n", plstnr->filename, plstnr->fstdin, plstnr->fstdout, plstnr->fstderr);
 	
 	if (plstnr->argv) {
 		char **arg;
@@ -94,31 +86,31 @@ void after_fork_reinit_cb(void *reinit_cb_data) {
 		}
 	}
 	
-	if (fstdin != STDIN_FILENO) {
-		rv = dup2(fstdin, STDIN_FILENO);
+	if (plstnr->fstdin != STDIN_FILENO) {
+		rv = dup2(plstnr->fstdin, STDIN_FILENO);
 		if (rv == -1) {
-			CRTX_ERROR("dup2(stdin, %d) failed: %s\n", fstdin, strerror(errno));
+			CRTX_ERROR("dup2(stdin, %d) failed: %s\n", plstnr->fstdin, strerror(errno));
 			exit(1);
 		}
-		close(fstdin);
+		close(plstnr->fstdin);
 	}
 	
-	if (fstdout != STDOUT_FILENO) {
-		rv = dup2(fstdout, STDOUT_FILENO);
+	if (plstnr->fstdout != STDOUT_FILENO) {
+		rv = dup2(plstnr->fstdout, STDOUT_FILENO);
 		if (rv == -1) {
-			CRTX_ERROR("dup2(stdout, %d) failed: %s\n", fstdout, strerror(errno));
+			CRTX_ERROR("dup2(stdout, %d) failed: %s\n", plstnr->fstdout, strerror(errno));
 			exit(1);
 		}
-		close(fstdout);
+		close(plstnr->fstdout);
 	}
 	
-	if (fstderr != STDERR_FILENO) {
-		rv = dup2(fstderr, STDERR_FILENO);
+	if (plstnr->fstderr != STDERR_FILENO) {
+		rv = dup2(plstnr->fstderr, STDERR_FILENO);
 		if (rv == -1) {
-			CRTX_ERROR("dup2(stderr, %d) failed: %s\n", fstderr, strerror(errno));
+			CRTX_ERROR("dup2(stderr, %d) failed: %s\n", plstnr->fstderr, strerror(errno));
 			exit(1);
 		}
-		close(fstderr);
+		close(plstnr->fstderr);
 	}
 	
 	if (plstnr->argv == 0) {
