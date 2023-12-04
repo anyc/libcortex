@@ -142,6 +142,7 @@ struct crtx_listener_base *crtx_setup_writequeue_listener(void *options) {
 							0, 0
 			);
 	}
+	wqueue->base.flags |= CRTX_LSTNR_NO_AUTO_CLOSE;
 	
 	return &wqueue->base;
 }
