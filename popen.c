@@ -27,9 +27,10 @@ void post_fork_child_callback(void *cb_data) {
 	
 	plstnr = (struct crtx_popen_listener *) cb_data;
 	
-	// In the child process, set the fstd* variables to their final value and
-	// set the listener FDs to -1 as libcortex will shutdown all the old listeners
-	// inherited from the parent process and would close their FDs otherwise.
+	// In the child process, set the fstd* variables to their final values and
+	// set the listener FDs the child will use to -1 as libcortex could shutdown
+	// all the old listeners inherited from the parent process and would close
+	// their FDs otherwise.
 	
 	if (plstnr->fstdin == -1) {
 		if (plstnr->stdin_wq_lstnr.write)
@@ -66,7 +67,7 @@ void post_fork_child_callback(void *cb_data) {
 // itself after the fork and it starts the actual executable/command
 void after_fork_reinit_cb(void *reinit_cb_data) {
 	struct crtx_popen_listener *plstnr;
-	int rv; //, fstdin, fstdout, fstderr;
+	int rv;
 	
 	
 	plstnr = (struct crtx_popen_listener *) reinit_cb_data;
@@ -166,6 +167,7 @@ void after_fork_reinit_cb(void *reinit_cb_data) {
 	crtx_init_shutdown();
 }
 
+// callback that is executed if this listener is configured to react on new data from stdout or stderr
 static char pipe_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_pipe_listener *pipe_lstnr;
 	struct crtx_popen_listener *popen_lstnr;
@@ -259,7 +261,7 @@ static char stop_listener(struct crtx_listener_base *listener) {
 	plstnr = (struct crtx_popen_listener *) listener;
 	
 	
-	// TODO also stop the child?
+	// TODO also stop the child if it is still running?
 	
 // 	int rv;
 // 	rv = crtx_stop_listener(&plstnr->fork_lstnr.base);
@@ -296,6 +298,7 @@ static void shutdown_listener(struct crtx_listener_base *listener) {
 	return;
 }
 
+// callback that is executed if the child process terminates
 static char fork_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	(void) sessiondata;
 	struct crtx_popen_listener *plstnr;
@@ -393,6 +396,8 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 	return &plstnr->base;
 }
 
+// can be used by the user application to indicate the child process that there
+// will be no more data on stdin
 void crtx_popen_close_stdin(struct crtx_popen_listener *lstnr) {
 	crtx_stop_listener(&lstnr->stdin_wq_lstnr.base);
 	

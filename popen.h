@@ -25,22 +25,23 @@ struct crtx_popen_listener {
 	struct crtx_pipe_listener stdout_lstnr;
 	struct crtx_pipe_listener stderr_lstnr;
 	
-	int fstdin;
-	int fstdout;
-	int fstderr;
-	int rc;
+	int fstdin;		// override stdin for the new process (optional)
+	int fstdout;	// override stdout for the new process (optional)
+	int fstderr;	// override stderr for the new process (optional)
 	
-	void (*stdout_cb)(int fd, void *userdata);
-	void (*stderr_cb)(int fd, void *userdata);
+	int rc;			// return code of the child process
 	
-	void *stdout_cb_data;
-	void *stderr_cb_data;
+	void (*stdout_cb)(int fd, void *userdata);	// if set, will be called if child process writes to stdout
+	void (*stderr_cb)(int fd, void *userdata);	// if set, will be called if child process writes to stderr
+	
+	void *stdout_cb_data;	// user data that will be passed to the respective callback above
+	void *stderr_cb_data;	// user data that will be passed to the respective callback above
 	
 	const char *filepath; // execute the executable with this file path
 	const char *filename; // execute an executable with this filename (e.g., in $PATH)
-	char **argv;
-	char **envp;
-	const char *chdir;
+	char **argv;	// start executable with parameters (must include executable itself)
+	char **envp;	// start executable with a custom environment (optional)
+	const char *chdir; // change current directory before starting child process (optional)
 	
 	// execute callback just before execv'ing the given command
 	void (*pre_exec)(struct crtx_popen_listener *plstnr, void *pre_exec_userdata);
