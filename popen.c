@@ -332,7 +332,7 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 	plstnr->base.stop_listener = &stop_listener;
 	plstnr->base.shutdown = &shutdown_listener;
 	
-	// plstnr->fork_lstnr.reinit_immediately = 1;
+	plstnr->fork_lstnr.reinit_immediately = 1;
 	plstnr->fork_lstnr.reinit_cb = &after_fork_reinit_cb;
 	plstnr->fork_lstnr.reinit_cb_data = plstnr;
 	plstnr->fork_lstnr.post_fork_child_callback = &post_fork_child_callback;
