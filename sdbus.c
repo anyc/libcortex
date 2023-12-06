@@ -63,10 +63,8 @@ int crtx_sdbus_get_property_async_print_response(sd_bus_message *m,
 int crtx_sdbus_get_property_async(sd_bus *bus, const char *service, const char *object_path, const char *interface, const char *name, sd_bus_message_handler_t callback, void *userdata, uint64_t usec) {
 	int rv;
 	sd_bus_message *m;
-	sd_bus_error error;
 	
 	
-	error = SD_BUS_ERROR_NULL;
 	m = 0;
 	rv = sd_bus_message_new_method_call(bus,
 		&m,
@@ -76,7 +74,7 @@ int crtx_sdbus_get_property_async(sd_bus *bus, const char *service, const char *
 		"Get"
 		);
 	if (rv < 0) {
-		fprintf(stderr, "Failed to create method call: %s %s\n", error.name, error.message);
+		fprintf(stderr, "Failed to create method call: %s\n", strerror(-rv));
 		return 0;
 	}
 	
@@ -90,9 +88,8 @@ int crtx_sdbus_get_property_async(sd_bus *bus, const char *service, const char *
 		usec
 		);
 	if (rv < 0) {
-		fprintf(stderr, "DBus get_property (%s %s %s %s) failed: %s %s\n",
-				service, object_path, interface, name,
-				error.name, error.message);
+		fprintf(stderr, "DBus get_property (%s %s %s %s) failed: %s\n",
+				service, object_path, interface, name, strerror(-rv));
 		return 0;
 	}
 	
