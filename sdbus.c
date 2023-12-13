@@ -344,6 +344,44 @@ finish:
 	return err;
 }
 
+int crtx_sdbus_get_objects_msg_async(struct crtx_sdbus_listener *lstnr, const char *service, sd_bus_message_handler_t callback, void *userdata, uint64_t timeout_us) {
+	int rv;
+	sd_bus_message *m;
+	
+	
+	m = 0;
+	rv = sd_bus_message_new_method_call(lstnr->bus,
+		&m,
+		service,
+		"/",
+		CRTX_DBUS_OBJECT_MANAGER_INTERFACE,
+		"GetManagedObjects"
+		);
+	if (rv < 0) {
+		fprintf(stderr, "Failed to create method call: %s\n", strerror(-rv));
+		return 0;
+	}
+	
+	// rv = sd_bus_message_append_basic(m, 's', interface); CRTX_RET_GEZ(rv)
+	// rv = sd_bus_message_append_basic(m, 's', name); CRTX_RET_GEZ(rv)
+	
+	sd_bus_call_async(lstnr->bus, 0 /* slot */,
+		m,
+		callback,
+		userdata,
+		timeout_us
+		);
+	if (rv < 0) {
+		fprintf(stderr, "DBus get_property (%s %s %s %s) failed: %s\n",
+				service, "/", CRTX_DBUS_OBJECT_MANAGER_INTERFACE, "GetManagedObjects", strerror(-rv));
+		return 0;
+	}
+	
+	sd_bus_message_unref(m);
+	
+	return 0;
+}
+
 static void match_event_release(struct crtx_event *event, void *userdata) {
 	sd_bus_message_unref(event->data.pointer);
 }
