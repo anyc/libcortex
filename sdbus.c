@@ -38,6 +38,174 @@ void crtx_sdbus_print_msg(sd_bus_message *m, const char *sig) {
 	}
 }
 
+int crtx_sdbus_next_to_dict_item(sd_bus_message *msg, struct crtx_dict_item *ditem, char no_reduce) {
+	int rv, n_elements;
+	char type;
+	const char *contents;
+	struct crtx_dict_item subitem;
+	struct crtx_dict_item *it;
+	
+	rv = sd_bus_message_peek_type(msg, &type, &contents); CRTX_RET_GEZ(rv)
+	if (rv == 0)
+		return 0;
+	
+	// VDBG("next: %c %s\n", type, contents);
+	
+	n_elements = 0;
+	switch (type) {
+		case 'e':
+		case 'v':
+		case 'a': {
+			// TODO first item should be length of the array
+// 			int array_length;
+// 			
+// 			if (type == 'a') {
+// 				rv = sd_bus_message_read_basic(msg, type, &array_length); CRTX_RET_GEZ(rv)
+// 				printf("len %d\n", array_length);
+// 			}
+			
+			rv = sd_bus_message_enter_container(msg, type, contents); CRTX_RET_GEZ(rv)
+			
+			ditem->type = 'D';
+			ditem->dict = (struct crtx_dict*) calloc(1, sizeof(struct crtx_dict));
+			
+			while (1) {
+				rv = sd_bus_message_at_end(msg, 0);
+				if (rv == 1)
+					break;
+				
+				memset(&subitem, 0, sizeof(struct crtx_dict_item));
+				rv = crtx_sdbus_next_to_dict_item(msg, &subitem, no_reduce);
+				if (rv < 0) {
+					printf("stop %s\n", strerror(-rv));
+					return rv;
+				}
+				if (rv < 1) {
+					break;
+				}
+				
+				// convert {sv} into a single key=value tuple (= crtx_dict_item) if possible
+				if (!strcmp(contents, "sv") && ditem->dict->signature_length == 1) {
+					if (subitem.type == 'D' && subitem.dict->signature_length == 1) {
+						free(ditem->dict);
+						
+						ditem->key = it->string;
+						ditem->flags |= CRTX_DIF_ALLOCATED_KEY;
+						ditem->type = subitem.dict->items[0].type;
+						ditem->pointer = subitem.dict->items[0].pointer;
+						ditem->size = subitem.dict->items[0].size;
+						
+						crtx_free_dict_item_data(&subitem);
+					} else {
+						it = &ditem->dict->items[ditem->dict->signature_length-1];
+						it->key = it->string;
+						it->flags |= CRTX_DIF_ALLOCATED_KEY;
+						it->type = subitem.type;
+						it->pointer = subitem.pointer;
+						it->size = subitem.size;
+					}
+					break;
+				}
+				
+				// it = crtx_alloc_item(ditem->dict);
+				ditem->dict->signature_length += 1;
+				ditem->dict->items = (struct crtx_dict_item*) realloc(ditem->dict->items, sizeof(struct crtx_dict_item)*ditem->dict->signature_length);
+				it = &ditem->dict->items[ditem->dict->signature_length-1];
+				memcpy(it, &subitem, sizeof(struct crtx_dict_item));
+			}
+			
+			rv = sd_bus_message_exit_container(msg); CRTX_RET_GEZ(rv)
+			
+			n_elements = 1; break; }
+		case 's':
+		case 'o': {
+			const char *s;
+			
+			ditem->type = 's';
+			rv = sd_bus_message_read_basic(msg, type, &s);
+			if (rv < 0)
+				return rv;
+			
+			ditem->string = strdup(s);
+			if (type == 'o')
+				ditem->key = "object";
+			n_elements = 1; break; }
+		case 'h':
+		case 'b': {
+			int i;
+			
+			ditem->type = 'u';
+			rv = sd_bus_message_read_basic(msg, type, &i);
+			if (rv < 0)
+				return rv;
+			
+			ditem->uint32 = i;
+			if (type == 'h')
+				ditem->key = "fd";
+			if (type == 'b')
+				ditem->key = "bool";
+			n_elements = 1; break; }
+		case 'q':
+		case 'u': {
+			uint32_t i;
+			
+			ditem->type = 'u';
+			rv = sd_bus_message_read_basic(msg, type, &i);
+			if (rv < 0)
+				return rv;
+			
+			ditem->uint32 = i;
+			n_elements = 1; break; }
+		case 'n':
+		case 'i': {
+			int32_t i;
+			
+			ditem->type = 'i';
+			rv = sd_bus_message_read_basic(msg, type, &i);
+			if (rv < 0)
+				return rv;
+			
+			ditem->int32 = i;
+			n_elements = 1; break; }
+		case 't': {
+			uint64_t i;
+			
+			ditem->type = 'U';
+			rv = sd_bus_message_read_basic(msg, type, &i);
+			if (rv < 0)
+				return rv;
+			
+			ditem->uint64 = i;
+			n_elements = 1; break; }
+		case 'x': {
+			int64_t i;
+			
+			ditem->type = 'I';
+			rv = sd_bus_message_read_basic(msg, type, &i);
+			if (rv < 0)
+				return rv;
+			
+			ditem->int64 = i;
+			n_elements = 1; break; }
+		case 'd': {
+			double i;
+			
+			ditem->type = 'd';
+			rv = sd_bus_message_read_basic(msg, type, &i);
+			if (rv < 0)
+				return rv;
+			
+			ditem->double_fp = i;
+			n_elements = 1; break; }
+		default:
+			CRTX_ERROR("TODO crtx_sdbus_next_to_dict_item(): %c\n", type);
+			// rv = sd_bus_message_skip(msg, 0); CRTX_RET_GEZ(rv)
+			break;
+	}
+	
+	return n_elements;
+}
+
 void crtx_sdbus_trigger_event_processing(struct crtx_sdbus_listener *lstnr) {
 	crtx_evloop_trigger_callback(lstnr->base.evloop_fd.evloop, &lstnr->base.default_el_cb);
 }

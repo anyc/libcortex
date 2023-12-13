@@ -77,6 +77,7 @@ int crtx_sdbus_get_property_async_print_response(sd_bus_message *m, void *userda
 int crtx_sd_bus_message_read_string(sd_bus_message *m, char **p);
 char crtx_sdbus_open_bus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name);
 void crtx_sdbus_print_msg(sd_bus_message *m, const char *sig);
+int crtx_sdbus_next_to_dict_item(sd_bus_message *msg, struct crtx_dict_item *ditem, char no_reduce);
 
 int crtx_sdbus_match_add(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus_match *match);
 int crtx_sdbus_match_remove(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus_match *match);
