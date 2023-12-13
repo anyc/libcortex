@@ -148,7 +148,7 @@ static char evloop_ctrl_pipe_handler(struct crtx_event *event, void *userdata, v
 void crtx_evloop_callback(struct crtx_evloop_callback *el_cb) {
 	struct crtx_event *event;
 	
-	if ((el_cb->crtx_event_flags & el_cb->triggered_flags) == 0)
+	if (el_cb->crtx_event_flags != 0 && (el_cb->crtx_event_flags & el_cb->triggered_flags) == 0)
 		return;
 	
 	if (el_cb->fd_entry)
