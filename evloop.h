@@ -128,6 +128,8 @@ struct crtx_event_loop {
 	
 	// if set, keep processing events but shutdown if no more events available
 	char phase_out;
+	
+	struct crtx_evloop_callback *startup_el_cb;
 };
 
 extern struct crtx_event_loop *crtx_event_loops;
@@ -170,6 +172,7 @@ void crtx_evloop_set_timeout_abs(struct crtx_evloop_callback *el_cb, clockid_t c
 void crtx_evloop_set_timeout_rel(struct crtx_evloop_callback *el_cb, uint64_t timeout_us);
 void crtx_evloop_disable_timeout(struct crtx_evloop_callback *el_cb);
 int crtx_evloop_trigger_callback(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
+int crtx_evloop_register_startup_callback(crtx_handle_task_t event_handler, void *userdata, struct crtx_event_loop *evloop);
 
 void crtx_event_flags2str(FILE *fd, unsigned int flags);
 

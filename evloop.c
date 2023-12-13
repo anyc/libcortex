@@ -502,6 +502,19 @@ int crtx_evloop_trigger_callback(struct crtx_event_loop *evloop, struct crtx_evl
 	return 0;
 }
 
+int crtx_evloop_register_startup_callback(crtx_handle_task_t event_handler, void *userdata, struct crtx_event_loop *evloop) {
+	if (!evloop)
+		evloop = crtx_get_main_event_loop();
+	
+	evloop->startup_el_cb = (struct crtx_evloop_callback*) calloc(1, sizeof(struct crtx_evloop_callback));
+	evloop->startup_el_cb->event_handler = event_handler;
+	evloop->startup_el_cb->event_handler_data = userdata;
+	
+	crtx_evloop_trigger_callback(evloop, evloop->startup_el_cb);
+	
+	return 0;
+}
+
 int crtx_evloop_start(struct crtx_event_loop *evloop) {
 	return evloop->start(evloop);
 }
