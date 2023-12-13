@@ -77,7 +77,6 @@ int crtx_sdbus_next_to_dict_item(sd_bus_message *msg, struct crtx_dict_item *dit
 				memset(&subitem, 0, sizeof(struct crtx_dict_item));
 				rv = crtx_sdbus_next_to_dict_item(msg, &subitem, no_reduce);
 				if (rv < 0) {
-					printf("stop %s\n", strerror(-rv));
 					return rv;
 				}
 				if (rv < 1) {
@@ -85,16 +84,22 @@ int crtx_sdbus_next_to_dict_item(sd_bus_message *msg, struct crtx_dict_item *dit
 				}
 				
 				// convert {sv} into a single key=value tuple (= crtx_dict_item) if possible
-				if (!strcmp(contents, "sv") && ditem->dict->signature_length == 1) {
+				if (!no_reduce && !strcmp(contents, "sv") && ditem->dict->signature_length == 1) {
 					if (subitem.type == 'D' && subitem.dict->signature_length == 1) {
-						free(ditem->dict);
+						struct crtx_dict *olddict;
+						
+						olddict = ditem->dict;
 						
 						ditem->key = it->string;
+						it->string = 0;
 						ditem->flags |= CRTX_DIF_ALLOCATED_KEY;
 						ditem->type = subitem.dict->items[0].type;
 						ditem->pointer = subitem.dict->items[0].pointer;
+						if ((subitem.dict->items[0].flags & CRTX_DIF_DONT_FREE_DATA) == 0)
+							subitem.dict->items[0].pointer = 0;
 						ditem->size = subitem.dict->items[0].size;
 						
+						crtx_dict_unref(olddict);
 						crtx_free_dict_item_data(&subitem);
 					} else {
 						it = &ditem->dict->items[ditem->dict->signature_length-1];
@@ -134,6 +139,7 @@ int crtx_sdbus_next_to_dict_item(sd_bus_message *msg, struct crtx_dict_item *dit
 		case 'b': {
 			int i;
 			
+			i=0;
 			ditem->type = 'u';
 			rv = sd_bus_message_read_basic(msg, type, &i);
 			if (rv < 0)
@@ -149,6 +155,7 @@ int crtx_sdbus_next_to_dict_item(sd_bus_message *msg, struct crtx_dict_item *dit
 		case 'u': {
 			uint32_t i;
 			
+			i=0;
 			ditem->type = 'u';
 			rv = sd_bus_message_read_basic(msg, type, &i);
 			if (rv < 0)
@@ -160,6 +167,7 @@ int crtx_sdbus_next_to_dict_item(sd_bus_message *msg, struct crtx_dict_item *dit
 		case 'i': {
 			int32_t i;
 			
+			i=0;
 			ditem->type = 'i';
 			rv = sd_bus_message_read_basic(msg, type, &i);
 			if (rv < 0)
