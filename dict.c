@@ -1468,7 +1468,8 @@ void crtx_dict_ref(struct crtx_dict *dict) {
 
 void crtx_dict_unref(struct crtx_dict *dict) {
 	LOCK(dict->mutex);
-	dict->ref_count--;
+	if (dict->ref_count > 0)
+		dict->ref_count--;
 	
 	if (dict->ref_count == 0) {
 // 		printf("unref free dict %p\n", dict);
