@@ -6,7 +6,7 @@ LDFLAGS+=-L$(libcrtx_path) -Wl,-rpath "$(libcrtx_path)"
 
 LDLIBS+=-lcrtx
 
-EXAMPLES?=libvirt-usb-hotplug named_pipe ipquery
+EXAMPLES?=libvirt-usb-hotplug named_pipe ipquery dbus-tool
 L_EXAMPLES?=$(filter-out ipquery,$(EXAMPLES))
 CONTROL_MODULES?=fanotify inotify_batch inotify_notify notifyd pfw
 
@@ -32,6 +32,8 @@ pfw: CFLAGS+=-DPFW_STANDALONE
 pfw: LDLIBS+=-lcrtx_nf_queue
 pfw: control_pfw.c
 	$(CC) -o $@ $< $(CFLAGS) $(LDFLAGS) $(LDLIBS)
+
+dbus-tool: LDLIBS+=-lcrtx_sdbus -lsystemd
 
 clean:
 	rm -f *.o $(L_EXAMPLES) $(CONTROL_MODULE_LIBS)
