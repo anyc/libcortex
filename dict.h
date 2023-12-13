@@ -116,7 +116,7 @@ struct crtx_dict_item * crtx_get_item_by_idx(struct crtx_dict *ds, size_t idx);
 
 char crtx_cmp_item(struct crtx_dict_item *a, struct crtx_dict_item *b);
 void crtx_print_dict_item(struct crtx_dict_item *di, unsigned char level);
-void crtx_free_dict_item(struct crtx_dict_item *di);
+void crtx_free_dict_item_data(struct crtx_dict_item *di);
 struct crtx_dict *crtx_dict_copy(struct crtx_dict *orig);
 void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src, char data_only);
 char crtx_get_item_value(struct crtx_dict_item *di, char type,  void *buffer, size_t buffer_size);

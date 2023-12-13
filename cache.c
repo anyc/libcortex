@@ -185,7 +185,7 @@ char crtx_cache_task_handler(struct crtx_event *event, void *userdata, void **se
 				
 				key_item = crtx_get_item(ditem->dict, "key");
 				
-				crtx_free_dict_item(key_item);
+				crtx_free_dict_item_data(key_item);
 				key_item->type = 0;
 				
 				ditem = 0;
@@ -419,7 +419,7 @@ static char crtx_cache_task_cleanup(struct crtx_event *event, void *userdata, vo
 		pthread_mutex_unlock(&cache->mutex);
 	}
 	
-	crtx_free_dict_item(key);
+	crtx_free_dict_item_data(key);
 	
 	free(sd);
 	

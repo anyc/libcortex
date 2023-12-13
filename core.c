@@ -1108,7 +1108,7 @@ char wait_on_event(struct crtx_event *event) {
 // void free_event_data(struct crtx_event_data *ed) {
 // // 	if (ed->raw.pointer && !(ed->flags & CRTX_EVF_DONT_FREE_RAW))
 // // 		free(ed->raw);
-// 	crtx_free_dict_item(&ed->raw);
+// 	crtx_free_dict_item_data(&ed->raw);
 // 	if (ed->dict)
 // 		crtx_free_dict(ed->dict);
 // }
@@ -1147,8 +1147,8 @@ void free_event(struct crtx_event *event) {
 	
 // 	free_event_data(&event->data);
 // 	free_event_data(&event->response);
-	crtx_free_dict_item(&event->data);
-	crtx_free_dict_item(&event->response);
+	crtx_free_dict_item_data(&event->data);
+	crtx_free_dict_item_data(&event->response);
 	
 	free(event);
 }

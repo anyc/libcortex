@@ -438,12 +438,10 @@ struct crtx_dict * crtx_create_dict(char *signature, ...) {
 	return ds;
 }
 
-void crtx_free_dict_item(struct crtx_dict_item *di) {
-// 	printf("key %s\n", di->key);
+void crtx_free_dict_item_data(struct crtx_dict_item *di) {
 	if (di->key && di->flags & CRTX_DIF_ALLOCATED_KEY)
 		free(di->key);
 	
-// 	if (di->pointer) {
 	switch (di->type) {
 		case 'p':
 			if (di->pointer && !(di->flags & CRTX_DIF_DONT_FREE_DATA))
@@ -465,7 +463,6 @@ void crtx_free_dict_item(struct crtx_dict_item *di) {
 			// nothing to do here
 			break;
 	}
-// 	}
 }
 
 void crtx_free_dict(struct crtx_dict *ds) {
@@ -479,7 +476,7 @@ void crtx_free_dict(struct crtx_dict *ds) {
 		di = ds->items;
 		for (i=0; i < ds->signature_length; i++) {
 // 			printf("di %p %p\n", di, di->key);
-			crtx_free_dict_item(di);
+			crtx_free_dict_item_data(di);
 			
 			if (CRTX_DIF_IS_LAST(di))
 				break;
@@ -1566,6 +1563,6 @@ void crtx_dict_remove_item(struct crtx_dict *dict, char *key) {
 	
 	di = crtx_get_item(dict, key);
 	
-	crtx_free_dict_item(di);
+	crtx_free_dict_item_data(di);
 	memset(di, 0, sizeof(struct crtx_dict_item));
 }
