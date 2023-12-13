@@ -208,7 +208,7 @@ static int out_cache_on_miss(struct crtx_cache_task *ct, struct crtx_dict_item *
 // // 	dc->entries[dc->n_entries-1].value = event;
 // // 	dc->entries[dc->n_entries-1].value_size = sizeof(void*);
 // 	
-// 	ditem = crtx_alloc_item(dc->entries);
+// 	ditem = crtx_dict_alloc_next_item(dc->entries);
 // 	ditem->key = key;
 // 	ditem->pointer = event;
 // 	ditem->type = 'p';

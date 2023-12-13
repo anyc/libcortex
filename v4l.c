@@ -65,7 +65,7 @@ char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr, s
 		case V4L2_EVENT_VSYNC:
 			crtx_dict_new_item(dict, 's', "etype", "vsync", 0, CRTX_DIF_DONT_FREE_DATA);
 			
-// 			di2 = crtx_alloc_item(dict);
+// 			di2 = crtx_dict_alloc_next_item(dict);
 // 			crtx_fill_data_item(di2, 'D', "vsync", 0, 0, 0);
 			// crtx_v4l2_event_vsync2dict(&ptr->vsync, di2->dict);
 			break;
@@ -75,28 +75,28 @@ char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr, s
 		case V4L2_EVENT_CTRL:
 			crtx_dict_new_item(dict, 's', "etype", "ctrl", 0, CRTX_DIF_DONT_FREE_DATA);
 			
-			di2 = crtx_alloc_item(dict);
+			di2 = crtx_dict_alloc_next_item(dict);
 			crtx_fill_data_item(di2, 'D', "ctrl", 0, 0, 0);
 			crtx_v4l2_event_ctrl2dict(&ptr->u.ctrl, &di2->dict);
 			break;
 		case V4L2_EVENT_FRAME_SYNC:
 			crtx_dict_new_item(dict, 's', "etype", "frame sync", 0, CRTX_DIF_DONT_FREE_DATA);
 			
-// 			di2 = crtx_alloc_item(dict);
+// 			di2 = crtx_dict_alloc_next_item(dict);
 // 			crtx_fill_data_item(di2, 'D', "frame_sync", 0, 0, 0);
 			// crtx_v4l2_event_frame_sync2dict(&ptr->frame_sync, di2->dict);
 			break;
 		case V4L2_EVENT_SOURCE_CHANGE:
 			crtx_dict_new_item(dict, 's', "etype", "source change", 0, CRTX_DIF_DONT_FREE_DATA);
 			
-// 			di2 = crtx_alloc_item(dict);
+// 			di2 = crtx_dict_alloc_next_item(dict);
 // 			crtx_fill_data_item(di2, 'D', "src_change", 0, 0, 0);
 			// crtx_v4l2_event_src_change2dict(&ptr->src_change, di2->dict);
 			break;
 		case V4L2_EVENT_MOTION_DET:
 			crtx_dict_new_item(dict, 's', "etype", "motion det", 0, CRTX_DIF_DONT_FREE_DATA);
 			
-// 			di2 = crtx_alloc_item(dict);
+// 			di2 = crtx_dict_alloc_next_item(dict);
 // 			crtx_fill_data_item(di2, 'D', "motion_det", 0, 0, 0);
 			// crtx_v4l2_event_motion_det2dict(&ptr->motion_det, di2->dict);
 			break;
@@ -107,7 +107,7 @@ char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr, s
 			break;
 	}
 	
-// 	di = crtx_alloc_item(dict);
+// 	di = crtx_dict_alloc_next_item(dict);
 // 	crtx_fill_data_item(di, 'D', "u", 0, 0, 0);
 	// crtx_union v4l2_event::(anonymous at /usr/include/linux/videodev2.h:2089:2)2dict(&ptr->u, di->dict);
 	
@@ -115,7 +115,7 @@ char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr, s
 	
 	crtx_dict_new_item(dict, 'u', "sequence", ptr->sequence, sizeof(ptr->sequence), 0);
 	
-// 	di = crtx_alloc_item(dict);
+// 	di = crtx_dict_alloc_next_item(dict);
 // 	crtx_fill_data_item(di, 'D', "timestamp", 0, 0, 0);
 	// crtx_timespec2dict(&ptr->timestamp, di->dict);
 	
@@ -140,7 +140,7 @@ char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr, s
 		}
 	}
 	
-// 	di = crtx_alloc_item(dict);
+// 	di = crtx_dict_alloc_next_item(dict);
 // 	crtx_fill_data_item(di, 'D', "reserved", 0, 0, 0);
 // 	
 // 	// TypeKind.UINT
@@ -266,7 +266,7 @@ static void enumerate_menu(struct crtx_v4l_listener *lstnr, struct v4l2_queryctr
 	struct crtx_dict_item *di;
 	int r;
 	
-	di = crtx_alloc_item(lstnr->controls);
+	di = crtx_dict_alloc_next_item(lstnr->controls);
 	di->type = 'D';
 	di->dict = crtx_init_dict(0, 0, 0);
 	di->key = crtx_stracpy((char*) qctrl->name, 0);
@@ -348,7 +348,7 @@ void query_formats(struct crtx_v4l_listener *lstnr) {
 		char fourcc[5];
 		
 		
-		di = crtx_alloc_item(lstnr->formats);
+		di = crtx_dict_alloc_next_item(lstnr->formats);
 		di->type = 'D';
 		
 		slen = strlen((char*)fmtdesc.description);
@@ -391,7 +391,7 @@ void query_formats(struct crtx_v4l_listener *lstnr) {
 		frmsize.pixel_format = fmtdesc.pixelformat;
 		frmsize.index = 0;
 		while (ioctl(lstnr->fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) >= 0) {
-			di = crtx_alloc_item(desc_dict);
+			di = crtx_dict_alloc_next_item(desc_dict);
 			di->type = 'D';
 			di->dict = crtx_init_dict(0, 0, 0);
 			size_dict = di->dict;

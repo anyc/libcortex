@@ -59,7 +59,7 @@ struct crtx_dict *crtx_uevents_raw2dict(struct crtx_event *event) {
 
 		len = strlen(sep+1);
 		
-		di = crtx_alloc_item(dict);
+		di = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di, 's', key, crtx_stracpy(sep+1, &len), len, CRTX_DIF_ALLOCATED_KEY);
 		
 		s = sep + 1 + len + 1;

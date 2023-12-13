@@ -216,7 +216,7 @@ char crtx_dict_new_item(struct crtx_dict *dict, unsigned char type, char *key, .
 	
 	va_start(va, key);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	ret = crtx_fill_data_item_va2(di, type, key, &va);
 	
 	va_end(va);
@@ -258,7 +258,11 @@ char crtx_resize_dict(struct crtx_dict *dict, size_t n_items) {
 	return 0;
 }
 
-struct crtx_dict_item * crtx_alloc_item(struct crtx_dict *dict) {
+struct crtx_dict_item * crtx_alloc_dict_item() {
+	return malloc(sizeof(struct crtx_dict_item));
+}
+
+struct crtx_dict_item * crtx_dict_alloc_next_item(struct crtx_dict *dict) {
 // 	dict->signature_length++;
 // 	dict->items = (struct crtx_dict_item*) realloc(dict->items, dict->signature_length*sizeof(struct crtx_dict_item));
 // 	
@@ -327,7 +331,7 @@ struct crtx_dict * crtx_init_dict(char *signature, uint32_t sign_length, size_t 
 // 		*dict = crtx_init_dict(0, 1, 0);
 // 		item = crtx_get_first_item(*dict);
 // 	} else {
-// 		item = crtx_alloc_item(*dict);
+// 		item = crtx_dict_alloc_next_item(*dict);
 // 	}
 // 	
 // 	if (!item)
@@ -1419,7 +1423,7 @@ struct crtx_dict *crtx_dict_create_copy(struct crtx_dict *orig) {
 	
 	oitem = crtx_get_first_item(orig);
 	while (oitem) {
-		nitem = crtx_alloc_item(dict);
+		nitem = crtx_dict_alloc_next_item(dict);
 		
 		crtx_dict_copy_item(nitem, oitem, 0);
 		

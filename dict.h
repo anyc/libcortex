@@ -87,7 +87,8 @@ struct crtx_transform_dict_handler {
 };
 
 
-struct crtx_dict_item * crtx_alloc_item(struct crtx_dict *dict);
+struct crtx_dict_item * crtx_alloc_dict_item();
+struct crtx_dict_item * crtx_dict_alloc_next_item(struct crtx_dict *dict);
 struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, struct crtx_dict_transformation *transf);
 struct crtx_dict_item * crtx_get_item(struct crtx_dict *ds, const char *key);
 struct crtx_dict_item * crtx_dict_get_item(struct crtx_dict *ds, const char *key);

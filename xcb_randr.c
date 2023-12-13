@@ -98,28 +98,28 @@ char crtx_xcb_randr_crtc_change_t2dict(struct xcb_randr_crtc_change_t *ptr, stru
 		*dict_ptr = crtx_init_dict(0, 0, 0);
 	dict = *dict_ptr;
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "mode", ptr->mode, sizeof(ptr->mode), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	if (ptr->mode == XCB_NONE)
 		crtx_fill_data_item(di, 's', "state", "off", 0, CRTX_DIF_DONT_FREE_DATA);
 	else
 		crtx_fill_data_item(di, 's', "state", "on", 0, CRTX_DIF_DONT_FREE_DATA);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "timestamp", ptr->timestamp, sizeof(ptr->timestamp), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "window", ptr->window, sizeof(ptr->window), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "crtc", ptr->crtc, sizeof(ptr->crtc), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "rotation", ptr->rotation, sizeof(ptr->rotation), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'D', "pad0", 0, 0, 0);
 	
 	// TypeKind.UCHAR
@@ -129,16 +129,16 @@ char crtx_xcb_randr_crtc_change_t2dict(struct xcb_randr_crtc_change_t *ptr, stru
 		crtx_fill_data_item(&di->dict->items[1], 'u', 0, ptr->pad0[1], sizeof(ptr->pad0[1]), 0);
 	}
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'i', "x", ptr->x, sizeof(ptr->x), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'i', "y", ptr->y, sizeof(ptr->y), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "width", ptr->width, sizeof(ptr->width), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "height", ptr->height, sizeof(ptr->height), 0);
 	
 	return 0;
@@ -153,37 +153,37 @@ char crtx_xcb_randr_output_change_t2dict(struct xcb_randr_output_change_t *ptr, 
 		*dict_ptr = crtx_init_dict(0, 0, 0);
 	dict = *dict_ptr;
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "timestamp", ptr->timestamp, sizeof(ptr->timestamp), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "config_timestamp", ptr->config_timestamp, sizeof(ptr->config_timestamp), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "window", ptr->window, sizeof(ptr->window), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "output", ptr->output, sizeof(ptr->output), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "crtc", ptr->crtc, sizeof(ptr->crtc), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "mode", ptr->mode, sizeof(ptr->mode), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	if (ptr->mode == XCB_NONE)
 		crtx_fill_data_item(di, 's', "state", "off", 0, CRTX_DIF_DONT_FREE_DATA);
 	else
 		crtx_fill_data_item(di, 's', "state", "on", 0, CRTX_DIF_DONT_FREE_DATA);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "rotation", ptr->rotation, sizeof(ptr->rotation), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "connection", ptr->connection, sizeof(ptr->connection), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "subpixel_order", ptr->subpixel_order, sizeof(ptr->subpixel_order), 0);
 	
 	return 0;
@@ -198,49 +198,49 @@ char crtx_xcb_randr_get_output_info_reply_t2dict(struct xcb_randr_get_output_inf
 		*dict_ptr = crtx_init_dict(0, 0, 0);
 	dict = *dict_ptr;
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "response_type", ptr->response_type, sizeof(ptr->response_type), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "status", ptr->status, sizeof(ptr->status), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "sequence", ptr->sequence, sizeof(ptr->sequence), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "length", ptr->length, sizeof(ptr->length), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "timestamp", ptr->timestamp, sizeof(ptr->timestamp), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "crtc", ptr->crtc, sizeof(ptr->crtc), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "mm_width", ptr->mm_width, sizeof(ptr->mm_width), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "mm_height", ptr->mm_height, sizeof(ptr->mm_height), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "connection", ptr->connection, sizeof(ptr->connection), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "subpixel_order", ptr->subpixel_order, sizeof(ptr->subpixel_order), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "num_crtcs", ptr->num_crtcs, sizeof(ptr->num_crtcs), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "num_modes", ptr->num_modes, sizeof(ptr->num_modes), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "num_preferred", ptr->num_preferred, sizeof(ptr->num_preferred), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "num_clones", ptr->num_clones, sizeof(ptr->num_clones), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "name_len", ptr->name_len, sizeof(ptr->name_len), 0);
 	
 	return 0;
@@ -268,7 +268,7 @@ struct crtx_dict * crtx_output_change2dict(struct crtx_xcb_randr_listener *xrlis
 			return 0;
 		}
 		
-		di = crtx_alloc_item(dict);
+		di = crtx_dict_alloc_next_item(dict);
 		di->type = 'D';
 		di->key = "output_info";
 		
@@ -280,7 +280,7 @@ struct crtx_dict * crtx_output_change2dict(struct crtx_xcb_randr_listener *xrlis
 		// name is not null-terminated!
 		name = strndup((char *) xcb_randr_get_output_info_name(output_info), length);
 		
-		di = crtx_alloc_item(oi_dict);
+		di = crtx_dict_alloc_next_item(oi_dict);
 		crtx_fill_data_item(di, 's', "output_name", name, length, 0);
 		
 		
@@ -296,7 +296,7 @@ struct crtx_dict * crtx_output_change2dict(struct crtx_xcb_randr_listener *xrlis
 // 			printf("crtc %d: 0x%08x %d,%d %d,%d\n", i, crtc[i], crtc_info->x, crtc_info->y, crtc_info->width, crtc_info->height);
 			
 			if (crtc[i] == oevent->crtc) {
-				di = crtx_alloc_item(oi_dict);
+				di = crtx_dict_alloc_next_item(oi_dict);
 				di->type = 'D';
 // 				di->key = (char*) malloc(5+floor(log10(abs(crtc[i])))+1);
 // 				sprintf(di->key, "crtc_%u", crtc[i]);
@@ -330,7 +330,7 @@ struct crtx_dict * crtx_output_change2dict(struct crtx_xcb_randr_listener *xrlis
 		if (i)
 			return dict;
 		
-		di = crtx_alloc_item(dict);
+		di = crtx_dict_alloc_next_item(dict);
 		di->type = 'D';
 		
 		di->key = "edid";
@@ -340,13 +340,13 @@ struct crtx_dict * crtx_output_change2dict(struct crtx_xcb_randr_listener *xrlis
 		name = (char*) malloc(4);
 		sprintf(name, "%c%c%c", (edid[8] >> 2 & 0x1f) + 'A' - 1, (((edid[8] & 0x3) << 3) | ((edid[9] & 0xe0) >> 5)) + 'A' - 1, (edid[9] & 0x1f) + 'A' - 1 );
 		
-		edi = crtx_alloc_item(di->dict);
+		edi = crtx_dict_alloc_next_item(di->dict);
 		crtx_fill_data_item(edi, 's', "vendor_name", name, 4, 0);
 		
 		if (edid[21] && edid[22]) {
-			edi = crtx_alloc_item(di->dict);
+			edi = crtx_dict_alloc_next_item(di->dict);
 			crtx_fill_data_item(edi, 'u', "width_cm", edid[21], 4, 0);
-			edi = crtx_alloc_item(di->dict);
+			edi = crtx_dict_alloc_next_item(di->dict);
 			crtx_fill_data_item(edi, 'u', "height_cm", edid[22], 4, 0);
 		}
 		
@@ -365,7 +365,7 @@ struct crtx_dict * crtx_output_change2dict(struct crtx_xcb_randr_listener *xrlis
 					memcpy(name, mon_desc->data, j);
 					name[j] = 0;
 					
-					edi = crtx_alloc_item(di->dict);
+					edi = crtx_dict_alloc_next_item(di->dict);
 					crtx_fill_data_item(edi, 's', "monitor_name", name, j, 0);
 				} else
 				if (mon_desc->desc_type == 0xFF) {
@@ -376,7 +376,7 @@ struct crtx_dict * crtx_output_change2dict(struct crtx_xcb_randr_listener *xrlis
 					name = (char*) malloc(j+1);
 					memcpy(name, mon_desc->data, j);
 					
-					edi = crtx_alloc_item(di->dict);
+					edi = crtx_dict_alloc_next_item(di->dict);
 					crtx_fill_data_item(edi, 's', "monitor_serial", name, j, 0);
 				}
 			}
@@ -401,13 +401,13 @@ char crtx_xcb_randr_output_property_t2dict(struct crtx_xcb_randr_listener *xrlis
 		*dict_ptr = crtx_init_dict(0, 0, 0);
 	dict = *dict_ptr;
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "window", ptr->window, sizeof(ptr->window), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "output", ptr->output, sizeof(ptr->output), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "atom", ptr->atom, sizeof(ptr->atom), 0);
 	
 	atom_reply = QRY(xcb_get_atom_name, xrlist->conn, error, ptr->atom);
@@ -419,20 +419,20 @@ char crtx_xcb_randr_output_property_t2dict(struct crtx_xcb_randr_listener *xrlis
 		
 		prop = xcb_get_atom_name_name(atom_reply);
 		
-		di = crtx_alloc_item(dict);
+		di = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di, 's', "property", prop, 0, 0);
 		
-		di = crtx_alloc_item(dict);
+		di = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di, 's', "property_status", ptr->status?"DELETE":"NEW", 0, CRTX_DIF_DONT_FREE_DATA);
 	}
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "timestamp", ptr->timestamp, sizeof(ptr->timestamp), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "status", ptr->status, sizeof(ptr->status), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'D', "pad0", 0, 0, 0);
 	
 	// TypeKind.UCHAR

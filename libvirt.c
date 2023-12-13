@@ -691,17 +691,17 @@ static int domain_evt_cb(virConnectPtr conn,
 	if (vm_name) {
 		slen = 0;
 		
-		di = crtx_alloc_item(dict);
+		di = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di, 's', "name", crtx_stracpy(vm_name, &slen), slen, 0);
 	}
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "id", virDomainGetID(dom), sizeof(unsigned int), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 's', "type", eventToString(event), strlen(eventToString(event)), CRTX_DIF_DONT_FREE_DATA);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 's', "detail", eventDetailToString(event, detail), strlen(eventDetailToString(event, detail)), CRTX_DIF_DONT_FREE_DATA);
 	
 // 	crtx_event->data.type = 'D';

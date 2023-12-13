@@ -32,14 +32,14 @@ struct crtx_dict *crtx_ping_raw2dict_addr(struct icmphdr *ptr, enum icmp_type ic
 	
 	crtx_dict_new_item(dict, 'u', "checksum", ptr->checksum, sizeof(ptr->checksum), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'D', "un", 0, 0, 0);
 	di->dict = crtx_init_dict(0, 0, 0);
 	
 	if (icmp_type == ICMP_T_ECHO) {
 		struct crtx_dict_item *di2;
 		
-		di2 = crtx_alloc_item(di->dict);
+		di2 = crtx_dict_alloc_next_item(di->dict);
 		crtx_fill_data_item(di2, 'D', "echo", 0, 0, 0);
 		di2->dict = crtx_init_dict(0, 0, 0);
 		
@@ -54,7 +54,7 @@ struct crtx_dict *crtx_ping_raw2dict_addr(struct icmphdr *ptr, enum icmp_type ic
 	if (icmp_type == ICMP_T_FRAG) {
 		struct crtx_dict_item *di2;
 		
-		di2 = crtx_alloc_item(di->dict);
+		di2 = crtx_dict_alloc_next_item(di->dict);
 		crtx_fill_data_item(di2, 'D', "frag", 0, 0, 0);
 		di2->dict = crtx_init_dict(0, 0, 0);
 		
@@ -65,7 +65,7 @@ struct crtx_dict *crtx_ping_raw2dict_addr(struct icmphdr *ptr, enum icmp_type ic
 	if (icmp_type == ICMP_T_RESERVED) {
 		struct crtx_dict_item *di2;
 		
-		di2 = crtx_alloc_item(di->dict);
+		di2 = crtx_dict_alloc_next_item(di->dict);
 		crtx_fill_data_item(di2, 'D', "reserved", 0, 0, 0);
 		
 		di2->dict = crtx_init_dict("uuuu", 4, 0);

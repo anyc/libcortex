@@ -49,7 +49,7 @@ char crtx_pa_proplist2dict(pa_proplist *props, struct crtx_dict **dict_ptr) {
 		
 		value = pa_proplist_gets(props, key);
 		if (value) {
-			di = crtx_alloc_item(*dict_ptr);
+			di = crtx_dict_alloc_next_item(*dict_ptr);
 			crtx_fill_data_item(di, 's', crtx_stracpy(key, 0), value, 0, CRTX_DIF_ALLOCATED_KEY | CRTX_DIF_CREATE_DATA_COPY);
 		}
 	}
@@ -101,13 +101,13 @@ static void generic_pa_get_info_callback(pa_context *c, void *info, int eol, voi
 	dict = crtx_init_dict(0, 0, 0);
 	crtx_event_set_dict_data(nevent, dict, 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	
 	ev_op = helper->type & PA_SUBSCRIPTION_EVENT_TYPE_MASK;
 	if (ev_op == PA_SUBSCRIPTION_EVENT_REMOVE) {
 		crtx_fill_data_item(di, 's', "operation", "remove", strlen("remove"), CRTX_DIF_DONT_FREE_DATA);
 		
-		di = crtx_alloc_item(dict);
+		di = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di, 'u', "index", helper->index, sizeof(helper->index), 0);
 	} else {
 		if (ev_op == PA_SUBSCRIPTION_EVENT_CHANGE)

@@ -58,7 +58,7 @@ void inspect_array(json_object *jobj, struct crtx_dict *dict) {
 	for (i=0; i < json_object_array_length(jobj); i++){
 		jvalue = json_object_array_get_idx(jobj, i);
 		type = json_object_get_type(jvalue);
-		ditem = crtx_alloc_item(dict);
+		ditem = crtx_dict_alloc_next_item(dict);
 		ditem->key = 0;
 		
 		if (type == json_type_array) {
@@ -88,7 +88,7 @@ static void inspect_obj(json_object * jobj, struct crtx_dict *dict) {
 	json_object_object_foreach(jobj, key, val) {
 		type = json_object_get_type(val);
 		
-		ditem = crtx_alloc_item(dict);
+		ditem = crtx_dict_alloc_next_item(dict);
 		
 		if (key) {
 			ditem->flags = CRTX_DIF_ALLOCATED_KEY;

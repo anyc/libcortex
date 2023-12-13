@@ -56,7 +56,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 	
 	// new or deleted address?
 	{
-		di = crtx_alloc_item(dict);
+		di = crtx_dict_alloc_next_item(dict);
 		
 		if (nlh->nlmsg_type == RTM_NEWADDR) {
 			crtx_fill_data_item(di, 's', "type", "add", 0, CRTX_DIF_DONT_FREE_DATA);
@@ -65,7 +65,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 			crtx_fill_data_item(di, 's', "type", "del", 0, CRTX_DIF_DONT_FREE_DATA);
 		}
 		
-		di = crtx_alloc_item(dict);
+		di = crtx_dict_alloc_next_item(dict);
 		
 		if (nlh->nlmsg_type == RTM_NEWADDR) {
 			crtx_fill_data_item(di, 's', "action", "add", 0, CRTX_DIF_DONT_FREE_DATA);
@@ -76,7 +76,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 	}
 	
 	if (all_fields) {
-		di = crtx_alloc_item(dict);
+		di = crtx_dict_alloc_next_item(dict);
 		
 		switch (ifa->ifa_scope) {
 			case RT_SCOPE_UNIVERSE:
@@ -98,7 +98,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 		
 		
 		
-		di = crtx_alloc_item(dict);
+		di = crtx_dict_alloc_next_item(dict);
 		di->type = 'D';
 		di->key = "flags";
 		
@@ -107,7 +107,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 		
 		#define IFA_FLAG(name) \
 		if (ifa->ifa_flags & IFA_F_ ## name) { \
-			cdi = crtx_alloc_item(di->dict); \
+			cdi = crtx_dict_alloc_next_item(di->dict); \
 			crtx_fill_data_item(cdi, 's', 0, #name, 0, CRTX_DIF_DONT_FREE_DATA); \
 		}
 		
@@ -134,7 +134,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 	while (rtl && RTA_OK(rth, rtl)) {
 		switch (rth->rta_type) {
 			case IFA_LABEL:
-				di = crtx_alloc_item(dict);
+				di = crtx_dict_alloc_next_item(dict);
 				
 				s = (char*) RTA_DATA(rth);
 				
@@ -148,7 +148,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 			case IFA_MULTICAST:
 			case IFA_ADDRESS:
 			case IFA_LOCAL:
-				di = crtx_alloc_item(dict);
+				di = crtx_dict_alloc_next_item(dict);
 				
 				memset(&addr, 0, sizeof(addr));
 				addr.ss_family = ifa->ifa_family;
@@ -167,7 +167,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 					if (!family) {
 						family = "ipv4";
 						crtx_fill_data_item(di, 's', "family", family, 0, CRTX_DIF_DONT_FREE_DATA);
-						di = crtx_alloc_item(dict);
+						di = crtx_dict_alloc_next_item(dict);
 					}
 				} else
 				if (addr.ss_family == AF_INET6) {
@@ -184,7 +184,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 					if (!family) {
 						family = "ipv6";
 						crtx_fill_data_item(di, 's', "family", family, 0, CRTX_DIF_DONT_FREE_DATA);
-						di = crtx_alloc_item(dict);
+						di = crtx_dict_alloc_next_item(dict);
 					}
 				} else {
 					CRTX_ERROR("unknown family: %d\n", addr.ss_family);
@@ -213,7 +213,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 			
 			case IFA_CACHEINFO:
 				if (all_fields) {
-					di = crtx_alloc_item(dict);
+					di = crtx_dict_alloc_next_item(dict);
 					di->type = 'D';
 					di->key = "cache";
 					
@@ -243,7 +243,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 // 				if (nlr_list->all_fields) {
 // 					unsigned int *flags;
 // 					
-// 					di = crtx_alloc_item(dict);
+// 					di = crtx_dict_alloc_next_item(dict);
 // 					di->type = 'D';
 // 					di->key = "flags";
 // 					
@@ -253,7 +253,7 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 // 					
 // 					#define IFA_FLAG(name)
 // 						if (*flags & IFA_F_ ## name) {
-// 							cdi = crtx_alloc_item(di->dict);
+// 							cdi = crtx_dict_alloc_next_item(di->dict);
 // 							crtx_fill_data_item(cdi, 's', 0, #name, 0, CRTX_DIF_DONT_FREE_DATA);
 // 						}
 // 					
@@ -283,11 +283,11 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 		rth = RTA_NEXT(rth, rtl);
 	}
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'i', "interface_index", ifa->ifa_index, sizeof(ifa->ifa_index), 0);
 	
 	if (!got_ifname) {
-		di = crtx_alloc_item(dict);
+		di = crtx_dict_alloc_next_item(dict);
 		
 		if_indextoname(ifa->ifa_index, ifname);
 		slen = strlen(ifname);
@@ -327,7 +327,7 @@ struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char al
 	
 	// new or deleted interface?
 	{
-		di = crtx_alloc_item(dict);
+		di = crtx_dict_alloc_next_item(dict);
 		
 		if (nlh->nlmsg_type == RTM_NEWLINK) {
 			crtx_fill_data_item(di, 's', "type", "add", 0, CRTX_DIF_DONT_FREE_DATA);
@@ -336,7 +336,7 @@ struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char al
 			crtx_fill_data_item(di, 's', "type", "del", 0, CRTX_DIF_DONT_FREE_DATA);
 		}
 		
-		di = crtx_alloc_item(dict);
+		di = crtx_dict_alloc_next_item(dict);
 		
 		if (nlh->nlmsg_type == RTM_NEWLINK) {
 			crtx_fill_data_item(di, 's', "action", "add", 0, CRTX_DIF_DONT_FREE_DATA);
@@ -347,7 +347,7 @@ struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char al
 	}
 	
 	{
-		di = crtx_alloc_item(dict);
+		di = crtx_dict_alloc_next_item(dict);
 		di->type = 'i';
 		di->key = "index";
 		
@@ -355,14 +355,14 @@ struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char al
 	}
 	
 	{
-		di = crtx_alloc_item(dict);
+		di = crtx_dict_alloc_next_item(dict);
 		di->type = 'D';
 		di->key = "flags";
 		di->dict = crtx_init_dict(0, 0, 0);
 		
 		#define IFI_FLAG(name) \
 		if (ifi->ifi_flags & IFF_ ## name) { \
-			cdi = crtx_alloc_item(di->dict); \
+			cdi = crtx_dict_alloc_next_item(di->dict); \
 			crtx_fill_data_item(cdi, 's', 0, #name, 0, CRTX_DIF_DONT_FREE_DATA); \
 		}
 		
@@ -391,7 +391,7 @@ struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char al
 		switch (rth->rta_type) {
 			case IFLA_ADDRESS:
 			case IFLA_BROADCAST:
-				di = crtx_alloc_item(dict);
+				di = crtx_dict_alloc_next_item(dict);
 				
 				// e.g., sit0 interfaces use only 4 bytes
 				if (RTA_PAYLOAD(rth) > 6)
@@ -414,7 +414,7 @@ struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char al
 				break;
 				
 			case IFLA_IFNAME:
-				di = crtx_alloc_item(dict);
+				di = crtx_dict_alloc_next_item(dict);
 				
 				s = (char*) RTA_DATA(rth);
 				
@@ -423,12 +423,12 @@ struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char al
 				break;
 				
 			case IFLA_MTU:
-				di = crtx_alloc_item(dict);
+				di = crtx_dict_alloc_next_item(dict);
 				crtx_fill_data_item(di, 'u', "mtu", *((unsigned int*) RTA_DATA(rth)), 0, 0);
 				break;
 				
 			case IFLA_LINK:
-				di = crtx_alloc_item(dict);
+				di = crtx_dict_alloc_next_item(dict);
 				crtx_fill_data_item(di, 'i', "link", *((int*) RTA_DATA(rth)), 0, 0);
 				break;
 				
@@ -437,13 +437,13 @@ struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char al
 				
 				slen = strlen(s);
 				
-				di = crtx_alloc_item(dict);
+				di = crtx_dict_alloc_next_item(dict);
 				crtx_fill_data_item(di, 's', "qdisc", crtx_stracpy(s, &slen), slen, 0);
 				break;
 				
 			case IFLA_STATS:
 				if (all_fields) {
-					di = crtx_alloc_item(dict);
+					di = crtx_dict_alloc_next_item(dict);
 					di->type = 'D';
 					di->key = "stats";
 					di->dict = crtx_init_dict(0, 23, 0);
@@ -524,7 +524,7 @@ struct crtx_dict * crtx_nl_route_raw2dict_neigh(struct nlmsghdr *nlh, char all_f
 	crtx_dict_new_item(dict, 'u', "ndm_flags", ndmsg->ndm_flags, sizeof(ndmsg->ndm_flags), 0);
 	crtx_dict_new_item(dict, 'u', "ndm_type", ndmsg->ndm_type, sizeof(ndmsg->ndm_type), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	di->type = 'D';
 	di->key = "ndm_state";
 	di->dict = crtx_init_dict(0, 0, 0);
@@ -544,7 +544,7 @@ struct crtx_dict * crtx_nl_route_raw2dict_neigh(struct nlmsghdr *nlh, char all_f
 	
 	
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	di->type = 'D';
 	di->key = "ndm_flags";
 	di->dict = crtx_init_dict(0, 0, 0);

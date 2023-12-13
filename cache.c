@@ -196,7 +196,7 @@ char crtx_cache_task_handler(struct crtx_event *event, void *userdata, void **se
 			// update
 			di = crtx_get_item(ditem->dict, "last_match");
 			if (!di) {
-				di = crtx_alloc_item(ditem->dict);
+				di = crtx_dict_alloc_next_item(ditem->dict);
 				
 				di->type = 'U';
 				di->key = "last_match";
@@ -207,7 +207,7 @@ char crtx_cache_task_handler(struct crtx_event *event, void *userdata, void **se
 			
 			di = crtx_get_item(ditem->dict, "n_hits");
 			if (!di) {
-				di = crtx_alloc_item(ditem->dict);
+				di = crtx_dict_alloc_next_item(ditem->dict);
 				
 				di->type = 'U';
 				di->key = "n_hits";
@@ -268,12 +268,12 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *cache, struct cr
 		struct crtx_dict_item *e;
 		
 		// for dc->config
-		e = crtx_alloc_item(dc->dict);
+		e = crtx_dict_alloc_next_item(dc->dict);
 		e->type = 'D';
 		e->dict = 0;
 		e->key = 0;
 		
-		e = crtx_alloc_item(dc->dict);
+		e = crtx_dict_alloc_next_item(dc->dict);
 		e->type = 'D';
 		e->key = 0;
 		e->dict = crtx_init_dict(0, 0, 0);
@@ -286,7 +286,7 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *cache, struct cr
 		if (key->type != 's')
 			CRTX_ERROR("wrong dictionary structure for simple cache layout\n");
 		
-		c_entry = crtx_alloc_item(dc->entries);
+		c_entry = crtx_dict_alloc_next_item(dc->entries);
 		
 		c_entry->key = key->string;
 		c_entry->flags = CRTX_DIF_ALLOCATED_KEY;
@@ -319,7 +319,7 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *cache, struct cr
 			c_entry = crtx_get_next_item(dc->entries, c_entry);
 		}
 		if (!c_entry)
-			c_entry = crtx_alloc_item(dc->entries);
+			c_entry = crtx_dict_alloc_next_item(dc->entries);
 		
 		
 		if (key->type == 's') {

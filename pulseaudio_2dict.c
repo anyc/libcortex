@@ -13,22 +13,22 @@ char crtx_pa_sink_input_info2dict(struct pa_sink_input_info *ptr, struct crtx_di
 		*dict_ptr = crtx_init_dict(0, 0, 0);
 	dict = *dict_ptr;
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "index", ptr->index, sizeof(ptr->index), 0);
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 's', "name", ptr->name, strlen(ptr->name), CRTX_DIF_CREATE_DATA_COPY);
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "owner_module", ptr->owner_module, sizeof(ptr->owner_module), 0);
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "client", ptr->client, sizeof(ptr->client), 0);
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "sink", ptr->sink, sizeof(ptr->sink), 0);
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'D', "sample_spec", 0, 0, 0);
 
 	{
@@ -36,17 +36,17 @@ char crtx_pa_sink_input_info2dict(struct pa_sink_input_info *ptr, struct crtx_di
 		struct crtx_dict *dict = di->dict;
 		struct crtx_dict_item *di2;
 
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'i', "format", ptr->sample_spec.format, sizeof(ptr->sample_spec.format), 0);
 
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'u', "rate", ptr->sample_spec.rate, sizeof(ptr->sample_spec.rate), 0);
 
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'u', "channels", ptr->sample_spec.channels, sizeof(ptr->sample_spec.channels), 0);
 	}
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'D', "channel_map", 0, 0, 0);
 
 	{
@@ -54,10 +54,10 @@ char crtx_pa_sink_input_info2dict(struct pa_sink_input_info *ptr, struct crtx_di
 		struct crtx_dict *dict = di->dict;
 		struct crtx_dict_item *di2;
 
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'u', "channels", ptr->channel_map.channels, sizeof(ptr->channel_map.channels), 0);
 
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'D', "map", 0, 0, 0);
 
 		di2->dict = crtx_init_dict(0, ptr->channel_map.channels, 0);
@@ -99,7 +99,7 @@ char crtx_pa_sink_input_info2dict(struct pa_sink_input_info *ptr, struct crtx_di
 		}
 	}
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'D', "volume", 0, 0, 0);
 
 	{
@@ -107,10 +107,10 @@ char crtx_pa_sink_input_info2dict(struct pa_sink_input_info *ptr, struct crtx_di
 		struct crtx_dict *dict = di->dict;
 		struct crtx_dict_item *di2;
 
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'u', "channels", ptr->volume.channels, sizeof(ptr->volume.channels), 0);
 
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'D', "values", 0, 0, 0);
 
 		di2->dict = crtx_init_dict(0, ptr->volume.channels, 0);
@@ -152,46 +152,46 @@ char crtx_pa_sink_input_info2dict(struct pa_sink_input_info *ptr, struct crtx_di
 		}
 	}
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'U', "buffer_usec", ptr->buffer_usec, sizeof(ptr->buffer_usec), 0);
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'U', "sink_usec", ptr->sink_usec, sizeof(ptr->sink_usec), 0);
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 's', "resample_method", ptr->resample_method, strlen(ptr->resample_method), CRTX_DIF_CREATE_DATA_COPY);
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 's', "driver", ptr->driver, strlen(ptr->driver), CRTX_DIF_CREATE_DATA_COPY);
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'i', "mute", ptr->mute, sizeof(ptr->mute), 0);
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 // 	crtx_fill_data_item(di, 'p', "proplist", ptr->proplist, 0, CRTX_DIF_DONT_FREE_DATA);
 	crtx_fill_data_item(di, 'D', "proplist", 0, 0, 0);
 	crtx_pa_proplist2dict(ptr->proplist, &di->dict);
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'i', "corked", ptr->corked, sizeof(ptr->corked), 0);
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'i', "has_volume", ptr->has_volume, sizeof(ptr->has_volume), 0);
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'i', "volume_writable", ptr->volume_writable, sizeof(ptr->volume_writable), 0);
 
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'D', "format", 0, 0, 0);
 	{
 		di->dict = crtx_init_dict(0, 0, 0);
 		struct crtx_dict *dict = di->dict;
 		struct crtx_dict_item *di2;
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'i', "encoding", ptr->format->encoding, sizeof(ptr->format->encoding), 0);
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 // 		crtx_fill_data_item(di2, 'p', "plist", ptr->format->plist, 0, CRTX_DIF_DONT_FREE_DATA);
 		crtx_fill_data_item(di2, 'D', "plist", 0, 0, 0);
 		crtx_pa_proplist2dict(ptr->format->plist, &di2->dict);
@@ -210,102 +210,102 @@ char crtx_pa_card_info2dict(struct pa_card_info *ptr, struct crtx_dict **dict_pt
 		*dict_ptr = crtx_init_dict(0, 0, 0);
 	dict = *dict_ptr;
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "index", ptr->index, sizeof(ptr->index), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 's', "name", ptr->name, strlen(ptr->name), CRTX_DIF_DONT_FREE_DATA);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "owner_module", ptr->owner_module, sizeof(ptr->owner_module), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 's', "driver", ptr->driver, strlen(ptr->driver), CRTX_DIF_DONT_FREE_DATA);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "n_profiles", ptr->n_profiles, sizeof(ptr->n_profiles), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'D', "profiles", 0, 0, 0);
 	{
 		di->dict = crtx_init_dict(0, 0, 0);
 		struct crtx_dict *dict = di->dict;
 		struct crtx_dict_item *di2;
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 's', "name", ptr->profiles->name, strlen(ptr->profiles->name), CRTX_DIF_DONT_FREE_DATA);
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 's', "description", ptr->profiles->description, strlen(ptr->profiles->description), CRTX_DIF_DONT_FREE_DATA);
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'u', "n_sinks", ptr->profiles->n_sinks, sizeof(ptr->profiles->n_sinks), 0);
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'u', "n_sources", ptr->profiles->n_sources, sizeof(ptr->profiles->n_sources), 0);
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'u', "priority", ptr->profiles->priority, sizeof(ptr->profiles->priority), 0);
 	}
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'D', "active_profile", 0, 0, 0);
 	{
 		di->dict = crtx_init_dict(0, 0, 0);
 		struct crtx_dict *dict = di->dict;
 		struct crtx_dict_item *di2;
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 's', "name", ptr->active_profile->name, strlen(ptr->active_profile->name), CRTX_DIF_DONT_FREE_DATA);
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 's', "description", ptr->active_profile->description, strlen(ptr->active_profile->description), CRTX_DIF_DONT_FREE_DATA);
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'u', "n_sinks", ptr->active_profile->n_sinks, sizeof(ptr->active_profile->n_sinks), 0);
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'u', "n_sources", ptr->active_profile->n_sources, sizeof(ptr->active_profile->n_sources), 0);
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'u', "priority", ptr->active_profile->priority, sizeof(ptr->active_profile->priority), 0);
 	}
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'p', "proplist", ptr->proplist, 0, CRTX_DIF_DONT_FREE_DATA);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "n_ports", ptr->n_ports, sizeof(ptr->n_ports), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'p', "ports", ptr->ports, 0, CRTX_DIF_DONT_FREE_DATA);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'p', "profiles2", ptr->profiles2, 0, CRTX_DIF_DONT_FREE_DATA);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'D', "active_profile2", 0, 0, 0);
 	{
 		di->dict = crtx_init_dict(0, 0, 0);
 		struct crtx_dict *dict = di->dict;
 		struct crtx_dict_item *di2;
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 's', "name", ptr->active_profile2->name, strlen(ptr->active_profile2->name), CRTX_DIF_DONT_FREE_DATA);
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 's', "description", ptr->active_profile2->description, strlen(ptr->active_profile2->description), CRTX_DIF_DONT_FREE_DATA);
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'u', "n_sinks", ptr->active_profile2->n_sinks, sizeof(ptr->active_profile2->n_sinks), 0);
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'u', "n_sources", ptr->active_profile2->n_sources, sizeof(ptr->active_profile2->n_sources), 0);
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'u', "priority", ptr->active_profile2->priority, sizeof(ptr->active_profile2->priority), 0);
 		
-		di2 = crtx_alloc_item(dict);
+		di2 = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di2, 'i', "available", ptr->active_profile2->available, sizeof(ptr->active_profile2->available), 0);
 	}
 	

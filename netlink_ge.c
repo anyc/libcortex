@@ -59,7 +59,7 @@ int crtx_genl_msg2dict(struct nl_msg *msg, void *arg) {
 	for (i=0; i < g->n_attrs; i++) {
 		if (g->attrs[i]) {
 			if (!g->parse_callbacks[i]) {
-				di = crtx_alloc_item(dict);
+				di = crtx_dict_alloc_next_item(dict);
 				
 				switch (tdi->type) {
 					case 'u':
@@ -213,16 +213,16 @@ void acpi_parse_cb(struct nlattr * attr, struct crtx_dict *dict) {
 	
 	ev = (struct acpi_genl_event *) nla_data(attr);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 's', "device_class", ev->device_class, 0, CRTX_DIF_DONT_FREE_DATA);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 's', "bus_id", ev->bus_id, 0, CRTX_DIF_DONT_FREE_DATA);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "type", ev->type, sizeof(ev->type), 0);
 	
-	di = crtx_alloc_item(dict);
+	di = crtx_dict_alloc_next_item(dict);
 	crtx_fill_data_item(di, 'u', "data", ev->data, sizeof(ev->data), 0);
 }
 

@@ -37,7 +37,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_r
 	
 	value = udev_device_get_syspath(dev);
 	if (value) {
-		di = crtx_alloc_item(dict);
+		di = crtx_dict_alloc_next_item(dict);
 		crtx_fill_data_item(di, 's', "SYSPATH", value, strlen(value), flags);
 	}
 	
@@ -45,29 +45,29 @@ struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_r
 	if (r2ds && (r2ds->subsystem || r2ds->device_type)) {
 		value = udev_device_get_devnode(dev);
 		if (value) {
-			di = crtx_alloc_item(dict);
+			di = crtx_dict_alloc_next_item(dict);
 			crtx_fill_data_item(di, 's', "NODE", value, strlen(value), flags);
 		}
 		
 		value = udev_device_get_subsystem(dev);
 		if (value) {
-			di = crtx_alloc_item(dict);
+			di = crtx_dict_alloc_next_item(dict);
 			crtx_fill_data_item(di, 's', "SUBSYSTEM", value, strlen(value), flags);
 		}
 		
 		value = udev_device_get_devtype(dev);
 		if (value) {
-			di = crtx_alloc_item(dict);
+			di = crtx_dict_alloc_next_item(dict);
 			crtx_fill_data_item(di, 's', "DEVTYPE", value, strlen(value), flags);
 		}
 		
 		value = udev_device_get_action(dev);
 		if (value) {
-			di = crtx_alloc_item(dict);
+			di = crtx_dict_alloc_next_item(dict);
 			crtx_fill_data_item(di, 's', "ACTION", value, strlen(value), flags);
 		} else {
 			// if we query existing devices at startup, there is no action field
-			di = crtx_alloc_item(dict);
+			di = crtx_dict_alloc_next_item(dict);
 			crtx_fill_data_item(di, 's', "ACTION", "initial", strlen("initial"), flags);
 		}
 		
@@ -91,7 +91,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_r
 				continue;
 			}
 			
-			di = crtx_alloc_item(dict);
+			di = crtx_dict_alloc_next_item(dict);
 			di->type = 'D';
 			
 			di->key = malloc( (i->subsystem?strlen(i->subsystem):0) + 1 + (i->device_type?strlen(i->device_type):0) + 1);
@@ -104,13 +104,13 @@ struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_r
 				value = udev_device_get_sysattr_value(dev, *a);
 // 				printf("value %s %s\n", *a, value);
 				if (value) {
-					sdi = crtx_alloc_item(di->dict);
+					sdi = crtx_dict_alloc_next_item(di->dict);
 					crtx_fill_data_item(sdi, 's', *a, value, strlen(value), flags);
 				} else {
 					value = udev_device_get_property_value(dev, *a);
 // 					printf("value2 %s %s\n", *a, value);
 					if (value) {
-						sdi = crtx_alloc_item(di->dict);
+						sdi = crtx_dict_alloc_next_item(di->dict);
 						crtx_fill_data_item(sdi, 's', *a, value, strlen(value), flags);
 					}
 				}
@@ -125,7 +125,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_r
 // 				key = udev_list_entry_get_name(entry);
 // 				value = udev_list_entry_get_value(entry);
 // 				
-// 				di = crtx_alloc_item(dict);
+// 				di = crtx_dict_alloc_next_item(dict);
 // 				if (value)
 // 					crtx_fill_data_item(di, 's', key, value, strlen(value), flags);
 // 			}
@@ -139,7 +139,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_r
 		value = udev_device_get_action(dev);
 		if (!value) {
 			// if we query existing devices at startup, there is no action field
-			di = crtx_alloc_item(dict);
+			di = crtx_dict_alloc_next_item(dict);
 			crtx_fill_data_item(di, 's', "ACTION", "initial", strlen("initial"), flags);
 		}
 		
@@ -147,7 +147,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_r
 			key = udev_list_entry_get_name(entry);
 			value = udev_list_entry_get_value(entry);
 			
-			di = crtx_alloc_item(dict);
+			di = crtx_dict_alloc_next_item(dict);
 			if (value)
 				crtx_fill_data_item(di, 's', (char*) key, value, strlen(value), flags);
 		}

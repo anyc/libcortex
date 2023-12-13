@@ -63,7 +63,7 @@ def output_cursor(cursor, level, di, prefix=""):
 				print(indent(level) + "if ("+prefix+spelling+") {")
 				level += 1
 				
-				#print(indent(level) + di + " = crtx_alloc_item(dict);")
+				#print(indent(level) + di + " = crtx_dict_alloc_next_item(dict);")
 				
 				print(indent(level) + "crtx_dict_new_item(dict, 's', \""+spelling+"\", "+prefix+spelling+", strlen("+prefix+spelling+"), CRTX_DIF_DONT_FREE_DATA);")
 				#print(indent(level) + "crtx_fill_data_item("+di+", 's', \""+spelling+"\", "+prefix+spelling+", 0, DIF_COPY_STRING);")
@@ -71,7 +71,7 @@ def output_cursor(cursor, level, di, prefix=""):
 				level -= 1
 				print(indent(level) + "}")
 			else:
-				print(indent(level) + di + " = crtx_alloc_item(dict);")
+				print(indent(level) + di + " = crtx_dict_alloc_next_item(dict);")
 				
 				#print(cursor.spelling, cursor.type.get_pointee().get_canonical().get_declaration().type.kind)
 				has_children = False
@@ -95,7 +95,7 @@ def output_cursor(cursor, level, di, prefix=""):
 					print(indent(level) + "crtx_fill_data_item("+di+", 'p', \""+spelling+"\", "+prefix+spelling+", 0, CRTX_DIF_DONT_FREE_DATA);")
 			
 		elif typ.kind == clang.cindex.TypeKind.CONSTANTARRAY:
-			print(indent(level) + di + " = crtx_alloc_item(dict);")
+			print(indent(level) + di + " = crtx_dict_alloc_next_item(dict);")
 			
 			subtype = type_clang2crtx(typ.get_array_element_type().get_canonical())
 			
@@ -129,11 +129,11 @@ def output_cursor(cursor, level, di, prefix=""):
 			
 			crtx_typ = type_clang2crtx(cur.type.get_canonical())
 			if crtx_typ in ["u", "U", "i", "I", "d"]:
-				#print(indent(level) + di + " = crtx_alloc_item(dict);")
+				#print(indent(level) + di + " = crtx_dict_alloc_next_item(dict);")
 				print(indent(level) + "crtx_dict_new_item(dict, '"+crtx_typ+"', \""+spelling+"\", "+prefix+spelling+", sizeof("+prefix+spelling+"), 0);")
 			
 			print("")
-			#print(indent(level) + di + " = crtx_alloc_item(dict);")
+			#print(indent(level) + di + " = crtx_dict_alloc_next_item(dict);")
 			print(indent(level) + "switch ("+prefix+spelling+") {")
 			for enum in cur.get_children():
 				#print(enum.spelling, enum.displayname, enum.enum_value)
@@ -148,7 +148,7 @@ def output_cursor(cursor, level, di, prefix=""):
 				print(indent(level) + "crtx_dict_new_item(dict, '"+crtx_typ+"', \""+spelling+"\", "+prefix+spelling+", sizeof("+prefix+spelling+"), 0);")
 			
 			elif crtx_typ == "D":
-				print(indent(level) + di + " = crtx_alloc_item(dict);")
+				print(indent(level) + di + " = crtx_dict_alloc_next_item(dict);")
 				print(indent(level) + "crtx_fill_data_item("+di+", 'D', \""+spelling+"\", 0, 0, 0);")
 				
 				if level < args.max_recursion:
