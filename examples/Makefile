@@ -2,7 +2,7 @@
 libcrtx_path?=../
 
 CFLAGS+=-I$(libcrtx_path) -g
-LDFLAGS+=-L$(libcrtx_path)
+LDFLAGS+=-L$(libcrtx_path) -Wl,-rpath "$(libcrtx_path)"
 
 LDLIBS+=-lcrtx
 
