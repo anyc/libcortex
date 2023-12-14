@@ -17,10 +17,12 @@ static int async_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) 
 	*reply = m;
 	
 	sd_bus_message_ref(m);
+	
+	return 0;
 }
 
 char startup_callback(struct crtx_event *event, void *userdata, void **sessiondata) {
-	sd_bus_message *msg, *reply;
+	sd_bus_message *reply;
 	const sd_bus_error *error;
 	struct crtx_dict_item ditem;
 	struct crtx_dict_item *object, *interface, *entry;
@@ -61,7 +63,6 @@ char startup_callback(struct crtx_event *event, void *userdata, void **sessionda
 			for (eidx=0; eidx < interface->dict->items[1].dict->signature_length; eidx++) {
 				entry = &interface->dict->items[1].dict->items[eidx];
 				
-				// printf("  %s\n", entry->dict->items[0].string);
 				printf("    "); crtx_print_dict_item(entry, 1); printf("\n");
 			}
 		}
@@ -70,6 +71,8 @@ char startup_callback(struct crtx_event *event, void *userdata, void **sessionda
 	crtx_free_dict_item_data(&ditem);
 	
 	crtx_init_shutdown();
+	
+	return 0;
 }
 
 int main(int argc, char **argv) {
