@@ -291,7 +291,7 @@ struct async_callback {
 	sd_bus_message **reply;
 };
 
-static int async_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
+static int async_signal_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
 	struct async_callback *async_cb_data;
 	
 	async_cb_data = (struct async_callback*) userdata;
@@ -332,7 +332,7 @@ int crtx_sdbus_call(struct crtx_sdbus_listener *lstnr, sd_bus_message *msg, sd_b
 	
 	slot = 0;
 	crtx_lock_listener_source(&lstnr->base);
-	err = sd_bus_call_async(lstnr->bus, &slot, msg, async_cb, &async_cb_data, timeout_us);
+	err = sd_bus_call_async(lstnr->bus, &slot, msg, async_signal_cb, &async_cb_data, timeout_us);
 	crtx_unlock_listener_source(&lstnr->base);
 	
 	if (err < 0) {
