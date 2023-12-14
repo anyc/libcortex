@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <poll.h>
 #include <inttypes.h>
+#include <errno.h>
 
 #include "intern.h"
 #include "core.h"
@@ -85,6 +86,8 @@ int crtx_sdbus_next_to_dict_item(sd_bus_message *msg, struct crtx_dict_item *dit
 				
 				// convert {sv} into a single key=value tuple (= crtx_dict_item) if possible
 				if (!no_reduce && !strcmp(contents, "sv") && ditem->dict->signature_length == 1) {
+					it = &ditem->dict->items[ditem->dict->signature_length-1];
+					
 					if (subitem.type == 'D' && subitem.dict->signature_length == 1) {
 						struct crtx_dict *olddict;
 						
@@ -102,7 +105,6 @@ int crtx_sdbus_next_to_dict_item(sd_bus_message *msg, struct crtx_dict_item *dit
 						crtx_dict_unref(olddict);
 						crtx_free_dict_item_data(&subitem);
 					} else {
-						it = &ditem->dict->items[ditem->dict->signature_length-1];
 						it->key = it->string;
 						it->flags |= CRTX_DIF_ALLOCATED_KEY;
 						it->type = subitem.type;
@@ -163,7 +165,16 @@ int crtx_sdbus_next_to_dict_item(sd_bus_message *msg, struct crtx_dict_item *dit
 			
 			ditem->uint32 = i;
 			n_elements = 1; break; }
-		case 'n':
+		case 'n': {
+			int16_t i;
+			
+			ditem->type = 'i';
+			rv = sd_bus_message_read_basic(msg, type, &i);
+			if (rv < 0)
+				return rv;
+			
+			ditem->int32 = i;
+			n_elements = 1; break; }
 		case 'i': {
 			int32_t i;
 			
