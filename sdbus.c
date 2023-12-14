@@ -401,6 +401,49 @@ int crtx_sdbus_get_objects_msg_async(struct crtx_sdbus_listener *lstnr, const ch
 	return 0;
 }
 
+static int sync_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
+	sd_bus_message **reply;
+	
+	reply = (sd_bus_message **) userdata;
+	*reply = m;
+	
+	sd_bus_message_ref(m);
+	
+	return 0;
+}
+
+int crtx_sdbus_get_objects(struct crtx_sdbus_listener *lstnr, const char *service, struct crtx_dict_item **objects) {
+	sd_bus_message *reply;
+	const sd_bus_error *error;
+	struct crtx_dict_item *ditem;
+	
+	
+	reply = 0;
+	crtx_sdbus_get_objects_msg_async(lstnr, service, &sync_cb, &reply, 0);
+	
+	while (reply == 0 && !crtx_is_shutting_down()) {
+		crtx_loop_onetime();
+	}
+	
+	if (!reply)
+		return -EAGAIN;
+	
+	error = sd_bus_message_get_error(reply);
+	if (error) {
+		CRTX_ERROR("DBus error: %s %s\n", error->name, error->message);
+		
+		return sd_bus_error_get_errno(error);
+	}
+	
+	ditem = (struct crtx_dict_item*) calloc(1, sizeof(struct crtx_dict_item));
+	
+	crtx_sdbus_next_to_dict_item(reply, ditem, 0);
+	
+	*objects = ditem;
+	
+	return 0;
+}
+
 static void match_event_release(struct crtx_event *event, void *userdata) {
 	sd_bus_message_unref(event->data.pointer);
 }

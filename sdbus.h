@@ -88,6 +88,7 @@ int crtx_sdbus_track_remove(struct crtx_sdbus_listener *lstnr, struct crtx_sdbus
 
 struct crtx_sdbus_listener *crtx_sdbus_get_default_listener(enum crtx_sdbus_type sdbus_type);
 int crtx_sdbus_get_objects_msg_async(struct crtx_sdbus_listener *lstnr, const char *service, sd_bus_message_handler_t callback, void *userdata, uint64_t timeout_us);
+int crtx_sdbus_get_objects(struct crtx_sdbus_listener *lstnr, const char *service, struct crtx_dict_item **objects);
 
 struct crtx_listener_base *crtx_sdbus_new_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(sdbus)
