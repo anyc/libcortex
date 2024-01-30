@@ -21,7 +21,7 @@ extern "C" {
 #define CRTX_NETCONF_ET_INTF (CRTX_EVENT_TYPE_FAMILY_NETCONF + 1)
 #define CRTX_NETCONF_ET_NEIGH (CRTX_EVENT_TYPE_FAMILY_NETCONF + 2)
 #define CRTX_NETCONF_ET_IP_ADDR (CRTX_EVENT_TYPE_FAMILY_NETCONF + 3)
-#define CRTX_NETCONF_ET_QUERY_DONE (CRTX_EVENT_TYPE_FAMILY_NETCONF + 4)
+#define CRTX_NETCONF_ET_QUERY_DONE (CRTX_EVENT_TYPE_FAMILY_NETCONF + 4) // returns 1 if all are queried
 
 struct crtx_netconf_listener {
 	struct crtx_listener_base base;

@@ -212,8 +212,8 @@ static char start_listener(struct crtx_listener_base *listener) {
 	
 	fd = sd_journal_get_fd(jlstnr->sd_journal);
 	if (fd < 0) {
-		CRTX_ERROR("sd_journal_get_fd() failed: %s", strerror(-fd));
-		return 0;
+		CRTX_ERROR("sd_journal_get_fd() failed: %s\n", strerror(-fd));
+		return fd;
 	}
 	
 	crtx_evloop_init_listener(&jlstnr->base,

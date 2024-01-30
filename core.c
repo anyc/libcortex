@@ -164,7 +164,7 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 	if (listener->start_listener) {
 		ret = listener->start_listener(listener);
 		if (ret < 0) {
-			CRTX_ERROR("start_listener failed\n");
+			CRTX_ERROR("start_listener \"%s\" failed\n", listener->id);
 			
 			listener->state = CRTX_LSTNR_STOPPED;
 			
@@ -2245,7 +2245,7 @@ void crtx_event_get_payload(struct crtx_event *event, char *id, void **raw_point
 			
 			ret = crtx_event_raw2dict(event, 0);
 			if (ret != CRTX_SUCCESS) {
-				CRTX_ERROR("cannot convert raw data\n");
+				CRTX_ERROR("cannot convert raw data (%c)\n", event->data.type);
 				*dict = 0;
 				return;
 			}

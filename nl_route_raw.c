@@ -515,7 +515,7 @@ struct crtx_dict * crtx_nl_route_raw2dict_neigh(struct nlmsghdr *nlh, char all_f
 	len = NLMSG_PAYLOAD(nlh, sizeof(struct ndmsg));
 	
 	dict = crtx_init_dict(0, 0, 0);
-	printf("neigh\n");
+	
 	crtx_dict_new_item(dict, 'u', "ndm_family", ndmsg->ndm_family, sizeof(ndmsg->ndm_family), 0);
 	crtx_dict_new_item(dict, 'u', "ndm_pad1", ndmsg->ndm_pad1, sizeof(ndmsg->ndm_pad1), 0);
 	crtx_dict_new_item(dict, 'u', "ndm_pad2", ndmsg->ndm_pad2, sizeof(ndmsg->ndm_pad2), 0);
