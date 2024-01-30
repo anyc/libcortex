@@ -363,7 +363,7 @@ struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char al
 		#define IFI_FLAG(name) \
 		if (ifi->ifi_flags & IFF_ ## name) { \
 			cdi = crtx_dict_alloc_next_item(di->dict); \
-			crtx_fill_data_item(cdi, 's', 0, #name, 0, CRTX_DIF_DONT_FREE_DATA); \
+			crtx_fill_data_item(cdi, 's', #name, #name, 0, CRTX_DIF_DONT_FREE_DATA); \
 		}
 		
 		IFI_FLAG(UP);
