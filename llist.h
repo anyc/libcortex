@@ -5,14 +5,30 @@
 
 // no preprocessor guard as linkedlist.h will include this header twice
 
-#ifdef CRTX_DLL
-	#define CRTX_DLL_PREFIX crtx_dll
-#else
-	#ifndef CRTX_DLL_PREFIX
-// 	#undef CRTX_DLL_PREFIX
-	#define CRTX_DLL_PREFIX crtx_ll
+/*
+ * user code can create a specialized linked-list implementation by including
+ * the llist.c file similar to the following code:
+ * 
+ * #undef CRTX_DLL_PREFIX
+ * #define CRTX_DLL_CUSTOM_UNION_TYPE struct my_app_type *my_value
+ * #define CRTX_DLL_PREFIX my_app_ll
+ * #include <crtx/llist.c>
+ * #undef CRTX_DLL_PREFIX
+ * 
+ * And then call the functions like this, for example:
+ * 
+ * my_app_ll_append_new(&my_list_head, my_value);
+ */
+
+#ifndef CRTX_DLL_PREFIX
+	#ifdef CRTX_DLL
+		#define CRTX_DLL_PREFIX crtx_dll
 	#else
-	#define STOP
+		#ifndef CRTX_DLL_PREFIX
+		#define CRTX_DLL_PREFIX crtx_ll
+		#else
+		#define STOP
+		#endif
 	#endif
 #endif
 
@@ -39,6 +55,11 @@ CRTX_DLL_TYPE {
 		struct crtx_transform_dict_handler *transform_handler;
 		struct crtx_handler_category *handler_category;
 		struct crtx_handler_category_entry *handler_category_entry;
+		struct crtx_dict *dict;
+		
+		#ifdef CRTX_DLL_CUSTOM_UNION_TYPE
+		CRTX_DLL_CUSTOM_UNION_TYPE;
+		#endif
 	};
 	
 	int payload[0];

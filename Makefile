@@ -201,6 +201,8 @@ install-devel:
 	$(INSTALL) -m 644 *.h $(DESTDIR)$(includedir)/cortex/
 	ln -s cortex $(DESTDIR)$(includedir)/crtx
 	$(INSTALL) -m 644 layer2/*.h $(DESTDIR)$(includedir)/cortex/layer2/
+	
+	$(INSTALL) -m 644 llist.c $(DESTDIR)$(includedir)/cortex/
 
 install-lib:
 	$(INSTALL) -m 755 -d $(DESTDIR)$(libdir)

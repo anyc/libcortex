@@ -6,7 +6,9 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#ifndef CRTX_DLL_PREFIX
 #include "llist.h"
+#endif
 
 int CRTX_DLL_FCT(append)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item) {
 	CRTX_DLL_TYPE *it;
