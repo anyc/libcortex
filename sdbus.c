@@ -216,6 +216,17 @@ int crtx_sdbus_next_to_dict_item(sd_bus_message *msg, struct crtx_dict_item *dit
 			
 			ditem->double_fp = i;
 			n_elements = 1; break; }
+		case 'y': {
+			uint8_t i;
+			
+			i=0;
+			ditem->type = 'u';
+			rv = sd_bus_message_read_basic(msg, type, &i);
+			if (rv < 0)
+				return rv;
+			
+			ditem->uint32 = i;
+			n_elements = 1; break; }
 		default:
 			CRTX_ERROR("TODO crtx_sdbus_next_to_dict_item(): %c\n", type);
 			// rv = sd_bus_message_skip(msg, 0); CRTX_RET_GEZ(rv)
