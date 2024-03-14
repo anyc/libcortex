@@ -436,13 +436,16 @@ int crtx_sdbus_get_objects(struct crtx_sdbus_listener *lstnr, const char *servic
 		crtx_loop_onetime();
 	}
 	
-	if (!reply)
+	if (!reply) {
+		*objects = 0;
 		return -EAGAIN;
+	}
 	
 	error = sd_bus_message_get_error(reply);
 	if (error) {
 		CRTX_ERROR("DBus error: %s %s\n", error->name, error->message);
 		
+		*objects = 0;
 		return sd_bus_error_get_errno(error);
 	}
 	
