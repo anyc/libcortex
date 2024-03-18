@@ -84,17 +84,30 @@ int crtx_sdbus_next_to_dict_item(sd_bus_message *msg, struct crtx_dict_item *dit
 					break;
 				}
 				
-				// convert {sv} into a single key=value tuple (= crtx_dict_item) if possible
+				// convert {sv} into a single key=value tuple (= crtx_dict_item)
+				// if requested and if we have a DBus dict and if we already read
+				// the key string for this dict entry
 				if (!no_reduce && !strcmp(contents, "sv") && ditem->dict->signature_length == 1) {
-					it = &ditem->dict->items[ditem->dict->signature_length-1];
+					struct crtx_dict_item *key_item;
+					
+					// the previous item is the dict_item that contains the key of the dict entry so far
+					key_item = &ditem->dict->items[ditem->dict->signature_length-1];
 					
 					if (subitem.type == 'D' && subitem.dict->signature_length == 1) {
 						struct crtx_dict *olddict;
 						
+						// if this subitem is also a dict and has only one entry
+						// we convert the current $ditem from a dict into a direct
+						// key=value dict_item where the value comes from this
+						// subitem's single dict entry
+						
 						olddict = ditem->dict;
 						
-						ditem->key = it->string;
-						it->string = 0;
+						if (ditem->key && (ditem->flags & CRTX_DIF_ALLOCATED_KEY) != 0)
+							free(ditem->key);
+						
+						ditem->key = key_item->string;
+						key_item->string = 0;
 						ditem->flags |= CRTX_DIF_ALLOCATED_KEY;
 						ditem->type = subitem.dict->items[0].type;
 						ditem->pointer = subitem.dict->items[0].pointer;
@@ -105,11 +118,14 @@ int crtx_sdbus_next_to_dict_item(sd_bus_message *msg, struct crtx_dict_item *dit
 						crtx_dict_unref(olddict);
 						crtx_free_dict_item_data(&subitem);
 					} else {
-						it->key = it->string;
-						it->flags |= CRTX_DIF_ALLOCATED_KEY;
-						it->type = subitem.type;
-						it->pointer = subitem.pointer;
-						it->size = subitem.size;
+						// if subitem is not a dict, we copy the value of $subitem
+						// directly in the previous $key_item
+						
+						key_item->key = key_item->string;
+						key_item->flags |= CRTX_DIF_ALLOCATED_KEY;
+						key_item->type = subitem.type;
+						key_item->pointer = subitem.pointer;
+						key_item->size = subitem.size;
 					}
 					break;
 				}
@@ -134,6 +150,7 @@ int crtx_sdbus_next_to_dict_item(sd_bus_message *msg, struct crtx_dict_item *dit
 				return rv;
 			
 			ditem->string = strdup(s);
+			
 			if (type == 'o')
 				ditem->key = "object";
 			n_elements = 1; break; }
