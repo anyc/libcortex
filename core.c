@@ -865,6 +865,11 @@ void crtx_add_event(struct crtx_graph *graph, struct crtx_event *event) {
 // 		return;
 // 	}
 	
+	if (event->origin) {
+		CRTX_ERROR("event %p already has associated listener: %s %p\n", event, event->origin->name, event->origin);
+		return;
+	}
+	
 	reference_event_release(event);
 	reference_event_response(event);
 	
