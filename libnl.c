@@ -36,7 +36,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	
 	libnl_lstnr = (struct crtx_libnl_listener*) listener;
 	
-	ret = nl_connect(libnl_lstnr->sock, NETLINK_ROUTE); 
+	ret = nl_connect(libnl_lstnr->sock, NETLINK_ROUTE);
 	if (ret < 0) {
 		CRTX_ERROR("nl_connect failed: %d\n", ret);
 		return ret;
