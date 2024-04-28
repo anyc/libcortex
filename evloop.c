@@ -107,6 +107,7 @@ static char evloop_ctrl_pipe_handler(struct crtx_event *event, void *userdata, v
 	struct crtx_evloop_callback *el_cb;
 	struct crtx_event_loop_control_pipe ecp;
 	ssize_t r;
+	int rv;
 	
 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 	
@@ -124,8 +125,12 @@ static char evloop_ctrl_pipe_handler(struct crtx_event *event, void *userdata, v
 		
 		for (i=0; i<crtx_root->n_graphs; i++) {
 			if (crtx_root->graphs[i] == ecp.graph) {
-// 				CRTX_DBG("processing graph\n");
-				crtx_process_graph_tmain(ecp.graph);
+				CRTX_DBG("processing graph %s %p\n", ecp.graph->name, ecp.graph);
+				while (1) {
+					rv = crtx_process_one_event(ecp.graph);
+					if (rv < 0)
+						break;
+				}
 				ecp.graph = 0;
 				break;
 			}

@@ -409,6 +409,7 @@ void crtx_finish_notification_listeners(void *data);
 int crtx_handle_std_signals();
 
 void *crtx_process_graph_tmain(void *arg);
+int crtx_process_one_event(struct crtx_graph *graph);
 
 // void crtx_event_set_data(struct crtx_event *event, void *raw_pointer, unsigned char flags, struct crtx_dict *data_dict, unsigned char n_additional_fields);
 void crtx_event_set_raw_data(struct crtx_event *event, unsigned char type, ...);

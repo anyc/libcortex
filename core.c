@@ -723,33 +723,30 @@ void crtx_process_event(struct crtx_graph *graph, struct crtx_dll *queue_entry) 
 	}	
 }
 
-void *crtx_process_graph_tmain(void *arg) {
-	// 	struct crtx_event_ll *qe;
+int crtx_process_one_event(struct crtx_graph *graph) {
 	struct crtx_dll *qe;
+	
+	
+	qe = 0;
+	crtx_claim_next_event_of_graph(graph, &qe);
+	if (!qe)
+		return -EAGAIN;
+	
+	crtx_process_event(graph, qe);
+	
+	return 1;
+}
+
+void *crtx_process_graph_tmain(void *arg) {
 	struct crtx_graph *graph = (struct crtx_graph*) arg;
+	int rv;
 	
-// 	LOCK(graph->queue_mutex);
-// 	
-// 	while (!graph->stop) {
-// 		for (qe = graph->equeue; qe && (qe->event->claimed || qe->event->error); qe = qe->next) {}
-// 		if (qe && !qe->event->claimed && !qe->event->error) {
-// 			qe->event->claimed = 1;
-// 			break;
-// 		}
-// 		pthread_cond_wait(&graph->queue_cond, &graph->queue_mutex);
-// 	}
-// 	
-// 	UNLOCK(graph->queue_mutex);
-	
-// 	while (1) {
-		qe = 0;
-		crtx_claim_next_event_of_graph(graph, &qe);
-		if (!qe)
-// 			break;
-			return 0;
-		
-		crtx_process_event(graph, qe);
-// 	}
+	while (1) {
+		rv = crtx_process_one_event(graph);
+		// TODO no busy waiting
+		if (rv < 0 && rv != -EAGAIN)
+			break;
+	}
 	
 	return 0;
 }
