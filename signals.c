@@ -272,7 +272,7 @@ static int update_signals(struct crtx_signals_listener *signal_lstnr) {
 			sigaction(sig->signum, 0, &old_action);
 			
 			// only set actions for signals not previously set to ignore
-			if (old_action.sa_handler != SIG_IGN) {
+			if (old_action.sa_handler != SIG_IGN && old_action.sa_handler != sig->sa.sa_handler) {
 				struct crtx_signal *smap;
 				
 				smap = crtx_get_signal_info(sig->signum);
@@ -372,6 +372,8 @@ static char start_sub_listener(struct crtx_listener_base *listener) {
 		
 		for (i=0; i < main_lstnr.n_signals; i++) {
 			if (main_lstnr.signals[i].signum == sig->signum) {
+				if (main_lstnr.signals[i].lstnrs == 0)
+					changed = 1;
 				crtx_dll_append_new(&main_lstnr.signals[i].lstnrs, signal_lstnr);
 				
 				if (!main_lstnr.signal_handler)
@@ -420,7 +422,7 @@ static char start_sub_listener(struct crtx_listener_base *listener) {
 static char stop_sub_listener(struct crtx_listener_base *listener) {
 	struct crtx_signals_listener *signal_lstnr;
 	int i;
-	char skip, changed;
+	char changed;
 	struct crtx_signal *sig;
 	struct crtx_dll *lit;
 	
@@ -429,8 +431,6 @@ static char stop_sub_listener(struct crtx_listener_base *listener) {
 	
 	changed = 0;
 	for (sig=signal_lstnr->signals; sig && sig->signum; sig++) {
-		skip = 0;
-		
 		for (i=0; i < main_lstnr.n_signals; i++) {
 			if (main_lstnr.signals[i].signum == sig->signum) {
 				lit = crtx_dll_unlink_data(&main_lstnr.signals[i].lstnrs, signal_lstnr);
@@ -445,9 +445,6 @@ static char stop_sub_listener(struct crtx_listener_base *listener) {
 				break;
 			}
 		}
-		
-		if (skip)
-			continue;
 	}
 	
 	if (changed)
@@ -641,6 +638,11 @@ int crtx_signals_rem_child_handler(void *sigchld_cb) {
 	
 	item = crtx_dll_unlink_data(&sigchld_cbs, sigchld_cb);
 	if (item) {
+		if (sigchld_cbs == 0) {
+			crtx_shutdown_listener(&sigchld_lstnr.base);
+			memset(&sigchld_lstnr, 0, sizeof(sigchld_lstnr));
+		}
+		
 		free(sigchld_cb);
 		free(item);
 	} else {
