@@ -199,7 +199,11 @@ static struct crtx_dict *crtx_nl_route_raw2dict_addr(struct nlmsghdr *nlh, char 
 						case IFA_ANYCAST: key = "anycast"; break;
 						case IFA_BROADCAST: key = "broadcast"; break;
 						case IFA_MULTICAST: key = "multicast"; break;
-						case IFA_ADDRESS: key = "address"; break;
+						case IFA_ADDRESS:
+							key = "address";
+							crtx_fill_data_item(di, 'u', "prefixlen", ifa->ifa_prefixlen, sizeof(ifa->ifa_prefixlen), 0);
+							di = crtx_dict_alloc_next_item(dict);
+							break;
 						case IFA_LOCAL: key = "local"; break;
 					}
 					
