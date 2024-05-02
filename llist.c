@@ -64,7 +64,7 @@ int CRTX_DLL_FCT(unlink_intern)(CRTX_DLL_TYPE **head, CRTX_DLL_TYPE *item, CRTX_
 			if (i) {
 				prev = i;
 			} else {
-				return ENOENT;
+				return -ENOENT;
 			}
 		}
 		prev->next = item->next;
@@ -106,7 +106,7 @@ int CRTX_DLL_FCT(unlink_data2)(CRTX_DLL_TYPE **head, void *data) {
 		
 		return 0;
 	} else {
-		return ENOENT;
+		return -ENOENT;
 	}
 }
 
