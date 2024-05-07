@@ -290,7 +290,7 @@ int crtx_sdbus_get_property_async(sd_bus *bus, const char *service, const char *
 		);
 	if (rv < 0) {
 		fprintf(stderr, "Failed to create method call: %s\n", strerror(-rv));
-		return 0;
+		return rv;
 	}
 	
 	rv = sd_bus_message_append_basic(m, 's', interface); CRTX_RET_GEZ(rv)
@@ -305,7 +305,7 @@ int crtx_sdbus_get_property_async(sd_bus *bus, const char *service, const char *
 	if (rv < 0) {
 		fprintf(stderr, "DBus get_property (%s %s %s %s) failed: %s\n",
 				service, object_path, interface, name, strerror(-rv));
-		return 0;
+		return rv;
 	}
 	
 	sd_bus_message_unref(m);
@@ -406,7 +406,7 @@ int crtx_sdbus_get_objects_msg_async(struct crtx_sdbus_listener *lstnr, const ch
 		);
 	if (rv < 0) {
 		fprintf(stderr, "Failed to create method call: %s\n", strerror(-rv));
-		return 0;
+		return rv;
 	}
 	
 	// rv = sd_bus_message_append_basic(m, 's', interface); CRTX_RET_GEZ(rv)
@@ -421,7 +421,7 @@ int crtx_sdbus_get_objects_msg_async(struct crtx_sdbus_listener *lstnr, const ch
 	if (rv < 0) {
 		fprintf(stderr, "DBus get_property (%s %s %s %s) failed: %s\n",
 				service, "/", CRTX_DBUS_OBJECT_MANAGER_INTERFACE, "GetManagedObjects", strerror(-rv));
-		return 0;
+		return rv;
 	}
 	
 	sd_bus_message_unref(m);
