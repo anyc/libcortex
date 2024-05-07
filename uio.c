@@ -30,12 +30,14 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 	lstnr = (struct crtx_uio_listener *) userdata;
 	
 	if ((lstnr->flags & CRTX_UIO_FLAG_NO_READ) == 0) {
+		// read number of interrupts so far
 		nbytes = read(crtx_listener_get_fd(&lstnr->base), &info, sizeof(info));
 		if (nbytes != (ssize_t)sizeof(info)) {
 			CRTX_ERROR("read unexpected number of bytes from uio device %s: %zd != %zu\n", lstnr->uio_device->name, nbytes, sizeof(info));
 			return 0;
 		}
 		
+		// unmask interrupt
 		nbytes = write(crtx_listener_get_fd(&lstnr->base), &info, sizeof(info));
 		if (nbytes != (ssize_t)sizeof(info)) {
 			CRTX_ERROR("write to uio device %s failed: %zd != %zu (%s)\n", lstnr->uio_device->name, nbytes, sizeof(info), strerror(errno));
