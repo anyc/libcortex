@@ -302,7 +302,7 @@ static char libvirt_event_handler(struct crtx_event *event, void *userdata, void
 		
 		// we are only interested in starting VMs as stopped VMs forget their
 		// dynamically attached devices automatically
-		if (!strcmp(type, "Started")) {
+		if (!strcmp(type, "Started") && udev_cache->entries) {
 			struct crtx_dict *vm_dict, *usb_dev_list;
 			struct crtx_dict_item *di, *di2;
 			int i, j;
