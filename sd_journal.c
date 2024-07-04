@@ -192,6 +192,9 @@ static char sd_journal_fd_event_handler(struct crtx_event *event, void *userdata
 			jlstnr->event_cb(jlstnr, jlstnr->event_cb_data);
 	} else if (rv == SD_JOURNAL_INVALIDATE) {
 		// all logs should be reloaded TODO: should we just handle this like APPEND?
+		CRTX_DBG("will reopen journal\n");
+		crtx_stop_listener(&jlstnr->base);
+		crtx_start_listener(&jlstnr->base);
 	} else if (rv == SD_JOURNAL_NOP) {
 		// do nothing
 	} else {
