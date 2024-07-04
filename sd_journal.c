@@ -213,6 +213,12 @@ static char start_listener(struct crtx_listener_base *listener) {
 	
 	jlstnr = (struct crtx_sd_journal_listener *) listener;
 	
+	rv = sd_journal_open(&jlstnr->sd_journal, jlstnr->flags);
+	if (rv < 0) {
+		CRTX_ERROR("sd_journal_open() failed: %s", strerror(-rv));
+		return 0;
+	}
+	
 	fd = sd_journal_get_fd(jlstnr->sd_journal);
 	if (fd < 0) {
 		CRTX_ERROR("sd_journal_get_fd() failed: %s\n", strerror(-fd));
@@ -264,31 +270,24 @@ static char start_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
-static void shutdown_listener(struct crtx_listener_base *listener) {
+static char stop_listener(struct crtx_listener_base *listener) {
 	struct crtx_sd_journal_listener *jlstnr;
 	
 	jlstnr = (struct crtx_sd_journal_listener *) listener;
 	
 	sd_journal_close(jlstnr->sd_journal);
 	
-	return;
+	return 0;
 }
 
 struct crtx_listener_base *crtx_setup_sd_journal_listener(void *options) {
 	struct crtx_sd_journal_listener *jlstnr;
-	int rv;
 	
 	
 	jlstnr = (struct crtx_sd_journal_listener *) options;
 	
 	jlstnr->base.start_listener = &start_listener;
-	jlstnr->base.shutdown = &shutdown_listener;
-	
-	rv = sd_journal_open(&jlstnr->sd_journal, jlstnr->flags);
-	if (rv < 0) {
-		CRTX_ERROR("sd_journal_open() failed: %s", strerror(-rv));
-		return 0;
-	}
+	jlstnr->base.stop_listener = &stop_listener;
 	
 	return &jlstnr->base;
 }

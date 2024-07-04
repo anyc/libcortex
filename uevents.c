@@ -215,7 +215,7 @@ int netlink_raw_main(int argc, char **argv) {
 	ret = crtx_setup_listener("uevents", &ulist);
 	if (ret) {
 		CRTX_ERROR("create_listener(uevents) failed: %s\n", strerror(ret));
-		exit(1);
+		return ret;
 	}
 	
 	crtx_create_task(ulist.base.graph, 0, "uevents_test", uevents_test_handler, 0);
@@ -223,7 +223,7 @@ int netlink_raw_main(int argc, char **argv) {
 	ret = crtx_start_listener(&ulist.base);
 	if (ret) {
 		CRTX_ERROR("starting uevents listener failed\n");
-		return 1;
+		return ret;
 	}
 	
 	crtx_loop();
