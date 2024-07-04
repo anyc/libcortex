@@ -59,13 +59,13 @@ int crtx_sd_journal_print_event(struct crtx_sd_journal_listener *jlstnr, void *u
 	while (sd_journal_next(jlstnr->sd_journal)) {
 		rv = sd_journal_get_data(jlstnr->sd_journal, "MESSAGE", (void *) &data, &data_length);
 		if (rv < 0) {
-			CRTX_ERROR("sd_journal_get_data() failed: %s", strerror(-rv));
+			CRTX_ERROR("sd_journal_get_data() failed: %s\n", strerror(-rv));
 			return 0;
 		}
 		
 		rv = sd_journal_get_realtime_usec(jlstnr->sd_journal, &usec);
 		if (rv < 0) {
-			CRTX_ERROR("sd_journal_get_realtime_usec() failed: %s", strerror(-rv));
+			CRTX_ERROR("sd_journal_get_realtime_usec() failed: %s\n", strerror(-rv));
 			return 0;
 		}
 		
@@ -183,7 +183,7 @@ static char sd_journal_fd_event_handler(struct crtx_event *event, void *userdata
 	
 	rv = sd_journal_process(jlstnr->sd_journal);
 	if (rv < 0) {
-		CRTX_ERROR("sd_journal_process() failed: %s", strerror(-rv));
+		CRTX_ERROR("sd_journal_process() failed: %s\n", strerror(-rv));
 		return 0;
 	}
 	
@@ -198,7 +198,7 @@ static char sd_journal_fd_event_handler(struct crtx_event *event, void *userdata
 	} else if (rv == SD_JOURNAL_NOP) {
 		// do nothing
 	} else {
-		CRTX_ERROR("unexpected sd_journal_process() return value: %d", rv);
+		CRTX_ERROR("unexpected sd_journal_process() return value: %d\n", rv);
 	}
 	
 	set_events_timeout(jlstnr);
@@ -215,7 +215,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	
 	rv = sd_journal_open(&jlstnr->sd_journal, jlstnr->flags);
 	if (rv < 0) {
-		CRTX_ERROR("sd_journal_open() failed: %s", strerror(-rv));
+		CRTX_ERROR("sd_journal_open() failed: %s\n", strerror(-rv));
 		return 0;
 	}
 	
@@ -242,14 +242,14 @@ static char start_listener(struct crtx_listener_base *listener) {
 	if (jlstnr->seek < 0) {
 		rv = sd_journal_seek_tail(jlstnr->sd_journal);
 		if (rv < 0) {
-			CRTX_ERROR("sd_journal_seek_tail() failed: %s", strerror(-rv));
+			CRTX_ERROR("sd_journal_seek_tail() failed: %s\n", strerror(-rv));
 			return 0;
 		}
 		
 		for (i=0; i < -jlstnr->seek + 1; i++) {
 			rv = sd_journal_previous(jlstnr->sd_journal);
 			if (rv < 0) {
-				CRTX_ERROR("sd_journal_previous() failed: %s", strerror(-rv));
+				CRTX_ERROR("sd_journal_previous() failed: %s\n", strerror(-rv));
 				return 0;
 			}
 		}
@@ -261,7 +261,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 		for (i=0; i < jlstnr->seek; i++) {
 			rv = sd_journal_next(jlstnr->sd_journal);
 			if (rv < 0) {
-				CRTX_ERROR("sd_journal_next() failed: %s", strerror(-rv));
+				CRTX_ERROR("sd_journal_next() failed: %s\n", strerror(-rv));
 // 				return 0;
 			}
 		}
