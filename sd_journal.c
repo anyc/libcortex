@@ -239,6 +239,15 @@ static char start_listener(struct crtx_listener_base *listener) {
 		return rv;
 	}
 	
+	if (jlstnr->same_boot_filter) {
+		sd_id128_t boot_id;
+		char buf[64];
+		
+		rv = sd_id128_get_boot(&boot_id);
+		snprintf(buf, sizeof(buf), "_BOOT_ID=" SD_ID128_FORMAT_STR, SD_ID128_FORMAT_VAL(boot_id));
+		sd_journal_add_match(jlstnr->sd_journal, buf, 0);
+	}
+	
 	if (jlstnr->seek < 0) {
 		rv = sd_journal_seek_tail(jlstnr->sd_journal);
 		if (rv < 0) {

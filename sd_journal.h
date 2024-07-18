@@ -33,6 +33,7 @@ extern "C" {
 		int flags;
 		int seek; // positive: skip first x entries, negative: read last x entries
 		char try_read;
+		char same_boot_filter;
 		
 		int (*event_cb)(struct crtx_sd_journal_listener *jlstnr, void *userdata);
 		void *event_cb_data;
