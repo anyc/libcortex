@@ -161,6 +161,9 @@ static int crtx_epoll_manage_fd(struct crtx_event_loop *evloop, struct crtx_evlo
 			CRTX_VDBG("epoll add %d %s (%p)\n", evloop_fd->fd, epoll_flags2str(epoll_event->events), evloop);
 			
 			ret = crtx_epoll_add_fd_intern(epl, evloop_fd->fd, epoll_event);
+			if (ret < 0) {
+				CRTX_ERROR("epoll add fd failed for: %s %d\n", evloop_fd->listener?evloop_fd->listener->name:"", evloop_fd->fd);
+			}
 			
 			evloop_fd->fd_added = (ret == 0);
 			
