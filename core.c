@@ -1663,8 +1663,10 @@ static void load_plugin(char *path, char *basename) {
 	p->handle = dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
 	p->plugin_name = strdup(plugin_name);
 	
-	if (!p->handle)
+	if (!p->handle) {
+		CRTX_ERROR("dlopen(%s) failed: %s\n", path, dlerror());
 		return;
+	}
 	
 	p->initialized = 1;
 	snprintf(buf, 1024, "crtx_%s_init", plugin_name);
