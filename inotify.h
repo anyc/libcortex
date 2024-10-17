@@ -12,9 +12,6 @@ extern "C" {
 
 #include <sys/inotify.h>
 
-// #define INOTIFY_MSG_ETYPE "inotify/event"
-// extern char *inotify_msg_etype[];
-
 struct crtx_inotify_listener {
 	struct crtx_listener_base base;
 	
@@ -24,7 +21,8 @@ struct crtx_inotify_listener {
 };
 
 uint32_t crtx_inotify_string2mask(char *mask_string);
-char crtx_inotify_mask2string(uint32_t mask, char *string, size_t *string_size);
+int crtx_inotify_mask2string(uint32_t mask, char *string, size_t *string_size);
+int crtx_inotify_to_dict(struct inotify_event *iev, struct crtx_dict **dict);
 
 struct crtx_listener_base *crtx_setup_inotify_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(inotify)

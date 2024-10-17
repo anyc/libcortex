@@ -1,6 +1,7 @@
 /*
  * Mario Kicherer (dev@kicherer.org) 2016
  *
+ * inotify enables monitoring of filesystem activity
  */
 
 #include <stdio.h>
@@ -17,8 +18,10 @@
 #include "threads.h"
 #include "epoll.h"
 
+#ifndef CRTX_TEST
+
+// we use one fd for all inotify listeners
 static int inotify_fd = -1;
-// char *inotify_msg_etype[] = { INOTIFY_MSG_ETYPE, 0 };
 
 static struct crtx_inotify_listener **listeners = 0;
 static unsigned int n_listeners = 0;
@@ -34,11 +37,11 @@ static char stop = 0;
 
 #define EV(name) { IN_ ## name, #name, sizeof(#name) }
 
-struct inotify_event_dict {
+struct crtx_inotify_event_dict {
 	uint32_t type;
 	char *name;
 	size_t name_size;
-} event_dict[] = {
+} crtx_inotify_event_dict[] = {
 	EV(ACCESS),
 	EV(MODIFY),
 	EV(ATTRIB),
@@ -50,9 +53,6 @@ struct inotify_event_dict {
 	EV(CREATE),
 	EV(DELETE),
 	EV(DELETE_SELF),
-	EV(UNMOUNT),
-	EV(Q_OVERFLOW),
-	EV(IGNORED),
 	
 	EV(DONT_FOLLOW),
 	EV(EXCL_UNLINK),
@@ -67,10 +67,10 @@ struct inotify_event_dict {
 };
 
 uint32_t crtx_inotify_string2mask(char *mask_string) {
-	struct inotify_event_dict *dictit;
+	struct crtx_inotify_event_dict *dictit;
 	
 	if (mask_string) {
-		dictit = event_dict;
+		dictit = crtx_inotify_event_dict;
 		while (dictit->name) {
 			if (!strcmp(dictit->name, mask_string)) {
 				return dictit->type;
@@ -83,8 +83,8 @@ uint32_t crtx_inotify_string2mask(char *mask_string) {
 	return 0;
 }
 
-char crtx_inotify_mask2string(uint32_t mask, char *string, size_t *string_size) {
-	struct inotify_event_dict *dictit;
+int crtx_inotify_mask2string(uint32_t mask, char *string, size_t *string_size) {
+	struct crtx_inotify_event_dict *dictit;
 	char *pos;
 	
 	if (mask && string_size) {
@@ -93,7 +93,7 @@ char crtx_inotify_mask2string(uint32_t mask, char *string, size_t *string_size) 
 		if (!string)
 			*string_size = 0;
 		
-		dictit = event_dict;
+		dictit = crtx_inotify_event_dict;
 		while (dictit->name) {
 			if (dictit->type & mask) {
 				if (string) {
@@ -104,7 +104,7 @@ char crtx_inotify_mask2string(uint32_t mask, char *string, size_t *string_size) 
 			}
 			dictit++;
 		}
-// 		*string_size += 1 - 1; // add final \0, remove last " "
+		
 		// remove last " "
 		if (pos > string)
 			pos[-1] = 0; // we request 1 byte more than necessary
@@ -116,28 +116,20 @@ char crtx_inotify_mask2string(uint32_t mask, char *string, size_t *string_size) 
 	}
 }
 
-// void inotify_to_dict(struct crtx_event_data *data) {
-void inotify_to_dict(struct crtx_event *event, struct crtx_dict_item *item) {
-	struct inotify_event *iev;
+int crtx_inotify_to_dict(struct inotify_event *iev, struct crtx_dict **dict) {
 	size_t len;
 	unsigned char mlen;
-	struct crtx_dict *mask_dict, *dict;
-	char *mask_signature; //[33]
-	struct inotify_event_dict *dictit;
+	struct crtx_dict *mask_dict;
+	struct crtx_inotify_event_dict *dictit;
 	struct crtx_dict_item *di;
 	
 	
-	iev = (struct inotify_event*) event->data.pointer;
-	len = strlen(iev->name);
+	len = iev->len;
 	
 	mlen = CRTX_POPCOUNT32(iev->mask);
-	mask_signature = (char*) malloc(mlen + 1);
-	memset(mask_signature, 's', mlen);
-	mask_signature[mlen] = 0;
+	mask_dict = crtx_init_dict(0, mlen, 0);
 	
-	mask_dict = crtx_init_dict(mask_signature, mlen, 0);
-	
-	dictit = event_dict;
+	dictit = crtx_inotify_event_dict;
 	di = mask_dict->items;
 	while (dictit->name) {
 		if (dictit->type & iev->mask) {
@@ -155,25 +147,22 @@ void inotify_to_dict(struct crtx_event *event, struct crtx_dict_item *item) {
 	di--;
 	di->flags |= CRTX_DIF_LAST_ITEM;
 	
-// 	item->dict = crtx_create_dict("iDuus",
-	dict = crtx_create_dict("iDuus",
-					"wd", iev->wd, sizeof(int32_t), 0,
-					"mask", mask_dict, mask_dict->size, 0,
-					"cookie", iev->cookie, sizeof(uint32_t), 0,
-					"len", iev->len, sizeof(uint32_t), 0,
-					"name", crtx_stracpy(iev->name, &len), len, 0
-				);
+	*dict = crtx_create_dict("iDuus",
+		"wd", iev->wd, sizeof(int32_t), 0,
+		"mask", mask_dict, mask_dict->size, 0,
+		"cookie", iev->cookie, sizeof(uint32_t), 0,
+		"len", iev->len, sizeof(uint32_t), 0,
+		"name", len?crtx_stracpy(iev->name, &len):0, len, 0
+		);
 	
-// 	crtx_event_set_data(event, 0, dict, 0);
-	crtx_event_set_dict_data(event, dict, 0);
+	return 0;
 }
 
-static char inotify_eloop() {
+static int inotify_process() {
 	char buffer[INOFITY_BUFLEN];
 	ssize_t length;
 	size_t i;
 	unsigned int j;
-	
 	struct crtx_event *event;
 	struct crtx_inotify_listener *fal;
 	struct inotify_event *in_event;
@@ -182,11 +171,11 @@ static char inotify_eloop() {
 	length = read(inotify_fd, buffer, INOFITY_BUFLEN);
 	
 	if (stop)
-		return 1;
+		return 0;
 	
 	if (length < 0) {
-		printf("inotify read failed\n");
-		return 1;
+		CRTX_ERROR("inotify read failed\n");
+		return length;
 	}
 	
 	i=0;
@@ -209,27 +198,14 @@ static char inotify_eloop() {
 			ev_data = (struct inotify_event *) malloc(sizeof(struct inotify_event) + in_event->len);
 			memcpy(ev_data, in_event, sizeof(struct inotify_event) + in_event->len);
 			
-			crtx_create_event(&event); // ev_data, sizeof(struct inotify_event) + in_event->len);
-			event->description = fal->base.graph->descriptions[0];
-			// 				event->data.to_dict = &inotify_to_dict;
-			// 				crtx_dict_upgrade_event_data(event, 0, 1);
+			crtx_create_event(&event);
 			
-// 			crtx_event_set_data(event, 0, 0, 1);
+			if (fal->base.graph->descriptions)
+				event->description = fal->base.graph->descriptions[0];
 			
-			
-			struct crtx_dict_item *di;
-			di = crtx_get_item_by_idx(event->data.dict, 2);
-			crtx_fill_data_item(di, 'p', "raw2dict", inotify_to_dict, 0, 0);
-			
-			// 				reference_event_release(event);
+			crtx_event_set_raw_data(event, 'p', ev_data, sizeof(struct inotify_event) + in_event->len, 0);
 			
 			crtx_add_event(fal->base.graph, event);
-			
-			// 				wait_on_event(event);
-			
-			// 				event->data.= 0;
-			
-			// 				dereference_event_release(event);
 		} else {
 			CRTX_ERROR("inotify listener for wd %d not found\n", in_event->wd);
 		}
@@ -242,7 +218,7 @@ static char inotify_eloop() {
 
 void *inotify_tmain(void *data) {
 	while (!stop) {
-		if (inotify_eloop())
+		if (inotify_process())
 			break;
 	}
 	
@@ -250,23 +226,37 @@ void *inotify_tmain(void *data) {
 }
 
 static char inotify_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	struct crtx_evloop_fd *payload;
-	
-	
-// 	payload = (struct crtx_evloop_fd*) event->data.pointer;
-	
-	inotify_eloop();
+	inotify_process();
 	
 	return 0;
 }
 
-void crtx_shutdown_inotify_listener(struct crtx_listener_base *data) {
-	unsigned int i;
+static char stop_inotify_listener(struct crtx_listener_base *listener) {
+	struct crtx_inotify_listener *inlist;
 	
+	inlist = (struct crtx_inotify_listener*) listener;
+	
+	inotify_rm_watch(inotify_fd, inlist->wd);
+	
+	return 0;
+}
+
+static void shutdown_inotify_listener(struct crtx_listener_base *listener) {
+	unsigned int i, closefd;
+	
+	closefd = 1;
 	for (i=0; i < n_listeners; i++) {
-		if (listeners[i] == (struct crtx_inotify_listener*) data) {
-			inotify_rm_watch(inotify_fd, listeners[i]->wd);
+		if (listeners[i] == (struct crtx_inotify_listener*) listener) {
 			listeners[i] = 0;
+		}
+		if (listeners[i])
+			closefd = 0;
+	}
+	
+	if (closefd) {
+		if (inotify_fd >= 0) {
+			close(inotify_fd);
+			inotify_fd = -1;
 		}
 	}
 }
@@ -280,12 +270,13 @@ static void stop_thread(struct crtx_thread *thread, void *data) {
 static char start_listener(struct crtx_listener_base *listener) {
 	struct crtx_inotify_listener *inlist;
 	
+	
 	inlist = (struct crtx_inotify_listener*) listener;
 	
-	
-	// start the global inotify loop
+	// is this the first inotify listener?
 	if (inotify_fd == -1) {
 		enum crtx_processing_mode mode;
+		
 		
 		inotify_fd = inotify_init();
 		if (inotify_fd == -1) {
@@ -295,38 +286,38 @@ static char start_listener(struct crtx_listener_base *listener) {
 		
 		INIT_MUTEX(mutex);
 		
+		// get default mode or use NONE as fallback
 		mode = crtx_get_mode(CRTX_PREFER_NONE);
 		
 		if (mode == CRTX_PREFER_THREAD) {
 			thread_job.fct = &inotify_tmain;
 			thread_job.do_stop = &stop_thread;
-	// 		global_thread = get_thread(inotify_tmain, 0, 1);
 			global_thread = crtx_thread_assign_job(&thread_job);
 			
 			crtx_reference_signal(&global_thread->finished);
 			
 			crtx_thread_start_job(global_thread);
-	// 		global_thread->do_stop = &stop_thread;
 		} else
 		if (mode == CRTX_PREFER_ELOOP) {
 			crtx_evloop_create_fd_entry(&evloop_fd, &el_cb,
-							inotify_fd,
-							CRTX_EVLOOP_READ,
-							0,
-							&inotify_fd_event_handler,
-							0,
-							0, 0
-						);
+				inotify_fd,
+				CRTX_EVLOOP_READ,
+				0,
+				&inotify_fd_event_handler,
+				0,
+				0, 0
+				);
 			
-// 			crtx_evloop_add_el_fd(&evloop_fd);
 			crtx_evloop_enable_cb(&el_cb);
 		}
-		
 	}
+	
+	// only the main listener is added to the main loop and it will trigger the sub-listeners
+	inlist->base.mode = CRTX_NO_PROCESSING_MODE;
 	
 	inlist->wd = inotify_add_watch(inotify_fd, inlist->path, inlist->mask);
 	if (inlist->wd == -1) {
-		printf("inotify_add_watch(\"%s\") failed with %d: %s\n", inlist->path, errno, strerror(errno));
+		printf("inotify_add_watch(\"%s\", %u) failed with %d: %s\n", inlist->path, inlist->mask, errno, strerror(errno));
 		return -errno;
 	}
 	
@@ -337,25 +328,8 @@ struct crtx_listener_base *crtx_setup_inotify_listener(void *options) {
 	struct crtx_inotify_listener *inlist;
 	unsigned int list_idx;
 	
-	inlist = (struct crtx_inotify_listener*) options;
 	
-// 	// start the global inotify loop
-// 	if (inotify_fd == -1) {
-// 		inotify_fd = inotify_init();
-// 		if (inotify_fd == -1) {
-// 			printf("inotify initialization failed\n");
-// 			return 0;
-// 		}
-// 		
-// 		INIT_MUTEX(mutex);
-// 		
-// 		thread_job.fct = &inotify_tmain;
-// 		thread_job.do_stop = &stop_thread;
-// // 		global_thread = get_thread(inotify_tmain, 0, 1);
-// 		global_thread = crtx_thread_assign_job(&thread_job);
-// 		crtx_thread_start_job(global_thread);
-// // 		global_thread->do_stop = &stop_thread;
-// 	}
+	inlist = (struct crtx_inotify_listener*) options;
 	
 	LOCK(mutex);
 	if (listeners == 0) {
@@ -381,12 +355,9 @@ struct crtx_listener_base *crtx_setup_inotify_listener(void *options) {
 	listeners[list_idx] = inlist;
 	
 	
-	inlist->base.shutdown = &crtx_shutdown_inotify_listener;
-	
-// 	new_eventgraph(&inlist->base.graph, 0, inotify_msg_etype);
-	
-// 	inlist->base.thread = 0;
 	inlist->base.start_listener = &start_listener;
+	inlist->base.stop_listener = &stop_inotify_listener;
+	inlist->base.shutdown = &shutdown_inotify_listener;
 	
 	return &inlist->base;
 }
@@ -397,17 +368,80 @@ void crtx_inotify_init() {
 }
 
 void crtx_inotify_finish() {
-	unsigned int i;
-	
 	if (listeners) {
-		for (i=0; i < n_listeners; i++) {
-			if (listeners[i])
-				inotify_rm_watch(inotify_fd, listeners[i]->wd);
-		}
-		
 		free(listeners);
 		listeners = 0;
-		if (inotify_fd >= 0)
+		if (inotify_fd >= 0) {
 			close(inotify_fd);
+			inotify_fd = -1;
+		}
 	}
 }
+
+#else /* CRTX_TEST */
+
+struct crtx_inotify_listener lstnr;
+
+static char event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	struct crtx_dict *dict;
+	
+	crtx_inotify_to_dict((struct inotify_event *) crtx_event_get_ptr(event), &dict);
+	
+	crtx_print_dict(dict);
+	
+	crtx_dict_unref(dict);
+	
+	return 0;
+}
+
+int test_main(int argc, char **argv) {
+	int ret;
+	
+	
+	memset(&lstnr, 0, sizeof(struct crtx_inotify_listener));
+	
+	if (argc > 1) {
+		lstnr.path = argv[1];
+	} else {
+		fprintf(stderr, "Usage: %s <path> [mask1,mask2,...]\n", argv[0]);
+		return 1;
+	}
+	
+	if (argc > 2) {
+		char *save, *s, *sub;
+		
+		lstnr.mask = 0;
+		s = argv[2];
+		while (1) {
+			sub = strtok_r(s, ",", &save);
+			if (sub == NULL)
+				break;
+			s = 0;
+			lstnr.mask |= crtx_inotify_string2mask(sub);
+		}
+	} else {
+		lstnr.mask = IN_CREATE | IN_DELETE;
+	}
+	
+	ret = crtx_setup_listener("inotify", &lstnr);
+	if (ret) {
+		CRTX_ERROR("create_listener(inotify) failed: %s\n", strerror(-ret));
+		return 0;
+	}
+	
+	ret = crtx_start_listener(&lstnr.base);
+	if (ret) {
+		CRTX_ERROR("starting inotify listener failed\n");
+		return 0;
+	}
+	
+	crtx_create_task(lstnr.base.graph, 0, "test_handler", &event_handler, 0);
+	
+	crtx_loop();
+	
+	return 0;
+}
+
+CRTX_TEST_MAIN(test_main);
+
+#endif /* CRTX_TEST */
