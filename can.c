@@ -66,7 +66,7 @@ static char can_fd_event_handler(struct crtx_event *event, void *userdata, void 
 				}
 			} else
 			if (r != sizeof(struct can_frame)) {
-				CRTX_ERROR("wrong can frame size: %d\n", r);
+				CRTX_ERROR("wrong can frame size: %zd\n", r);
 				free(frame);
 				return 1;
 			}
