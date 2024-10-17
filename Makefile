@@ -26,9 +26,8 @@ AVAILABLE_TESTS=avahi can curl epoll evdev evloop_qt fork libnl libvirt mqtt \
 	netlink_ge nl_route_raw popen pulseaudio sdbus sd_journal sip timer \
 	udev uevents v4l xcb_randr writequeue uio
 
-DEBUG_FLAGS?=-Wall -Werror
-CFLAGS+=$(DEBUG_FLAGS) -D_FILE_OFFSET_BITS=64 -fPIC -DCRTX_PLUGIN_DIR=\"$(plugindir)\"
-CXXFLAGS+=$(DEBUG_FLAGS)
+CFLAGS+=-D_FILE_OFFSET_BITS=64 -fPIC -DCRTX_PLUGIN_DIR=\"$(plugindir)\"
+CXXFLAGS+=
 LDLIBS+=-lpthread -ldl
 
 #
@@ -60,6 +59,15 @@ LAYER2_MODULES?=dynamic_evdev forked_curl netif netconf
 DEFAULT_EVLOOP=epoll
 
 -include $(local_mk)
+
+ifeq ($(DEBUG),1)
+SANITIZER_FLAGS=-fsanitize=address -fsanitize=undefined
+DEBUG_FLAGS+=-g -g3 -gdwarf-2 -DDEBUG -Wall -Werror $(SANITIZER_FLAGS)
+
+CFLAGS+=$(DEBUG_FLAGS)
+CXXFLAGS+=$(DEBUG_FLAGS)
+LDLIBS+=$(DEBUG_FLAGS)
+endif
 
 CFLAGS+=-DDEFAULT_EVLOOP=\"$(DEFAULT_EVLOOP)\" -DSO_VERSION=\"$(SO_VERSION)\" -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -DREVISION=$(REVISION)
 
@@ -98,7 +106,7 @@ clean:
 	rm -f *.o $(APP) core_modules.h config.h $(TESTS) $(SHAREDLIB) libcrtx*.so* libcortex*.deb
 
 debug:
-	$(MAKE) $(MAKEFILE) DEBUG_FLAGS="-g -g3 -gdwarf-2 -DDEBUG -Wall" $(DEBUGARGS)
+	$(MAKE) $(MAKEFILE) DEBUG=1 $(DEBUGARGS)
 
 
 crtx_include_dir:
@@ -182,7 +190,7 @@ crtx_examples:
 	$(MAKE) -C examples
 
 crtx_layer2: $(SHAREDLIB)
-	$(MAKE) -C layer2 LAYER2_MODULES="$(LAYER2_MODULES)" DEBUG_FLAGS="$(DEBUG_FLAGS)"
+	$(MAKE) -C layer2 LAYER2_MODULES="$(LAYER2_MODULES)"
 
 crtx_layer2_tests: $(SHAREDLIB) crtx_layer2
 	$(MAKE) -C layer2 tests LAYER2_MODULES="$(LAYER2_MODULES)" plugindir="$(plugindir)"
