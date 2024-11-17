@@ -60,11 +60,13 @@ struct crtx_listener_base *crtx_setup_pipe_listener(void *options) {
 		reinit = 1;
 	} else {
 		if (!crtx_is_fd_valid(lstnr->fds[0])) {
-			close(lstnr->fds[1]);
+			if (crtx_is_fd_valid(lstnr->fds[1]))
+				close(lstnr->fds[1]);
 			reinit = 1;
 		} else
 		if (!crtx_is_fd_valid(lstnr->fds[1])) {
-			close(lstnr->fds[0]);
+			if (crtx_is_fd_valid(lstnr->fds[0]))
+				close(lstnr->fds[0]);
 			reinit = 1;
 		}
 	}
