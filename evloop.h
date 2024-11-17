@@ -86,7 +86,8 @@ struct crtx_listener_base;
 struct crtx_evloop_fd {
 	struct crtx_ll ll;
 	
-	int fd;
+	int *fd;
+	int l_fd;
 	char fd_added;
 	
 	void *el_data; // data that can be set by the event loop implementation
@@ -96,6 +97,11 @@ struct crtx_evloop_fd {
 	struct crtx_evloop_callback *callbacks;
 	
 	struct crtx_event_loop *evloop;
+	
+	#ifndef CRTX_REDUCED_SIZE
+	/* reserved to avoid ABI breakage */
+	void *reserved1;
+	#endif
 };
 
 struct crtx_event_loop_control_pipe {
@@ -145,7 +151,7 @@ int crtx_evloop_start(struct crtx_event_loop *evloop);
 int crtx_evloop_stop(struct crtx_event_loop *evloop);
 int crtx_evloop_release(struct crtx_event_loop *evloop);
 int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd, struct crtx_evloop_callback *el_callback,
-						  int fd,
+						  int *fd_ptr, int fd,
 						  int event_flags,
 						  struct crtx_graph *graph,
 						  crtx_handle_task_t event_handler,
@@ -154,7 +160,7 @@ int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd, struct crtx_ev
 						  void *error_cb_data
 					);
 int crtx_evloop_init_listener(struct crtx_listener_base *listener,
-						int fd,
+						int *fd_ptr, int fd,
 						int event_flags,
 						struct crtx_graph *graph,
 						crtx_handle_task_t event_handler,

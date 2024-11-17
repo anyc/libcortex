@@ -127,7 +127,7 @@ struct crtx_listener_base *crtx_setup_writequeue_listener(void *options) {
 	// of the read_listener
 	if (wqueue->read_listener) {
 		crtx_evloop_create_fd_entry(&wqueue->read_listener->evloop_fd, &wqueue->base.default_el_cb,
-							wqueue->write_fd,
+							&wqueue->write_fd, 0,
 							CRTX_EVLOOP_WRITE,
 							0,
 							&fd_event_handler, wqueue,
@@ -135,7 +135,7 @@ struct crtx_listener_base *crtx_setup_writequeue_listener(void *options) {
 						);
 	} else {
 		crtx_evloop_create_fd_entry(&wqueue->base.evloop_fd, &wqueue->base.default_el_cb,
-							wqueue->write_fd,
+							&wqueue->write_fd, 0,
 							CRTX_EVLOOP_WRITE,
 							0,
 							&fd_event_handler, wqueue,
@@ -153,7 +153,7 @@ int crtx_add_writequeue2listener(struct crtx_writequeue_listener *writequeue, st
 	
 	memset(writequeue, 0, sizeof(struct crtx_writequeue_listener));
 	
-	writequeue->write_fd = listener->evloop_fd.fd;
+	writequeue->write_fd = *listener->evloop_fd.fd;
 	writequeue->write = write_cb;
 	writequeue->write_userdata = write_userdata;
 	

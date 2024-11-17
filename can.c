@@ -506,7 +506,7 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 		}
 		
 		crtx_evloop_init_listener(&clist->base,
-								  clist->sockfd,
+							&clist->sockfd, 0,
 							CRTX_EVLOOP_READ,
 							0,
 							&can_fd_event_handler,

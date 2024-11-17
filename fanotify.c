@@ -163,7 +163,7 @@ struct crtx_listener_base *crtx_setup_fanotify_listener(void *options) {
 	} else
 	if (mode == CRTX_PREFER_ELOOP) {
 		crtx_evloop_init_listener(&falist->base,
-			falist->fanotify_fd,
+			&falist->fanotify_fd, 0,
 			CRTX_EVLOOP_READ,
 			0,
 			&fanotify_event_handler,

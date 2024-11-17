@@ -226,7 +226,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	}
 	
 	crtx_evloop_init_listener(&mlstnr->base,
-							mosquitto_socket(mlstnr->mosq),
+							0, mosquitto_socket(mlstnr->mosq),
 							evtypes,
 							0,
 							&mqtt_fd_event_handler,

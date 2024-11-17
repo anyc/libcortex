@@ -77,7 +77,7 @@ struct crtx_listener_base *crtx_setup_pipe_listener(void *options) {
 		}
 		
 		crtx_evloop_init_listener(&lstnr->base,
-			lstnr->fds[CRTX_READ_END],
+			&lstnr->fds[CRTX_READ_END], 0,
 			CRTX_EVLOOP_READ,
 			0,
 			&pipe_fd_event_handler, lstnr,

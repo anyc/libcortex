@@ -63,7 +63,7 @@ static char start_listener(struct crtx_listener_base *base_lstnr) {
 	snprintf(buf, sizeof(buf), "/dev/uio%d", lstnr->uio_device->index);
 	fd = open(buf, O_RDWR);
 	
-	crtx_listener_add_fd(base_lstnr, fd, CRTX_EVLOOP_READ, 0,
+	crtx_listener_add_fd(base_lstnr, 0, fd, CRTX_EVLOOP_READ, 0,
 						 &fd_event_handler, lstnr, 0, 0);
 	
 	return 0;

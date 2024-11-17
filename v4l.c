@@ -458,7 +458,7 @@ struct crtx_listener_base *crtx_new_v4l_listener(void *options) {
 	query_ctrls(lstnr);
 	
 	crtx_evloop_init_listener(&lstnr->base,
-						lstnr->fd,
+						&lstnr->fd, 0,
 						CRTX_EVLOOP_SPECIAL | CRTX_EVLOOP_READ,
 						0,
 						&v4l_fd_event_handler,

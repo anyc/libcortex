@@ -177,7 +177,7 @@ static int elw_virEventAddHandleFunc(int fd, int event, virEventHandleCallback c
 // 	wrap->evloop_fd.error_cb = &elw_fd_error_cb;
 // 	wrap->evloop_fd.data = wrap;
 	crtx_evloop_create_fd_entry(&wrap->evloop_fd, &wrap->default_el_cb,
-						fd,
+						0, fd,
 						elw_virEventPollToNativeEvents(event),
 						0,
 						&elw_fd_event_handler,

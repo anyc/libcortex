@@ -91,7 +91,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	eXosip_unlock (slist->ctx);
 	
 	crtx_evloop_init_listener(&slist->base,
-						eXosip_event_geteventsocket(slist->ctx),
+						0, eXosip_event_geteventsocket(slist->ctx),
 						CRTX_EVLOOP_READ,
 						0,
 						&sip_fd_event_handler,

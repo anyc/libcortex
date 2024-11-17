@@ -391,7 +391,7 @@ static int socket_callback(CURL *easy, curl_socket_t curl_socket, int what, CURL
 			crtx_evloop_create_fd_entry(
 					&socketp->el_fd,
 					&socketp->el_cb,
-					socketp->socket_fd,
+					&socketp->socket_fd, 0,
 					0, // access type
 					0, // graph
 					&fd_event_callback,

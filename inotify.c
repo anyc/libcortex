@@ -300,7 +300,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 		} else
 		if (mode == CRTX_PREFER_ELOOP) {
 			crtx_evloop_create_fd_entry(&evloop_fd, &el_cb,
-				inotify_fd,
+				&inotify_fd, 0,
 				CRTX_EVLOOP_READ,
 				0,
 				&inotify_fd_event_handler,

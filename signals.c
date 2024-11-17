@@ -330,7 +330,7 @@ static int update_signals(struct crtx_signals_listener *signal_lstnr) {
 		CRTX_DBG("new signalfd with fd %d\n", signal_lstnr->fd);
 		
 		crtx_evloop_init_listener(&signal_lstnr->base,
-							signal_lstnr->fd,
+							&signal_lstnr->fd, 0,
 							CRTX_EVLOOP_READ,
 							0,
 							&signalfd_event_handler,

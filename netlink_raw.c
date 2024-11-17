@@ -138,7 +138,7 @@ struct crtx_listener_base *crtx_setup_netlink_raw_listener(void *options) {
 	}
 	
 	crtx_evloop_init_listener(&nl_listener->base,
-						nl_listener->fd,
+						0, nl_listener->fd,
 						CRTX_EVLOOP_READ,
 						0,
 						event_handler,

@@ -268,7 +268,7 @@ struct crtx_listener_base *crtx_setup_udev_listener(void *options) {
 	}
 	
 	crtx_evloop_init_listener(&ulist->base,
-						udev_monitor_get_fd(ulist->monitor),
+						0, udev_monitor_get_fd(ulist->monitor),
 						CRTX_EVLOOP_READ,
 						0,
 						&udev_fd_event_handler,

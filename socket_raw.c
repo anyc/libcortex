@@ -105,7 +105,7 @@ static int create_sub_lstnr(struct crtx_socket_raw_listener **listener, struct c
 	crtx_init_listener_base(&lstnr->base);
 	
 	crtx_evloop_init_listener(&lstnr->base,
-							lstnr->sockfd,
+							&lstnr->sockfd, 0,
 							CRTX_EVLOOP_READ,
 							0,
 							lstnr->read_cb,

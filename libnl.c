@@ -42,7 +42,8 @@ static char start_listener(struct crtx_listener_base *listener) {
 		return ret;
 	}
 	
-	libnl_lstnr->base.evloop_fd.fd = nl_socket_get_fd(libnl_lstnr->sock);
+	libnl_lstnr->base.evloop_fd.fd = &libnl_lstnr->base.evloop_fd.l_fd;
+	libnl_lstnr->base.evloop_fd.l_fd = nl_socket_get_fd(libnl_lstnr->sock);
 	
 	return 0;
 }
@@ -86,7 +87,7 @@ struct crtx_listener_base *crtx_setup_libnl_listener(void *options) {
 	libnl_lstnr->base.free_cb = &free_libnl_listener;
 	
 	crtx_evloop_init_listener(&libnl_lstnr->base,
-						0,
+						0, 0,
 						CRTX_EVLOOP_READ,
 						0,
 						&libnl_fd_event_handler,

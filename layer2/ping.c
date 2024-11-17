@@ -401,7 +401,7 @@ struct crtx_listener_base *crtx_setup_ping_listener(void *options) {
 	
 	crtx_evloop_init_listener(
 		&ping_lstnr->base,
-		sockfd,
+		0, sockfd,
 		CRTX_EVLOOP_READ,
 		0,
 		&fd_event_handler,

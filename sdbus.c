@@ -890,7 +890,7 @@ struct crtx_listener_base *crtx_sdbus_new_listener(void *options) {
 	}
 	
 	crtx_evloop_init_listener(&sdlist->base,
-						sd_bus_get_fd(sdlist->bus),
+						0, sd_bus_get_fd(sdlist->bus),
 						crtx_sdbus_get_events(sdlist->bus),
 						0,
 						&fd_event_handler,

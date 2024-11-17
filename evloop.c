@@ -113,7 +113,7 @@ static char evloop_ctrl_pipe_handler(struct crtx_event *event, void *userdata, v
 	
 	CRTX_VDBG("received ctrl pipe event\n");
 	
-	r = read(el_cb->fd_entry->fd, &ecp, sizeof(struct crtx_event_loop_control_pipe));
+	r = read(*el_cb->fd_entry->fd, &ecp, sizeof(struct crtx_event_loop_control_pipe));
 	
 	if (r != sizeof(struct crtx_event_loop_control_pipe)) {
 		CRTX_ERROR("unexpected number of bytes read in evloop_ctrl_pipe_handler(): %zd != %zd\n", r, sizeof(struct crtx_event_loop_control_pipe));
@@ -157,7 +157,7 @@ void crtx_evloop_callback(struct crtx_evloop_callback *el_cb) {
 		return;
 	
 	if (el_cb->fd_entry)
-		CRTX_VDBG("exec callback for fd %d\n", el_cb->fd_entry->fd);
+		CRTX_VDBG("exec callback for fd %d\n", *el_cb->fd_entry->fd);
 	else
 		CRTX_VDBG("exec callback without fd\n");
 	
@@ -204,7 +204,7 @@ void crtx_evloop_callback(struct crtx_evloop_callback *el_cb) {
 			UNLOCK(el_cb->fd_entry->listener->source_lock);
 	} else {
 		if (el_cb->fd_entry) {
-			CRTX_ERROR("no handler for fd %d\n", el_cb->fd_entry->fd);
+			CRTX_ERROR("no handler for fd %d\n", *el_cb->fd_entry->fd);
 		} else {
 			CRTX_ERROR("crtx_evloop_callback(): no callback handler\n");
 // 			exit(1);
@@ -219,7 +219,7 @@ void crtx_evloop_fwd_error2event_cb(struct crtx_evloop_callback *el_cb, void *da
 void crtx_evloop_update_default_fd(struct crtx_listener_base *listener, int fd) {
 	crtx_evloop_disable_cb(&listener->default_el_cb);
 	
-	listener->evloop_fd.fd = fd;
+	*listener->evloop_fd.fd = fd;
 	
 	if (fd >= 0)
 		crtx_evloop_enable_cb(&listener->default_el_cb);
@@ -228,7 +228,7 @@ void crtx_evloop_update_default_fd(struct crtx_listener_base *listener, int fd) 
 void crtx_evloop_handle_fd_closed(struct crtx_evloop_fd *evloop_fd) {
 	struct crtx_evloop_callback *el_cb;
 	
-	CRTX_DBG("received notification fd %d was closed\n", evloop_fd->fd);
+	CRTX_DBG("received notification fd %d was closed\n", *evloop_fd->fd);
 	
 	for (el_cb=evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
 		if (!el_cb->active)
@@ -237,13 +237,17 @@ void crtx_evloop_handle_fd_closed(struct crtx_evloop_fd *evloop_fd) {
 		el_cb->active = 0;
 	}
 	
-	evloop_fd->fd = -1;
+	if (!evloop_fd->fd) {
+		evloop_fd->fd = &evloop_fd->l_fd;
+		evloop_fd->l_fd = -1;
+	}
 	
 	if (evloop_fd->evloop)
 		evloop_fd->evloop->mod_fd(evloop_fd->evloop, evloop_fd);
 }
 
 int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd, struct crtx_evloop_callback *el_cb,
+						  int *fd_ptr,
 						  int fd,
 						  int event_flags,
 						  struct crtx_graph *graph,
@@ -253,7 +257,12 @@ int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd, struct crtx_ev
 						  void *error_cb_data
 						 )
 {
-	evloop_fd->fd = fd;
+	if (fd_ptr) {
+		evloop_fd->fd = fd_ptr;
+	} else {
+		evloop_fd->fd = &evloop_fd->l_fd;
+		evloop_fd->l_fd = fd;
+	}
 	
 	el_cb->crtx_event_flags = event_flags;
 	el_cb->graph = graph;
@@ -274,6 +283,7 @@ int crtx_evloop_create_fd_entry(struct crtx_evloop_fd *evloop_fd, struct crtx_ev
 }
 
 int crtx_evloop_init_listener(struct crtx_listener_base *listener,
+						  int *fd_ptr,
 						  int fd,
 						  int event_flags,
 						  struct crtx_graph *graph,
@@ -286,6 +296,7 @@ int crtx_evloop_init_listener(struct crtx_listener_base *listener,
 	int ret;
 	
 	ret = crtx_evloop_create_fd_entry(&listener->evloop_fd, &listener->default_el_cb,
+						fd_ptr,
 						fd,
 						event_flags,
 						graph,
@@ -312,7 +323,7 @@ int crtx_evloop_enable_cb(struct crtx_evloop_callback *el_cb) {
 	if (el_fd->evloop == 0) {
 		el_fd->evloop = crtx_get_main_event_loop();
 		if (!el_fd->evloop) {
-			CRTX_ERROR("no event loop for fd %d\n", el_fd->fd);
+			CRTX_ERROR("no event loop for fd %d\n", *el_fd->fd);
 			return -1;
 		}
 	}
@@ -386,7 +397,7 @@ int crtx_evloop_create(struct crtx_event_loop *evloop) {
 		return ret;
 	} else {
 		crtx_evloop_create_fd_entry(&evloop->ctrl_pipe_evloop_handler, &evloop->default_el_cb,
-								evloop->ctrl_pipe[0],
+								&evloop->ctrl_pipe[0], 0,
 								CRTX_EVLOOP_READ,
 								0,
 								&evloop_ctrl_pipe_handler,

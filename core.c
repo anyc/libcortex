@@ -158,7 +158,7 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 	
 	CRTX_DBG("starting listener \"%s\"", listener->id);
 	if (listener->evloop_fd.fd >=0)
-		CRTX_DBG(" (fd %d)", listener->evloop_fd.fd);
+		CRTX_DBG(" (fd %d)", *listener->evloop_fd.fd);
 	CRTX_DBG("\n");
 	
 	if (listener->start_listener) {
@@ -191,7 +191,7 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 	mode = crtx_get_mode(listener->mode);
 	
 	if (listener->evloop_fd.fd < 0 && !listener->thread_job.fct && !listener->start_listener && mode != CRTX_NO_PROCESSING_MODE) {
-		CRTX_DBG("no method to start listener \"%s\" provided (%d, %p, %p, %d)\n", listener->id, listener->evloop_fd.fd, listener->thread_job.fct, listener->start_listener, listener->mode);
+		CRTX_DBG("no method to start listener \"%s\" provided (%d, %p, %p, %d)\n", listener->id, *listener->evloop_fd.fd, listener->thread_job.fct, listener->start_listener, listener->mode);
 		
 		UNLOCK(listener->state_mutex);
 		return -EINVAL;
@@ -199,7 +199,7 @@ int crtx_start_listener(struct crtx_listener_base *listener) {
 	
 	if (listener->evloop_fd.fd || listener->thread_job.fct) {
 		if (mode == CRTX_PREFER_ELOOP && listener->evloop_fd.fd <= 0) {
-			CRTX_ERROR("listener mode set to \"event loop\" but no event loop data available (fd = %d)\n", listener->evloop_fd.fd);
+			CRTX_ERROR("listener mode set to \"event loop\" but no event loop data available (fd = %d)\n", *listener->evloop_fd.fd);
 			mode = CRTX_PREFER_THREAD;
 		}
 		if (mode == CRTX_PREFER_THREAD && !listener->thread_job.fct) {
@@ -290,7 +290,10 @@ int crtx_init_listener_base(struct crtx_listener_base *lbase) {
 	
 	INIT_REC_MUTEX(lbase->source_lock);
 	
-	lbase->evloop_fd.fd = -1;
+	if (!lbase->evloop_fd.fd) {
+		lbase->evloop_fd.fd = &lbase->evloop_fd.l_fd;
+		lbase->evloop_fd.l_fd = -1;
+	}
 	
 	return 0;
 }
@@ -542,7 +545,7 @@ void crtx_shutdown_listener(struct crtx_listener_base *listener) {
 	
 	UNLOCK(listener->state_mutex);
 	
-	if (listener->evloop_fd.fd >= 0) {
+	if (*listener->evloop_fd.fd >= 0) {
 		struct crtx_evloop_callback *cit, *citn;
 		
 		for (cit = listener->evloop_fd.callbacks; cit; cit=citn) {
@@ -556,11 +559,11 @@ void crtx_shutdown_listener(struct crtx_listener_base *listener) {
 	if (listener->shutdown) {
 		listener->shutdown(listener);
 	} else {
-		if (listener->evloop_fd.fd >= 0 && (listener->flags & CRTX_LSTNR_NO_AUTO_CLOSE) == 0) {
-			CRTX_DBG("auto-closing %d during shutdown %s\n", listener->evloop_fd.fd, listener->id);
+		if (*listener->evloop_fd.fd >= 0 && (listener->flags & CRTX_LSTNR_NO_AUTO_CLOSE) == 0) {
+			CRTX_DBG("auto-closing %d during shutdown %s\n", *listener->evloop_fd.fd, listener->id);
 			
-			close(listener->evloop_fd.fd);
-			listener->evloop_fd.fd = 0;
+			close(*listener->evloop_fd.fd);
+			*listener->evloop_fd.fd = -1;
 		}
 	}
 	
@@ -2429,7 +2432,7 @@ void crtx_trigger_event_processing(struct crtx_listener_base *lstnr) {
 	if (!lstnr->evloop_fd.evloop) {
 		lstnr->evloop_fd.evloop = crtx_get_main_event_loop();
 		if (!lstnr->evloop_fd.evloop) {
-			CRTX_ERROR("no event loop for fd %d\n", lstnr->evloop_fd.fd);
+			CRTX_ERROR("no event loop for fd %d\n", *lstnr->evloop_fd.fd);
 			return;
 		}
 	}
@@ -2588,6 +2591,7 @@ void crtx_print_event(struct crtx_event *event, FILE *f) {
 }
 
 int crtx_listener_add_fd(struct crtx_listener_base *listener,
+						int *fd_ptr,
 						int fd,
 						int event_flags,
 						uint64_t timeout_us,
@@ -2600,6 +2604,7 @@ int crtx_listener_add_fd(struct crtx_listener_base *listener,
 	int rv;
 	
 	rv = crtx_evloop_init_listener(listener,
+			fd_ptr,
 			fd,
 			event_flags,
 			listener->graph,
@@ -2619,7 +2624,7 @@ int crtx_listener_add_fd(struct crtx_listener_base *listener,
 }
 
 int crtx_listener_get_fd(struct crtx_listener_base *listener) {
-	return listener->evloop_fd.fd;
+	return *listener->evloop_fd.fd;
 }
 
 int crtx_is_shutting_down() {

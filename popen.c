@@ -54,13 +54,8 @@ void post_fork_child_callback(void *cb_data) {
 	}
 	
 	plstnr->stdin_lstnr.fds[CRTX_READ_END] = -1;
-	plstnr->stdin_lstnr.base.evloop_fd.fd = -1;
-	
 	plstnr->stdout_lstnr.fds[CRTX_WRITE_END] = -1;
-	plstnr->stdout_lstnr.base.evloop_fd.fd = -1;
-	
 	plstnr->stderr_lstnr.fds[CRTX_WRITE_END] = -1;
-	plstnr->stderr_lstnr.base.evloop_fd.fd = -1;
 }
 
 // this function is called by the child process after libcortex has reinitialized
@@ -405,7 +400,6 @@ void crtx_popen_close_stdin(struct crtx_popen_listener *lstnr) {
 	lstnr->stdin_wq_lstnr.write_fd = -1;
 	
 	lstnr->stdin_lstnr.fds[CRTX_WRITE_END] = -1;
-	lstnr->stdin_lstnr.base.evloop_fd.fd = -1;
 }
 
 void crtx_popen_clear_lstnr(struct crtx_popen_listener *lstnr) {

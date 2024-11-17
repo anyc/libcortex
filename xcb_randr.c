@@ -622,7 +622,7 @@ struct crtx_listener_base *crtx_setup_xcb_randr_listener(void *options) {
 // 	xrlist->base.evloop_fd.event_handler = &xcb_randr_fd_event_handler;
 // 	xrlist->base.evloop_fd.event_handler_name = "xcb-randr fd handler";
 	crtx_evloop_init_listener(&xrlist->base,
-						xcb_get_file_descriptor(xrlist->conn),
+						0, xcb_get_file_descriptor(xrlist->conn),
 						CRTX_EVLOOP_READ,
 						0,
 						&xcb_randr_fd_event_handler,

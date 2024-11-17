@@ -226,12 +226,12 @@ static char start_listener(struct crtx_listener_base *listener) {
 	}
 	
 	crtx_evloop_init_listener(&jlstnr->base,
-							  fd,
-						   CRTX_EVLOOP_READ,
-						   0,
-						   &sd_journal_fd_event_handler,
-						   jlstnr,
-						   0, 0
+							0, fd,
+							CRTX_EVLOOP_READ,
+							0,
+							&sd_journal_fd_event_handler,
+							jlstnr,
+							0, 0
 		);
 	
 	rv = set_events_timeout(jlstnr);

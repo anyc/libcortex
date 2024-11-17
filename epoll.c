@@ -154,15 +154,15 @@ static int crtx_epoll_manage_fd(struct crtx_event_loop *evloop, struct crtx_evlo
 	
 	if (epoll_event->events) {
 		if (evloop_fd->fd_added) {
-			CRTX_VDBG("epoll mod %d %s (%p)\n", evloop_fd->fd, epoll_flags2str(epoll_event->events), evloop);
+			CRTX_VDBG("epoll mod %d %s (%p)\n", *evloop_fd->fd, epoll_flags2str(epoll_event->events), evloop);
 			
-			crtx_epoll_mod_fd_intern(epl, evloop_fd->fd, epoll_event);
+			crtx_epoll_mod_fd_intern(epl, *evloop_fd->fd, epoll_event);
 		} else {
-			CRTX_VDBG("epoll add %d %s (%p)\n", evloop_fd->fd, epoll_flags2str(epoll_event->events), evloop);
+			CRTX_VDBG("epoll add %d %s (%p)\n", *evloop_fd->fd, epoll_flags2str(epoll_event->events), evloop);
 			
-			ret = crtx_epoll_add_fd_intern(epl, evloop_fd->fd, epoll_event);
+			ret = crtx_epoll_add_fd_intern(epl, *evloop_fd->fd, epoll_event);
 			if (ret < 0) {
-				CRTX_ERROR("epoll add fd failed for: %s %d\n", evloop_fd->listener?evloop_fd->listener->name:"", evloop_fd->fd);
+				CRTX_ERROR("epoll add fd failed for: %s %d\n", evloop_fd->listener?evloop_fd->listener->name:"", *evloop_fd->fd);
 			}
 			
 			evloop_fd->fd_added = (ret == 0);
@@ -170,15 +170,15 @@ static int crtx_epoll_manage_fd(struct crtx_event_loop *evloop, struct crtx_evlo
 			crtx_ll_append((struct crtx_ll**) &evloop->fds, &evloop_fd->ll);
 		}
 	} else {
-		CRTX_VDBG("epoll del %d (%d %p)\n", evloop_fd->fd, evloop->after_fork_close, evloop);
+		CRTX_VDBG("epoll del %d (%d %p)\n", *evloop_fd->fd, evloop->after_fork_close, evloop);
 		
 		crtx_ll_unlink((struct crtx_ll**) &evloop->fds, (struct crtx_ll*) &evloop_fd->ll);
 		
 		// after a fork, we close all file handles but we don't want to remove
 		// them from an epoll instance as it would remove the file handle for
 		// the parent process as well.
-		if (!evloop->after_fork_close && evloop_fd->fd >= 0)
-			crtx_epoll_del_fd_intern(epl, evloop_fd->fd);
+		if (!evloop->after_fork_close && *evloop_fd->fd >= 0)
+			crtx_epoll_del_fd_intern(epl, *evloop_fd->fd);
 		
 		free(evloop_fd->el_data);
 		evloop_fd->el_data = 0;
@@ -251,7 +251,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 			evloop_fd = (struct crtx_evloop_fd* ) epl->events[i].data.ptr;
 			
 			#ifdef DEBUG
-			CRTX_VDBG("epoll #%zu %d ", i, evloop_fd->fd);
+			CRTX_VDBG("epoll #%zu %d ", i, *evloop_fd->fd);
 			#define PRINTFLAG(flag) if (epl->events[i].events & flag) CRTX_VDBG(#flag " ");
 			
 			PRINTFLAG(EPOLLIN);
@@ -264,7 +264,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 			
 			int rv;
 			int bytesAvailable = 0;
-			rv = ioctl(evloop_fd->fd, FIONREAD, &bytesAvailable);
+			rv = ioctl(*evloop_fd->fd, FIONREAD, &bytesAvailable);
 			if (!rv) {
 				CRTX_VDBG("available data: %u bytes\n", bytesAvailable);
 			} else {
@@ -276,11 +276,11 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 			
 			if (epl->events[i].events & EPOLLERR || epl->events[i].events & EPOLLRDHUP || epl->events[i].events & EPOLLHUP) {
 				if (epl->events[i].events & EPOLLERR)
-					CRTX_DBG("epoll returned EPOLLERR for fd %d\n", evloop_fd->fd);
+					CRTX_DBG("epoll returned EPOLLERR for fd %d\n", *evloop_fd->fd);
 				if (epl->events[i].events & EPOLLHUP)
-					CRTX_DBG("epoll returned EPOLLHUP for fd %d\n", evloop_fd->fd);
+					CRTX_DBG("epoll returned EPOLLHUP for fd %d\n", *evloop_fd->fd);
 				if (epl->events[i].events & EPOLLRDHUP)
-					CRTX_DBG("epoll returned EPOLLRDHUP for fd %d\n", evloop_fd->fd);
+					CRTX_DBG("epoll returned EPOLLRDHUP for fd %d\n", *evloop_fd->fd);
 				
 				for (el_cb = evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
 					if (el_cb->error_cb) {
@@ -288,7 +288,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 						
 						el_cb->error_cb(el_cb, el_cb->error_cb_data);
 					} else {
-						CRTX_DBG("no error_cb for fd %d\n", el_cb->fd_entry->fd);
+						CRTX_DBG("no error_cb for fd %d\n", *el_cb->fd_entry->fd);
 					}
 				}
 			} else {
@@ -322,7 +322,7 @@ static int evloop_start_intern(struct crtx_event_loop *evloop, char onetime) {
 			for (el_cb = evloop_fd->callbacks; el_cb; el_cb = (struct crtx_evloop_callback *) el_cb->ll.next) {
 				if (el_cb->timeout.tv_sec > 0 || el_cb->timeout.tv_nsec > 0) {
 					if (CRTX_CMP_TIMESPEC(&el_cb->timeout, &now_ts) < 0) {
-						CRTX_VDBG("epoll timeout %d\n", evloop_fd->fd);
+						CRTX_VDBG("epoll timeout %d\n", *evloop_fd->fd);
 						
 						el_cb->timeout_enabled = 0;
 						el_cb->timeout.tv_sec = 0;
@@ -661,7 +661,7 @@ static char epoll_test_handler(struct crtx_event *event, void *userdata, void **
 	
 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 	
-	n_read = read(el_cb->fd_entry->fd, buf, sizeof(buf)-1);
+	n_read = read(*el_cb->fd_entry->fd, buf, sizeof(buf)-1);
 	if (n_read < 0) {
 		CRTX_ERROR("epoll test read failed: %s\n", strerror(errno));
 		return 1;
@@ -735,7 +735,7 @@ int epoll_main(int argc, char **argv) {
 	memset(&default_el_cb, 0, sizeof(struct crtx_evloop_callback));
 	
 	crtx_evloop_create_fd_entry(&evloop_fd, &default_el_cb,
-						testpipe[0],
+						0, testpipe[0],
 						CRTX_EVLOOP_READ,
 						0,
 						&epoll_test_handler,

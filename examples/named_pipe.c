@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
 	// tell libcortex that, if the listener is started, it should call
 	// fd_event_handler on all events and at least call the function every 3 seconds
 	rv = crtx_listener_add_fd(lstnr,
-			fd, // int fd,
+			0, fd, // int fd,
 			CRTX_EVLOOP_ALL, // int event_flags,
 			3000000, // uint64_t timeout_us,
 			fd_event_handler, // crtx_handle_task_t event_handler,

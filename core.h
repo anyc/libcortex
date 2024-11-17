@@ -362,6 +362,7 @@ int crtx_setup_listener(const char *id, void *options);
 int crtx_init_listener_base(struct crtx_listener_base *lstnr);
 struct crtx_listener_base *crtx_calloc_listener_base(void);
 int crtx_listener_add_fd(struct crtx_listener_base *listener,
+						 int *fd_ptr,
 						 int fd,
 						 int event_flags,
 						 uint64_t timeout_us,
