@@ -674,12 +674,16 @@ static char epoll_test_handler(struct crtx_event *event, void *userdata, void **
 }
 
 static char timer_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+	ssize_t srv;
+	
 	printf("timerhandler\n");
 	
 	if (count > 2) {
 		crtx_init_shutdown();
 	} else {
-		write(testpipe[1], "success", 7);
+		srv = write(testpipe[1], "success", 7);
+		if (srv != 7)
+			fprintf(stderr, "write failed: %zd\n", srv);
 		count++;
 	}
 	
@@ -757,7 +761,9 @@ int epoll_main(int argc, char **argv) {
 		}
 		
 		sleep(1);
-		write(testpipe[1], "success", 7);
+		ssize_t srv = write(testpipe[1], "success", 7);
+		if (srv != 7)
+			fprintf(stderr, "write failed: %zd\n", srv);
 		
 		sleep(1);
 		

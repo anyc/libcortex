@@ -17,7 +17,7 @@ struct crtx_inotify_listener {
 	
 	int wd;
 	uint32_t mask;
-	char *path;
+	const char *path;
 };
 
 uint32_t crtx_inotify_string2mask(char *mask_string);

@@ -542,9 +542,15 @@ static int wq_write(struct crtx_writequeue_listener *wqueue, void *userdata) {
 
 void pre_exec(struct crtx_popen_listener *plstnr, void *pre_exec_userdata) {
 	char *s;
+	int rv;
+	
 	printf("still open FDs before fork:\n");
-	asprintf(&s, "ls -lsh /proc/%d/fd/", getpid());
-	system(s);
+	rv = asprintf(&s, "ls -lsh /proc/%d/fd/", getpid());
+	if (rv < 0)
+		fprintf(stderr, "asprintf failed\n");
+	rv = system(s);
+	if (rv < 0)
+		fprintf(stderr, "system() failed\n");
 	free(s);
 }
 

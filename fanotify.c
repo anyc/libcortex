@@ -254,7 +254,9 @@ static char event_handler(struct crtx_event *event, void *userdata, void **sessi
 				else
 					access.response = FAN_DENY;
 				
-				write(lstnr->fanotify_fd, &access, sizeof(access));
+				ssize_t srv = write(lstnr->fanotify_fd, &access, sizeof(access));
+				if (srv != sizeof(access))
+					fprintf(stderr, "write() failed\n");
 			}
 			
 			free(line);
