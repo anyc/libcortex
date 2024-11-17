@@ -61,7 +61,9 @@ DEFAULT_EVLOOP=epoll
 -include $(local_mk)
 
 ifeq ($(DEBUG),1)
+ifneq ($(SANITIZER), 0)
 SANITIZER_FLAGS=-fsanitize=address -fsanitize=undefined
+endif
 DEBUG_FLAGS+=-g -g3 -gdwarf-2 -DDEBUG -Wall -Werror $(SANITIZER_FLAGS)
 
 CFLAGS+=$(DEBUG_FLAGS)
