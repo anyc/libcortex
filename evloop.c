@@ -202,6 +202,9 @@ void crtx_evloop_callback(struct crtx_evloop_callback *el_cb) {
 		
 		if (el_cb->fd_entry && el_cb->fd_entry->listener && el_cb->fd_entry->listener->autolock_source)
 			UNLOCK(el_cb->fd_entry->listener->source_lock);
+		
+		if (el_cb->flags & CRTX_ECBF_FREE)
+			free(el_cb);
 	} else {
 		if (el_cb->fd_entry) {
 			CRTX_ERROR("no handler for fd %d\n", *el_cb->fd_entry->fd);
@@ -529,6 +532,22 @@ int crtx_evloop_register_startup_callback(crtx_handle_task_t event_handler, void
 	evloop->startup_el_cb->event_handler_data = userdata;
 	
 	crtx_evloop_trigger_callback(evloop, evloop->startup_el_cb);
+	
+	return 0;
+}
+
+int crtx_evloop_schedule_callback(crtx_handle_task_t event_handler, void *userdata, struct crtx_event_loop *evloop) {
+	struct crtx_evloop_callback *el_cb;
+	
+	if (!evloop)
+		evloop = crtx_get_main_event_loop();
+	
+	el_cb = (struct crtx_evloop_callback*) calloc(1, sizeof(struct crtx_evloop_callback));
+	el_cb->event_handler = event_handler;
+	el_cb->event_handler_data = userdata;
+	el_cb->flags |= CRTX_ECBF_FREE;
+	
+	crtx_evloop_trigger_callback(evloop, el_cb);
 	
 	return 0;
 }

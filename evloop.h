@@ -54,6 +54,8 @@ struct crtx_event_loop;
 
 typedef void (*crtx_evloop_error_cb_t)(struct crtx_evloop_callback *el_cb, void *data);
 
+#define CRTX_ECBF_FREE	(1<<0)
+
 struct crtx_evloop_callback {
 	struct crtx_ll ll;
 	
@@ -75,6 +77,8 @@ struct crtx_evloop_callback {
 	void *error_cb_data;
 	
 	struct crtx_evloop_fd *fd_entry;
+	
+	int flags;
 };
 
 struct crtx_listener_base;
@@ -179,6 +183,7 @@ void crtx_evloop_set_timeout_rel(struct crtx_evloop_callback *el_cb, uint64_t ti
 void crtx_evloop_disable_timeout(struct crtx_evloop_callback *el_cb);
 int crtx_evloop_trigger_callback(struct crtx_event_loop *evloop, struct crtx_evloop_callback *el_cb);
 int crtx_evloop_register_startup_callback(crtx_handle_task_t event_handler, void *userdata, struct crtx_event_loop *evloop);
+int crtx_evloop_schedule_callback(crtx_handle_task_t event_handler, void *userdata, struct crtx_event_loop *evloop);
 
 void crtx_event_flags2str(FILE *fd, unsigned int flags);
 
