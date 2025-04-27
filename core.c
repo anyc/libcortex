@@ -809,6 +809,19 @@ struct crtx_task *crtx_create_task(struct crtx_graph *graph, unsigned char posit
 	return task;
 }
 
+struct crtx_task * crtx_graph_get_task(struct crtx_graph *graph, const char *id, crtx_handle_task_t handler) {
+	struct crtx_task *titer;
+	
+	for (titer=graph->tasks; titer; titer=titer->next) {
+		if (handler && titer->handle == handler)
+			break;
+		if (id && !strcmp(id, titer->id))
+			break;
+	}
+	
+	return titer;
+}
+
 // void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event) {
 // 	struct crtx_event_ll *eit;
 // 	
