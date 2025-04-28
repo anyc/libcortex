@@ -342,7 +342,8 @@ struct crtx_listener_base *crtx_setup_popen_listener(void *options) {
 		return 0;
 	}
 	
-	crtx_create_task(plstnr->fork_lstnr.base.graph, 0, "popen_fork_event_handler", &fork_event_handler, plstnr);
+	if (!plstnr->fork_lstnr.base.graph->tasks)
+		crtx_create_task(plstnr->fork_lstnr.base.graph, 0, "popen_fork_event_handler", &fork_event_handler, plstnr);
 	
 	if (plstnr->fstdin == -1 && plstnr->stdin_wq_lstnr.write) {
 		rv = crtx_setup_listener("pipe", &plstnr->stdin_lstnr);
