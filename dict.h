@@ -6,6 +6,8 @@
  *
  */
 
+#include <stdio.h>
+
 #include "intern.h"
 
 #define CRTX_DICT_GET_NUMBER(dict_item) ( \
