@@ -1,6 +1,21 @@
 
 local_mk ?= Makefile.local
 
+ifeq ($(DEBUG),1)
+ifneq ($(SANITIZER), 0)
+SANITIZER_FLAGS=-fsanitize=address -fsanitize=undefined
+endif
+DEBUG_FLAGS+=-g -g3 -gdwarf-2 -DDEBUG -Wall -Werror $(SANITIZER_FLAGS)
+
+CFLAGS+=$(DEBUG_FLAGS)
+CXXFLAGS+=$(DEBUG_FLAGS)
+LDLIBS+=$(DEBUG_FLAGS)
+
+export CFLAGS
+export CXXFLAGS
+export LDLIBS
+endif
+
 all: libcortex crtx_layer2 crtx_examples
 
 $(local_mk):
@@ -29,3 +44,6 @@ libcortex: $(local_mk)
 
 tests: crtx_layer2_tests
 	$(MAKE) -C src tests
+
+debug:
+	$(MAKE) $(MAKEFILE) DEBUG=1 $(DEBUGARGS)

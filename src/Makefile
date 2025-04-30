@@ -59,17 +59,6 @@ DEFAULT_EVLOOP=epoll
 
 -include $(local_mk)
 
-ifeq ($(DEBUG),1)
-ifneq ($(SANITIZER), 0)
-SANITIZER_FLAGS=-fsanitize=address -fsanitize=undefined
-endif
-DEBUG_FLAGS+=-g -g3 -gdwarf-2 -DDEBUG -Wall -Werror $(SANITIZER_FLAGS)
-
-CFLAGS+=$(DEBUG_FLAGS)
-CXXFLAGS+=$(DEBUG_FLAGS)
-LDLIBS+=$(DEBUG_FLAGS)
-endif
-
 CFLAGS+=-DDEFAULT_EVLOOP=\"$(DEFAULT_EVLOOP)\" -DSO_VERSION=\"$(SO_VERSION)\" -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -DREVISION=$(REVISION)
 
 # build tests for enabled modules
