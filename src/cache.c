@@ -137,7 +137,7 @@ struct cache_sessiondata {
 	struct crtx_dict_item *cache_entry;
 };
 
-char crtx_cache_task_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+int crtx_cache_task_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_cache *cache = (struct crtx_cache*) userdata;
 	struct crtx_dict_item *ditem, *passthrough;
 	char ret;
@@ -397,7 +397,7 @@ struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *cache, struct cr
 	return c_entry;
 }
 
-static char crtx_cache_task_cleanup(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int crtx_cache_task_cleanup(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_cache *cache = (struct crtx_cache*) userdata;
 	struct crtx_dict_item *key;
 	struct cache_sessiondata *sd;

@@ -116,7 +116,7 @@ static void setup_response_event_cb(struct crtx_event *event, void *userdata) {
 	crtx_add_event(slist->outbox, resp_event);
 }
 
-static char outbound_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int outbound_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_socket_listener *slistener;
 	
 	slistener = (struct crtx_socket_listener *) userdata;
@@ -132,7 +132,7 @@ static char outbound_event_handler(struct crtx_event *event, void *userdata, voi
 	return 1;
 }
 
-static char inbound_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int inbound_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_socket_listener *slistener;
 	
 	slistener = (struct crtx_socket_listener *) userdata;

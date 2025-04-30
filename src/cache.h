@@ -67,7 +67,7 @@ int crtx_create_cache_task(struct crtx_task **task, char *id, create_key_cb_t cr
 void crtx_free_cache_task(struct crtx_task *task);
 
 struct crtx_dict_item * crtx_cache_add_entry(struct crtx_cache *cache, struct crtx_dict_item *key, struct crtx_event *event, struct crtx_dict_item *entry_data);
-char crtx_cache_task_handler(struct crtx_event *event, void *userdata, void **sessiondata);
+int crtx_cache_task_handler(struct crtx_event *event, void *userdata, void **sessiondata);
 char crtx_load_cache(struct crtx_cache *cache, char *path);
 void crtx_cache_remove_entry(struct crtx_cache *cache, struct crtx_dict_item *key);
 

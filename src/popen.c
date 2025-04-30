@@ -163,7 +163,7 @@ void after_fork_reinit_cb(void *reinit_cb_data) {
 }
 
 // callback that is executed if this listener is configured to react on new data from stdout or stderr
-static char pipe_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int pipe_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_pipe_listener *pipe_lstnr;
 	struct crtx_popen_listener *popen_lstnr;
 	
@@ -294,7 +294,7 @@ static void shutdown_listener(struct crtx_listener_base *listener) {
 }
 
 // callback that is executed if the child process terminates
-static char fork_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int fork_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	(void) sessiondata;
 	struct crtx_popen_listener *plstnr;
 	
@@ -428,7 +428,7 @@ int repeat = 1;
 struct crtx_popen_listener plist;
 struct crtx_popen_listener plist2;
 
-static char popen_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int popen_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	if (event->type == CRTX_FORK_ET_CHILD_STOPPED || event->type == CRTX_FORK_ET_CHILD_KILLED) {
 		printf("child (%zu) done with rc %d, shutdown parent\n", (size_t) userdata, event->data.int32);
 		if (userdata == 0) {
@@ -461,7 +461,7 @@ static char popen_event_handler(struct crtx_event *event, void *userdata, void *
 	return 0;
 }
 
-// static char pipe_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+// static int pipe_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	struct crtx_pipe_listener *lstnr;
 // 	ssize_t r;
 // 	char buf[256];

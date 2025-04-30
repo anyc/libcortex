@@ -225,7 +225,7 @@ void *inotify_tmain(void *data) {
 	return 0;
 }
 
-static char inotify_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int inotify_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	inotify_process();
 	
 	return 0;
@@ -382,7 +382,7 @@ void crtx_inotify_finish() {
 
 struct crtx_inotify_listener lstnr;
 
-static char event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *dict;
 	
 	crtx_inotify_to_dict((struct inotify_event *) crtx_event_get_ptr(event), &dict);

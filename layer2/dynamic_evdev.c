@@ -112,7 +112,7 @@ int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct ude
 	return 0;
 }
 
-static char udev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int udev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct udev_device *dev;
 //	const char *devpath;
 	struct crtx_dynamic_evdev_listener *dyn_evdev;
@@ -240,7 +240,7 @@ struct counter {
 
 #define TDIFF(start, end) ((end.tv_sec - start.tv_sec) * 1000 + (end.tv_nsec - start.tv_nsec)/1000000)
 
-static char dyn_evdev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int dyn_evdev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct counter *counter;
 	struct crtx_dll *dll;
 	struct crtx_dynamic_evdev_listener *dyn_evdev;
@@ -453,7 +453,7 @@ static int print_event(struct input_event *ev)
 	return 0;
 }
 
-static char dyn_evdev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int dyn_evdev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct input_event *ev;
 	
 	ev = (struct input_event *) event->data.pointer;

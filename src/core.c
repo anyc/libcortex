@@ -1413,7 +1413,7 @@ void crtx_flush_events() {
 	}
 }
 
-// static char shutdown_event_callback(struct crtx_event *event, void *userdata, void **sessiondata) {
+// static int shutdown_event_callback(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	struct crtx_ll *ll, *ll_next;
 // // 	int all_stopped, r;
 // 	
@@ -1614,7 +1614,7 @@ void crtx_shutdown_after_fork() {
 	crtx_init_shutdown();
 }
 
-static char handle_shutdown(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int handle_shutdown(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_task *t;
 	
 	// TODO make sure we're only called once
@@ -2480,7 +2480,7 @@ void crtx_selfpipe_cb_free_lstnr(void *data) {
 	crtx_shutdown_listener(lstnr);
 }
 
-static char selfpipe_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int selfpipe_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_pipe_listener *selfpipe_lstnr;
 	ssize_t r;
 	void (*cb)(void*);

@@ -269,7 +269,7 @@ static int pfw_on_hit_host(struct crtx_cache *cache, struct crtx_dict_item *key,
 	return orig_ret;
 }
 
-static char pfw_resolve_IPs_timer(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int pfw_resolve_IPs_timer(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_cache *cache;
 	struct crtx_dict_item *ditem;
 	
@@ -291,7 +291,7 @@ static char pfw_resolve_IPs_timer(struct crtx_event *event, void *userdata, void
 	return 1;
 }
 
-static char pfw_print_packet(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int pfw_print_packet(struct crtx_event *event, void *userdata, void **sessiondata) {
 	crtx_nfq_print_packet(event->data.dict);
 	
 	return 1;

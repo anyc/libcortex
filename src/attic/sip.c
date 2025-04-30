@@ -22,7 +22,7 @@ static void sip_event_before_release_cb(struct crtx_event *event, void *userdata
 	eXosip_event_free(evt);
 }
 
-static char sip_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int sip_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_sip_listener *slist;
 	eXosip_event_t *evt;
 	struct crtx_event *nevent;
@@ -204,7 +204,7 @@ struct crtx_dict_transformation dict_transformation[] = {
 	{ "icon", 's', 0, "phone" },
 };
 
-static char sip2notify_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int sip2notify_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *dict;
 	struct eXosip_event *evt;
 	struct crtx_graph *notify_graph;

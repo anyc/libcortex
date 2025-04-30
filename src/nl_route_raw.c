@@ -825,7 +825,7 @@ struct {
 
 struct crtx_signals msg_done;
 
-// static char netlink_raw_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+// static int netlink_raw_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	crtx_print_dict(event->data.dict);
 // 	
 // 	return 1;

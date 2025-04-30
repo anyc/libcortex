@@ -88,7 +88,7 @@ void process_fanotify(struct crtx_fanotify_listener *fal) {
 	}
 }
 
-static char fanotify_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int fanotify_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	process_fanotify((struct crtx_fanotify_listener*) userdata);
 	
 	return 0;
@@ -189,7 +189,7 @@ void crtx_fanotify_finish() {
 
 struct crtx_fanotify_listener lstnr;
 
-static char event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct fanotify_event_metadata *metadata;
 	char *buf;
 	char title[32];

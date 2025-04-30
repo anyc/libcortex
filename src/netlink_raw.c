@@ -13,7 +13,7 @@
 #include "core.h"
 #include "netlink_raw.h"
 
-static char netlink_raw_generic_read(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int netlink_raw_generic_read(struct crtx_event *event, void *userdata, void **sessiondata) {
 	int len, r;
 	char buffer[4096];
 	struct nlmsghdr *nlh;
@@ -80,7 +80,7 @@ static char netlink_raw_generic_read(struct crtx_event *event, void *userdata, v
 // 	return 0;
 // }
 
-static char netlink_el_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int netlink_el_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_netlink_raw_listener *nl_listener;
 	struct crtx_evloop_callback *el_cb;
 	

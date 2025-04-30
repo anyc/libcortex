@@ -298,7 +298,7 @@ void crtx_pa_finish() {
 
 #ifdef CRTX_TEST
 
-static char pa_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int pa_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	crtx_print_dict(event->data.dict);
 	
 	return 0;

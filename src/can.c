@@ -40,7 +40,7 @@
 
 #ifndef CRTX_TEST
 
-static char can_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int can_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct can_frame *frame;
 	struct crtx_event *nevent;
 	struct crtx_can_listener *clist;
@@ -547,7 +547,7 @@ void crtx_can_finish() {
 
 #else /* CRTX_TEST */
 
-static char can_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int can_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct can_frame *frame;
 	
 	frame = (struct can_frame*) event->data.pointer;

@@ -105,7 +105,7 @@ static void reinit_cb(void *reinit_cb_data) {
 	flstnr->reinit_cb(flstnr->reinit_cb_data);
 }
 
-static char do_fork(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int do_fork(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_fork_listener *flstnr;
 	
 	
@@ -309,7 +309,7 @@ void reinit_cb(void *reinit_cb_data) {
 // 	printf("child %d result: %d\n", pid, status);
 // }
 
-static char timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	printf("[%d] received timer event: %u\n", getpid(), event->data.uint32);
 	
 	if (!forked) {

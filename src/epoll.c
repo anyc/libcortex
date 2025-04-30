@@ -654,7 +654,7 @@ struct itimerspec newtimer;
 int testpipe[2];
 int count = 0;
 
-static char epoll_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int epoll_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char buf[1024];
 	ssize_t n_read;
 	struct crtx_evloop_callback *el_cb;
@@ -673,7 +673,7 @@ static char epoll_test_handler(struct crtx_event *event, void *userdata, void **
 	return 1;
 }
 
-static char timer_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int timer_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	ssize_t srv;
 	
 	printf("timerhandler\n");

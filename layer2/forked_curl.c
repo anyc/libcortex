@@ -96,7 +96,7 @@ void crtx_forked_curl_finish() {
 struct crtx_forked_curl_listener fc_lstnr;
 size_t last_dlnow = 0;
 
-static char fork_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int fork_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	if (event->type == CRTX_FORK_ET_CHILD_STOPPED) {
 		printf("child done with rv %d, shutdown parent\n", event->data.int32);
 		

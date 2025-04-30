@@ -21,7 +21,7 @@ static int async_cb(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) 
 	return 0;
 }
 
-char startup_callback(struct crtx_event *event, void *userdata, void **sessiondata) {
+int startup_callback(struct crtx_event *event, void *userdata, void **sessiondata) {
 	sd_bus_message *reply;
 	const sd_bus_error *error;
 	struct crtx_dict_item ditem;

@@ -197,7 +197,7 @@ int crtx_ping_send_ping(struct crtx_ping_listener *ping_lstnr) {
 	return 0;
 }
 
-static char ping_timer_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int ping_timer_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_ping_listener *ping_lstnr;
 	int rv;
 	
@@ -215,7 +215,7 @@ static char ping_timer_handler(struct crtx_event *event, void *userdata, void **
 	return 0;
 }
 
-static char fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_ping_listener *ping_lstnr;
 	ssize_t ssize;
 	char packet[1024];
@@ -431,7 +431,7 @@ void crtx_ping_finish() {}
 
 #ifdef CRTX_TEST
 
-static char ping_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int ping_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_ping_listener *ping_lstnr;
 	void *p;
 	size_t size;

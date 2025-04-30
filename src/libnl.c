@@ -13,7 +13,7 @@
 #include "libnl.h"
 
 // handler that is called on file descriptor events
-static char libnl_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int libnl_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_libnl_listener *libnl_lstnr;
 	int r;
 	
@@ -118,7 +118,7 @@ void crtx_libnl_finish() {
 
 #include "nl_route_raw.h" // for crtx_nl_route_raw2dict_interface
 
-static char libnl_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int libnl_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_libnl_listener *libnl;
 	int r;
 	

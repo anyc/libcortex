@@ -91,7 +91,7 @@ static void default_signal_handler(int signum) {
 }
 
 #ifndef WITHOUT_SIGNALFD
-static char signalfd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int signalfd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_signals_listener *slistener;
 	struct signalfd_siginfo si;
 	ssize_t r;
@@ -135,7 +135,7 @@ static void shutdown_listener(struct crtx_listener_base *data) {
 #endif
 
 #ifndef WITHOUT_SELFPIPE
-static char selfpipe_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int selfpipe_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_signals_listener *slistener;
 	int32_t signal_num;
 	ssize_t r;
@@ -563,7 +563,7 @@ struct crtx_listener_base *crtx_setup_signals_listener(void *options) {
 	return &slistener->base;
 }
 
-static char sigchild_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int sigchild_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	// 	unsigned int i;
 	struct crtx_dll *it, *itn;
 	struct sigchld_cb_data *data;
@@ -653,7 +653,7 @@ int crtx_signals_rem_child_handler(void *sigchld_cb) {
 	return 0;
 }
 
-static char sigterm_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int sigterm_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event *newe;
 	
 // 	struct sigaction new_action;
@@ -670,7 +670,7 @@ static char sigterm_handler(struct crtx_event *event, void *userdata, void **ses
 	return 1;
 }
 
-static char sigint_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int sigint_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_event *newe;
 	
 	crtx_create_event(&newe);

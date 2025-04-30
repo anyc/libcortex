@@ -179,7 +179,7 @@ void push_new_udev_event(struct crtx_udev_listener *ulist, struct udev_device *d
 	crtx_add_event(ulist->base.graph, nevent);
 }
 
-static char udev_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int udev_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_udev_listener *ulist;
 	struct udev_device *dev;
 	
@@ -316,7 +316,7 @@ char *test_filters[] = {
 	0,
 };
 
-static char udev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int udev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *dict;
 	
 	

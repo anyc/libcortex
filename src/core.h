@@ -94,8 +94,6 @@ struct crtx_event {
 	#endif
 };
 
-typedef char (*crtx_handle_task_t)(struct crtx_event *event, void *userdata, void **sessiondata);
-
 struct crtx_graph;
 struct crtx_task {
 	const char *id;

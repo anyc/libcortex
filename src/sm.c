@@ -6,7 +6,7 @@
 #include "core.h"
 #include "sm.h"
 
-static char change_sms(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int change_sms(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_sm_state *sms;
 	
 	sms = (struct crtx_sm_state*) userdata;

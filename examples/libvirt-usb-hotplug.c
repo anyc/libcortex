@@ -117,7 +117,7 @@ char is_dev_attached(virDomainPtr dom, char *check_vendor, char *check_product) 
 	return stop;
 }
 
-static char udev_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int udev_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *dict, *usb_dict;
 	int ret;
 	char *vendor, *product, *vm_name;
@@ -240,7 +240,7 @@ static char udev_event_handler(struct crtx_event *event, void *userdata, void **
 	return 0;
 }
 
-static char libvirt_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int libvirt_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	// first handle events that indicate a change of our listener state
 	if (!strcmp(event->description, "listener_state")) {
 		if (event->data.uint32 == CRTX_LSTNR_STARTED) {

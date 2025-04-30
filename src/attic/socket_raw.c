@@ -116,7 +116,7 @@ static int create_sub_lstnr(struct crtx_socket_raw_listener **listener, struct c
 	return 0;
 }
 
-static char socket_raw_accept_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int socket_raw_accept_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_socket_raw_listener *slist;
 	struct sockaddr *cliaddr;
 	int fd, r;
@@ -150,7 +150,7 @@ static char socket_raw_accept_handler(struct crtx_event *event, void *userdata, 
 	return 0;
 }
 
-// static char socket_raw_accept_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+// static int socket_raw_accept_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	struct crtx_event *event;
 // 	
 // 	event = crtx_create_event(0);
@@ -260,7 +260,7 @@ int crtx_init_socket_raw_server_listener(struct crtx_socket_raw_listener *sliste
 }
 
 
-static char client_read_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int client_read_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	struct crtx_evloop_fd *evloop_fd;
 	struct crtx_socket_raw_listener *slist;
 	

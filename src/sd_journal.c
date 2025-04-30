@@ -174,7 +174,7 @@ int crtx_sd_journal_gen_event_dict(struct crtx_sd_journal_listener *jlstnr, void
 	return 0;
 }
 
-static char sd_journal_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int sd_journal_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_sd_journal_listener *jlstnr;
 	int rv;
 	
@@ -317,7 +317,7 @@ void crtx_sd_journal_finish() {
 
 char * topic = 0;
 
-static char sd_journal_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int sd_journal_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	crtx_print_event(event, 0);
 	printf("\n");
 	

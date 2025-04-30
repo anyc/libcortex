@@ -1171,7 +1171,7 @@ struct crtx_dict * crtx_dict_transform(struct crtx_dict *dict, char *signature, 
 	return ds;
 }
 
-char crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+int crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *dict, *orig_dict;
 	struct crtx_event *new_event;
 	struct crtx_transform_dict_handler *trans;

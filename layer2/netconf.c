@@ -72,7 +72,7 @@ int crtx_netconf_query_interfaces(struct crtx_netconf_listener *netconf_lstnr) {
 	return 0;
 }
 
-static char netconf_state_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int netconf_state_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_netconf_listener *netconf_lstnr;
 	int r;
 	
@@ -253,7 +253,7 @@ void crtx_netconf_finish() {}
 
 #else
 
-static char netconf_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int netconf_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *dict;
 	
 	if (event->data.type == 'u' && event->data.uint32 == CRTX_LSTNR_STOPPED) {

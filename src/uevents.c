@@ -179,7 +179,7 @@ void crtx_uevents_finish() {
 #ifdef CRTX_TEST
 struct crtx_uevents_listener ulist;
 
-static char uevents_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int uevents_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char *buf;
 	int i;
 	struct crtx_dict *dict;

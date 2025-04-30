@@ -46,7 +46,7 @@ struct crtx_socket_listener sock_listener;
 char *sock_path = 0;
 
 /// this function will be called for each fanotify event
-static char fanotify_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int fanotify_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct fanotify_event_metadata *metadata;
 	char *buf, *chosen_action;
 	char title[32];

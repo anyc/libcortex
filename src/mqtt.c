@@ -155,7 +155,7 @@ void crtx_mqtt_default_message_callback(struct mosquitto *mosq, void *userdata, 
 #endif
 }
 
-static char mqtt_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int mqtt_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_mqtt_listener *mlstnr;
 	struct crtx_evloop_callback *el_cb;
 	int rv, flags;
@@ -306,7 +306,7 @@ void crtx_mqtt_finish() {
 
 char * topic = 0;
 
-static char mqtt_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int mqtt_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_mqtt_listener *mlist;
 	int rv;
 	

@@ -28,7 +28,7 @@ int crtx_netif_query_interfaces(struct crtx_netif_listener *netif_lstnr) {
 	return 0;
 }
 
-static char netif_state_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int netif_state_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_netif_listener *netif_lstnr;
 	int r;
 	
@@ -158,7 +158,7 @@ void crtx_netif_finish() {}
 
 #ifdef CRTX_TEST
 
-static char netif_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int netif_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *dict;
 	
 	if (event->data.type == 'u' && event->data.uint32 == CRTX_LSTNR_STOPPED) {

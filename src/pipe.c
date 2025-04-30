@@ -11,7 +11,7 @@
 #include "intern.h"
 #include "pipe.h"
 
-static char pipe_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int pipe_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_pipe_listener *lstnr;
 	
 	lstnr = (struct crtx_pipe_listener *) userdata;

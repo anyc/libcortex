@@ -103,7 +103,7 @@ void crtx_evloop_disable_timeout(struct crtx_evloop_callback *el_cb) {
 	el_cb->timeout_enabled = 0;
 }
 
-static char evloop_ctrl_pipe_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int evloop_ctrl_pipe_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_evloop_callback *el_cb;
 	struct crtx_event_loop_control_pipe ecp;
 	ssize_t r;

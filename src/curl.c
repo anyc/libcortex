@@ -36,7 +36,7 @@ static CURLM *crtx_curlm;
 static struct crtx_timer_listener timer_list;
 static struct crtx_curl_socket *sockets;
 
-static char timeout_handler(struct crtx_event *event, void *userdata, void **sessiondata);
+static int timeout_handler(struct crtx_event *event, void *userdata, void **sessiondata);
 static void init_curl();
 
 
@@ -297,7 +297,7 @@ static void process_curl_infos() {
 	}
 }
 
-static char fd_event_callback(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int fd_event_callback(struct crtx_event *event, void *userdata, void **sessiondata) {
 	CURLMcode curlr;
 	int action;
 	struct crtx_evloop_callback *el_cb;
@@ -328,7 +328,7 @@ static char fd_event_callback(struct crtx_event *event, void *userdata, void **s
 	return 1;
 }
 
-static char timeout_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int timeout_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	int still_running;
 	CURLMcode curlr;
 	
@@ -471,7 +471,7 @@ void crtx_curl_finish() {
 size_t last_dlnow = 0;
 struct crtx_curl_listener clist;
 
-static char curl_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int curl_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	if (event->type == CRTX_CURL_ET_FINISHED) {
 		printf("curl finished, shutdown now\n");
 		

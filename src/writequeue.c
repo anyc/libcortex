@@ -75,7 +75,7 @@ int crtx_writequeue_default_write_callback(struct crtx_writequeue_listener *writ
 	return err;
 }
 
-static char fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_writequeue_listener *wqueue;
 	int r;
 	

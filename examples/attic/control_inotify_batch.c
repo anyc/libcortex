@@ -24,7 +24,7 @@ struct crtx_ll *transformations = 0;
 
 
 // execute script with inotify parameters
-static char exec_script_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int exec_script_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char *script;
 	char *cmd, *pos;
 	struct inotify_event *in_event;

@@ -734,7 +734,7 @@ static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct cr
 	return 0;
 }
 
-static char fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_sdbus_listener *sdlist;
 	int r;
 	struct crtx_evloop_callback *el_cb;
@@ -969,7 +969,7 @@ void crtx_sdbus_finish() {
 
 
 #ifdef CRTX_TEST
-static char sdbus_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int sdbus_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	sd_bus_message *m;
 	
 	m = (sd_bus_message*) crtx_event_get_ptr(event);

@@ -159,7 +159,7 @@ char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr, s
 	return 0;
 }
 
-static char v4l_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int v4l_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	struct crtx_evloop_fd *payload;
 	struct crtx_event *nevent;
 	struct crtx_v4l_listener *clist;
@@ -482,7 +482,7 @@ void crtx_v4l_finish() {
 }
 
 #ifdef CRTX_TEST
-static char v4l_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int v4l_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct v4l2_event *v4l_event;
 	struct crtx_dict *dict;
 	struct crtx_v4l_listener *lstnr;

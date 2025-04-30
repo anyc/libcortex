@@ -119,7 +119,7 @@ static void elw_fd_cleanup(struct libvirt_eventloop_wrapper* wrap) {
 }
 
 // static void elw_fd_callback(struct crtx_evloop_fd *evloop_fd) {
-static char elw_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int elw_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct libvirt_eventloop_wrapper *wrap;
 // 	struct epoll_event *epoll_event;
 	
@@ -289,7 +289,7 @@ static void elw_timer_cleanup(struct libvirt_eventloop_wrapper *wrap) {
 	free(wrap);
 }
 
-static char elw_timer_event_cb(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int elw_timer_event_cb(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct libvirt_eventloop_wrapper *wrap;
 	
 	wrap = (struct libvirt_eventloop_wrapper*) userdata;
@@ -900,7 +900,7 @@ struct crtx_timer_retry_listener *retry_lstnr;
 // struct crtx_timer_listener tlist;
 // struct crtx_listener_base *tblist;
 
-static char libvirt_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int libvirt_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	printf("virt %d timer %d\n", lvlist.base.state, tlist.base.state);
 	if (!strcmp(event->description, "listener_state")) {
 // 		printf("ev %d\n", event->data.uint32);
@@ -922,7 +922,7 @@ static char libvirt_test_handler(struct crtx_event *event, void *userdata, void 
 	return 0;
 }
 
-// static char timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+// static int timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	if (!strcmp(event->type, CRTX_EVT_TIMER)) {
 // // 		printf("state %d\n", lvlist.base.state);
 // 		if (lvlist.base.state == CRTX_LSTNR_STOPPED) {

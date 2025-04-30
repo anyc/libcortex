@@ -288,7 +288,7 @@ static void cb_sdbus_event_release(struct crtx_event *event, void *userdata) {
 }
 
 
-static char sdbus_to_avahi_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int sdbus_to_avahi_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_avahi_listener *alist;
 	sd_bus_message *m;
 	struct crtx_avahi_service *service;
@@ -440,7 +440,7 @@ void crtx_avahi_finish() {
 
 #else /* CRTX_TEST */
 
-static char avahi_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int avahi_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_avahi_service *service;
 	
 	service = (struct crtx_avahi_service*) event->data.pointer;

@@ -43,7 +43,7 @@ static struct crtx_sdbus_match notification_match[] = {
 	{0},
 };
 
-static char notification_signal_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int notification_signal_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	sd_bus_message *m = (sd_bus_message *) event->data.pointer;
 	struct wait_list_item *it;
 	char *s;
@@ -237,7 +237,7 @@ void crtx_send_notification(char *icon, char *title, char *text, char **actions,
 }
 
 /// extract necessary information from the cortex dict to call send_notification
-static char notify_send_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int notify_send_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char *title, *msg, *answer, *icon;
 	char ret;
 	size_t answer_length;

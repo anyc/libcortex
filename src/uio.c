@@ -21,7 +21,7 @@
 struct uio_device *uio_devices = 0;
 unsigned int n_uio_devices = 0;
 
-static char fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_uio_listener *lstnr;
 	struct crtx_event *nevent;
 	uint32_t info;
@@ -151,7 +151,7 @@ void crtx_uio_finish() {
 
 #else /* CRTX_TEST */
 
-static char uio_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int uio_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	printf("interrupt\n");
 	
 	return 0;

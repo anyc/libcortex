@@ -15,7 +15,7 @@
 #include "core.h"
 #include "timer.h"
 
-static char timer_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int timer_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_timer_listener *tlist;
 	uint64_t exp;
 	ssize_t s;
@@ -118,7 +118,7 @@ struct crtx_listener_base *crtx_setup_timer_listener(void *options) {
  * retry listener that tries to restart stopped listeners after a given time
  */
 
-static char retry_listener_task(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int retry_listener_task(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_timer_retry_listener *retry_lstnr;
 	
 	
@@ -223,7 +223,7 @@ int crtx_timer_get_listener(struct crtx_timer_listener *tlist,
 	return 0;
 }
 
-static char timer_oneshot_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int timer_oneshot_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_timer_oneshot *oneshot;
 	
 	oneshot = (struct crtx_timer_oneshot *) userdata;
@@ -298,7 +298,7 @@ void crtx_timer_finish() {
 
 
 #ifdef CRTX_TEST
-static char timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int timertest_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	printf("received timer event: %u\n", event->data.uint32);
 	
 	return 1;

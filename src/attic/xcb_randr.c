@@ -541,7 +541,7 @@ static void *xcb_randr_tmain(void *data) {
 	return 0;
 }
 
-static char xcb_randr_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int xcb_randr_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	struct crtx_evloop_fd *payload;
 	struct crtx_xcb_randr_listener *xrlist;
 	xcb_generic_event_t *ev;
@@ -646,7 +646,7 @@ void crtx_xcb_randr_finish() {
 
 struct crtx_xcb_randr_listener xrlist;
 
-static char xcb_randr_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int xcb_randr_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_dict *dict;
 	void *ptr;
 	

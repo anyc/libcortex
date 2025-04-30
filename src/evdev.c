@@ -38,7 +38,7 @@ static void send_event(struct crtx_evdev_listener *el, struct input_event *ev, c
 	crtx_add_event(el->base.graph, event);
 }
 
-static char evdev_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int evdev_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_evdev_listener *evdev;
 	struct input_event ev;
 	int ret;
@@ -158,7 +158,7 @@ print_event(struct input_event *ev)
 	return 0;
 }
 
-static char evdev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int evdev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct input_event *ev;
 	
 	ev = (struct input_event *) crtx_event_get_ptr(event);

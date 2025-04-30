@@ -130,7 +130,7 @@ struct crtx_event *read_event_as_dict(read_fct read, void *conn_id) {
 	return event;
 }
 
-static char inbox_dispatch_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int inbox_dispatch_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	add_raw_event(event);
 	
 	return 1;

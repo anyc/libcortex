@@ -16,7 +16,7 @@
  * parameter and printfs the data another process writes into the pipe.
  */
 
-static char fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char *pipe_path;
 	ssize_t n_bytes;
 	char buf[32];

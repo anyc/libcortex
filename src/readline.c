@@ -59,7 +59,7 @@ void crtx_readline_show_notification(char *title, char *text, char **actions, ch
 }
 
 /// extract necessary information from the cortex dict to call send_notification
-static char rl_notify_send_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int rl_notify_send_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char *title, *msg, *answer;
 	char ret;
 	size_t answer_length;

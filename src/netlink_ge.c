@@ -89,7 +89,7 @@ int crtx_genl_msg2dict(struct nl_msg *msg, void *arg) {
 }
 
 // handler that is called on file descriptor events
-static char genl_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
+static int genl_fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 // 	struct crtx_evloop_fd *payload;
 	struct crtx_genl_listener *genlist;
 	int r;
