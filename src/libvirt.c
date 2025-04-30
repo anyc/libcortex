@@ -579,6 +579,11 @@ static const char *eventDetailToString(int event, int detail) {
 				ret = "Postcopy";
 				break;
 #endif
+#if LIBVIR_CHECK_VERSION(8,5,0)
+			case VIR_DOMAIN_EVENT_RESUMED_POSTCOPY_FAILED:
+				ret = "POSTCOPY_FAILED";
+				break;
+#endif
 			}
 			break;
 		case VIR_DOMAIN_EVENT_STOPPED:
