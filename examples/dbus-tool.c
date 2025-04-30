@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 	
-	if (!strcmp(argv[1], "tree")) {
+	if (argc > 1 && !strcmp(argv[1], "tree")) {
 		crtx_evloop_register_startup_callback(startup_callback, argv[2], 0);
 		
 		crtx_loop();

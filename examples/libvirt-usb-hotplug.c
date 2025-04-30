@@ -75,7 +75,7 @@ char is_dev_attached(virDomainPtr dom, char *check_vendor, char *check_product) 
 		if (!xmlStrcmp(node->name, (const xmlChar *) "devices")) {
 			for (node2 = node->children; node2; node2 = node2->next) {
 				if (!xmlStrcmp(node2->name, (const xmlChar *) "hostdev")) {
-					char *type;
+					unsigned char *type;
 					type = xmlGetProp(node2, (const xmlChar *) "type");
 					if (!xmlStrcmp(type, (const xmlChar *) "usb")) {
 						for (node3 = node2->children; node3; node3 = node3->next) {
@@ -339,7 +339,7 @@ static int libvirt_event_handler(struct crtx_event *event, void *userdata, void 
 					struct crtx_dict *cache_dict;
 					cache_dict = udev_cache->entries;
 					for (k=0; k < cache_dict->signature_length; k++) {
-						struct crtx_dict_item *di, *di_data;
+						struct crtx_dict_item *di;
 						char r;
 						char *cache_vendor, *cache_product;
 						
@@ -441,6 +441,8 @@ static int cache_update_on_hit(struct crtx_cache *cache, struct crtx_dict_item *
 	} else {
 		return 1;
 	}
+	
+	return 0;
 }
 
 static int cache_on_add_cb(struct crtx_cache *cache, struct crtx_dict_item *key, struct crtx_event *event) {

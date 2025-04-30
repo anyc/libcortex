@@ -6,7 +6,7 @@ LDFLAGS+=-L$(libcrtx_path) -Wl,-rpath "$(libcrtx_path)"
 
 LDLIBS+=-lcrtx
 
-EXAMPLES?=libvirt-usb-hotplug named_pipe ipquery dbus-tool
+EXAMPLES?=libvirt-usb-hotplug named_pipe dbus-tool
 L_EXAMPLES?=$(filter-out ipquery,$(EXAMPLES))
 
 -include $(local_mk)
