@@ -21,6 +21,7 @@
 #include "epoll.h"
 #include "evloop.h"
 
+#ifndef CRTX_TEST
 
 static int crtx_epoll_add_fd_intern(struct crtx_epoll_listener *epl, int fd, struct epoll_event *event) {
 	int ret;
@@ -645,7 +646,8 @@ void crtx_epoll_finish() {
 }
 
 
-#ifdef CRTX_TEST
+#else /* CRTX_TEST */
+
 #include <fcntl.h>
 #include "timer.h"
 
@@ -769,6 +771,8 @@ int epoll_main(int argc, char **argv) {
 		
 		printf("stop\n");
 	}
+	
+	crtx_evloop_disable_cb(&default_el_cb);
 	
 	close(testpipe[0]);
 	
