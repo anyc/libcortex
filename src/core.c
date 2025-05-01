@@ -2030,7 +2030,13 @@ int crtx_finish() {
 		if (crtx_root->plugins[i].handle) {
 			dlclose(crtx_root->plugins[i].handle);
 		}
+		
+		free(crtx_root->plugins[i].path);
+		free(crtx_root->plugins[i].plugin_name);
 	}
+	free(crtx_root->plugins);
+	crtx_root->plugins = 0;
+	crtx_root->n_plugins = 0;
 	
 	if (crtx_root->selfpipe_lstnr)
 		free(crtx_root->selfpipe_lstnr);
