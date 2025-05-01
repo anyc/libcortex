@@ -1,0 +1,26 @@
+name: libcortex CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get install -y libavahi-core-dev libsystemd-dev libjson-c-dev \
+            libcurl4-gnutls-dev libevdev-dev libnl-3-dev libvirt-dev libnl-genl-3-dev \
+            libnetfilter-queue-dev libpulse-dev libreadline-dev libudev-dev libmosquitto-dev
+    - name: Build code
+      run: |
+        make local
+        make DEBUG=1
+        make tests DEBUG=1
+    - name: Run tests
+      run: |
+        make run_tests

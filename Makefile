@@ -47,3 +47,6 @@ tests: crtx_layer2_tests
 
 debug:
 	$(MAKE) $(MAKEFILE) DEBUG=1 $(DEBUGARGS)
+
+run_tests:
+	for x in src/epoll.test src/fork.test; do $${x}; done
