@@ -1,6 +1,10 @@
 #ifndef _CRTX_CORE_H
 #define _CRTX_CORE_H
 
+/** \file core.h
+ * The core definitions of libcortex
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -45,12 +49,21 @@ extern char *crtx_evt_inbox[];
 #define CRTX_EVT_OUTBOX "cortexd.outbox"
 extern char *crtx_evt_outbox[];
 
+#define CRTX_EVT_SHUTDOWN "cortexd.control.shutdown"
+#define CRTX_EVT_MOD_INIT "cortex.control.module_initialized"
 
-enum crtx_processing_mode {CRTX_PREFER_NONE=0, CRTX_PREFER_THREAD, CRTX_PREFER_ELOOP, CRTX_NO_PROCESSING_MODE};
+/// specifies how a listener should be processed
+enum crtx_processing_mode {
+	CRTX_PREFER_NONE=0,		///< unspecified mode
+	CRTX_PREFER_THREAD,		///< a thread should be started, e.g., for blocking calls
+	CRTX_PREFER_ELOOP,		///< a listener provides a file descriptor that can be added to the event loop
+	CRTX_NO_PROCESSING_MODE	///< the listener requires no processing, e.g., if it depends on other listeners
+};
 
 
 struct crtx_event;
 struct crtx_listener_base;
+struct crtx_graph;
 
 typedef void (*crtx_raw_to_dict_t)(struct crtx_event *event, struct crtx_dict_item *item, void *user_data);
 
@@ -60,6 +73,7 @@ typedef void (*crtx_raw_to_dict_t)(struct crtx_event *event, struct crtx_dict_it
 
 #define CRTX_EVENT_TYPE_FAMILY_MAX (2)
 
+/// an event that is emitted by a listener \ref crtx_listener_base
 struct crtx_event {
 	CRTX_EVENT_TYPE_VARTYPE type;
 	char *description;
@@ -94,7 +108,7 @@ struct crtx_event {
 	#endif
 };
 
-struct crtx_graph;
+/// a task basically represents a function that will be executed for an \ref crtx_event
 struct crtx_task {
 	const char *id;
 	unsigned char position;
@@ -118,6 +132,7 @@ struct crtx_task {
 
 #define CRTX_GRAPH_KEEP_GOING 1<<0
 
+/// structure that represents a graph of tasks (\ref crtx_task) that will be traversed with every \ref crtx_event
 struct crtx_graph {
 	const char *name;
 	
@@ -166,33 +181,49 @@ struct crtx_listener_repository {
 	#endif
 };
 
-enum crtx_listener_state { CRTX_LSTNR_UNKNOWN=0, CRTX_LSTNR_STARTING, CRTX_LSTNR_STARTED, CRTX_LSTNR_PAUSED, CRTX_LSTNR_STOPPING, CRTX_LSTNR_STOPPED, CRTX_LSTNR_SHUTTING_DOWN, CRTX_LSTNR_SHUTDOWN }; //CRTX_LSTNR_ABORTED, 
+/// the possible states of a listener \ref crtx_listener_base
+enum crtx_listener_state {
+	CRTX_LSTNR_UNKNOWN=0,
+	CRTX_LSTNR_STARTING,
+	CRTX_LSTNR_STARTED,
+	CRTX_LSTNR_PAUSED,
+	CRTX_LSTNR_STOPPING,
+	CRTX_LSTNR_STOPPED,
+	CRTX_LSTNR_SHUTTING_DOWN,
+	CRTX_LSTNR_SHUTDOWN
+};
 
 // immediately schedule a call of the fd event handler (e.g., to query flags/timeouts/...)
 #define CRTX_LSTNR_STARTUP_TRIGGER	(1<<0)
 #define CRTX_LSTNR_NO_AUTO_CLOSE 	(1<<1)
 
+/** base structure of a listener
+ *
+ * Every libcortex listener "inherits" from this structure by using it as the first
+ * member of its structure. This structure contains the basic information needed for
+ * libcortex.
+ */
 struct crtx_listener_base {
-	struct crtx_ll ll;
+	struct crtx_ll ll; ///< linked-list entry of this listener
 	
 	const char *id;
 	char *name;
 	
-	MUTEX_TYPE state_mutex;
-	enum crtx_listener_state state;
+	MUTEX_TYPE state_mutex; ///< mutex that protects the listener's state
+	enum crtx_listener_state state; ///< the current state of this listener
 	struct crtx_graph *state_graph;
 	
-	enum crtx_processing_mode mode;
+	enum crtx_processing_mode mode; ///< processing mode (none, thread, eloop) of this listener
 	
-	struct crtx_evloop_fd evloop_fd;
-	struct crtx_evloop_callback default_el_cb;
+	struct crtx_evloop_fd evloop_fd; ///< if this listener has a file descriptor, it will be stored in this structure
+	struct crtx_evloop_callback default_el_cb; ///< contains data about what should happen if events occur
 	
 	char autolock_source;
 	MUTEX_TYPE source_lock;
 	
-	struct crtx_ll *dependencies;
-	struct crtx_ll *rev_dependencies;
-	MUTEX_TYPE dependencies_lock;
+	struct crtx_ll *dependencies; ///< list of listeners this listener depends on
+	struct crtx_ll *rev_dependencies; ///< list of listeners which depend on us
+	MUTEX_TYPE dependencies_lock; ///< mutex that protects the (reverse) depenency lists
 	
 	struct crtx_thread_job_description thread_job;
 	struct crtx_thread *eloop_thread;
@@ -208,12 +239,12 @@ struct crtx_listener_base {
 	void (*free_cb)(struct crtx_listener_base *base, void *userdata);
 	void *free_cb_userdata;
 	
-	struct crtx_graph *graph;
+	struct crtx_graph *graph; ///< graph that contains the tasks that will be executed on events
 	
 	unsigned int flags;
 	char free_after_event;
 	
-	void *userdata;
+	void *userdata; ///< storage for user-provided data
 	
 	#ifndef CRTX_REDUCED_SIZE
 	/* reserved to avoid ABI breakage */
@@ -229,18 +260,21 @@ struct crtx_module {
 	void (*finish)();
 };
 
+/** structure that represents a plugin
+ */
 struct crtx_lstnr_plugin {
-	char *path;
-	char *basename;
+	char *path; ///< path to the library
+	char *basename; ///< filename of the library
 	
-	void *handle;
+	void *handle; ///< library handle
 	
 	char initialized;
-	char (*init)();
-	void (*finish)();
+	char (*init)(); ///< callback that initializes this plugin
+	void (*finish)(); ///< callback that finishes this plugin
+	/// callback that registers the listeners the plugin provides
 	void (*get_listener_repository)(struct crtx_listener_repository **listener_repository, unsigned int *listener_repository_length);
 	
-	char *plugin_name;
+	char *plugin_name; ///< name of this plugin
 	
 	#ifndef CRTX_REDUCED_SIZE
 	/* reserved to avoid ABI breakage */
@@ -260,26 +294,27 @@ struct crtx_handler_category {
 	struct crtx_ll *entries;
 };
 
+/** core structure of libcortex
+ */
 struct crtx_root {
 	struct crtx_graph **graphs;
 	unsigned int n_graphs;
 	MUTEX_TYPE graphs_mutex;
 	
-	struct crtx_ll *listeners;
-	MUTEX_TYPE listeners_mutex;
+	struct crtx_ll *listeners; ///< list of registered listeners
+	MUTEX_TYPE listeners_mutex; ///< mutex that protects the list of listeners \ref crtx_root.listeners
 	
 	struct crtx_dll *graph_queue;
 	MUTEX_TYPE graph_queue_mutex;
 	
 	char initialized;
 	char shutdown;
-	char reinit_after_shutdown;
+	char reinit_after_shutdown; ///< if true, reinitialize libcortex after a fork
 	struct crtx_evloop_callback shutdown_el_cb;
-	void (*reinit_cb)(void *cb_data);
+	void (*reinit_cb)(void *cb_data); ///< callback function that is called during reinit after a fork
 	void *reinit_cb_data;
 	
 	const char *chosen_event_loop;
-// 	char detached_event_loop;
 	struct crtx_event_loop *event_loop;
 	struct crtx_ll *event_loops;
 	
@@ -291,10 +326,8 @@ struct crtx_root {
 	
 	struct crtx_graph *crtx_ctrl_graph;
 	
-// 	void *notification_listeners_handle;
-	
-	struct crtx_lstnr_plugin *plugins;
-	unsigned int n_plugins;
+	struct crtx_lstnr_plugin *plugins; ///< list of available plugins
+	unsigned int n_plugins; ///< number of available plugins in \ref crtx_root.plugins
 	
 	struct crtx_listener_repository *listener_repository;
 	unsigned int listener_repository_length;
@@ -315,14 +348,6 @@ struct crtx_root {
 };
 
 extern struct crtx_module static_modules[];
-// extern struct crtx_graph *cortexd_graph;
-
-// extern struct crtx_graph **graphs;
-// extern unsigned int n_graphs;
-
-#define CRTX_EVT_SHUTDOWN "cortexd.control.shutdown"
-#define CRTX_EVT_MOD_INIT "cortex.control.module_initialized"
-// extern struct crtx_graph *crtx_ctrl_graph;
 extern struct crtx_root *crtx_root;
 
 
