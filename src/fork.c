@@ -182,7 +182,11 @@ static void fork_sigchld_cb(pid_t pid, int status, void *userdata) {
 	if (pid == lstnr->pid) {
 		struct crtx_event *new_event;
 		
-		lstnr->pid = 0;
+		// we do not clear this so the parent process can still use this to
+		// determine if it is the parent process after the child stopped.
+		// lstnr->pid = 0;
+		
+		lstnr->flags |= CRTX_FORK_CHILD_STOPPED;
 		
 		crtx_stop_listener(&lstnr->base);
 		
@@ -227,6 +231,9 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 	flstnr->base.default_el_cb.crtx_event_flags = CRTX_EVLOOP_SPECIAL;
 	crtx_evloop_trigger_callback(crtx_root->event_loop, &flstnr->base.default_el_cb);
 	
+	flstnr->pid = 0;
+	flstnr->flags &= ~CRTX_FORK_CHILD_STOPPED;
+	
 	return 0;
 }
 
@@ -237,7 +244,7 @@ static char stop_listener(struct crtx_listener_base *listener) {
 	
 	flstnr = (struct crtx_fork_listener *) listener;
 	
-	if (flstnr->pid > 0) {
+	if (flstnr->pid > 0 && (flstnr->flags & CRTX_FORK_CHILD_STOPPED) == 0) {
 		CRTX_DBG("sending SIGTERM to pid %d\n", flstnr->pid);
 
 		r = kill(flstnr->pid, SIGTERM);

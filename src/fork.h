@@ -18,6 +18,8 @@ extern "C" {
 #define CRTX_FORK_ET_CHILD_STOPPED (CRTX_EVENT_TYPE_FAMILY_FORK + 2)
 #define CRTX_FORK_ET_CHILD_KILLED (CRTX_EVENT_TYPE_FAMILY_FORK + 3)
 
+#define CRTX_FORK_CHILD_STOPPED	(1<<0)
+
 struct crtx_fork_listener {
 	struct crtx_listener_base base;
 	
@@ -25,6 +27,7 @@ struct crtx_fork_listener {
 // 	sigchld_cb sigchld_cb;
 	
 	pid_t pid;
+	int flags;
 	
 	char *user;
 	char *group;
