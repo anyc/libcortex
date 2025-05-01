@@ -233,7 +233,7 @@ int crtx_init_socket_raw_server_listener(struct crtx_socket_raw_listener *sliste
 		listen(slistener->sockfd, slistener->listen_backlog);
 		
 		crtx_evloop_init_listener(&slistener->base,
-						slistener->sockfd,
+						0, slistener->sockfd,
 						CRTX_EVLOOP_READ,
 						0,
 						&socket_raw_accept_handler,
@@ -243,7 +243,7 @@ int crtx_init_socket_raw_server_listener(struct crtx_socket_raw_listener *sliste
 	} else 
 	if (slistener->type == SOCK_DGRAM) {
 		crtx_evloop_init_listener(&slistener->base,
-						slistener->sockfd,
+						0, slistener->sockfd,
 						CRTX_EVLOOP_READ,
 						0,
 						slistener->read_cb,
@@ -317,7 +317,7 @@ int crtx_init_socket_raw_client_listener(struct crtx_socket_raw_listener *sliste
 // 	slistener->base.evloop_fd.event_handler = &client_read_handler;
 // 	slistener->base.evloop_fd.event_handler_name = "client_read_handler";
 	crtx_evloop_init_listener(&slistener->base,
-						slistener->sockfd,
+						0, slistener->sockfd,
 						CRTX_EVLOOP_READ,
 						0,
 						&client_read_handler,

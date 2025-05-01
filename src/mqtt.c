@@ -60,7 +60,7 @@ void crtx_mqtt_default_disconnect_callback(struct mosquitto *mosq, void *userdat
 	mlstnr = (struct crtx_mqtt_listener *) userdata;
 	
 	if (rc)
-		CRTX_ERROR("MQTT disconnect callback error: %s (%d, fd %d)\n", mosquitto_strerror(rc), rc, mlstnr->base.evloop_fd.fd);
+		CRTX_ERROR("MQTT disconnect callback error: %s (%d, fd %d)\n", mosquitto_strerror(rc), rc, mlstnr->base.evloop_fd.l_fd);
 	else
 		CRTX_DBG("mqtt disconnected\n");
 #if 0

@@ -139,7 +139,7 @@ static char elw_fd_event_handler(struct crtx_event *event, void *userdata, void 
 // 		return;
 // 	}
 	
-	wrap->event_cb(wrap->id, wrap->evloop_fd.fd, elw_virEventPollFromNativeEvents(el_cb->triggered_flags), wrap->opaque);
+	wrap->event_cb(wrap->id, wrap->evloop_fd.l_fd, elw_virEventPollFromNativeEvents(el_cb->triggered_flags), wrap->opaque);
 	
 	if (wrap->delete)
 		elw_fd_cleanup(wrap);
@@ -155,12 +155,12 @@ static void elw_fd_error_cb(struct crtx_evloop_callback *el_cb, void *data) {
 	wrap = (struct libvirt_eventloop_wrapper*) el_cb->event_handler_data;
 // 	epoll_event = (struct epoll_event *) evloop_fd->el_data;
 	
-	CRTX_DBG("libvirt event loop error callback for fd %d\n", el_cb->fd_entry->fd);
+	CRTX_DBG("libvirt event loop error callback for fd %d\n", el_cb->fd_entry->l_fd);
 	
 	if (wrap->delete)
 		elw_fd_cleanup(wrap);
 	
-	wrap->event_cb(wrap->id, wrap->evloop_fd.fd, elw_virEventPollFromNativeEvents(el_cb->triggered_flags), wrap->opaque);
+	wrap->event_cb(wrap->id, wrap->evloop_fd.l_fd, elw_virEventPollFromNativeEvents(el_cb->triggered_flags), wrap->opaque);
 	
 	wrap->delete = 1;
 }
@@ -262,7 +262,7 @@ static int elw_virEventRemoveHandleFunc(int watch) {
 	wrap->delete = 1;
 	
 	// 	printf("rem id %d\n", wrap->id);
-	CRTX_DBG("libvirt: remove fd %d (id %d)\n", wrap->evloop_fd.fd, wrap->id);
+	CRTX_DBG("libvirt: remove fd %d (id %d)\n", wrap->evloop_fd.l_fd, wrap->id);
 	
 // 	crtx_root->event_loop.del_fd(&crtx_root->event_loop.listener->base, &wrap->evloop_fd);
 	

@@ -16,7 +16,7 @@
 # LAYER2_MODULES=
 
 ### plugin directory
-# CFLAGS+=-DCRTX_PLUGIN_DIR=\"/usr/lib/\"
+# plugindir=/usr/lib/
 
 ### development option to simplify error inspection
 # CFLAGS+=-DSEGV_ON_ERROR

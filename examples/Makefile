@@ -1,5 +1,5 @@
 
-libcrtx_path?=../
+libcrtx_path?=../src
 
 CFLAGS+=-I$(libcrtx_path) -g
 LDFLAGS+=-L$(libcrtx_path) -Wl,-rpath "$(libcrtx_path)"
@@ -8,14 +8,10 @@ LDLIBS+=-lcrtx
 
 EXAMPLES?=libvirt-usb-hotplug named_pipe ipquery dbus-tool
 L_EXAMPLES?=$(filter-out ipquery,$(EXAMPLES))
-CONTROL_MODULES?=fanotify inotify_batch inotify_notify notifyd pfw
 
-local_mk ?= Makefile.local
--include ${libcrtx_path}/$(local_mk)
+-include $(local_mk)
 
-CONTROL_MODULE_LIBS=$(patsubst %,libcrtx_ctrl_%.so,$(CONTROL_MODULES))
-
-all: $(EXAMPLES) $(CONTROL_MODULES)
+all: $(EXAMPLES)
 
 libvirt-usb-hotplug: CFLAGS+=$(shell pkg-config --cflags libvirt) $(shell xml2-config --cflags)
 libvirt-usb-hotplug: LDLIBS+=$(shell pkg-config --libs libvirt) $(shell xml2-config --libs) -lcrtx_udev
@@ -36,7 +32,7 @@ pfw: control_pfw.c
 dbus-tool: LDLIBS+=-lcrtx_sdbus -lsystemd
 
 clean:
-	rm -f *.o $(L_EXAMPLES) $(CONTROL_MODULE_LIBS)
+	rm -f *.o $(L_EXAMPLES) $(EXAMPLES)
 	make -C ipquery clean
 
 run_%: %

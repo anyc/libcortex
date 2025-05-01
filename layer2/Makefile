@@ -1,5 +1,5 @@
 
-libcrtx_dir=../
+libcrtx_dir=../src/
 
 PKG_CONFIG?=pkg-config
 

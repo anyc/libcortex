@@ -72,10 +72,10 @@ static char evdev_fd_event_handler(struct crtx_event *event, void *userdata, voi
 }
 
 void crtx_shutdown_evdev_listener(struct crtx_listener_base *data) {
-	struct crtx_evdev_listener *el;
+	struct crtx_evdev_listener *evdev;
 	
-	el = (struct crtx_evdev_listener*) data;
-	libevdev_free(el->device);
+	evdev = (struct crtx_evdev_listener*) data;
+	libevdev_free(evdev->device);
 	
 	if (evdev->fd >= 0)
 		close(evdev->fd);

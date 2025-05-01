@@ -30,11 +30,11 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 	// pointer we registered with crtx_listener_add_fd() below
 	pipe_path = (char *) userdata;
 	
-	printf("activity on fd %d: ", el_cb->fd_entry->fd); crtx_event_flags2str(stdout, el_cb->triggered_flags); printf("\n");
+	printf("activity on fd %d: ", el_cb->fd_entry->l_fd); crtx_event_flags2str(stdout, el_cb->triggered_flags); printf("\n");
 	
 	// if there is something to read, print the data
 	if (el_cb->triggered_flags & CRTX_EVLOOP_READ) {
-		n_bytes = read(el_cb->fd_entry->fd, buf, sizeof(buf)-1);
+		n_bytes = read(el_cb->fd_entry->l_fd, buf, sizeof(buf)-1);
 		if (n_bytes < 0) {
 			fprintf(stderr, "read() failed: %s\n", strerror(errno));
 			return 0;
@@ -75,11 +75,11 @@ static char fd_event_handler(struct crtx_event *event, void *userdata, void **se
 		
 		// first deactivate this callback and close the fd
 		crtx_evloop_disable_cb(el_cb);
-		close(el_cb->fd_entry->fd);
+		close(el_cb->fd_entry->l_fd);
 		
 		// open the pipe again and set the fd
-		el_cb->fd_entry->fd = open(pipe_path, O_RDONLY | O_NONBLOCK);
-		if (el_cb->fd_entry->fd < 0) {
+		el_cb->fd_entry->l_fd = open(pipe_path, O_RDONLY | O_NONBLOCK);
+		if (el_cb->fd_entry->l_fd < 0) {
 			fprintf(stderr, "opening \"%s\" failed: %s\n", pipe_path, strerror(errno));
 			return -errno;
 		}
