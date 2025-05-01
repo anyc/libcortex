@@ -299,13 +299,12 @@ struct crtx_fork_listener fork_lstnr;
 struct crtx_timer_listener tlist;
 struct crtx_listener_base *blist;
 int forked = 0;
+int counter = 0;
 
 int start_timer();
 
 void reinit_cb(void *reinit_cb_data) {
 	printf("child reinit_cb\n");
-	
-// 	crtx_init_shutdown();
 	
 	crtx_handle_std_signals();
 	
@@ -334,13 +333,22 @@ static int timertest_handler(struct crtx_event *event, void *userdata, void **se
 			return -1;
 		}
 		
-// 		crtx_create_task(fork_lstnr.base.graph, 0, "fork_event_handler", fork_event_handler, 0);
+		printf("[%d] forking...\n", getpid());
 		
 		rv = crtx_start_listener(&fork_lstnr.base);
 		if (rv) {
 			CRTX_ERROR("starting signal listener failed\n");
 			return rv;
 		}
+	}
+	
+	counter += 1;
+	if (fork_lstnr.pid == 0) {
+		if (counter == 3)
+			crtx_init_shutdown();
+	} else {
+		if (counter == 5)
+			crtx_init_shutdown();
 	}
 	
 	return 1;
@@ -392,9 +400,9 @@ int main(int argc, char **argv) {
 	crtx_loop();
 	
 	if (fork_lstnr.pid == 0) {
-		printf("CHILD TERM\n");
+		printf("[%d] CHILD TERM\n", getpid());
 	} else {
-		printf("PARENT TERM\n");
+		printf("[%d] PARENT TERM\n", getpid());
 	}
 	
 	crtx_finish();
