@@ -84,7 +84,7 @@ Example
 The following code will show information about a USB mass storage device whenever
 udev detects that one was plugged in:
 
-```
+```C
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -174,3 +174,25 @@ int main(int argc, char **argv) {
 Please note, some plugins also include example code (used to build a small test
 application) at the end of the source file which can compiled using the
 `make test` command.
+
+Setup
+-----
+
+Depending on the to-be-used plugins, different development packages are required.
+
+On a Debian/Ubuntu-base system, the following command installs a common set of
+required packages:
+
+```shell
+apt install libavahi-core-dev libsystemd-dev libjson-c-dev libcurl4-gnutls-dev \
+	libevdev-dev libnl-3-dev libvirt-dev libnl-genl-3-dev libnetfilter-queue-dev \
+	libpulse-dev libreadline-dev libudev-dev libmosquitto-dev
+```
+
+To configure the build, libcortex uses a simple include file for `make`, called
+`Makefile.local`. This file is automatically created from `Makefile.local.skel`
+if it does not exist.
+
+If you want to test libcortex in your home directory, simply call `make local`
+to generate a `Makefile.local` which creates binaries that can be executed from
+the local directory without installing them in the system.
