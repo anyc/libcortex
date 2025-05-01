@@ -894,6 +894,9 @@ void crtx_add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	if (!graph->tasks) {
 		CRTX_INFO("dropping event %s (%p) as graph \"%s\" (%p) is empty\n", event->description, event, graph->name?graph->name:"", graph);
 		
+		dereference_event_response(event);
+		dereference_event_release(event);
+		
 		pthread_mutex_unlock(&graph->mutex);
 		return;
 	}
