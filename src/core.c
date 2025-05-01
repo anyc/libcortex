@@ -1546,6 +1546,10 @@ void crtx_init_shutdown() {
 		for (ll=crtx_root->listeners; ll; ll=ll_next) {
 			ll_next = ll->next;
 			
+			// TODO see fork.test
+			if (!ll->data)
+				continue;
+			
 			if (crtx_root->event_loop && crtx_root->event_loop->listener == ll->data) {
 				CRTX_VDBG("skip eloop listener\n");
 				continue;
