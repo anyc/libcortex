@@ -315,7 +315,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		crtx_add_event(nfq_list->base.graph, event);
 		
-		wait_on_event(event);
+		crtx_wait_on_event(event);
 		
 // 		if (event->response.raw.type == 'U')
 // 			pkt->mark_out = event->response.raw.uint64;

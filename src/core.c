@@ -952,7 +952,7 @@ void crtx_dereference_event_response(struct crtx_event *event) {
 	pthread_mutex_unlock(&event->mutex);
 }
 
-char wait_on_event(struct crtx_event *event) {
+int crtx_wait_on_event(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
 	while (event->refs_before_response > 0)
@@ -962,27 +962,6 @@ char wait_on_event(struct crtx_event *event) {
 	
 	return event->error;
 }
-
-// struct crtx_event *new_event() {
-// 	struct crtx_event *event;
-// 	int ret;
-// 	
-// 	event = (struct crtx_event*) calloc(1, sizeof(struct crtx_event));
-// 	
-// 	ret = pthread_mutex_init(&event->mutex, 0); CRTX_ASSERT(ret >= 0);
-// 	ret = pthread_cond_init(&event->response_cond, NULL); CRTX_ASSERT(ret >= 0);
-// 	ret = pthread_cond_init(&event->release_cond, NULL); CRTX_ASSERT(ret >= 0);
-// 	
-// 	return event;
-// }
-
-// void free_event_data(struct crtx_event_data *ed) {
-// // 	if (ed->raw.pointer && !(ed->flags & CRTX_EVF_DONT_FREE_RAW))
-// // 		free(ed->raw);
-// 	crtx_free_dict_item_data(&ed->raw);
-// 	if (ed->dict)
-// 		crtx_free_dict(ed->dict);
-// }
 
 void crtx_invalidate_event(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);

@@ -360,7 +360,7 @@ struct crtx_graph *find_graph_by_name(char *na6me);
 struct crtx_graph *crtx_get_graph_for_event_description(char *event_type, char **new_event_types);
 struct crtx_task *new_task();
 void crtx_free_task(struct crtx_task *task);
-char wait_on_event(struct crtx_event *event);
+int crtx_wait_on_event(struct crtx_event *event);
 int crtx_create_listener(const char *id, void *options) __attribute__((deprecated));
 int crtx_setup_listener(const char *id, void *options);
 int crtx_init_listener_base(struct crtx_listener_base *lstnr);
