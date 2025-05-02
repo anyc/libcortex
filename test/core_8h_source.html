@@ -362,209 +362,209 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>};</div>
 </div>
 <div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span> </div>
-<div class="foldopen" id="foldopen00263" data-start="{" data-end="};">
-<div class="line"><a id="l00263" name="l00263"></a><span class="lineno"><a class="line" href="structcrtx__root.html">  263</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__root.html">crtx_root</a> {</div>
-<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> **graphs;</div>
-<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> n_graphs;</div>
-<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>    MUTEX_TYPE graphs_mutex;</div>
-<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>    </div>
-<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>    <span class="keyword">struct </span>crtx_ll *listeners;</div>
-<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>    MUTEX_TYPE listeners_mutex;</div>
-<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>    </div>
-<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>    <span class="keyword">struct </span>crtx_dll *graph_queue;</div>
-<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>    MUTEX_TYPE graph_queue_mutex;</div>
-<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>    </div>
-<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>    <span class="keywordtype">char</span> initialized;</div>
-<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>    <span class="keywordtype">char</span> shutdown;</div>
-<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>    <span class="keywordtype">char</span> reinit_after_shutdown;</div>
-<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__evloop__callback.html">crtx_evloop_callback</a> shutdown_el_cb;</div>
-<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>    void (*reinit_cb)(<span class="keywordtype">void</span> *cb_data);</div>
-<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>    <span class="keywordtype">void</span> *reinit_cb_data;</div>
-<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>    </div>
-<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *chosen_event_loop;</div>
-<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span><span class="comment">//  char detached_event_loop;</span></div>
-<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__event__loop.html">crtx_event_loop</a> *event_loop;</div>
-<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>    <span class="keyword">struct </span>crtx_ll *event_loops;</div>
-<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>    </div>
-<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__thread__job__description.html">crtx_thread_job_description</a> evloop_job;</div>
-<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__thread.html">crtx_thread</a> *evloop_thread;</div>
-<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>    </div>
-<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>    <span class="keyword">enum</span> crtx_processing_mode default_mode;</div>
-<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>    <span class="keyword">enum</span> crtx_processing_mode force_mode;</div>
-<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>    </div>
-<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *crtx_ctrl_graph;</div>
+<div class="foldopen" id="foldopen00265" data-start="{" data-end="};">
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno"><a class="line" href="structcrtx__root.html">  265</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__root.html">crtx_root</a> {</div>
+<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> **graphs;</div>
+<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> n_graphs;</div>
+<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>    MUTEX_TYPE graphs_mutex;</div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>    </div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno"><a class="line" href="structcrtx__root.html#ab51a60543e6a20d5fc0e311995f21c39">  270</a></span>    <span class="keyword">struct </span>crtx_ll *<a class="code hl_variable" href="structcrtx__root.html#ab51a60543e6a20d5fc0e311995f21c39">listeners</a>; </div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>    MUTEX_TYPE listeners_mutex;</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>    </div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>    <span class="keyword">struct </span>crtx_dll *graph_queue;</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>    MUTEX_TYPE graph_queue_mutex;</div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>    </div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>    <span class="keywordtype">char</span> initialized;</div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>    <span class="keywordtype">char</span> shutdown;</div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>    <span class="keywordtype">char</span> reinit_after_shutdown;</div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__evloop__callback.html">crtx_evloop_callback</a> shutdown_el_cb;</div>
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>    void (*reinit_cb)(<span class="keywordtype">void</span> *cb_data);</div>
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>    <span class="keywordtype">void</span> *reinit_cb_data;</div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>    </div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *chosen_event_loop;</div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span><span class="comment">//  char detached_event_loop;</span></div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__event__loop.html">crtx_event_loop</a> *event_loop;</div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>    <span class="keyword">struct </span>crtx_ll *event_loops;</div>
+<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>    </div>
+<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__thread__job__description.html">crtx_thread_job_description</a> evloop_job;</div>
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__thread.html">crtx_thread</a> *evloop_thread;</div>
+<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>    </div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>    <span class="keyword">enum</span> crtx_processing_mode default_mode;</div>
+<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>    <span class="keyword">enum</span> crtx_processing_mode force_mode;</div>
 <div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>    </div>
-<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span><span class="comment">//  void *notification_listeners_handle;</span></div>
+<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *crtx_ctrl_graph;</div>
 <div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span>    </div>
-<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__lstnr__plugin.html">crtx_lstnr_plugin</a> *plugins;</div>
-<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> n_plugins;</div>
-<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>    </div>
-<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__listener__repository.html">crtx_listener_repository</a> *listener_repository;</div>
-<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> listener_repository_length;</div>
-<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>    </div>
-<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span>    <span class="keyword">struct </span>crtx_ll *handler_categories;</div>
+<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span><span class="comment">//  void *notification_listeners_handle;</span></div>
+<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>    </div>
+<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__lstnr__plugin.html">crtx_lstnr_plugin</a> *plugins;</div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> n_plugins;</div>
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>    </div>
+<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__listener__repository.html">crtx_listener_repository</a> *listener_repository;</div>
+<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> listener_repository_length;</div>
 <div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>    </div>
-<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>    <span class="keywordtype">int</span> global_fd_flags;</div>
+<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>    <span class="keyword">struct </span>crtx_ll *handler_categories;</div>
 <div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>    </div>
-<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *selfpipe_lstnr;</div>
+<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>    <span class="keywordtype">int</span> global_fd_flags;</div>
 <div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>    </div>
-<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>    MUTEX_TYPE mutex;</div>
+<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *selfpipe_lstnr;</div>
 <div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span>    </div>
-<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span><span class="preprocessor">    #ifndef CRTX_REDUCED_SIZE</span></div>
-<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>    <span class="comment">/* reserved to avoid ABI breakage */</span></div>
-<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span>    <span class="keywordtype">void</span> *reserved1;</div>
-<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span>    <span class="keywordtype">void</span> *reserved2;</div>
-<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span><span class="preprocessor">    #endif</span></div>
-<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span>};</div>
+<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>    MUTEX_TYPE mutex;</div>
+<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>    </div>
+<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span><span class="preprocessor">    #ifndef CRTX_REDUCED_SIZE</span></div>
+<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span>    <span class="comment">/* reserved to avoid ABI breakage */</span></div>
+<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span>    <span class="keywordtype">void</span> *reserved1;</div>
+<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span>    <span class="keywordtype">void</span> *reserved2;</div>
+<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span><span class="preprocessor">    #endif</span></div>
+<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>};</div>
 </div>
-<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span> </div>
-<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span><span class="keyword">extern</span> <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__module.html">crtx_module</a> static_modules[];</div>
-<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span><span class="comment">// extern struct crtx_graph *cortexd_graph;</span></div>
-<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span> </div>
-<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span><span class="comment">// extern struct crtx_graph **graphs;</span></div>
-<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span><span class="comment">// extern unsigned int n_graphs;</span></div>
-<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span> </div>
-<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span><span class="preprocessor">#define CRTX_EVT_SHUTDOWN &quot;cortexd.control.shutdown&quot;</span></div>
-<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span><span class="preprocessor">#define CRTX_EVT_MOD_INIT &quot;cortex.control.module_initialized&quot;</span></div>
-<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span><span class="comment">// extern struct crtx_graph *crtx_ctrl_graph;</span></div>
-<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span><span class="keyword">extern</span> <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__root.html">crtx_root</a> *<a class="code hl_struct" href="structcrtx__root.html">crtx_root</a>;</div>
-<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span> </div>
-<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span> </div>
-<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span><span class="keywordtype">void</span> crtx_printf(<span class="keywordtype">char</span> level, <span class="keywordtype">char</span> <span class="keyword">const</span> *format, ...) __attribute__ ((format (printf, 2, 3)));</div>
-<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span><span class="keywordtype">char</span> *crtx_stracpy(const <span class="keywordtype">char</span> *str, <span class="keywordtype">size_t</span> *str_length);</div>
-<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *new_event();</div>
-<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span><span class="keywordtype">void</span> free_event(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
-<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span><span class="keywordtype">int</span> crtx_init();</div>
-<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span><span class="keywordtype">int</span> crtx_finish();</div>
-<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span><span class="keywordtype">void</span> crtx_loop();</div>
-<div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span><span class="keywordtype">int</span> crtx_loop_onetime();</div>
-<div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span><span class="keywordtype">int</span> crtx_is_shutting_down();</div>
-<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span> </div>
-<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span><span class="keywordtype">int</span> crtx_create_graph(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> **<a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a>, const <span class="keywordtype">char</span> *name);</div>
-<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span><span class="keywordtype">int</span> crtx_init_graph(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *<a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a>, const <span class="keywordtype">char</span> *name);</div>
-<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span><span class="keywordtype">int</span> crtx_shutdown_graph(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *egraph);</div>
-<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span><span class="keywordtype">int</span> crtx_free_graph(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *egraph);</div>
-<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span> </div>
-<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span><span class="comment">// void get_eventgraph(struct crtx_graph **crtx_graph, char **event_types, unsigned int n_event_types);</span></div>
-<div class="line"><a id="l00345" name="l00345"></a><span class="lineno">  345</span><span class="keywordtype">void</span> add_task(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, struct <a class="code hl_struct" href="structcrtx__task.html">crtx_task</a> *task);</div>
-<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span><span class="keywordtype">void</span> crtx_add_task(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, struct <a class="code hl_struct" href="structcrtx__task.html">crtx_task</a> *task);</div>
-<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span>struct <a class="code hl_struct" href="structcrtx__task.html">crtx_task</a> * crtx_graph_get_task(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, const <span class="keywordtype">char</span> *<span class="keywordtype">id</span>, crtx_handle_task_t handler);</div>
-<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span><span class="keywordtype">void</span> add_event_type(<span class="keywordtype">char</span> *event_type);</div>
-<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span><span class="keywordtype">void</span> add_raw_event(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
-<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span><span class="keywordtype">void</span> crtx_add_event(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
-<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span><span class="keywordtype">void</span> add_event_sync(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
-<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span>struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *crtx_find_graph_for_event_description(<span class="keywordtype">char</span> *event_description);</div>
-<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span>struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *crtx_find_graph_for_event_type(CRTX_EVENT_TYPE_VARTYPE event_type);</div>
-<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span>struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *find_graph_by_name(<span class="keywordtype">char</span> *na6me);</div>
-<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *crtx_get_graph_for_event_description(<span class="keywordtype">char</span> *event_type, <span class="keywordtype">char</span> **new_event_types);</div>
-<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>struct <a class="code hl_struct" href="structcrtx__task.html">crtx_task</a> *new_task();</div>
-<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span><span class="keywordtype">void</span> crtx_free_task(struct <a class="code hl_struct" href="structcrtx__task.html">crtx_task</a> *task);</div>
-<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span><span class="keywordtype">char</span> wait_on_event(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
-<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span><span class="keywordtype">int</span> crtx_create_listener(const <span class="keywordtype">char</span> *<span class="keywordtype">id</span>, <span class="keywordtype">void</span> *options) __attribute__((deprecated));</div>
-<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span><span class="keywordtype">int</span> crtx_setup_listener(const <span class="keywordtype">char</span> *<span class="keywordtype">id</span>, <span class="keywordtype">void</span> *options);</div>
-<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span><span class="keywordtype">int</span> crtx_init_listener_base(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *lstnr);</div>
-<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span>struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *crtx_calloc_listener_base(<span class="keywordtype">void</span>);</div>
-<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span><span class="keywordtype">int</span> crtx_listener_add_fd(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *listener,</div>
-<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>                         <span class="keywordtype">int</span> *fd_ptr,</div>
-<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>                         <span class="keywordtype">int</span> fd,</div>
-<div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>                         <span class="keywordtype">int</span> event_flags,</div>
-<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>                         uint64_t timeout_us,</div>
-<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span>                         crtx_handle_task_t event_handler,</div>
-<div class="line"><a id="l00369" name="l00369"></a><span class="lineno">  369</span>                         <span class="keywordtype">void</span> *event_handler_data,</div>
-<div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span>                         crtx_evloop_error_cb_t error_cb,</div>
-<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span>                         <span class="keywordtype">void</span> *error_cb_data</div>
-<div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span>        );</div>
-<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span><span class="keywordtype">int</span> crtx_listener_get_fd(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *listener);</div>
-<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span> </div>
-<div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span><span class="keywordtype">void</span> crtx_shutdown_listener(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *listener);</div>
-<div class="line"><a id="l00376" name="l00376"></a><span class="lineno">  376</span><span class="keywordtype">int</span> crtx_create_event(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> **event);</div>
-<div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span><span class="keywordtype">int</span> crtx_push_new_event(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *lstnr, struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> **event,</div>
-<div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span>                        CRTX_EVENT_TYPE_VARTYPE event_type, <span class="keywordtype">char</span> *description,</div>
-<div class="line"><a id="l00379" name="l00379"></a><span class="lineno">  379</span>                        <span class="keywordtype">char</span> data_type, <span class="keywordtype">char</span> *data_key_or_sign,</div>
-<div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span>                        ...);</div>
-<div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span>struct <a class="code hl_struct" href="structcrtx__task.html">crtx_task</a> *crtx_create_task(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> position, const <span class="keywordtype">char</span> *<span class="keywordtype">id</span>, crtx_handle_task_t handler, <span class="keywordtype">void</span> *userdata);</div>
-<div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span><span class="comment">// void crtx_claim_next_event(struct crtx_dll **graph, struct crtx_dll **event);</span></div>
-<div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span><span class="keywordtype">void</span> crtx_process_event(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, struct crtx_dll *queue_entry);</div>
-<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span><span class="keywordtype">void</span> crtx_init_shutdown();</div>
-<div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span> </div>
-<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span><span class="keywordtype">int</span> crtx_start_listener(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *listener);</div>
-<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span><span class="keywordtype">int</span> crtx_update_listener(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *listener);</div>
-<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span><span class="keywordtype">int</span> crtx_stop_listener(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *listener);</div>
-<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span><span class="keywordtype">void</span> print_tasks(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph);</div>
-<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span><span class="keywordtype">void</span> hexdump(<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> *buffer, <span class="keywordtype">size_t</span> index);</div>
-<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span> </div>
-<div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span><span class="keywordtype">void</span> crtx_daemonize();</div>
+<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span> </div>
+<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span><span class="keyword">extern</span> <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__module.html">crtx_module</a> static_modules[];</div>
+<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span><span class="comment">// extern struct crtx_graph *cortexd_graph;</span></div>
+<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span> </div>
+<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span><span class="comment">// extern struct crtx_graph **graphs;</span></div>
+<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span><span class="comment">// extern unsigned int n_graphs;</span></div>
+<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span> </div>
+<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span><span class="preprocessor">#define CRTX_EVT_SHUTDOWN &quot;cortexd.control.shutdown&quot;</span></div>
+<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span><span class="preprocessor">#define CRTX_EVT_MOD_INIT &quot;cortex.control.module_initialized&quot;</span></div>
+<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span><span class="comment">// extern struct crtx_graph *crtx_ctrl_graph;</span></div>
+<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span><span class="keyword">extern</span> <span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__root.html">crtx_root</a> *<a class="code hl_struct" href="structcrtx__root.html">crtx_root</a>;</div>
+<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span> </div>
+<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span> </div>
+<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span><span class="keywordtype">void</span> crtx_printf(<span class="keywordtype">char</span> level, <span class="keywordtype">char</span> <span class="keyword">const</span> *format, ...) __attribute__ ((format (printf, 2, 3)));</div>
+<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span><span class="keywordtype">char</span> *crtx_stracpy(const <span class="keywordtype">char</span> *str, <span class="keywordtype">size_t</span> *str_length);</div>
+<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span>struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *new_event();</div>
+<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span><span class="keywordtype">void</span> free_event(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
+<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span><span class="keywordtype">int</span> crtx_init();</div>
+<div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span><span class="keywordtype">int</span> crtx_finish();</div>
+<div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span><span class="keywordtype">void</span> crtx_loop();</div>
+<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span><span class="keywordtype">int</span> crtx_loop_onetime();</div>
+<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span><span class="keywordtype">int</span> crtx_is_shutting_down();</div>
+<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span> </div>
+<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span><span class="keywordtype">int</span> crtx_create_graph(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> **<a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a>, const <span class="keywordtype">char</span> *name);</div>
+<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span><span class="keywordtype">int</span> crtx_init_graph(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *<a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a>, const <span class="keywordtype">char</span> *name);</div>
+<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span><span class="keywordtype">int</span> crtx_shutdown_graph(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *egraph);</div>
+<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span><span class="keywordtype">int</span> crtx_free_graph(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *egraph);</div>
+<div class="line"><a id="l00345" name="l00345"></a><span class="lineno">  345</span> </div>
+<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span><span class="comment">// void get_eventgraph(struct crtx_graph **crtx_graph, char **event_types, unsigned int n_event_types);</span></div>
+<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span><span class="keywordtype">void</span> add_task(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, struct <a class="code hl_struct" href="structcrtx__task.html">crtx_task</a> *task);</div>
+<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span><span class="keywordtype">void</span> crtx_add_task(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, struct <a class="code hl_struct" href="structcrtx__task.html">crtx_task</a> *task);</div>
+<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span>struct <a class="code hl_struct" href="structcrtx__task.html">crtx_task</a> * crtx_graph_get_task(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, const <span class="keywordtype">char</span> *<span class="keywordtype">id</span>, crtx_handle_task_t handler);</div>
+<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span><span class="keywordtype">void</span> add_event_type(<span class="keywordtype">char</span> *event_type);</div>
+<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span><span class="keywordtype">void</span> add_raw_event(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
+<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span><span class="keywordtype">void</span> crtx_add_event(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
+<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span><span class="keywordtype">void</span> add_event_sync(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
+<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span>struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *crtx_find_graph_for_event_description(<span class="keywordtype">char</span> *event_description);</div>
+<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *crtx_find_graph_for_event_type(CRTX_EVENT_TYPE_VARTYPE event_type);</div>
+<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *find_graph_by_name(<span class="keywordtype">char</span> *na6me);</div>
+<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span>struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *crtx_get_graph_for_event_description(<span class="keywordtype">char</span> *event_type, <span class="keywordtype">char</span> **new_event_types);</div>
+<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span>struct <a class="code hl_struct" href="structcrtx__task.html">crtx_task</a> *new_task();</div>
+<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span><span class="keywordtype">void</span> crtx_free_task(struct <a class="code hl_struct" href="structcrtx__task.html">crtx_task</a> *task);</div>
+<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span><span class="keywordtype">char</span> wait_on_event(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
+<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span><span class="keywordtype">int</span> crtx_create_listener(const <span class="keywordtype">char</span> *<span class="keywordtype">id</span>, <span class="keywordtype">void</span> *options) __attribute__((deprecated));</div>
+<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span><span class="keywordtype">int</span> crtx_setup_listener(const <span class="keywordtype">char</span> *<span class="keywordtype">id</span>, <span class="keywordtype">void</span> *options);</div>
+<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span><span class="keywordtype">int</span> crtx_init_listener_base(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *lstnr);</div>
+<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *crtx_calloc_listener_base(<span class="keywordtype">void</span>);</div>
+<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span><span class="keywordtype">int</span> crtx_listener_add_fd(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *listener,</div>
+<div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>                         <span class="keywordtype">int</span> *fd_ptr,</div>
+<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>                         <span class="keywordtype">int</span> fd,</div>
+<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span>                         <span class="keywordtype">int</span> event_flags,</div>
+<div class="line"><a id="l00369" name="l00369"></a><span class="lineno">  369</span>                         uint64_t timeout_us,</div>
+<div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span>                         crtx_handle_task_t event_handler,</div>
+<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span>                         <span class="keywordtype">void</span> *event_handler_data,</div>
+<div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span>                         crtx_evloop_error_cb_t error_cb,</div>
+<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span>                         <span class="keywordtype">void</span> *error_cb_data</div>
+<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span>        );</div>
+<div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span><span class="keywordtype">int</span> crtx_listener_get_fd(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *listener);</div>
+<div class="line"><a id="l00376" name="l00376"></a><span class="lineno">  376</span> </div>
+<div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span><span class="keywordtype">void</span> crtx_shutdown_listener(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *listener);</div>
+<div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span><span class="keywordtype">int</span> crtx_create_event(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> **event);</div>
+<div class="line"><a id="l00379" name="l00379"></a><span class="lineno">  379</span><span class="keywordtype">int</span> crtx_push_new_event(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *lstnr, struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> **event,</div>
+<div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span>                        CRTX_EVENT_TYPE_VARTYPE event_type, <span class="keywordtype">char</span> *description,</div>
+<div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span>                        <span class="keywordtype">char</span> data_type, <span class="keywordtype">char</span> *data_key_or_sign,</div>
+<div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span>                        ...);</div>
+<div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span>struct <a class="code hl_struct" href="structcrtx__task.html">crtx_task</a> *crtx_create_task(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> position, const <span class="keywordtype">char</span> *<span class="keywordtype">id</span>, crtx_handle_task_t handler, <span class="keywordtype">void</span> *userdata);</div>
+<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span><span class="comment">// void crtx_claim_next_event(struct crtx_dll **graph, struct crtx_dll **event);</span></div>
+<div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span><span class="keywordtype">void</span> crtx_process_event(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, struct crtx_dll *queue_entry);</div>
+<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span><span class="keywordtype">void</span> crtx_init_shutdown();</div>
+<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span> </div>
+<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span><span class="keywordtype">int</span> crtx_start_listener(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *listener);</div>
+<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span><span class="keywordtype">int</span> crtx_update_listener(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *listener);</div>
+<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span><span class="keywordtype">int</span> crtx_stop_listener(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *listener);</div>
+<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span><span class="keywordtype">void</span> print_tasks(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph);</div>
+<div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span><span class="keywordtype">void</span> hexdump(<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> *buffer, <span class="keywordtype">size_t</span> index);</div>
 <div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span> </div>
-<div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span><span class="keywordtype">void</span> crtx_traverse_graph(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
-<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span><span class="keywordtype">void</span> reference_event_response(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
-<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span><span class="keywordtype">void</span> dereference_event_response(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
-<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span><span class="keywordtype">void</span> reference_event_release(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
-<div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span><span class="keywordtype">void</span> dereference_event_release(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
-<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span> </div>
-<div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span><span class="comment">// void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event);</span></div>
-<div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span><span class="keywordtype">char</span> *get_username();</div>
-<div class="line"><a id="l00402" name="l00402"></a><span class="lineno">  402</span><span class="keywordtype">char</span> crtx_graph_has_task(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph);</div>
-<div class="line"><a id="l00403" name="l00403"></a><span class="lineno">  403</span><span class="keywordtype">int</span> crtx_is_graph_empty(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph);</div>
-<div class="line"><a id="l00404" name="l00404"></a><span class="lineno">  404</span><span class="comment">// void *crtx_copy_raw_data(struct crtx_event_data *data);</span></div>
-<div class="line"><a id="l00405" name="l00405"></a><span class="lineno">  405</span> </div>
-<div class="line"><a id="l00406" name="l00406"></a><span class="lineno">  406</span><span class="keywordtype">void</span> crtx_init_notification_listeners(<span class="keywordtype">void</span> **data);</div>
-<div class="line"><a id="l00407" name="l00407"></a><span class="lineno">  407</span><span class="keywordtype">void</span> crtx_finish_notification_listeners(<span class="keywordtype">void</span> *data);</div>
-<div class="line"><a id="l00408" name="l00408"></a><span class="lineno">  408</span> </div>
-<div class="line"><a id="l00409" name="l00409"></a><span class="lineno">  409</span><span class="keywordtype">int</span> crtx_handle_std_signals();</div>
+<div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span><span class="keywordtype">void</span> crtx_daemonize();</div>
+<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span> </div>
+<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span><span class="keywordtype">void</span> crtx_traverse_graph(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
+<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span><span class="keywordtype">void</span> reference_event_response(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
+<div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span><span class="keywordtype">void</span> dereference_event_response(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
+<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span><span class="keywordtype">void</span> reference_event_release(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
+<div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span><span class="keywordtype">void</span> dereference_event_release(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
+<div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span> </div>
+<div class="line"><a id="l00402" name="l00402"></a><span class="lineno">  402</span><span class="comment">// void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event);</span></div>
+<div class="line"><a id="l00403" name="l00403"></a><span class="lineno">  403</span><span class="keywordtype">char</span> *get_username();</div>
+<div class="line"><a id="l00404" name="l00404"></a><span class="lineno">  404</span><span class="keywordtype">char</span> crtx_graph_has_task(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph);</div>
+<div class="line"><a id="l00405" name="l00405"></a><span class="lineno">  405</span><span class="keywordtype">int</span> crtx_is_graph_empty(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph);</div>
+<div class="line"><a id="l00406" name="l00406"></a><span class="lineno">  406</span><span class="comment">// void *crtx_copy_raw_data(struct crtx_event_data *data);</span></div>
+<div class="line"><a id="l00407" name="l00407"></a><span class="lineno">  407</span> </div>
+<div class="line"><a id="l00408" name="l00408"></a><span class="lineno">  408</span><span class="keywordtype">void</span> crtx_init_notification_listeners(<span class="keywordtype">void</span> **data);</div>
+<div class="line"><a id="l00409" name="l00409"></a><span class="lineno">  409</span><span class="keywordtype">void</span> crtx_finish_notification_listeners(<span class="keywordtype">void</span> *data);</div>
 <div class="line"><a id="l00410" name="l00410"></a><span class="lineno">  410</span> </div>
-<div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span><span class="keywordtype">void</span> *crtx_process_graph_tmain(<span class="keywordtype">void</span> *arg);</div>
-<div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span><span class="keywordtype">int</span> crtx_process_one_event(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph);</div>
-<div class="line"><a id="l00413" name="l00413"></a><span class="lineno">  413</span> </div>
-<div class="line"><a id="l00414" name="l00414"></a><span class="lineno">  414</span><span class="comment">// void crtx_event_set_data(struct crtx_event *event, void *raw_pointer, unsigned char flags, struct crtx_dict *data_dict, unsigned char n_additional_fields);</span></div>
-<div class="line"><a id="l00415" name="l00415"></a><span class="lineno">  415</span><span class="keywordtype">void</span> crtx_event_set_raw_data(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> type, ...);</div>
-<div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span><span class="keywordtype">void</span> crtx_event_set_dict_data(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, struct <a class="code hl_struct" href="structcrtx__dict.html">crtx_dict</a> *data_dict, <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> n_additional_fields);</div>
-<div class="line"><a id="l00417" name="l00417"></a><span class="lineno">  417</span><span class="keywordtype">char</span> crtx_event_raw2dict(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">void</span> *user_data);</div>
-<div class="line"><a id="l00418" name="l00418"></a><span class="lineno">  418</span><span class="keywordtype">void</span> crtx_event_get_payload(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">char</span> *<span class="keywordtype">id</span>, <span class="keywordtype">void</span> **raw_pointer, struct <a class="code hl_struct" href="structcrtx__dict.html">crtx_dict</a> **dict);</div>
-<div class="line"><a id="l00419" name="l00419"></a><span class="lineno">  419</span>struct <a class="code hl_struct" href="structcrtx__dict.html">crtx_dict</a> *crtx_event_get_dict(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
-<div class="line"><a id="l00420" name="l00420"></a><span class="lineno">  420</span>struct <a class="code hl_struct" href="structcrtx__dict__item.html">crtx_dict_item</a> *crtx_event_get_item_by_key(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">char</span> *<span class="keywordtype">id</span>, <span class="keywordtype">char</span> *key);</div>
-<div class="line"><a id="l00421" name="l00421"></a><span class="lineno">  421</span><span class="keywordtype">int</span> crtx_event_get_value_by_key(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">char</span> *key, <span class="keywordtype">char</span> type, <span class="keywordtype">void</span> *buffer, <span class="keywordtype">size_t</span> buffer_size);</div>
-<div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span><span class="keywordtype">void</span> *crtx_event_get_ptr(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
-<div class="line"><a id="l00423" name="l00423"></a><span class="lineno">  423</span><span class="keywordtype">char</span> *crtx_event_get_string(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">char</span> *key);</div>
-<div class="line"><a id="l00424" name="l00424"></a><span class="lineno">  424</span><span class="keywordtype">void</span> crtx_event_set_dict(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">char</span> *signature, ...);</div>
-<div class="line"><a id="l00425" name="l00425"></a><span class="lineno">  425</span><span class="keywordtype">int</span> crtx_event_get_int(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">int</span> *value);</div>
-<div class="line"><a id="l00426" name="l00426"></a><span class="lineno">  426</span><span class="keywordtype">int</span> crtx_event_get_data(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">void</span> **data, <span class="keywordtype">size_t</span> *size);</div>
-<div class="line"><a id="l00427" name="l00427"></a><span class="lineno">  427</span> </div>
-<div class="line"><a id="l00428" name="l00428"></a><span class="lineno">  428</span><span class="keywordtype">void</span> crtx_register_handler_for_event_type(<span class="keywordtype">char</span> *event_type, <span class="keywordtype">char</span> *handler_name, crtx_handle_task_t handler_function, <span class="keywordtype">void</span> *handler_data);</div>
-<div class="line"><a id="l00429" name="l00429"></a><span class="lineno">  429</span><span class="keywordtype">void</span> crtx_autofill_graph_with_tasks(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, const <span class="keywordtype">char</span> *event_type);</div>
-<div class="line"><a id="l00430" name="l00430"></a><span class="lineno">  430</span> </div>
-<div class="line"><a id="l00431" name="l00431"></a><span class="lineno">  431</span>enum crtx_processing_mode crtx_get_mode(enum crtx_processing_mode local_mode);</div>
-<div class="line"><a id="l00432" name="l00432"></a><span class="lineno">  432</span><span class="keywordtype">void</span> crtx_wait_on_graph_empty(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph);</div>
-<div class="line"><a id="l00433" name="l00433"></a><span class="lineno">  433</span> </div>
-<div class="line"><a id="l00434" name="l00434"></a><span class="lineno">  434</span>struct <a class="code hl_struct" href="structcrtx__listener__repository.html">crtx_listener_repository</a>* crtx_get_new_listener_repo_entry();</div>
+<div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span><span class="keywordtype">int</span> crtx_handle_std_signals();</div>
+<div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span> </div>
+<div class="line"><a id="l00413" name="l00413"></a><span class="lineno">  413</span><span class="keywordtype">void</span> *crtx_process_graph_tmain(<span class="keywordtype">void</span> *arg);</div>
+<div class="line"><a id="l00414" name="l00414"></a><span class="lineno">  414</span><span class="keywordtype">int</span> crtx_process_one_event(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph);</div>
+<div class="line"><a id="l00415" name="l00415"></a><span class="lineno">  415</span> </div>
+<div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span><span class="comment">// void crtx_event_set_data(struct crtx_event *event, void *raw_pointer, unsigned char flags, struct crtx_dict *data_dict, unsigned char n_additional_fields);</span></div>
+<div class="line"><a id="l00417" name="l00417"></a><span class="lineno">  417</span><span class="keywordtype">void</span> crtx_event_set_raw_data(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> type, ...);</div>
+<div class="line"><a id="l00418" name="l00418"></a><span class="lineno">  418</span><span class="keywordtype">void</span> crtx_event_set_dict_data(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, struct <a class="code hl_struct" href="structcrtx__dict.html">crtx_dict</a> *data_dict, <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> n_additional_fields);</div>
+<div class="line"><a id="l00419" name="l00419"></a><span class="lineno">  419</span><span class="keywordtype">char</span> crtx_event_raw2dict(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">void</span> *user_data);</div>
+<div class="line"><a id="l00420" name="l00420"></a><span class="lineno">  420</span><span class="keywordtype">void</span> crtx_event_get_payload(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">char</span> *<span class="keywordtype">id</span>, <span class="keywordtype">void</span> **raw_pointer, struct <a class="code hl_struct" href="structcrtx__dict.html">crtx_dict</a> **dict);</div>
+<div class="line"><a id="l00421" name="l00421"></a><span class="lineno">  421</span>struct <a class="code hl_struct" href="structcrtx__dict.html">crtx_dict</a> *crtx_event_get_dict(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
+<div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span>struct <a class="code hl_struct" href="structcrtx__dict__item.html">crtx_dict_item</a> *crtx_event_get_item_by_key(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">char</span> *<span class="keywordtype">id</span>, <span class="keywordtype">char</span> *key);</div>
+<div class="line"><a id="l00423" name="l00423"></a><span class="lineno">  423</span><span class="keywordtype">int</span> crtx_event_get_value_by_key(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">char</span> *key, <span class="keywordtype">char</span> type, <span class="keywordtype">void</span> *buffer, <span class="keywordtype">size_t</span> buffer_size);</div>
+<div class="line"><a id="l00424" name="l00424"></a><span class="lineno">  424</span><span class="keywordtype">void</span> *crtx_event_get_ptr(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event);</div>
+<div class="line"><a id="l00425" name="l00425"></a><span class="lineno">  425</span><span class="keywordtype">char</span> *crtx_event_get_string(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">char</span> *key);</div>
+<div class="line"><a id="l00426" name="l00426"></a><span class="lineno">  426</span><span class="keywordtype">void</span> crtx_event_set_dict(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">char</span> *signature, ...);</div>
+<div class="line"><a id="l00427" name="l00427"></a><span class="lineno">  427</span><span class="keywordtype">int</span> crtx_event_get_int(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">int</span> *value);</div>
+<div class="line"><a id="l00428" name="l00428"></a><span class="lineno">  428</span><span class="keywordtype">int</span> crtx_event_get_data(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, <span class="keywordtype">void</span> **data, <span class="keywordtype">size_t</span> *size);</div>
+<div class="line"><a id="l00429" name="l00429"></a><span class="lineno">  429</span> </div>
+<div class="line"><a id="l00430" name="l00430"></a><span class="lineno">  430</span><span class="keywordtype">void</span> crtx_register_handler_for_event_type(<span class="keywordtype">char</span> *event_type, <span class="keywordtype">char</span> *handler_name, crtx_handle_task_t handler_function, <span class="keywordtype">void</span> *handler_data);</div>
+<div class="line"><a id="l00431" name="l00431"></a><span class="lineno">  431</span><span class="keywordtype">void</span> crtx_autofill_graph_with_tasks(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph, const <span class="keywordtype">char</span> *event_type);</div>
+<div class="line"><a id="l00432" name="l00432"></a><span class="lineno">  432</span> </div>
+<div class="line"><a id="l00433" name="l00433"></a><span class="lineno">  433</span>enum crtx_processing_mode crtx_get_mode(enum crtx_processing_mode local_mode);</div>
+<div class="line"><a id="l00434" name="l00434"></a><span class="lineno">  434</span><span class="keywordtype">void</span> crtx_wait_on_graph_empty(struct <a class="code hl_struct" href="structcrtx__graph.html">crtx_graph</a> *graph);</div>
 <div class="line"><a id="l00435" name="l00435"></a><span class="lineno">  435</span> </div>
-<div class="line"><a id="l00436" name="l00436"></a><span class="lineno">  436</span><span class="keywordtype">void</span> crtx_set_main_event_loop(const <span class="keywordtype">char</span> *event_loop);</div>
-<div class="line"><a id="l00437" name="l00437"></a><span class="lineno">  437</span><span class="keywordtype">int</span> crtx_separate_evloop_thread();</div>
-<div class="line"><a id="l00438" name="l00438"></a><span class="lineno">  438</span> </div>
-<div class="line"><a id="l00439" name="l00439"></a><span class="lineno">  439</span><span class="keywordtype">void</span> crtx_lock_listener_source(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *lbase);</div>
-<div class="line"><a id="l00440" name="l00440"></a><span class="lineno">  440</span><span class="keywordtype">void</span> crtx_unlock_listener_source(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *lbase);</div>
-<div class="line"><a id="l00441" name="l00441"></a><span class="lineno">  441</span><span class="keywordtype">void</span> crtx_lock_listener(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *lbase);</div>
-<div class="line"><a id="l00442" name="l00442"></a><span class="lineno">  442</span><span class="keywordtype">void</span> crtx_unlock_listener(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *lbase);</div>
-<div class="line"><a id="l00443" name="l00443"></a><span class="lineno">  443</span><span class="keywordtype">void</span> crtx_trigger_event_processing(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *lstnr);</div>
-<div class="line"><a id="l00444" name="l00444"></a><span class="lineno">  444</span><span class="keywordtype">void</span> crtx_lstnr_handle_fd_closed(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *lstnr);</div>
-<div class="line"><a id="l00445" name="l00445"></a><span class="lineno">  445</span> </div>
-<div class="line"><a id="l00446" name="l00446"></a><span class="lineno">  446</span><span class="keywordtype">void</span> crtx_shutdown_after_fork();</div>
+<div class="line"><a id="l00436" name="l00436"></a><span class="lineno">  436</span>struct <a class="code hl_struct" href="structcrtx__listener__repository.html">crtx_listener_repository</a>* crtx_get_new_listener_repo_entry();</div>
+<div class="line"><a id="l00437" name="l00437"></a><span class="lineno">  437</span> </div>
+<div class="line"><a id="l00438" name="l00438"></a><span class="lineno">  438</span><span class="keywordtype">void</span> crtx_set_main_event_loop(const <span class="keywordtype">char</span> *event_loop);</div>
+<div class="line"><a id="l00439" name="l00439"></a><span class="lineno">  439</span><span class="keywordtype">int</span> crtx_separate_evloop_thread();</div>
+<div class="line"><a id="l00440" name="l00440"></a><span class="lineno">  440</span> </div>
+<div class="line"><a id="l00441" name="l00441"></a><span class="lineno">  441</span><span class="keywordtype">void</span> crtx_lock_listener_source(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *lbase);</div>
+<div class="line"><a id="l00442" name="l00442"></a><span class="lineno">  442</span><span class="keywordtype">void</span> crtx_unlock_listener_source(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *lbase);</div>
+<div class="line"><a id="l00443" name="l00443"></a><span class="lineno">  443</span><span class="keywordtype">void</span> crtx_lock_listener(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *lbase);</div>
+<div class="line"><a id="l00444" name="l00444"></a><span class="lineno">  444</span><span class="keywordtype">void</span> crtx_unlock_listener(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *lbase);</div>
+<div class="line"><a id="l00445" name="l00445"></a><span class="lineno">  445</span><span class="keywordtype">void</span> crtx_trigger_event_processing(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *lstnr);</div>
+<div class="line"><a id="l00446" name="l00446"></a><span class="lineno">  446</span><span class="keywordtype">void</span> crtx_lstnr_handle_fd_closed(struct <a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *lstnr);</div>
 <div class="line"><a id="l00447" name="l00447"></a><span class="lineno">  447</span> </div>
-<div class="line"><a id="l00448" name="l00448"></a><span class="lineno">  448</span>struct <a class="code hl_struct" href="structcrtx__thread.html">crtx_thread</a> * crtx_start_detached_event_loop();</div>
+<div class="line"><a id="l00448" name="l00448"></a><span class="lineno">  448</span><span class="keywordtype">void</span> crtx_shutdown_after_fork();</div>
 <div class="line"><a id="l00449" name="l00449"></a><span class="lineno">  449</span> </div>
-<div class="line"><a id="l00450" name="l00450"></a><span class="lineno">  450</span><span class="keywordtype">int</span> crtx_get_version(<span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> *major, <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> *minor, <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> *revision);</div>
+<div class="line"><a id="l00450" name="l00450"></a><span class="lineno">  450</span>struct <a class="code hl_struct" href="structcrtx__thread.html">crtx_thread</a> * crtx_start_detached_event_loop();</div>
 <div class="line"><a id="l00451" name="l00451"></a><span class="lineno">  451</span> </div>
-<div class="line"><a id="l00452" name="l00452"></a><span class="lineno">  452</span><span class="keywordtype">void</span> crtx_selfpipe_cb_free_lstnr(<span class="keywordtype">void</span> *data);</div>
-<div class="line"><a id="l00453" name="l00453"></a><span class="lineno">  453</span><span class="keywordtype">int</span> crtx_selfpipe_enqueue_cb(<span class="keywordtype">void</span> (*cb)(<span class="keywordtype">void</span>*), <span class="keywordtype">void</span> *cb_data);</div>
-<div class="line"><a id="l00454" name="l00454"></a><span class="lineno">  454</span> </div>
-<div class="line"><a id="l00455" name="l00455"></a><span class="lineno">  455</span><span class="keywordtype">void</span> crtx_print_event(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, FILE *f);</div>
+<div class="line"><a id="l00452" name="l00452"></a><span class="lineno">  452</span><span class="keywordtype">int</span> crtx_get_version(<span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> *major, <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> *minor, <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> *revision);</div>
+<div class="line"><a id="l00453" name="l00453"></a><span class="lineno">  453</span> </div>
+<div class="line"><a id="l00454" name="l00454"></a><span class="lineno">  454</span><span class="keywordtype">void</span> crtx_selfpipe_cb_free_lstnr(<span class="keywordtype">void</span> *data);</div>
+<div class="line"><a id="l00455" name="l00455"></a><span class="lineno">  455</span><span class="keywordtype">int</span> crtx_selfpipe_enqueue_cb(<span class="keywordtype">void</span> (*cb)(<span class="keywordtype">void</span>*), <span class="keywordtype">void</span> *cb_data);</div>
 <div class="line"><a id="l00456" name="l00456"></a><span class="lineno">  456</span> </div>
-<div class="line"><a id="l00457" name="l00457"></a><span class="lineno">  457</span><span class="keywordtype">int</span> crtx_is_fd_valid(<span class="keywordtype">int</span> fd);</div>
+<div class="line"><a id="l00457" name="l00457"></a><span class="lineno">  457</span><span class="keywordtype">void</span> crtx_print_event(struct <a class="code hl_struct" href="structcrtx__event.html">crtx_event</a> *event, FILE *f);</div>
 <div class="line"><a id="l00458" name="l00458"></a><span class="lineno">  458</span> </div>
-<div class="line"><a id="l00459" name="l00459"></a><span class="lineno">  459</span><span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a id="l00460" name="l00460"></a><span class="lineno">  460</span>}</div>
-<div class="line"><a id="l00461" name="l00461"></a><span class="lineno">  461</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00462" name="l00462"></a><span class="lineno">  462</span> </div>
+<div class="line"><a id="l00459" name="l00459"></a><span class="lineno">  459</span><span class="keywordtype">int</span> crtx_is_fd_valid(<span class="keywordtype">int</span> fd);</div>
+<div class="line"><a id="l00460" name="l00460"></a><span class="lineno">  460</span> </div>
+<div class="line"><a id="l00461" name="l00461"></a><span class="lineno">  461</span><span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a id="l00462" name="l00462"></a><span class="lineno">  462</span>}</div>
 <div class="line"><a id="l00463" name="l00463"></a><span class="lineno">  463</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00464" name="l00464"></a><span class="lineno">  464</span> </div>
+<div class="line"><a id="l00465" name="l00465"></a><span class="lineno">  465</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="astructcrtx__dict__item_html"><div class="ttname"><a href="structcrtx__dict__item.html">crtx_dict_item</a></div><div class="ttdef"><b>Definition</b> dict.h:35</div></div>
 <div class="ttc" id="astructcrtx__dict_html"><div class="ttname"><a href="structcrtx__dict.html">crtx_dict</a></div><div class="ttdef"><b>Definition</b> dict.h:61</div></div>
 <div class="ttc" id="astructcrtx__event__loop_html"><div class="ttname"><a href="structcrtx__event__loop.html">crtx_event_loop</a></div><div class="ttdef"><b>Definition</b> evloop.h:116</div></div>
@@ -578,7 +578,8 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="astructcrtx__listener__repository_html"><div class="ttname"><a href="structcrtx__listener__repository.html">crtx_listener_repository</a></div><div class="ttdef"><b>Definition</b> core.h:157</div></div>
 <div class="ttc" id="astructcrtx__lstnr__plugin_html"><div class="ttname"><a href="structcrtx__lstnr__plugin.html">crtx_lstnr_plugin</a></div><div class="ttdef"><b>Definition</b> core.h:232</div></div>
 <div class="ttc" id="astructcrtx__module_html"><div class="ttname"><a href="structcrtx__module.html">crtx_module</a></div><div class="ttdef"><b>Definition</b> core.h:225</div></div>
-<div class="ttc" id="astructcrtx__root_html"><div class="ttname"><a href="structcrtx__root.html">crtx_root</a></div><div class="ttdef"><b>Definition</b> core.h:263</div></div>
+<div class="ttc" id="astructcrtx__root_html"><div class="ttname"><a href="structcrtx__root.html">crtx_root</a></div><div class="ttdef"><b>Definition</b> core.h:265</div></div>
+<div class="ttc" id="astructcrtx__root_html_ab51a60543e6a20d5fc0e311995f21c39"><div class="ttname"><a href="structcrtx__root.html#ab51a60543e6a20d5fc0e311995f21c39">crtx_root::listeners</a></div><div class="ttdeci">struct crtx_ll * listeners</div><div class="ttdoc">list of registered listeners</div><div class="ttdef"><b>Definition</b> core.h:270</div></div>
 <div class="ttc" id="astructcrtx__task_html"><div class="ttname"><a href="structcrtx__task.html">crtx_task</a></div><div class="ttdef"><b>Definition</b> core.h:98</div></div>
 <div class="ttc" id="astructcrtx__thread__job__description_html"><div class="ttname"><a href="structcrtx__thread__job__description.html">crtx_thread_job_description</a></div><div class="ttdef"><b>Definition</b> threads.h:51</div></div>
 <div class="ttc" id="astructcrtx__thread_html"><div class="ttname"><a href="structcrtx__thread.html">crtx_thread</a></div><div class="ttdef"><b>Definition</b> threads.h:63</div></div>
