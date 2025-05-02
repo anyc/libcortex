@@ -57,31 +57,29 @@ typedef void (*crtx_raw_to_dict_t)(struct crtx_event *event, struct crtx_dict_it
 
 /// an event that is emitted by a listener \ref crtx_listener_base
 struct crtx_event {
-	CRTX_EVENT_TYPE_VARTYPE type;
-	char *description;
+	CRTX_EVENT_TYPE_VARTYPE type; ///< this or \ref crtx_event.description describe the type of event
+	char *description; ///< this or \ref crtx_event.type describe the type of event
 	
-	struct crtx_dict_item data;
+	struct crtx_dict_item data; ///< data associated with this event
 	
 	struct crtx_dict_item response;
 	char response_expected;
 	
 	char error;
-	char claimed;
+	char claimed; ///< true if this event is being processed
 	char release_in_progress;
-	
-	uint64_t original_event_id;
 	
 	unsigned char refs_before_response;
 	unsigned char refs_before_release;
 	pthread_cond_t response_cond;
 	pthread_cond_t release_cond;
 	
-	struct crtx_listener_base *origin;
+	struct crtx_listener_base *origin; ///< the listener that generated this event
 	
 	void (*cb_before_release)(struct crtx_event *event, void *cb_before_release_data);
 	void *cb_before_release_data;
 	
-	pthread_mutex_t mutex;
+	pthread_mutex_t mutex; ///< mutex that protects this structure
 	
 	#ifndef CRTX_REDUCED_SIZE
 	/* reserved to avoid ABI breakage */
@@ -93,12 +91,12 @@ struct crtx_event {
 /// a task basically represents a function that will be executed for an \ref crtx_event
 struct crtx_task {
 	const char *id;
-	unsigned char position;
+	unsigned char position; ///< position of the task in the graph
 	struct crtx_graph *graph;
 	
-	char *event_type_match; // if 0, task receives all events passing the graph
+	char *event_type_match; ///< if 0, task receives all events passing the graph
 	
-	crtx_handle_task_t handle;
+	crtx_handle_task_t handle; ///< function that is called with the current event
 	crtx_handle_task_t cleanup;
 	void *userdata;
 	
@@ -121,24 +119,23 @@ struct crtx_graph {
 	char stop;
 	unsigned char flags;
 	
-	CRTX_EVENT_TYPE_VARTYPE *types;
-	unsigned int n_types;
+	CRTX_EVENT_TYPE_VARTYPE *types; ///< type of events this graph accepts
+	unsigned int n_types; ///< number of \ref crtx_graph.types
 	
-	char **descriptions;
-	unsigned int n_descriptions;
+	char **descriptions; ///< event descriptions this graph accepts
+	unsigned int n_descriptions; ///< number of \ref crtx_graph.descriptions
 	
-	pthread_mutex_t mutex;
+	pthread_mutex_t mutex; ///< mutex that protects this structure
 	
-	struct crtx_task *tasks;
+	struct crtx_task *tasks; ///< list of tasks in this graph
 	
-	enum crtx_processing_mode mode;
+	enum crtx_processing_mode mode; ///< processing mode (none, thread, eloop) of this graph
 	
-	struct crtx_dll *equeue;
-	
+	struct crtx_dll *equeue; ///< event queue of this graph
 	pthread_mutex_t queue_mutex;
 	pthread_cond_t queue_cond;
 	
-	struct crtx_listener_base *listener;
+	struct crtx_listener_base *listener; ///< listener this graph belongs to
 	
 	struct crtx_thread_job_description thread_job;
 	
@@ -151,6 +148,7 @@ struct crtx_graph {
 	#endif
 };
 
+/// listener repository to create new listeners of a certain type
 struct crtx_listener_repository {
 	char *id;
 	
@@ -200,7 +198,7 @@ struct crtx_listener_base {
 	struct crtx_evloop_fd evloop_fd; ///< if this listener has a file descriptor, it will be stored in this structure
 	struct crtx_evloop_callback default_el_cb; ///< contains data about what should happen if events occur
 	
-	char autolock_source;
+	char autolock_source; ///< if enabled, \ref crtx_listener_base.source_lock is acquired before calling an event handler
 	MUTEX_TYPE source_lock;
 	
 	struct crtx_ll *dependencies; ///< list of listeners this listener depends on
@@ -209,8 +207,6 @@ struct crtx_listener_base {
 	
 	struct crtx_thread_job_description thread_job;
 	struct crtx_thread *eloop_thread;
-// 	thread_fct thread_fct;
-// 	void *thread_data;
 	void (*thread_stop)(struct crtx_thread *thread, void *data);
 	
 	char (*start_listener)(struct crtx_listener_base *listener);
@@ -235,6 +231,7 @@ struct crtx_listener_base {
 	#endif
 };
 
+/// represents generic modules
 struct crtx_module {
 	char *id;
 	
@@ -271,6 +268,7 @@ struct crtx_handler_category_entry {
 	void *handler_data;
 };
 
+/// a list of \ref crtx_handler_category_entry for a certain event type
 struct crtx_handler_category {
 	char *event_type;
 	struct crtx_ll *entries;
