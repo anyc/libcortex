@@ -196,3 +196,10 @@ if it does not exist.
 If you want to test libcortex in your home directory, simply call `make local`
 to generate a `Makefile.local` which creates binaries that can be executed from
 the local directory without installing them in the system.
+
+Documentation
+-------------
+
+Initial documentation based on Doxygen comments is available here:
+
+https://anyc.github.io/libcortex/
