@@ -388,10 +388,8 @@ void crtx_init_shutdown();
 int crtx_start_listener(struct crtx_listener_base *listener);
 int crtx_update_listener(struct crtx_listener_base *listener);
 int crtx_stop_listener(struct crtx_listener_base *listener);
-void print_tasks(struct crtx_graph *graph);
-void hexdump(unsigned char *buffer, size_t index);
-
-void crtx_daemonize();
+void crtx_print_tasks(struct crtx_graph *graph);
+void crtx_hexdump(unsigned char *buffer, size_t index);
 
 void crtx_traverse_graph(struct crtx_graph *graph, struct crtx_event *event);
 void crtx_reference_event_response(struct crtx_event *event);

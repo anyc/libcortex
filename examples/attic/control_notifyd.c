@@ -34,6 +34,19 @@ static struct crtx_socket_listener sock_listener;
 static char *sock_path = 0;
 static void *notifier_data = 0;
 
+char *get_username() {
+	struct passwd *pw;
+	uid_t uid;
+	
+	uid = getuid();
+	pw = getpwuid(uid);
+	if (pw) {
+		return pw->pw_name;
+	}
+	
+	return 0;
+}
+
 char init() {
 	int r;
 	

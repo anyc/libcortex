@@ -15,6 +15,22 @@
 
 #include "sip_eXosip_event2dict.c"
 
+void crtx_autofill_graph_with_tasks(struct crtx_graph *graph, const char *event_type) {
+	struct crtx_ll *catit, *entry;
+	
+	for (catit = crtx_root->handler_categories; catit && strcmp(catit->handler_category->event_type, event_type); catit=catit->next) {}
+	
+	if (catit) {
+		for (entry = catit->handler_category->entries; entry; entry=entry->next) {
+			CRTX_VDBG("auto-add %s to %s\n", entry->handler_category_entry->handler_name, graph->name);
+			crtx_create_task(graph, 0,
+							 entry->handler_category_entry->handler_name,
+					entry->handler_category_entry->function,
+					entry->handler_category_entry->handler_data);
+		}
+	}
+}
+
 static void sip_event_before_release_cb(struct crtx_event *event, void *userdata) {
 	eXosip_event_t *evt;
 	

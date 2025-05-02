@@ -1061,6 +1061,8 @@ int crtx_find_graph_add_event(struct crtx_event *event) {
 	}
 	
 	crtx_add_event(graph, event);
+	
+	return 0;
 }
 
 
@@ -1100,15 +1102,6 @@ int crtx_create_graph(struct crtx_graph **crtx_graph, const char *name) {
 		*crtx_graph = graph;
 	
 	return crtx_init_graph(graph, name);
-	
-// 	, char **event_descriptions
-// 	if (event_descriptions) {
-// 		while (event_descriptions[graph->n_types]) {
-// 			graph->n_types++;
-// 		}
-// 		
-// 		graph->descriptions = event_descriptions;
-// 	}
 }
 
 static int shutdown_graph_intern(struct crtx_graph *egraph, char crtx_shutdown) {
@@ -1188,10 +1181,7 @@ void crtx_free_task(struct crtx_task *task) {
 	free(task);
 }
 
-void free_task(struct crtx_task *task) {
-	crtx_free_task(task);
-}
-
+/// release all remaining events in all graphs
 void crtx_flush_events() {
 	size_t i;
 	
@@ -1202,10 +1192,9 @@ void crtx_flush_events() {
 			continue;
 		
 		LOCK(crtx_root->graphs[i]->queue_mutex);
-// 		printf("flush %s\n", graphs[i]->types? graphs[i]->types[0]: 0);
+		
 		for (qe = crtx_root->graphs[i]->equeue; qe ; qe = qe_next) {
 			qe_next = qe->next;
-// 			graphs[i]->n_queue_entries--;
 			
 			crtx_invalidate_event(qe->event);
 			
@@ -1213,48 +1202,13 @@ void crtx_flush_events() {
 			crtx_dereference_event_release(qe->event);
 			
 			crtx_dll_unlink(&crtx_root->graphs[i]->equeue, qe);
-			
-// 			free(qe);
 		}
-// 		graphs[i]->equeue = 0;
 		
 		UNLOCK(crtx_root->graphs[i]->queue_mutex);
 	}
 }
 
-// static int shutdown_event_callback(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	struct crtx_ll *ll, *ll_next;
-// // 	int all_stopped, r;
-// 	
-// 	CRTX_VDBG("releasing listeners\n");
-// 	
-// // 	all_stopped = 1;
-// 	for (ll=crtx_root->listeners; ll; ll=ll_next) {
-// 		ll_next = ll->next;
-// 		
-// 		if (crtx_root->event_loop->listener == ll->data)
-// 			continue;
-// 		
-// 		crtx_shutdown_listener((struct crtx_listener_base *) ll->data);
-// 		
-// // 		all_stopped = 0;
-// 		
-// // 		r = crtx_stop_listener((struct crtx_listener_base *) ll->data);
-// // 		if (r != EALREADY)
-// // 			all_stopped = 0;
-// 	}
-// 	
-// // 	printf("all stopped %d\n", all_stopped);
-// // 	if (all_stopped) {
-// 		if (crtx_root->event_loop->listener) {
-// 			crtx_evloop_stop(crtx_root->event_loop);
-// 		}
-// // 	}
-// 	
-// 	return 0;
-// }
-
-
+/// start the main event loop
 void crtx_loop() {
 	if (!crtx_root->event_loop)
 		return;
@@ -1262,7 +1216,6 @@ void crtx_loop() {
 	// the thread calling this either executes the event loop or becomes one of
 	// the worker threads in the thread pool
 	if (crtx_root->event_loop->listener) {
-		// 		crtx_epoll_main(crtx_root->event_loop.listener);
 		crtx_evloop_start(crtx_root->event_loop);
 	} else {
 		spawn_thread(0);
@@ -1293,18 +1246,6 @@ static void *evloop_detached_main(void *data) {
 	
 	return 0;
 }
-// 
-// struct crtx_thread * crtx_start_detached_event_loop() {
-// 	if (!crtx_root->event_loop.listener)
-// 		crtx_get_event_loop();
-// 	
-// 	if (!crtx_root->event_loop.listener) {
-// 		CRTX_ERROR("no event loop registered\n");
-// 		return 0;
-// 	}
-// 	
-// 	return get_thread(event_loop_tmain, 0, 1);
-// }
 
 int crtx_separate_evloop_thread() {
 	struct crtx_thread *t;
@@ -1343,54 +1284,24 @@ void crtx_init_shutdown() {
 	
 	crtx_root->shutdown = 1;
 	
-// 	for (ll=crtx_root->listeners; ll; ll=ll->next) {
-// 	while (crtx_root->listeners) {
-		struct crtx_ll *ll, *ll_next;
-// 		int all_stopped; //, r;
+	struct crtx_ll *ll, *ll_next;
+	for (ll=crtx_root->listeners; ll; ll=ll_next) {
+		ll_next = ll->next;
 		
-// 		all_stopped = 1;
-		for (ll=crtx_root->listeners; ll; ll=ll_next) {
-			ll_next = ll->next;
-			
-			// TODO see fork.test
-			if (!ll->data)
-				continue;
-			
-			if (crtx_root->event_loop && crtx_root->event_loop->listener == ll->data) {
-				CRTX_VDBG("skip eloop listener\n");
-				continue;
-			}
-			
-// 			crtx_shutdown_listener((struct crtx_listener_base *) ll->data);
-			crtx_stop_listener((struct crtx_listener_base *) ll->data);
-// 			r = crtx_stop_listener((struct crtx_listener_base *) ll->data);
-// 			if (r != EALREADY)
-// 				all_stopped = 0;
+		// TODO see fork.test
+		if (!ll->data)
+			continue;
+		
+		if (crtx_root->event_loop && crtx_root->event_loop->listener == ll->data) {
+			CRTX_VDBG("skip eloop listener\n");
+			continue;
 		}
+		
+		crtx_stop_listener((struct crtx_listener_base *) ll->data);
+	}
 	
 	if (crtx_root->event_loop)
 		crtx_root->event_loop->phase_out = 1;
-	
-	// just wake-up the event loop
-// 	crtx_evloop_trigger_callback(crtx_get_main_event_loop(), 0);
-	
-// 		if (all_stopped)
-// 			break;
-// 	}
-	
-// 	crtx_root->shutdown_el_cb.event_handler = &shutdown_event_callback;
-// 	crtx_root->shutdown_el_cb.crtx_event_flags = CRTX_EVLOOP_SPECIAL;
-// 	crtx_evloop_trigger_callback(crtx_root->event_loop, &crtx_root->shutdown_el_cb);
-	
-// 	CRTX_VDBG("asd %p %d\n",&crtx_root->shutdown_el_cb, crtx_root->shutdown_el_cb.crtx_event_flags);
-// 	if (crtx_root->event_loop.listener) {
-// // 		crtx_epoll_stop(crtx_root->event_loop.listener);
-// 		crtx_evloop_stop(&crtx_root->event_loop);
-// 	}
-	
-// // 	crtx_finish();
-// 	crtx_threads_stop_all();
-// 	crtx_flush_events();
 }
 
 void crtx_shutdown_after_fork() {
@@ -1529,10 +1440,6 @@ static void load_plugin(char *path, char *basename) {
 				create = dlsym(p->handle, buf);
 				
 				if (create) {
-// 					crtx_root->listener_repository_length++;
-// 					crtx_root->listener_repository = (struct crtx_listener_repository*) realloc(crtx_root->listener_repository, sizeof(struct crtx_listener_repository)*(crtx_root->listener_repository_length+1));
-// 					lrepo = &crtx_root->listener_repository[crtx_root->listener_repository_length-1];
-// 					memset(&crtx_root->listener_repository[crtx_root->listener_repository_length], 0, sizeof(struct crtx_listener_repository));
 					lrepo = crtx_get_new_listener_repo_entry();
 					
 					lrepo->id = *s;
@@ -1588,45 +1495,45 @@ static void load_plugins(char * directory) {
 	return;
 }
 
-
-// #include <sys/types.h>
-// #include <sys/stat.h>
-// void crtx_daemonize() {
-// // 	pid_t pid = 0;
-// // 	int r, fd;
-// 	
-// // 	signal(SIGCHLD, SIG_IGN);
-// 	
-// 	daemon(0, 0);
-// 	
-// // 	pid = fork();
-// // 	if (pid < 0) {
-// // 		CRTX_ERROR("fork failed\n");
-// // 		exit(1);
-// // 	}
-// // 	if (pid > 0) {
-// // 		CRTX_DBG("parent exits\n");
-// // 		exit(0);
-// // 	}
-// // 	
-// // 	r = setsid();
-// // 	if (r < 0) {
-// // 		CRTX_ERROR("setsid failed: %d\n", r);
-// // 		exit(1);
-// // 	}
-// // 	
-// // 	umask(0);
-// // 	chdir("/");
-// 	
-// // 	for (fd = sysconf(_SC_OPEN_MAX); fd > 0; fd--) {
-// // 		close(fd);
-// // 	}
-// // 	fclose(stdin);
-// 	
-// // 	stdin = fopen("/dev/null", "r");
-// // 	stdout = fopen("/dev/null", "w+");
-// // 	stderr = fopen("/dev/null", "w+");
-// }
+// TODO
+#if 0
+#include <sys/types.h>
+#include <sys/stat.h>
+void crtx_daemonize() {
+	pid_t pid = 0;
+	int r, fd;
+	
+	signal(SIGCHLD, SIG_IGN);
+	
+	pid = fork();
+	if (pid < 0) {
+		CRTX_ERROR("fork failed\n");
+		exit(1);
+	}
+	if (pid > 0) {
+		CRTX_DBG("parent exits\n");
+		exit(0);
+	}
+	
+	r = setsid();
+	if (r < 0) {
+		CRTX_ERROR("setsid failed: %d\n", r);
+		exit(1);
+	}
+	
+	umask(0);
+	chdir("/");
+	
+	for (fd = sysconf(_SC_OPEN_MAX); fd > 0; fd--) {
+		close(fd);
+	}
+	fclose(stdin);
+	
+	stdin = fopen("/dev/null", "r");
+	stdout = fopen("/dev/null", "w+");
+	stderr = fopen("/dev/null", "w+");
+}
+#endif
 
 int crtx_init() {
 	unsigned int i;
@@ -1643,12 +1550,9 @@ int crtx_init() {
 	if (getenv("CRTX_PID_PREFIX"))
 		crtx_pid_prefix = atoi(getenv("CRTX_PID_PREFIX"));
 	
-// 	memset(crtx_root, 0, sizeof(struct crtx_root));
-	
 	CRTX_DBG("initializing libcortex (PID: %d)\n", getpid());
 	
 	crtx_root->shutdown = 0;
-// 	crtx_root->no_threads = 1;
 	crtx_root->default_mode = CRTX_PREFER_ELOOP;
 	crtx_root->global_fd_flags = O_CLOEXEC;
 	
@@ -1695,21 +1599,6 @@ int crtx_finish() {
 	crtx_threads_stop_all();
 	crtx_flush_events();
 	
-// 	while (crtx_root->listeners) {
-// // 		struct crtx_ll *ev_iter;
-// // 		int skip = 0;
-// // 		for (ev_iter = crtx_root->event_loops; ev_iter; ev_iter = ev_iter->next) {
-// // 			if (((struct crtx_event_loop*) ev_iter->data)->listener == crtx_root->listeners->data) {
-// // 				skip = 1;
-// // 				break;
-// // 			}
-// // 		}
-// // 		if (skip)
-// // 			continue;
-// 		
-// 		crtx_shutdown_listener((struct crtx_listener_base*) crtx_root->listeners->data);
-// 	}
-	
 	for (it = crtx_root->listeners; it; it = itn) {
 		itn = it->next;
 		
@@ -1720,21 +1609,6 @@ int crtx_finish() {
 		
 		crtx_shutdown_listener((struct crtx_listener_base*) it->data);
 	}
-	
-// 	if (crtx_root->event_loop) {
-// 		crtx_evloop_stop(crtx_root->event_loop);
-// 		crtx_evloop_release(crtx_root->event_loop);
-// 	}
-// 	for (it=crtx_root->event_loops; it; it=itn) {
-// 		itn = it->next;
-// 		
-// 		crtx_ll_unlink(&crtx_root->event_loops, it);
-// 		
-// 		crtx_evloop_stop((struct crtx_event_loop*) it->data);
-// 		crtx_evloop_release((struct crtx_event_loop*) it->data);
-// 		
-// 		free(it);
-// 	}
 	
 	if (crtx_root->evloop_thread) {
 		crtx_evloop_stop(crtx_root->event_loop);
@@ -1754,14 +1628,7 @@ int crtx_finish() {
 	while (static_modules[i].id) { i++; }
 	i--;
 	
-// 	if (crtx_root->notification_listeners_handle)
-// 		crtx_finish_notification_listeners(crtx_root->notification_listeners_handle);
-	
-	// stop threads first
-// 	static_modules[0].finish();
 	crtx_threads_stop_all();
-	// stop controls second
-// 	static_modules[1].finish();
 	
 	while (i > 0) {
 		CRTX_DBG("finish \"%s\"\n", static_modules[i].id);
@@ -1770,17 +1637,6 @@ int crtx_finish() {
 		i--;
 	}
 	
-// 	if (crtx_root->event_loop && crtx_root->event_loop->listener) {
-// 		crtx_shutdown_listener((struct crtx_listener_base *) crtx_root->event_loop->listener);
-// // 		free(crtx_root->event_loop.listener);
-// 	}
-	
-// 	if (crtx_root->event_loop)
-// 		free(crtx_root->event_loop);
-// 	crtx_root->event_loop = 0;
-	
-	// finish threads module
-// 	static_modules[0].finish();
 	crtx_threads_finish();
 	
 	LOCK(crtx_root->graphs_mutex);
@@ -1818,7 +1674,7 @@ int crtx_finish() {
 	return 0;
 }
 
-void print_tasks(struct crtx_graph *graph) {
+void crtx_print_tasks(struct crtx_graph *graph) {
 	struct crtx_task *e;
 	
 	for (e=graph->tasks; e; e=e->next) {
@@ -1826,7 +1682,7 @@ void print_tasks(struct crtx_graph *graph) {
 	}
 }
 
-void hexdump(unsigned char *buffer, size_t index) {
+void crtx_hexdump(unsigned char *buffer, size_t index) {
 	size_t i;
 	
 	for (i=0;i<index;i++) {
@@ -1835,50 +1691,6 @@ void hexdump(unsigned char *buffer, size_t index) {
 	CRTX_INFO("\n");
 }
 
-typedef char (*event_notifier_filter)(struct crtx_event *event);
-typedef void (*event_notifier_cb)(struct crtx_event *event);
-struct crtx_event_notifier {
-	event_notifier_filter filter;
-	event_notifier_cb callback;
-	
-	pthread_mutex_t mutex;
-	pthread_cond_t cond;
-};
-
-void event_notifier_task(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_event_notifier *en = (struct crtx_event_notifier*) userdata;
-	
-	if (en->filter(event)) {
-		en->callback(event);
-		
-		pthread_mutex_lock(&en->mutex);
-		pthread_cond_broadcast(&en->cond);
-		pthread_mutex_unlock(&en->mutex);
-	}
-}
-
-void wait_on_notifier(struct crtx_event_notifier *en) {
-	pthread_mutex_lock(&en->mutex);
-	
-	pthread_cond_wait(&en->cond, &en->mutex);
-	
-	pthread_mutex_unlock(&en->mutex);
-}
-
-char *get_username() {
-	struct passwd *pw;
-	uid_t uid;
-	
-	uid = getuid();
-	pw = getpwuid(uid);
-	if (pw) {
-		return pw->pw_name;
-	}
-	
-	return 0;
-}
-
-// void crtx_event_set_raw_data(struct crtx_event *event, void *raw_pointer, size_t size, unsigned char flags) {
 void crtx_event_set_raw_data(struct crtx_event *event, unsigned char type, ...) {
 	struct crtx_dict *upgraded_dict;
 	struct crtx_dict_item *di;
@@ -1888,12 +1700,7 @@ void crtx_event_set_raw_data(struct crtx_event *event, unsigned char type, ...) 
 	LOCK(event->mutex);
 	
 	va_start(va, type);
-// 	
-// 	ret = crtx_fill_data_item_va(di, type, va);
-// 	
-// 	va_end(va);
-// 	crtx_fill_data_item(&event->data, type, "crtx_raw_data", raw_pointer, size, flags);
-	
+
 	if (event->data.type == 'D') {
 		if (event->data.key && !strcmp(event->data.key, "crtx_raw_data")) {
 			di = crtx_get_item_by_idx(event->data.dict, 0);
@@ -1906,11 +1713,6 @@ void crtx_event_set_raw_data(struct crtx_event *event, unsigned char type, ...) 
 			crtx_fill_data_item_va2(di, type, "crtx_raw_data", &va);
 			
 			di = crtx_get_item_by_idx(upgraded_dict, 1);
-// 			di->key = event->data.key;
-// 			di->type = 'D';
-// 			di->size = event->data.size;
-// 			di->flags = event->data.flags;
-// 			di->dict = &event->data;
 			memcpy(di, &event->data, sizeof(struct crtx_dict_item));
 			
 			event->data.key = "crtx_dict_data";
@@ -1931,48 +1733,40 @@ void crtx_event_set_raw_data(struct crtx_event *event, unsigned char type, ...) 
 void crtx_event_set_dict_data(struct crtx_event *event, struct crtx_dict *data_dict, unsigned char n_additional_fields) {
 	struct crtx_dict *upgraded_dict;
 	struct crtx_dict_item *di;
-// 	unsigned char n_additional_fields = 0;
-// 	crtx_event_set_data(event, 0, 0, data_dict, n_additional_fields);
 	
 	LOCK(event->mutex);
 	
-// 	if (data_dict || n_additional_fields > 0) {
-		if (event->data.type != 'D') {
-			upgraded_dict = crtx_init_dict(0, 2+n_additional_fields, 0);
-			
-			di = crtx_get_item_by_idx(upgraded_dict, 0);
-			
-// 			crtx_dict_copy_item(di, &event->data, 0);
-			memcpy(di, &event->data, sizeof(struct crtx_dict_item));
-			
-			di = crtx_get_item_by_idx(upgraded_dict, 1);
-			di->key = "crtx_dict_data";
-			di->type = 'D';
+	if (event->data.type != 'D') {
+		upgraded_dict = crtx_init_dict(0, 2+n_additional_fields, 0);
+		
+		di = crtx_get_item_by_idx(upgraded_dict, 0);
+		
+		memcpy(di, &event->data, sizeof(struct crtx_dict_item));
+		
+		di = crtx_get_item_by_idx(upgraded_dict, 1);
+		di->key = "crtx_dict_data";
+		di->type = 'D';
+		di->dict = data_dict;
+		
+		event->data.key = "crtx_dict_data";
+		event->data.type = 'D';
+		event->data.size = 0;
+		event->data.flags = 0;
+		event->data.dict = upgraded_dict;
+	} else
+	if (event->data.type == 'D') {
+		if (!strcmp(event->data.key, "crtx_dict_data")) {
+			di = crtx_get_item_by_idx(event->data.dict, 1);
 			di->dict = data_dict;
 			
-			event->data.key = "crtx_dict_data";
-			event->data.type = 'D';
-			event->data.size = 0;
-			event->data.flags = 0;
-			event->data.dict = upgraded_dict;
-		} else
-		if (event->data.type == 'D') {
-// 			if (strcmp(event->data.key, "data"))
-// 				CRTX_ERROR("invalid event data structure\n");
-			
-			if (!strcmp(event->data.key, "crtx_dict_data")) {
-				di = crtx_get_item_by_idx(event->data.dict, 1);
-				di->dict = data_dict;
-				
-				if (event->data.dict->signature_length < 2 + n_additional_fields)
-					crtx_resize_dict(event->data.dict, 2 + n_additional_fields);
-			} else {
-				event->data.dict = data_dict;
-				if (n_additional_fields > 0)
-					CRTX_ERROR("TODO\n");
-			}
+			if (event->data.dict->signature_length < 2 + n_additional_fields)
+				crtx_resize_dict(event->data.dict, 2 + n_additional_fields);
+		} else {
+			event->data.dict = data_dict;
+			if (n_additional_fields > 0)
+				CRTX_ERROR("TODO\n");
 		}
-// 	}
+	}
 	
 	UNLOCK(event->mutex);
 }
@@ -2017,13 +1811,6 @@ char crtx_event_raw2dict(struct crtx_event *event, void *user_data) {
 	return CRTX_SUCCESS;
 }
 
-// static struct crtx_dict_item *crtx_event_get_data_dict(struct crtx_event *event) {
-// 	if (event->data.type != 'D' || strcmp(event->data.key, "crtx_dict_data"))
-// 		return &event->data;
-// 	
-// 	return crtx_get_item_by_idx(event->data.dict, 1);
-// }
-
 void crtx_event_get_payload(struct crtx_event *event, char *id, void **raw_pointer, struct crtx_dict **dict) {
 	struct crtx_dict_item *di;
 	
@@ -2054,13 +1841,7 @@ void crtx_event_get_payload(struct crtx_event *event, char *id, void **raw_point
 				*dict = 0;
 				return;
 			}
-		} 
-// 		else
-// 		if (event->data.type != 'D') {
-// 			CRTX_ERROR("unknown event data type %d\n", event->data.type);
-// 			*dict = 0;
-// 			return;
-// 		}
+		}
 		
 		if (!strcmp(event->data.key, "crtx_dict_data")) {
 			di = crtx_get_item_by_idx(event->data.dict, 1);
@@ -2156,11 +1937,6 @@ void crtx_register_handler_for_event_type(char *event_type, char *handler_name, 
 	
 	for (catit = crtx_root->handler_categories; catit && strcmp(catit->handler_category->event_type, event_type); catit=catit->next) {}
 	
-// 	if (!last_catit) {
-// 		catit = crtx_ll_append_new(&crtx_root->handler_categories, 0);
-// 		catit->handler_category = 0;
-// 	}
-	
 	if (!catit) {
 		catit = crtx_ll_append_new(&crtx_root->handler_categories, 0);
 		catit->handler_category = 0;
@@ -2180,22 +1956,6 @@ void crtx_register_handler_for_event_type(char *event_type, char *handler_name, 
 	entry->handler_category_entry->handler_data = handler_data;
 	
 	CRTX_VDBG("new handler %s for etype %s\n", handler_name, event_type);
-}
-
-void crtx_autofill_graph_with_tasks(struct crtx_graph *graph, const char *event_type) {
-	struct crtx_ll *catit, *entry;
-	
-	for (catit = crtx_root->handler_categories; catit && strcmp(catit->handler_category->event_type, event_type); catit=catit->next) {}
-	
-	if (catit) {
-		for (entry = catit->handler_category->entries; entry; entry=entry->next) {
-			CRTX_VDBG("auto-add %s to %s\n", entry->handler_category_entry->handler_name, graph->name);
-			crtx_create_task(graph, 0,
-							entry->handler_category_entry->handler_name,
-							entry->handler_category_entry->function,
-							entry->handler_category_entry->handler_data);
-		}
-	}
 }
 
 void crtx_set_main_event_loop(const char *event_loop) {

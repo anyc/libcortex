@@ -1204,7 +1204,7 @@ int crtx_transform_dict_handler(struct crtx_event *event, void *userdata, void *
 	if (trans->graph)
 		crtx_add_event(trans->graph, new_event);
 	else
-		add_raw_event(new_event);
+		crtx_find_graph_add_event(new_event);
 	
 	return 1;
 }
