@@ -1,0 +1,8 @@
+<map id="crtx_genl_group" name="crtx_genl_group">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,93,132,119"/>
+<area shape="rect" id="Node000002" href="$structcrtx__dict.html" title=" " alt="" coords="161,5,240,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="149,28,117,39,89,57,78,75,73,94,67,92,73,72,85,53,115,34,147,23"/>
+<area shape="rect" id="Node000003" href="$structcrtx__dict__item.html" title=" " alt="" coords="179,93,294,119"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="197,44,199,68,208,81,220,91,216,95,204,85,194,70,191,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="234,80,229,56,212,33,216,30,234,54,240,79"/>
+</map>
