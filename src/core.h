@@ -398,8 +398,7 @@ void crtx_reference_event_release(struct crtx_event *event);
 void crtx_dereference_event_release(struct crtx_event *event);
 
 // void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event);
-char *get_username();
-char crtx_graph_has_task(struct crtx_graph *graph);
+int crtx_graph_has_task(struct crtx_graph *graph);
 int crtx_is_graph_empty(struct crtx_graph *graph);
 // void *crtx_copy_raw_data(struct crtx_event_data *data);
 
@@ -414,7 +413,7 @@ int crtx_process_one_event(struct crtx_graph *graph);
 // void crtx_event_set_data(struct crtx_event *event, void *raw_pointer, unsigned char flags, struct crtx_dict *data_dict, unsigned char n_additional_fields);
 void crtx_event_set_raw_data(struct crtx_event *event, unsigned char type, ...);
 void crtx_event_set_dict_data(struct crtx_event *event, struct crtx_dict *data_dict, unsigned char n_additional_fields);
-char crtx_event_raw2dict(struct crtx_event *event, void *user_data);
+int crtx_event_raw2dict(struct crtx_event *event, void *user_data);
 void crtx_event_get_payload(struct crtx_event *event, char *id, void **raw_pointer, struct crtx_dict **dict);
 struct crtx_dict *crtx_event_get_dict(struct crtx_event *event);
 struct crtx_dict_item *crtx_event_get_item_by_key(struct crtx_event *event, char *id, char *key);

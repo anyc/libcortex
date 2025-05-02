@@ -747,7 +747,7 @@ struct crtx_task * crtx_graph_get_task(struct crtx_graph *graph, const char *id,
 	return titer;
 }
 
-char crtx_graph_has_task(struct crtx_graph *graph) {
+int crtx_graph_has_task(struct crtx_graph *graph) {
 	return (graph->tasks != 0);
 }
 
@@ -1789,7 +1789,7 @@ void crtx_event_set_dict(struct crtx_event *event, char *signature, ...) {
 	va_end(va);
 }
 
-char crtx_event_raw2dict(struct crtx_event *event, void *user_data) {
+int crtx_event_raw2dict(struct crtx_event *event, void *user_data) {
 	struct crtx_dict_item *raw2dict;
 	crtx_raw_to_dict_t raw2dict_fct;
 	
