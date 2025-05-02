@@ -12,12 +12,11 @@
 #include "udev.h"
 #include "dict.h"
 
-// char *udev_msg_etype[] = { UDEV_MSG_ETYPE, 0 };
-
 /* Note that USB strings are Unicode, UCS2 encoded, but the strings returned from
  * udev_device_get_sysattr_value() are UTF-8 encoded.
  */
 
+/// convert udev_device into a crtx dictionary
 struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_raw2dict_attr_req *r2ds, char make_persistent) {
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di, *sdi;
@@ -76,14 +75,12 @@ struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_r
 			subsystem = udev_device_get_subsystem(dev);
 			device_type = udev_device_get_devtype(dev);
 			
-// 			printf("%s %s %s %s\n", subsystem, device_type, i->subsystem, i->device_type);
 			if (
 				(i->subsystem && strcmp(subsystem, i->subsystem))
 				|| (i->device_type && strcmp(device_type, i->device_type))
 				)
 			{
 				new_dev = udev_device_get_parent_with_subsystem_devtype(dev, i->subsystem, i->device_type);
-// 				printf("new %s %s\n", subsystem, device_type);
 				if (new_dev)
 					dev = new_dev;
 				else
@@ -102,13 +99,11 @@ struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_r
 			a = i->attributes;
 			while (*a) {
 				value = udev_device_get_sysattr_value(dev, *a);
-// 				printf("value %s %s\n", *a, value);
 				if (value) {
 					sdi = crtx_dict_alloc_next_item(di->dict);
 					crtx_fill_data_item(sdi, 's', *a, value, strlen(value), flags);
 				} else {
 					value = udev_device_get_property_value(dev, *a);
-// 					printf("value2 %s %s\n", *a, value);
 					if (value) {
 						sdi = crtx_dict_alloc_next_item(di->dict);
 						crtx_fill_data_item(sdi, 's', *a, value, strlen(value), flags);
@@ -117,19 +112,7 @@ struct crtx_dict *crtx_udev_raw2dict(struct udev_device *dev, struct crtx_udev_r
 				
 				a++;
 			}
-			
-// 			struct udev_list_entry *entry;
-// 			const char *key;
-// 			
-// 			udev_list_entry_foreach(entry, udev_device_get_properties_list_entry(dev)) {
-// 				key = udev_list_entry_get_name(entry);
-// 				value = udev_list_entry_get_value(entry);
-// 				
-// 				di = crtx_dict_alloc_next_item(dict);
-// 				if (value)
-// 					crtx_fill_data_item(di, 's', key, value, strlen(value), flags);
-// 			}
-// 			
+ 			
 			i++;
 		}
 	} else {
@@ -170,7 +153,7 @@ void push_new_udev_event(struct crtx_udev_listener *ulist, struct udev_device *d
 	struct crtx_event *nevent;
 	
 	// size of struct udev_device is unknown
-	crtx_create_event(&nevent); //, dev, sizeof(struct udev_device*));
+	crtx_create_event(&nevent);
 	
 	crtx_event_set_raw_data(nevent, 'p', dev, sizeof(struct udev_device*), CRTX_DIF_DONT_FREE_DATA);
 	
@@ -250,8 +233,6 @@ struct crtx_listener_base *crtx_setup_udev_listener(void *options) {
 	
 	ulist = (struct crtx_udev_listener *) options;
 	
-// 	CRTX_DBG("new evdev listener on %s: %s\n", evdev->device_path, libevdev_get_name(evdev->device));
-	
 	/* Create the udev object */
 	ulist->udev = udev_new();
 	if (!ulist->udev) {
@@ -290,78 +271,3 @@ void crtx_udev_init() {
 
 void crtx_udev_finish() {
 }
-
-
-
-#ifdef CRTX_TEST
-
-char * usb_attrs[] = {
-	"idVendor",
-	"idProduct",
-	"manufacturer",
-	"product",
-	"serial",
-	0,
-};
-
-struct crtx_udev_raw2dict_attr_req r2ds[] = {
-	{ "usb", "usb_device", usb_attrs },
-	{ 0 },
-};
-
-char *test_filters[] = {
-	"block",
-	"partition",
-	0,
-	0,
-};
-
-static int udev_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_dict *dict;
-	
-	
-	dict = crtx_udev_raw2dict((struct udev_device *) crtx_event_get_ptr(event), r2ds, 0);
-	
-	crtx_print_dict(dict);
-	
-// 	char r, *s;
-// 	r = crtx_dict_locate_value(dict, "usb-usb_device/idVendor", 's', &s, sizeof(void*));
-// 	printf("%d %s\n", r, s);
-	
-	crtx_dict_unref(dict);
-	
-	return 0;
-}
-
-struct crtx_udev_listener ulist;
-
-int udev_main(int argc, char **argv) {
-	int ret;
-	
-	
-	memset(&ulist, 0, sizeof(struct crtx_udev_listener));
-	
-	ulist.sys_dev_filter = test_filters;
-	
-	ret = crtx_setup_listener("udev", &ulist);
-	if (ret) {
-		CRTX_ERROR("create_listener(udev) failed: %s\n", strerror(-ret));
-		exit(1);
-	}
-	
-	crtx_create_task(ulist.base.graph, 0, "udev_test", udev_test_handler, 0);
-	
-	ret = crtx_start_listener(&ulist.base);
-	if (ret) {
-		CRTX_ERROR("starting udev listener failed\n");
-		return 1;
-	}
-	
-	crtx_loop();
-	
-	return 0;  
-}
-
-CRTX_TEST_MAIN(udev_main);
-
-#endif

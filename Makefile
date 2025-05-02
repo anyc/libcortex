@@ -44,6 +44,7 @@ libcortex: $(local_mk)
 
 tests: crtx_layer2_tests
 	$(MAKE) -C src tests
+	$(MAKE) -C tests local_mk=../$(local_mk)
 
 debug:
 	$(MAKE) $(MAKEFILE) DEBUG=1 $(DEBUGARGS)
