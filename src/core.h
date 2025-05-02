@@ -395,10 +395,10 @@ void hexdump(unsigned char *buffer, size_t index);
 void crtx_daemonize();
 
 void crtx_traverse_graph(struct crtx_graph *graph, struct crtx_event *event);
-void reference_event_response(struct crtx_event *event);
-void dereference_event_response(struct crtx_event *event);
-void reference_event_release(struct crtx_event *event);
-void dereference_event_release(struct crtx_event *event);
+void crtx_reference_event_response(struct crtx_event *event);
+void crtx_dereference_event_response(struct crtx_event *event);
+void crtx_reference_event_release(struct crtx_event *event);
+void crtx_dereference_event_release(struct crtx_event *event);
 
 // void event_ll_add(struct crtx_event_ll **list, struct crtx_event *event);
 char *get_username();

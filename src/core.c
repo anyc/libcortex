@@ -632,9 +632,9 @@ int crtx_process_one_event(struct crtx_graph *graph) {
 			CRTX_INFO("no task in graph\n");
 	}
 	
-	dereference_event_response(queue_entry->event);
+	crtx_dereference_event_response(queue_entry->event);
 	
-	dereference_event_release(queue_entry->event);
+	crtx_dereference_event_release(queue_entry->event);
 	
 	LOCK(graph->queue_mutex);
 	if (queue_entry->prev)
@@ -779,16 +779,16 @@ void crtx_add_event(struct crtx_graph *graph, struct crtx_event *event) {
 		return;
 	}
 	
-	reference_event_release(event);
-	reference_event_response(event);
+	crtx_reference_event_release(event);
+	crtx_reference_event_response(event);
 	
 	pthread_mutex_lock(&graph->mutex);
 	
 	if (!graph->tasks) {
 		CRTX_INFO("dropping event %s (%p) as graph \"%s\" (%p) is empty\n", event->description, event, graph->name?graph->name:"", graph);
 		
-		dereference_event_response(event);
-		dereference_event_release(event);
+		crtx_dereference_event_response(event);
+		crtx_dereference_event_release(event);
 		
 		pthread_mutex_unlock(&graph->mutex);
 		return;
@@ -901,7 +901,7 @@ int crtx_push_new_event(struct crtx_listener_base *lstnr, struct crtx_event **ev
 	return 0;
 }
 
-void reference_event_release(struct crtx_event *event) {
+void crtx_reference_event_release(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
 	event->refs_before_release++;
@@ -910,7 +910,7 @@ void reference_event_release(struct crtx_event *event) {
 	pthread_mutex_unlock(&event->mutex);
 }
 
-void dereference_event_release(struct crtx_event *event) {
+void crtx_dereference_event_release(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
 	CRTX_VDBG("deref release of event %s (%p) (remaining %d)\n", event->description, event, event->refs_before_release);
@@ -927,7 +927,7 @@ void dereference_event_release(struct crtx_event *event) {
 	pthread_mutex_unlock(&event->mutex);
 }
 
-void reference_event_response(struct crtx_event *event) {
+void crtx_reference_event_response(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
 	if (!event->error) {
@@ -938,7 +938,7 @@ void reference_event_response(struct crtx_event *event) {
 	pthread_mutex_unlock(&event->mutex);
 }
 
-void dereference_event_response(struct crtx_event *event) {
+void crtx_dereference_event_response(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
 	CRTX_VDBG("ref response of event %s (%p) (remaining %d)\n", event->description, event, event->refs_before_response);
@@ -1253,8 +1253,8 @@ void crtx_flush_events() {
 			
 			crtx_invalidate_event(qe->event);
 			
-			dereference_event_response(qe->event);
-			dereference_event_release(qe->event);
+			crtx_dereference_event_response(qe->event);
+			crtx_dereference_event_release(qe->event);
 			
 			crtx_dll_unlink(&crtx_root->graphs[i]->equeue, qe);
 			

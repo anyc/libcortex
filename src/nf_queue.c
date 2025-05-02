@@ -311,7 +311,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		
 		
-		reference_event_release(event);
+		crtx_reference_event_release(event);
 		
 		crtx_add_event(nfq_list->base.graph, event);
 		
@@ -330,7 +330,7 @@ static int nfq_event_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		
 		ret = nfq_set_verdict2(qh, pkt->id, NF_REPEAT, pkt->mark_out, 0, NULL);
 		
-		dereference_event_release(event);
+		crtx_dereference_event_release(event);
 		
 		return ret;
 	} else {
