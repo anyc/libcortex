@@ -85,7 +85,7 @@ static char timeout_event_handler(struct crtx_event *event, void *userdata, void
 		
 		el_cb->event_handler(event, el_cb->event_handler_data, 0);
 		
-		free_event(event);
+		crtx_free_event(event);
 	}
 	
 	return 0;

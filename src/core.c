@@ -871,21 +871,21 @@ int crtx_push_new_event(struct crtx_listener_base *lstnr, struct crtx_event **ev
 			dict = crtx_create_dict_va(data_key_or_sign, &va);
 			if (!dict) {
 				CRTX_ERROR("crtx_create_dict_va() failed: %d\n", rv);
-				free_event(levent);
+				crtx_free_event(levent);
 				return rv;
 			}
 			
 			rv = crtx_fill_data_item(&levent->data, data_type, 0, dict, 0, 0);
 			if (rv) {
 				CRTX_ERROR("crtx_fill_data_item() failed: %d\n", rv);
-				free_event(levent);
+				crtx_free_event(levent);
 				return rv;
 			}
 		} else {
 			rv = crtx_fill_data_item_va2(&levent->data, data_type, data_key_or_sign, &va);
 			if (rv) {
 				CRTX_ERROR("crtx_fill_data_item_va2() failed: %d\n", rv);
-				free_event(levent);
+				crtx_free_event(levent);
 				return rv;
 			}
 		}
@@ -920,7 +920,7 @@ void crtx_dereference_event_release(struct crtx_event *event) {
 	
 	if (event->refs_before_release == 0) {
 		pthread_mutex_unlock(&event->mutex);
-		free_event(event);
+		crtx_free_event(event);
 		return;
 	}
 	
@@ -972,15 +972,12 @@ void crtx_invalidate_event(struct crtx_event *event) {
 	pthread_cond_broadcast(&event->response_cond);
 }
 
-void free_event(struct crtx_event *event) {
+void crtx_free_event(struct crtx_event *event) {
 	// is somebody already releasing this event?
 	if (!CAS(&event->release_in_progress, 0, 1)) {
 		pthread_cond_broadcast(&event->release_cond);
 		return;
 	}
-	
-// 	if (event->refs_before_release > 0)
-// 		reference_event_release(event);
 	
 	// disappoint everyone who still waits for this event
 	crtx_invalidate_event(event);
@@ -995,8 +992,6 @@ void free_event(struct crtx_event *event) {
 	if (event->cb_before_release)
 		event->cb_before_release(event, event->cb_before_release_data);
 	
-// 	free_event_data(&event->data);
-// 	free_event_data(&event->response);
 	crtx_free_dict_item_data(&event->data);
 	crtx_free_dict_item_data(&event->response);
 	
@@ -1155,7 +1150,7 @@ static int shutdown_graph_intern(struct crtx_graph *egraph, char crtx_shutdown) 
 	}
 	
 	for (qe = egraph->equeue; qe; qe=qe_next) {
-		free_event(qe->event);
+		crtx_free_event(qe->event);
 		qe_next = qe->next;
 		free(qe);
 	}

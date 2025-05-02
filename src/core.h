@@ -334,7 +334,7 @@ extern struct crtx_root *crtx_root;
 void crtx_printf(char level, char const *format, ...) __attribute__ ((format (printf, 2, 3)));
 char *crtx_stracpy(const char *str, size_t *str_length);
 struct crtx_event *new_event();
-void free_event(struct crtx_event *event);
+void crtx_free_event(struct crtx_event *event);
 int crtx_init();
 int crtx_finish();
 void crtx_loop();

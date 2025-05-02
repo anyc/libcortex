@@ -183,7 +183,7 @@ void crtx_evloop_callback(struct crtx_evloop_callback *el_cb) {
 		if (el_cb->event_handler) {
 			el_cb->event_handler(event, el_cb->event_handler_data, 0);
 			
-			free_event(event);
+			crtx_free_event(event);
 		}
 // 		} else {
 // 			enum crtx_processing_mode mode;

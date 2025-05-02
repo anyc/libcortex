@@ -136,7 +136,7 @@ int crtx_sd_journal_gen_event_dict(struct crtx_sd_journal_listener *jlstnr, void
 			if (!sep) {
 				CRTX_ERROR("cannot parse: \"%.*s\"\n", (int) tuple_length, (char*) tuple);
 				crtx_dict_unref(dict);
-				free_event(levent);
+				crtx_free_event(levent);
 				return rv;
 			}
 			
@@ -155,7 +155,7 @@ int crtx_sd_journal_gen_event_dict(struct crtx_sd_journal_listener *jlstnr, void
 			if (rv) {
 				CRTX_ERROR("crtx_fill_data_item() failed: %d\n", rv);
 				crtx_dict_unref(dict);
-				free_event(levent);
+				crtx_free_event(levent);
 				return rv;
 			}
 		}
@@ -164,7 +164,7 @@ int crtx_sd_journal_gen_event_dict(struct crtx_sd_journal_listener *jlstnr, void
 		if (rv) {
 			CRTX_ERROR("crtx_fill_data_item() failed: %d\n", rv);
 			crtx_dict_unref(dict);
-			free_event(levent);
+			crtx_free_event(levent);
 			return rv;
 		}
 		
