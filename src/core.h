@@ -35,23 +35,6 @@ extern "C" {
 		return i; \
 	}
 
-#define CRTX_DECLARE_ALLOC_FUNCTION(lstnr) \
-	struct crtx_ ## lstnr ## _listener * crtx_alloc_ ## lstnr ## _listener();
-#define CRTX_DECLARE_CALLOC_FUNCTION(lstnr) \
-	struct crtx_ ## lstnr ## _listener * crtx_ ## lstnr ## _calloc_listener(void);
-
-#define CRTX_RET_GEZ(r) { if (r < 0) {CRTX_ERROR("%s:%d: %d %s\n", __FILE__, __LINE__, r, strerror(-r)); return(r); } }
-
-#define CRTX_EVT_NOTIFICATION "cortexd.notification"
-extern char *crtx_evt_notification[];
-#define CRTX_EVT_INBOX "cortexd.inbox"
-extern char *crtx_evt_inbox[];
-#define CRTX_EVT_OUTBOX "cortexd.outbox"
-extern char *crtx_evt_outbox[];
-
-#define CRTX_EVT_SHUTDOWN "cortexd.control.shutdown"
-#define CRTX_EVT_MOD_INIT "cortex.control.module_initialized"
-
 /// specifies how a listener should be processed
 enum crtx_processing_mode {
 	CRTX_PREFER_NONE=0,		///< unspecified mode
@@ -59,7 +42,6 @@ enum crtx_processing_mode {
 	CRTX_PREFER_ELOOP,		///< a listener provides a file descriptor that can be added to the event loop
 	CRTX_NO_PROCESSING_MODE	///< the listener requires no processing, e.g., if it depends on other listeners
 };
-
 
 struct crtx_event;
 struct crtx_listener_base;

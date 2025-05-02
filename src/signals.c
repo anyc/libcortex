@@ -654,29 +654,19 @@ int crtx_signals_rem_child_handler(void *sigchld_cb) {
 }
 
 static int sigterm_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_event *newe;
-	
 // 	struct sigaction new_action;
 // 	new_action.sa_handler = SIG_DFL;
 // 	sigemptyset(&new_action.sa_mask);
 // 	new_action.sa_flags = 0;
 // 	sigaction(SIGTERM, &new_action, 0);
 	
-	crtx_create_event(&newe);
-	newe->description = CRTX_EVT_SHUTDOWN;
-	
-	crtx_add_event(crtx_root->crtx_ctrl_graph, newe);
+	crtx_init_shutdown();
 	
 	return 1;
 }
 
 static int sigint_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_event *newe;
-	
-	crtx_create_event(&newe);
-	newe->description = CRTX_EVT_SHUTDOWN;
-	
-	crtx_add_event(crtx_root->crtx_ctrl_graph, newe);
+	crtx_init_shutdown();
 	
 	return 1;
 }

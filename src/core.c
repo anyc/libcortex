@@ -35,10 +35,6 @@ struct crtx_root *crtx_root = &crtx_global_root;
 
 #include "core_modules.h"
 
-char * crtx_evt_control[] = { CRTX_EVT_MOD_INIT, CRTX_EVT_SHUTDOWN, 0 };
-char *crtx_evt_inbox[] = { CRTX_EVT_INBOX, 0 };
-char *crtx_evt_outbox[] = { CRTX_EVT_OUTBOX, 0 };
-
 char crtx_verbosity = CRTX_VLEVEL_INFO;
 char crtx_pid_prefix = 0;
 char crtx_use_syslog = 0;
@@ -1621,22 +1617,6 @@ void crtx_shutdown_after_fork() {
 	crtx_init_shutdown();
 }
 
-static int handle_shutdown(struct crtx_event *event, void *userdata, void **sessiondata) {
-	struct crtx_task *t;
-	
-	// TODO make sure we're only called once
-	t = (struct crtx_task *) userdata;
-	t->handle = 0;
-	
-	crtx_init_shutdown();
-	
-// 	if (crtx_root->event_loop && crtx_root->event_loop->listener) {
-// 		crtx_evloop_stop(crtx_root->event_loop);
-// 	}
-	
-	return 1;
-}
-
 struct crtx_listener_repository* crtx_get_new_listener_repo_entry() {
 	crtx_root->listener_repository_length++;
 	crtx_root->listener_repository = (struct crtx_listener_repository*) realloc(crtx_root->listener_repository, sizeof(struct crtx_listener_repository)*(crtx_root->listener_repository_length+1));
@@ -1839,7 +1819,6 @@ static void load_plugins(char * directory) {
 // }
 
 int crtx_init() {
-	struct crtx_task *t;
 	unsigned int i;
 	
 	
@@ -1870,23 +1849,6 @@ int crtx_init() {
 	crtx_root->evloop_job.fct = &evloop_detached_main;
 	
 	INIT_MUTEX(crtx_root->graphs_mutex);
-	
-	crtx_create_graph(&crtx_root->crtx_ctrl_graph, "cortexd.control");
-	{
-		while (crtx_evt_control[crtx_root->crtx_ctrl_graph->n_types]) {
-			crtx_root->crtx_ctrl_graph->n_types++;
-		}
-		
-		crtx_root->crtx_ctrl_graph->descriptions = crtx_evt_control;
-	}
-	
-	t = new_task();
-	t->id = "shutdown";
-	t->handle = &handle_shutdown;
-	t->userdata = t;
-	t->position = 255;
-	t->event_type_match = CRTX_EVT_SHUTDOWN;
-	add_task(crtx_root->crtx_ctrl_graph, t);
 	
 	crtx_threads_init();
 	
