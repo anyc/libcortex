@@ -71,37 +71,48 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-attribs">Public Attributes</a> &#124;
-<a href="structcrtx__lstnr__plugin-members.html">List of all members</a>  </div>
+<a href="#pub-attribs">Data Fields</a>  </div>
   <div class="headertitle"><div class="title">crtx_lstnr_plugin Struct Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>structure that represents a plugin  
+ <a href="structcrtx__lstnr__plugin.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="core_8h_source.html">core.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
+Data Fields</h2></td></tr>
 <tr class="memitem:a4cafde8b60e5393693144362a6916784" id="r_a4cafde8b60e5393693144362a6916784"><td class="memItemLeft" align="right" valign="top"><a id="a4cafde8b60e5393693144362a6916784" name="a4cafde8b60e5393693144362a6916784"></a>
 char *&#160;</td><td class="memItemRight" valign="bottom"><b>path</b></td></tr>
+<tr class="memdesc:a4cafde8b60e5393693144362a6916784"><td class="mdescLeft">&#160;</td><td class="mdescRight">path to the library <br /></td></tr>
 <tr class="separator:a4cafde8b60e5393693144362a6916784"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae5a8cf188870c012ce265133cbbf138b" id="r_ae5a8cf188870c012ce265133cbbf138b"><td class="memItemLeft" align="right" valign="top"><a id="ae5a8cf188870c012ce265133cbbf138b" name="ae5a8cf188870c012ce265133cbbf138b"></a>
 char *&#160;</td><td class="memItemRight" valign="bottom"><b>basename</b></td></tr>
+<tr class="memdesc:ae5a8cf188870c012ce265133cbbf138b"><td class="mdescLeft">&#160;</td><td class="mdescRight">filename of the library <br /></td></tr>
 <tr class="separator:ae5a8cf188870c012ce265133cbbf138b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86890e79280826c9717d14d2dea98918" id="r_a86890e79280826c9717d14d2dea98918"><td class="memItemLeft" align="right" valign="top"><a id="a86890e79280826c9717d14d2dea98918" name="a86890e79280826c9717d14d2dea98918"></a>
 void *&#160;</td><td class="memItemRight" valign="bottom"><b>handle</b></td></tr>
+<tr class="memdesc:a86890e79280826c9717d14d2dea98918"><td class="mdescLeft">&#160;</td><td class="mdescRight">library handle <br /></td></tr>
 <tr class="separator:a86890e79280826c9717d14d2dea98918"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8980653017f20b60eca8544a4f50a856" id="r_a8980653017f20b60eca8544a4f50a856"><td class="memItemLeft" align="right" valign="top"><a id="a8980653017f20b60eca8544a4f50a856" name="a8980653017f20b60eca8544a4f50a856"></a>
 char&#160;</td><td class="memItemRight" valign="bottom"><b>initialized</b></td></tr>
 <tr class="separator:a8980653017f20b60eca8544a4f50a856"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a19cd525e9ae7b4e34aef496ab5dab62c" id="r_a19cd525e9ae7b4e34aef496ab5dab62c"><td class="memItemLeft" align="right" valign="top"><a id="a19cd525e9ae7b4e34aef496ab5dab62c" name="a19cd525e9ae7b4e34aef496ab5dab62c"></a>
 char(*&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> )()</td></tr>
+<tr class="memdesc:a19cd525e9ae7b4e34aef496ab5dab62c"><td class="mdescLeft">&#160;</td><td class="mdescRight">callback that initializes this plugin <br /></td></tr>
 <tr class="separator:a19cd525e9ae7b4e34aef496ab5dab62c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a59f4f41aa6bf21c71c34c582beb64da1" id="r_a59f4f41aa6bf21c71c34c582beb64da1"><td class="memItemLeft" align="right" valign="top"><a id="a59f4f41aa6bf21c71c34c582beb64da1" name="a59f4f41aa6bf21c71c34c582beb64da1"></a>
 void(*&#160;</td><td class="memItemRight" valign="bottom"><b>finish</b> )()</td></tr>
+<tr class="memdesc:a59f4f41aa6bf21c71c34c582beb64da1"><td class="mdescLeft">&#160;</td><td class="mdescRight">callback that finishes this plugin <br /></td></tr>
 <tr class="separator:a59f4f41aa6bf21c71c34c582beb64da1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9718e82304b952fc495ab4a41087334f" id="r_a9718e82304b952fc495ab4a41087334f"><td class="memItemLeft" align="right" valign="top"><a id="a9718e82304b952fc495ab4a41087334f" name="a9718e82304b952fc495ab4a41087334f"></a>
 void(*&#160;</td><td class="memItemRight" valign="bottom"><b>get_listener_repository</b> )(struct <a class="el" href="structcrtx__listener__repository.html">crtx_listener_repository</a> **listener_repository, unsigned int *listener_repository_length)</td></tr>
+<tr class="memdesc:a9718e82304b952fc495ab4a41087334f"><td class="mdescLeft">&#160;</td><td class="mdescRight">callback that registers the listeners the plugin provides <br /></td></tr>
 <tr class="separator:a9718e82304b952fc495ab4a41087334f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acf784f443b6f3b8420f37b3a34ddebed" id="r_acf784f443b6f3b8420f37b3a34ddebed"><td class="memItemLeft" align="right" valign="top"><a id="acf784f443b6f3b8420f37b3a34ddebed" name="acf784f443b6f3b8420f37b3a34ddebed"></a>
 char *&#160;</td><td class="memItemRight" valign="bottom"><b>plugin_name</b></td></tr>
+<tr class="memdesc:acf784f443b6f3b8420f37b3a34ddebed"><td class="mdescLeft">&#160;</td><td class="mdescRight">name of this plugin <br /></td></tr>
 <tr class="separator:acf784f443b6f3b8420f37b3a34ddebed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa5fc2b32410a3c4358be92f80b80ca06" id="r_aa5fc2b32410a3c4358be92f80b80ca06"><td class="memItemLeft" align="right" valign="top"><a id="aa5fc2b32410a3c4358be92f80b80ca06" name="aa5fc2b32410a3c4358be92f80b80ca06"></a>
 void *&#160;</td><td class="memItemRight" valign="bottom"><b>reserved1</b></td></tr>
@@ -110,7 +121,9 @@ void *&#160;</td><td class="memItemRight" valign="bottom"><b>reserved1</b></td><
 void *&#160;</td><td class="memItemRight" valign="bottom"><b>reserved2</b></td></tr>
 <tr class="separator:aed09de3ccd9e5e864a010ad908d7685b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this struct was generated from the following file:<ul>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>structure that represents a plugin </p>
+</div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>src/<a class="el" href="core_8h_source.html">core.h</a></li>
 </ul>
 </div><!-- contents -->

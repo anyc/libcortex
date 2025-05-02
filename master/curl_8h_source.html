@@ -96,7 +96,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;curl/curl.h&gt;</span></div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &quot;core.h&quot;</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &quot;<a class="code" href="core_8h.html">core.h</a>&quot;</span></div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__curl__listener.html">crtx_curl_listener</a>;</div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
@@ -137,8 +137,8 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span><span class="preprocessor">#define CRTX_CURL_ET_PROGRESS (CRTX_EVENT_TYPE_FAMILY_CURL + 2)</span></div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span><span class="preprocessor">#define CRTX_CURL_ET_HEADER (CRTX_EVENT_TYPE_FAMILY_CURL + 3)</span></div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span><span class="keywordtype">int</span> crtx_curl_progress_callback(<span class="keywordtype">void</span> *userdata, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span><span class="keywordtype">size_t</span> crtx_curl_header_callback(<span class="keywordtype">char</span> *buffer, <span class="keywordtype">size_t</span> size, <span class="keywordtype">size_t</span> nitems, <span class="keywordtype">void</span> *userdata);</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span><span class="keywordtype">int</span> crtx_curl_progress_callback(<span class="keywordtype">void</span> *<a class="code hl_variable" href="structcrtx__listener__base.html#a5bdecb78c59c35b8c0e50f3ead18d6d2">userdata</a>, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span><span class="keywordtype">size_t</span> crtx_curl_header_callback(<span class="keywordtype">char</span> *buffer, <span class="keywordtype">size_t</span> size, <span class="keywordtype">size_t</span> nitems, <span class="keywordtype">void</span> *<a class="code hl_variable" href="structcrtx__listener__base.html#a5bdecb78c59c35b8c0e50f3ead18d6d2">userdata</a>);</div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span><span class="keyword">struct </span><a class="code hl_struct" href="structcrtx__listener__base.html">crtx_listener_base</a> *crtx_setup_curl_listener(<span class="keywordtype">void</span> *options);</div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>CRTX_DECLARE_ALLOC_FUNCTION(curl)</div>
@@ -151,8 +151,10 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
 <div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span><span class="preprocessor">#endif</span></div>
+<div class="ttc" id="acore_8h_html"><div class="ttname"><a href="core_8h.html">core.h</a></div><div class="ttdoc">The core definitions of libcortex.</div></div>
 <div class="ttc" id="astructcrtx__curl__listener_html"><div class="ttname"><a href="structcrtx__curl__listener.html">crtx_curl_listener</a></div><div class="ttdef"><b>Definition</b> curl.h:25</div></div>
-<div class="ttc" id="astructcrtx__listener__base_html"><div class="ttname"><a href="structcrtx__listener__base.html">crtx_listener_base</a></div><div class="ttdef"><b>Definition</b> core.h:175</div></div>
+<div class="ttc" id="astructcrtx__listener__base_html"><div class="ttname"><a href="structcrtx__listener__base.html">crtx_listener_base</a></div><div class="ttdoc">base structure of a listener</div><div class="ttdef"><b>Definition</b> core.h:206</div></div>
+<div class="ttc" id="astructcrtx__listener__base_html_a5bdecb78c59c35b8c0e50f3ead18d6d2"><div class="ttname"><a href="structcrtx__listener__base.html#a5bdecb78c59c35b8c0e50f3ead18d6d2">crtx_listener_base::userdata</a></div><div class="ttdeci">void * userdata</div><div class="ttdoc">storage for user-provided data</div><div class="ttdef"><b>Definition</b> core.h:247</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

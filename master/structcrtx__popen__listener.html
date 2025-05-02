@@ -71,74 +71,13 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-attribs">Public Attributes</a> &#124;
-<a href="structcrtx__popen__listener-members.html">List of all members</a>  </div>
+<a href="#pub-attribs">Data Fields</a>  </div>
   <div class="headertitle"><div class="title">crtx_popen_listener Struct Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="dynheader">
-Collaboration diagram for crtx_popen_listener:</div>
-<div class="dyncontent">
-<div class="center"><img src="structcrtx__popen__listener__coll__graph.png" border="0" usemap="#acrtx__popen__listener_coll__map" alt="Collaboration graph"/></div>
-<map name="acrtx__popen__listener_coll__map" id="acrtx__popen__listener_coll__map">
-<area shape="rect" title=" " alt="" coords="1441,219,1592,245"/>
-<area shape="rect" href="structcrtx__listener__base.html" title=" " alt="" coords="545,327,687,353"/>
-<area shape="poly" title=" " alt="" coords="633,314,665,279,686,262,710,248,772,230,855,219,953,212,1059,210,1272,215,1441,224,1441,229,1272,220,1059,216,953,218,855,224,773,235,712,253,689,266,669,282,636,318"/>
-<area shape="rect" href="structcrtx__graph.html" title=" " alt="" coords="821,522,911,547"/>
-<area shape="poly" title=" " alt="" coords="626,365,637,399,654,439,679,478,712,510,738,523,766,531,821,536,820,541,765,536,736,528,709,514,675,481,650,442,632,401,621,367"/>
-<area shape="rect" href="structcrtx__event.html" title=" " alt="" coords="821,421,911,446"/>
-<area shape="poly" title=" " alt="" coords="644,360,675,382,712,402,768,418,821,427,820,432,766,424,710,406,673,387,641,364"/>
-<area shape="rect" href="structcrtx__evloop__fd.html" title=" " alt="" coords="1808,385,1927,410"/>
-<area shape="poly" title=" " alt="" coords="617,313,625,264,641,202,668,138,687,108,709,81,744,48,778,29,816,20,865,17,1518,17,1564,19,1604,25,1639,35,1670,50,1698,69,1726,93,1786,158,1807,187,1824,218,1848,283,1862,342,1867,384,1862,385,1856,343,1843,285,1819,220,1802,190,1782,162,1723,97,1695,73,1667,54,1637,40,1603,30,1564,25,1518,23,865,23,817,25,780,34,748,53,713,84,691,111,673,141,646,204,630,265,623,313"/>
-<area shape="rect" href="structcrtx__event__loop.html" title=" " alt="" coords="1453,494,1580,519"/>
-<area shape="poly" title=" " alt="" coords="619,366,622,423,634,496,646,533,662,569,684,601,712,627,735,640,762,648,830,657,911,655,998,645,1170,613,1301,580,1401,548,1483,517,1485,522,1403,553,1302,585,1171,618,999,650,911,660,830,662,761,654,732,644,709,631,680,604,658,572,641,535,629,497,617,424,614,367"/>
-<area shape="rect" href="structcrtx__fork__listener.html" title=" " alt="" coords="959,246,1095,271"/>
-<area shape="poly" title=" " alt="" coords="647,318,676,301,710,288,775,273,841,263,959,255,959,261,842,268,776,278,711,293,679,306,649,322"/>
-<area shape="rect" href="structcrtx__writequeue__listener.html" title=" " alt="" coords="936,142,1119,167"/>
-<area shape="poly" title=" " alt="" coords="623,313,635,283,653,248,677,213,709,186,764,160,823,146,882,141,936,141,936,147,882,146,824,151,766,165,712,190,681,217,657,250,640,285,628,315"/>
-<area shape="rect" href="structcrtx__pipe__listener.html" title=" " alt="" coords="1153,309,1291,334"/>
-<area shape="poly" title=" " alt="" coords="701,333,936,324,1152,320,1152,325,936,329,701,339"/>
-<area shape="poly" title=" " alt="" coords="832,517,795,497,771,488,751,482,731,476,709,462,680,436,655,406,622,354,627,352,660,403,684,432,712,458,734,471,753,477,773,483,797,492,834,513"/>
-<area shape="rect" href="structcrtx__task.html" title=" " alt="" coords="1181,545,1263,570"/>
-<area shape="poly" title=" " alt="" coords="892,555,913,570,937,581,969,589,1003,593,1071,591,1133,581,1183,568,1184,573,1134,586,1071,596,1003,598,968,595,935,587,910,575,889,559"/>
-<area shape="rect" href="structcrtx__evloop__callback.html" title=" " alt="" coords="1143,406,1301,431"/>
-<area shape="poly" title=" " alt="" coords="925,532,1033,526,1083,519,1117,508,1130,495,1141,478,1200,430,1203,434,1145,482,1134,498,1120,513,1084,524,1034,531,925,537"/>
-<area shape="poly" title=" " alt="" coords="1167,564,1060,568,997,565,936,559,900,550,902,545,936,553,998,560,1060,562,1167,559"/>
-<area shape="poly" title=" " alt="" coords="1192,530,1201,522,1222,518,1239,520,1250,527,1253,536,1247,546,1243,543,1247,536,1246,530,1237,525,1222,523,1204,526,1196,534"/>
-<area shape="poly" title=" " alt="" coords="905,449,937,461,987,472,1028,476,1069,480,1120,494,1167,517,1205,542,1203,547,1165,522,1118,498,1068,485,1028,481,987,478,935,467,903,454"/>
-<area shape="poly" title=" " alt="" coords="925,428,1142,419,1142,425,925,434"/>
-<area shape="poly" title=" " alt="" coords="905,412,935,400,1059,360,1167,332,1168,337,1061,366,937,405,907,417"/>
-<area shape="rect" href="structcrtx__dict__item.html" title=" " alt="" coords="559,670,673,695"/>
-<area shape="poly" title=" " alt="" coords="662,662,729,625,764,600,794,570,803,556,808,542,818,510,854,445,859,447,822,512,813,544,808,558,798,574,767,604,732,630,664,667"/>
-<area shape="rect" href="structcrtx__dict.html" title=" " alt="" coords="827,701,905,726"/>
-<area shape="poly" title=" " alt="" coords="687,689,827,706,826,711,687,694"/>
-<area shape="poly" title=" " alt="" coords="813,728,763,734,710,729,670,715,636,698,639,693,672,710,711,724,763,728,813,723"/>
-<area shape="rect" href="structcrtx__thread__job__description.html" title=" " alt="" coords="5,398,208,423"/>
-<area shape="poly" title=" " alt="" coords="222,399,408,377,556,350,557,355,408,383,222,404"/>
-<area shape="poly" title=" " alt="" coords="152,426,250,465,387,513,546,559,629,578,711,593,754,601,773,600,795,594,813,584,829,572,853,546,857,549,832,576,816,589,797,598,773,605,754,606,710,599,628,584,545,564,385,518,248,470,150,431"/>
-<area shape="rect" href="structcrtx__thread.html" title=" " alt="" coords="312,327,408,353"/>
-<area shape="poly" title=" " alt="" coords="166,392,313,350,314,355,167,397"/>
-<area shape="poly" title=" " alt="" coords="1852,374,1807,297,1774,250,1734,201,1688,157,1637,120,1580,95,1549,88,1518,85,865,85,819,85,782,86,749,96,712,121,690,144,671,171,644,231,628,287,621,328,616,327,623,286,639,229,666,168,686,141,709,117,746,92,781,81,818,79,865,80,1518,80,1550,82,1581,90,1639,115,1692,153,1738,198,1778,246,1812,294,1856,371"/>
-<area shape="poly" title=" " alt="" coords="1795,408,1592,425,1517,427,1441,425,1301,423,1302,418,1441,420,1517,421,1592,420,1794,403"/>
-<area shape="poly" title=" " alt="" coords="1860,424,1834,478,1812,505,1785,526,1755,539,1724,546,1659,547,1598,536,1550,522,1551,517,1599,531,1659,541,1723,540,1754,534,1783,522,1809,502,1829,475,1855,422"/>
-<area shape="poly" title=" " alt="" coords="1128,407,1118,405,686,351,687,345,1119,400,1129,401"/>
-<area shape="poly" title=" " alt="" coords="1315,407,1325,407,1595,397,1808,395,1808,400,1595,402,1325,412,1315,413"/>
-<area shape="poly" title=" " alt="" coords="1192,391,1201,383,1222,379,1239,382,1250,388,1253,398,1247,407,1243,405,1247,397,1246,391,1237,387,1222,385,1204,388,1196,395"/>
-<area shape="poly" title=" " alt="" coords="1254,437,1288,456,1326,473,1391,490,1454,500,1453,505,1390,496,1324,479,1286,461,1251,441"/>
-<area shape="poly" title=" " alt="" coords="1593,492,1783,459,1822,435,1852,408,1855,412,1825,439,1785,464,1594,497"/>
-<area shape="poly" title=" " alt="" coords="422,337,545,337,545,343,422,343"/>
-<area shape="poly" title=" " alt="" coords="340,313,346,304,360,301,372,303,379,310,381,319,378,328,373,326,376,318,375,312,370,308,360,306,349,309,344,316"/>
-<area shape="rect" href="structcrtx__signals.html" title=" " alt="" coords="57,309,157,334"/>
-<area shape="poly" title=" " alt="" coords="171,323,312,334,312,339,170,329"/>
-<area shape="poly" title=" " alt="" coords="1109,252,1441,233,1441,239,1110,257"/>
-<area shape="poly" title=" " alt="" coords="1132,151,1269,160,1345,170,1418,185,1459,200,1494,217,1492,222,1457,205,1417,191,1344,175,1269,165,1132,157"/>
-<area shape="poly" title=" " alt="" coords="996,127,1005,119,1027,115,1046,118,1057,124,1060,134,1054,143,1050,141,1055,133,1053,127,1044,123,1027,121,1008,124,999,131"/>
-<area shape="poly" title=" " alt="" coords="1305,331,1361,330,1389,326,1416,318,1444,302,1469,282,1504,243,1508,246,1473,286,1447,307,1418,322,1390,331,1361,335,1305,336"/>
-</map>
-<center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
+Data Fields</h2></td></tr>
 <tr class="memitem:ab98d9e656d950c12b606ed4305abd0c3" id="r_ab98d9e656d950c12b606ed4305abd0c3"><td class="memItemLeft" align="right" valign="top"><a id="ab98d9e656d950c12b606ed4305abd0c3" name="ab98d9e656d950c12b606ed4305abd0c3"></a>
 struct <a class="el" href="structcrtx__listener__base.html">crtx_listener_base</a>&#160;</td><td class="memItemRight" valign="bottom"><b>base</b></td></tr>
 <tr class="separator:ab98d9e656d950c12b606ed4305abd0c3"><td class="memSeparator" colspan="2">&#160;</td></tr>

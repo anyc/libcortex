@@ -95,7 +95,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="comment">     */</span></div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span>    </div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">    #include &lt;systemd/sd-journal.h&gt;</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">    #include &quot;core.h&quot;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">    #include &quot;<a class="code" href="core_8h.html">core.h</a>&quot;</span></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>    </div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">    #define CRTX_SD_JOURNAL_EVT_NEW_ENTRY &quot;sd_journal.new_entry&quot;</span></div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>    </div>
@@ -134,15 +134,17 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    <span class="keywordtype">void</span> crtx_sd_journal_init();</div>
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    <span class="keywordtype">void</span> crtx_sd_journal_finish();</div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    </div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="keywordtype">int</span> crtx_sd_journal_print_event(<span class="keyword">struct</span> <a class="code hl_struct" href="structcrtx__sd__journal__listener.html">crtx_sd_journal_listener</a> *jlstnr, <span class="keywordtype">void</span> *userdata);</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keywordtype">int</span> crtx_sd_journal_gen_event_dict(<span class="keyword">struct</span> <a class="code hl_struct" href="structcrtx__sd__journal__listener.html">crtx_sd_journal_listener</a> *jlstnr, <span class="keywordtype">void</span> *userdata);</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="keywordtype">int</span> crtx_sd_journal_print_event(<span class="keyword">struct</span> <a class="code hl_struct" href="structcrtx__sd__journal__listener.html">crtx_sd_journal_listener</a> *jlstnr, <span class="keywordtype">void</span> *<a class="code hl_variable" href="structcrtx__listener__base.html#a5bdecb78c59c35b8c0e50f3ead18d6d2">userdata</a>);</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keywordtype">int</span> crtx_sd_journal_gen_event_dict(<span class="keyword">struct</span> <a class="code hl_struct" href="structcrtx__sd__journal__listener.html">crtx_sd_journal_listener</a> *jlstnr, <span class="keywordtype">void</span> *<a class="code hl_variable" href="structcrtx__listener__base.html#a5bdecb78c59c35b8c0e50f3ead18d6d2">userdata</a>);</div>
 <div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    </div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span><span class="preprocessor">    #ifdef __cplusplus</span></div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>}</div>
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span> </div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span><span class="preprocessor">#endif</span></div>
-<div class="ttc" id="astructcrtx__listener__base_html"><div class="ttname"><a href="structcrtx__listener__base.html">crtx_listener_base</a></div><div class="ttdef"><b>Definition</b> core.h:175</div></div>
+<div class="ttc" id="acore_8h_html"><div class="ttname"><a href="core_8h.html">core.h</a></div><div class="ttdoc">The core definitions of libcortex.</div></div>
+<div class="ttc" id="astructcrtx__listener__base_html"><div class="ttname"><a href="structcrtx__listener__base.html">crtx_listener_base</a></div><div class="ttdoc">base structure of a listener</div><div class="ttdef"><b>Definition</b> core.h:206</div></div>
+<div class="ttc" id="astructcrtx__listener__base_html_a5bdecb78c59c35b8c0e50f3ead18d6d2"><div class="ttname"><a href="structcrtx__listener__base.html#a5bdecb78c59c35b8c0e50f3ead18d6d2">crtx_listener_base::userdata</a></div><div class="ttdeci">void * userdata</div><div class="ttdoc">storage for user-provided data</div><div class="ttdef"><b>Definition</b> core.h:247</div></div>
 <div class="ttc" id="astructcrtx__sd__journal__listener_html"><div class="ttname"><a href="structcrtx__sd__journal__listener.html">crtx_sd_journal_listener</a></div><div class="ttdef"><b>Definition</b> sd_journal.h:29</div></div>
 <div class="ttc" id="astructcrtx__sd__journal__print__event__userdata_html"><div class="ttname"><a href="structcrtx__sd__journal__print__event__userdata.html">crtx_sd_journal_print_event_userdata</a></div><div class="ttdef"><b>Definition</b> sd_journal.h:20</div></div>
 </div><!-- fragment --></div><!-- contents -->

@@ -1,8 +1,5 @@
 var searchData=
 [
-  ['sd_5fbus_5fsignal_0',['sd_bus_signal',['../structsd__bus__signal.html',1,'']]],
-  ['serialized_5fdict_1',['serialized_dict',['../structserialized__dict.html',1,'']]],
-  ['serialized_5fdict_5fitem_2',['serialized_dict_item',['../structserialized__dict__item.html',1,'']]],
-  ['setup_3',['Setup',['../index.html#autotoc_md2',1,'']]],
-  ['sigchld_5fcb_5fdata_4',['sigchld_cb_data',['../structsigchld__cb__data.html',1,'']]]
+  ['i_20need_20an_20event_20loop_0',['Why do I need an event loop?',['../index.html#autotoc_md0',1,'']]],
+  ['init_1',['init',['../structcrtx__lstnr__plugin.html#a19cd525e9ae7b4e34aef496ab5dab62c',1,'crtx_lstnr_plugin']]]
 ];

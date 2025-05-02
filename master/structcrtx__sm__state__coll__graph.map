@@ -1,8 +1,0 @@
-<map id="crtx_sm_state" name="crtx_sm_state">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,15,120,40"/>
-<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="135,17,143,21,147,28,138,36,121,40,120,35,136,32,141,27,139,25,133,22"/>
-<area shape="rect" id="Node000002" href="$structcrtx__sm.html" title=" " alt="" coords="25,112,100,137"/>
-<area shape="poly" id="edge3_Node000002_Node000001" title=" " alt="" coords="31,50,14,68,11,77,13,87,23,100,37,110,34,114,20,103,8,89,6,77,9,65,27,46"/>
-<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="75,99,79,88,77,63,68,41,73,39,83,62,84,88,80,101"/>
-<area shape="poly" id="edge4_Node000002_Node000002" title=" " alt="" coords="115,115,123,118,127,125,118,133,101,135,100,130,116,128,121,124,120,123,113,120"/>
-</map>
