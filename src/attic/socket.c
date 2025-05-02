@@ -181,7 +181,7 @@ static void *socket_connection_tmain(void *data) {
 		if (slist.base.graph)
 			crtx_add_event(slist.base.graph, event);
 		else
-			add_raw_event(event);
+			crtx_find_graph_add_event(event);
 	}
 	
 	// TODO handle aborted connection if events are still processed
@@ -307,7 +307,7 @@ static void *socket_client_tmain(void *data) {
 		if (listeners->base.graph)
 			crtx_add_event(listeners->base.graph, event);
 		else
-			add_raw_event(event);
+			crtx_find_graph_add_event(event);
 	}
 	close(listeners->sockfd);
 	

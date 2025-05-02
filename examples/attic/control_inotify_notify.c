@@ -46,7 +46,7 @@ static void send_notification(char *msg) {
 			);
 	notif_event->data.dict = data;
 	
-	add_raw_event(notif_event);
+	crtx_find_graph_add_event(notif_event);
 }
 
 /// this function is called for every inotify event

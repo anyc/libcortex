@@ -1026,18 +1026,6 @@ struct crtx_graph *crtx_find_graph_for_event_type(CRTX_EVENT_TYPE_VARTYPE event_
 	return 0;
 }
 
-struct crtx_graph *find_graph_by_name(char *name) {
-	unsigned int i;
-	
-	for (i=0; i < crtx_root->n_graphs; i++) {
-		if (!strcmp(crtx_root->graphs[i]->name, name)) {
-			return crtx_root->graphs[i];
-		}
-	}
-	
-	return 0;
-}
-
 struct crtx_graph *crtx_get_graph_for_event_description(char *event_description, char **new_event_types) {
 	struct crtx_graph *graph;
 	
@@ -1056,7 +1044,7 @@ struct crtx_graph *crtx_get_graph_for_event_description(char *event_description,
 	return graph;
 }
 
-void add_raw_event(struct crtx_event *event) {
+int crtx_find_graph_add_event(struct crtx_event *event) {
 	struct crtx_graph *graph;
 	
 	graph = 0;
@@ -1067,15 +1055,9 @@ void add_raw_event(struct crtx_event *event) {
 	if (!graph)
 		graph = crtx_find_graph_for_event_type(event->type);
 	
-// 	if (!graph && !strcmp(event->type, CRTX_EVT_NOTIFICATION)) {
-// 		crtx_init_notification_listeners(&crtx_root->notification_listeners_handle);
-// 		
-// 		graph = find_graph_for_event_type(event->type);
-// 	}
-	
 	if (!graph) {
 		CRTX_ERROR("did not find graph for event type \"%s\"\n", event->description);
-		return;
+		return -ENOENT;
 	}
 	
 	crtx_add_event(graph, event);

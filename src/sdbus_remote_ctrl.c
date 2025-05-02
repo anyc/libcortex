@@ -81,7 +81,7 @@ static int sd_bus_listener_cb(sd_bus_message *m, void *userdata, sd_bus_error *r
 	
 	reference_event_release(event);
 	
-	add_raw_event(event);
+	crtx_find_graph_add_event(event);
 	
 	crtx_wait_on_event(event);
 	
