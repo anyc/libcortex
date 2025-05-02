@@ -689,14 +689,14 @@ int crtx_signals_handle_std_signals(struct crtx_signals_listener **signal_lstnr)
 	t->handle = &sigterm_handler;
 	t->userdata = 0;
 	t->event_type_match = crtx_get_signal_info(SIGTERM)->etype;
-	add_task(default_signal_lstnr.base.graph, t);
+	crtx_add_task(default_signal_lstnr.base.graph, t);
 	
 	t = new_task();
 	t->id = "sigint_handler";
 	t->handle = &sigint_handler;
 	t->userdata = 0;
 	t->event_type_match = crtx_get_signal_info(SIGINT)->etype;
-	add_task(default_signal_lstnr.base.graph, t);
+	crtx_add_task(default_signal_lstnr.base.graph, t);
 	
 	signal(SIGPIPE, SIG_IGN);
 	

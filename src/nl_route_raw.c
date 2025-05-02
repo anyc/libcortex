@@ -898,7 +898,7 @@ char crtx_get_own_ip_addresses() {
 // 		cache->on_add = &crtx_cache_no_add;
 		cache->on_miss = &crtx_cache_add_on_miss;
 		
-		add_task(nlr_list.base.graph, task);
+		crtx_add_task(nlr_list.base.graph, task);
 	}
 	
 	ret = crtx_start_listener(&nlr_list.base);
