@@ -35,7 +35,7 @@ LDLIBS+=-lpthread -ldl
 
 .PHONY: clean
 
-all: ./$(local_mk) core_modules.h config.h plugins shared crtx_include_dir
+all: $(local_mk) core_modules.h config.h plugins shared crtx_include_dir
 
 #
 # module-specific flags
@@ -46,7 +46,7 @@ include Makefile.common
 
 # default module sets
 BUILTIN_MODULES=signals epoll
-STATIC_TOOLS+=cache dict_inout dict_inout_json threads
+STATIC_TOOLS+=cache dict_inout dict_inout_json threads sm
 STATIC_MODULES+=fanotify fork inotify netlink_raw nl_route_raw uevents \
 	timer writequeue pipe popen uio
 DYN_MODULES+=avahi can curl evdev libnl libvirt netlink_ge nf_queue \
