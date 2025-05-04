@@ -10,8 +10,8 @@ extern "C" {
  *
  */
 
-#include "fork.h"
-#include "curl.h"
+#include "crtx/fork.h"
+#include "crtx/curl.h"
 
 struct crtx_forked_curl_listener {
 	struct crtx_listener_base base;

@@ -1,7 +1,9 @@
 
-libcrtx_path?=../../
+libcrtx_path?=../../src
 
-CFLAGS+=-I$(libcrtx_path)/include -g -fPIC -Wall
+include ../../Makefile.common
+
+CFLAGS+=-I../../include -g -fPIC -Wall
 
 LDFLAGS+=-L$(libcrtx_path)
 LDLIBS+=-lcrtx
@@ -16,16 +18,22 @@ LIBSOFILENAME=$(LIBFILENAME).$(SONAME)
 
 LIB_OBJS=ipquery.o
 
+-include $(local_mk)
+
 all: $(NAME) $(LIBFILENAME)
 
 $(NAME): main.o $(LIBFILENAME)
-	$(CC) -o $@ $< $(LDFLAGS) $(LDLIBS) -Wl,-rpath-link=$(libcrtx_path) -L. -lipquery
+	$(CC) -o $@ $< $(LDFLAGS) $(LDLIBS) -L. -lipquery
 
 $(LIBSOFILENAME): $(LIB_OBJS)
 	$(CC) -shared -o $@ $(LIB_OBJS) $(LIB_LDFLAGS) $(LIB_LDLIBS) -Wl,-soname,$@
 
 $(LIBFILENAME): $(LIBSOFILENAME)
 	ln -sf $(LIBSOFILENAME) $@
+
+install:
+	$(INSTALL) -m 755 ipquery $(DESTDIR)$(bindir)
+	$(INSTALL) -m 755 $(LIBSOFILENAME) $(DESTDIR)$(libdir)
 
 clean:
 	rm -f *.o $(NAME) $(LIBFILENAME) $(LIBSOFILENAME)

@@ -14,8 +14,8 @@ extern "C" {
 #include <linux/icmp.h>
 #include <time.h>
 
-#include "../core.h"
-#include "../timer.h"
+#include "crtx/core.h"
+#include "crtx/timer.h"
 
 #define CRTX_EVENT_TYPE_FAMILY_PING (600)
 #define CRTX_PING_ET_PING_SUCCESS		(CRTX_EVENT_TYPE_FAMILY_PING + 1)

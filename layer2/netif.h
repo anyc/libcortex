@@ -10,7 +10,7 @@ extern "C" {
  *
  */
 
-#include "../libnl.h"
+#include "crtx/libnl.h"
 
 struct crtx_netif_listener {
 	struct crtx_listener_base base;

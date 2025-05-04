@@ -1,23 +1,19 @@
 
-libcrtx_path?=../src
+libcrtx_dir?=../src
 
-prefix?=/usr
-exec_prefix?=/usr
-bindir?=$(exec_prefix)/bin
+include ../Makefile.common
 
-SHELL?=/bin/bash
-PKG_CONFIG?=pkg-config
-INSTALL?=install
-
-CFLAGS+=-I$(libcrtx_path) -g
-LDFLAGS+=-L$(libcrtx_path) -Wl,-rpath "$(libcrtx_path)"
+CFLAGS+=-I$(libcrtx_dir) -I../include -g
+LDFLAGS+=-L$(libcrtx_dir)
 
 LDLIBS+=-lcrtx
 
-EXAMPLES?=libvirt-usb-hotplug named_pipe dbus-tool
-L_EXAMPLES?=$(filter-out ipquery,$(EXAMPLES))
+EXAMPLES?=libvirt-usb-hotplug named_pipe dbus-tool ipquery
+L_EXAMPLES=$(filter-out ipquery,$(EXAMPLES))
 
 -include $(local_mk)
+
+.PHONY: ipquery
 
 all: $(EXAMPLES)
 
@@ -40,19 +36,21 @@ pfw: control_pfw.c
 dbus-tool: LDLIBS+=-lcrtx_sdbus -lsystemd
 
 clean:
-	rm -f *.o $(L_EXAMPLES) $(EXAMPLES)
+	rm -f *.o $(L_EXAMPLES)
 	make -C ipquery clean
 
 run_%: %
-	LD_LIBRARY_PATH=$(libcrtx_path) ./$<
+	LD_LIBRARY_PATH=$(libcrtx_dir) ./$<
 
 gdb_%: %
-	LD_LIBRARY_PATH=$(libcrtx_path) gdb -args ./$<
+	LD_LIBRARY_PATH=$(libcrtx_dir) gdb -args ./$<
 
 valgrind_%: %
-	LD_LIBRARY_PATH=$(libcrtx_path) valgrind --leak-check=full ./$<
+	LD_LIBRARY_PATH=$(libcrtx_dir) valgrind --leak-check=full ./$<
 
 install:
-	$(INSTALL) -m 755 -d $(DESTDIR)$(bindir)
+	[ "$(EXAMPLES)" == "" ] || $(INSTALL) -m 755 -d $(DESTDIR)$(bindir)
 	
-	if [ "$(EXAMPLES)" != "" ]; then $(INSTALL) -m 755 $(EXAMPLES) $(DESTDIR)$(bindir); fi
+	if [ "$(L_EXAMPLES)" != "" ]; then $(INSTALL) -m 755 $(L_EXAMPLES) $(DESTDIR)$(bindir); fi
+	
+	[[ "$(EXAMPLES)" != *ipquery* ]] || $(MAKE) -C ipquery install

@@ -194,8 +194,9 @@ To configure the build, libcortex uses a simple include file for `make`, called
 if it does not exist.
 
 If you want to test libcortex in your home directory, simply call `make local`
-to generate a `Makefile.local` which creates binaries that can be executed from
-the local directory without installing them in the system.
+to generate a `Makefile.local` and call `make install_local` to create binaries
+in the `local` subdirectory that can be executed from the local directory without
+installing them in the system.
 
 Documentation
 -------------

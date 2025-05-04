@@ -43,7 +43,6 @@ all: $(local_mk) core_modules.h config.h plugins shared crtx_include_dir
 #
 
 include Makefile.modules
-include Makefile.common
 
 # default module sets
 BUILTIN_MODULES=signals epoll
@@ -57,6 +56,7 @@ DYN_MODULES+=avahi can curl evdev libnl libvirt netlink_ge nf_queue \
 DEFAULT_EVLOOP=epoll
 
 -include $(local_mk)
+include ../Makefile.common
 
 CFLAGS+=-DDEFAULT_EVLOOP=\"$(DEFAULT_EVLOOP)\" -DSO_VERSION=\"$(SO_VERSION)\" -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -DREVISION=$(REVISION)
 
@@ -88,15 +88,16 @@ shared: $(SHAREDLIB)
 
 clean:
 	rm -f *.o $(APP) core_modules.h config.h $(TESTS) $(SHAREDLIB) libcrtx*.so* libcortex*.deb
+	rm -rf ../include
 
 debug:
 	$(MAKE) $(MAKEFILE) DEBUG=1 $(DEBUGARGS)
 
 crtx_include_dir:
-	mkdir -p include/cortex include/cortex/layer2/
-	[ -e include/crtx ] || ln -s cortex include/crtx
-	for h in *.h; do [ -e include/cortex/$$h ] || ln -s ../../$$h include/cortex/; done
-	for h in ../layer2/*.h; do [ -e include/cortex/layer2/$(shell basename \"$$h\") ] || ln -s ../../../$$h include/cortex/layer2/; done
+	mkdir -p ../include/cortex ../include/cortex/layer2/
+	[ -e ../include/crtx ] || ln -s cortex ../include/crtx
+	for h in *.h; do [ -e ../include/cortex/$$h ] || ln -s ../../src/$$h ../include/cortex/; done
+	for h in ../layer2/*.h; do [ -e ../include/cortex/layer2/$(shell basename \"$$h\") ] || ln -s ../../../src/$$h ../include/cortex/layer2/; done
 
 core_modules.h: $(local_mk)
 	echo -n "" > $@
@@ -179,8 +180,8 @@ install-devel:
 	cp -P libcrtx.so $(DESTDIR)$(libdir)
 	ls libcrtx_*.so.* 2>/dev/null && cp -P libcrtx_*.so $(DESTDIR)$(plugindir) || :
 	
-	$(INSTALL) -m 644 *.h $(DESTDIR)$(includedir)/cortex/
-	ln -s cortex $(DESTDIR)$(includedir)/crtx
+	$(INSTALL) -m 644 ../include/cortex/*.h $(DESTDIR)$(includedir)/cortex/
+	[ -L $(DESTDIR)$(includedir)/crtx ] || ln -s cortex $(DESTDIR)$(includedir)/crtx
 	
 	$(INSTALL) -m 644 llist.c $(DESTDIR)$(includedir)/cortex/
 

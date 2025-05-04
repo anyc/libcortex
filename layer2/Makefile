@@ -1,16 +1,7 @@
 
 libcrtx_dir=../src/
 
-prefix?=/usr
-libdir?=$(prefix)/lib
-plugindir?=$(libdir)
-includedir?=$(prefix)/include
-
-SHELL?=/bin/bash
-PKG_CONFIG?=pkg-config
-INSTALL?=install
-
-CFLAGS+=$(DEBUG_FLAGS) -I$(libcrtx_dir) -I$(libcrtx_dir)include -fPIC
+CFLAGS+=$(DEBUG_FLAGS) -I$(libcrtx_dir) -I../include -fPIC
 LDFLAGS+=-L$(libcrtx_dir)
 
 LAYER2_MODULES?=dynamic_evdev forked_curl netif netconf ping
@@ -20,7 +11,7 @@ LAYER2_LISTENER_LIST=$(patsubst %,libcrtx_%.so, $(LAYER2_MODULES))
 TESTS+=$(foreach t,$(LAYER2_MODULES), $(t).test)
 
 include $(libcrtx_dir)/Makefile.modules
-include $(libcrtx_dir)/Makefile.common
+include ../Makefile.common
 
 # CFLAGS_dynamic_evdev=$(shell pkg-config --cflags ncurses librrd)
 # LDLIBS_dynamic_evdev=$(shell pkg-config --libs ncurses librrd)
@@ -33,6 +24,8 @@ LDLIBS_netif=
 DEPS_netif=libnl
 
 DEPS_netconf=libnl
+
+-include $(local_mk)
 
 .PHONY: clean
 

@@ -8,6 +8,8 @@
 # LAYER2_TESTS=crtx_layer2_tests
 # LAYER2_MODULES=dynamic_evdev netif
 
+# EXAMPLES=libvirt-usb-hotplug named_pipe dbus-tool ipquery
+
 ### minimal select of modules
 
 # STATIC_TOOLS=

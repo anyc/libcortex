@@ -10,8 +10,8 @@ extern "C" {
  *
  */
 
-#include <udev.h>
-#include <evdev.h>
+#include <crtx/udev.h>
+#include <crtx/evdev.h>
 
 struct crtx_dynamic_evdev_listener {
 	struct crtx_listener_base base;
