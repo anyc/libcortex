@@ -7,6 +7,11 @@ cortexd
 socket_client
 examples/libvirt-usb-hotplug
 examples/named_pipe
+examples/dbus-tool
+examples/*.json
+examples/ipquery/ipquery
 core_modules.h
 include
 config.h
+local
+
