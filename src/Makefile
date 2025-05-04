@@ -5,7 +5,8 @@
 
 local_mk_rules ?= Makefile.local_rules
 
-SHELL?=/bin/bash
+# we use bash-specific code
+SHELL=/bin/bash
 PKG_CONFIG?=pkg-config
 INSTALL?=install
 
