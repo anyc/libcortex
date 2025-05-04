@@ -43,7 +43,7 @@ examples: libcortex $(local_mk)
 layer2: libcortex $(local_mk)
 	$(MAKE) -C layer2
 
-layer2_tests: crtx_layer2 $(local_mk)
+layer2_tests: layer2 $(local_mk)
 	$(MAKE) -C layer2 tests plugindir="$(plugindir)"
 
 libcortex: $(local_mk)
@@ -54,7 +54,7 @@ install:
 	$(MAKE) -C examples install
 	$(MAKE) -C layer2 install
 
-tests: crtx_layer2_tests
+tests: layer2_tests
 	$(MAKE) -C src tests
 	$(MAKE) -C tests
 
