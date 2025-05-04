@@ -54,8 +54,6 @@ DYN_MODULES+=avahi can curl evdev libnl libvirt netlink_ge nf_queue \
 	pulseaudio readline sdbus sd_journal udev v4l \
 	sdbus_notifications mqtt
 
-LAYER2_MODULES?=dynamic_evdev forked_curl netif netconf
-
 DEFAULT_EVLOOP=epoll
 
 -include $(local_mk)

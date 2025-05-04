@@ -34,10 +34,10 @@ crtx_examples: $(local_mk)
 	$(MAKE) -C examples local_mk=../$(local_mk)
 
 crtx_layer2: $(SHAREDLIB) $(local_mk)
-	$(MAKE) -C layer2 LAYER2_MODULES="$(LAYER2_MODULES)" local_mk=../$(local_mk)
+	$(MAKE) -C layer2 local_mk=../$(local_mk)
 
 crtx_layer2_tests: $(SHAREDLIB) crtx_layer2 $(local_mk)
-	$(MAKE) -C layer2 tests LAYER2_MODULES="$(LAYER2_MODULES)" plugindir="$(plugindir)" local_mk=../$(local_mk)
+	$(MAKE) -C layer2 tests plugindir="$(plugindir)" local_mk=../$(local_mk)
 
 libcortex: $(local_mk)
 	$(MAKE) -C src local_mk=../$(local_mk)

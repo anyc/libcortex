@@ -13,7 +13,9 @@ INSTALL?=install
 CFLAGS+=$(DEBUG_FLAGS) -I$(libcrtx_dir) -I$(libcrtx_dir)include -fPIC
 LDFLAGS+=-L$(libcrtx_dir)
 
-LAYER2_LISTENER_LIST=$(patsubst %,$(libcrtx_dir)/libcrtx_%.so, $(LAYER2_MODULES))
+LAYER2_MODULES?=dynamic_evdev forked_curl netif netconf ping
+
+LAYER2_LISTENER_LIST=$(patsubst %,libcrtx_%.so, $(LAYER2_MODULES))
 
 TESTS+=$(foreach t,$(LAYER2_MODULES), $(t).test)
 
@@ -39,13 +41,10 @@ all: $(LAYER2_LISTENER_LIST)
 clean:
 	rm -rf *.o $(TESTS) libcrtx_*.so
 
-$(libcrtx_dir)/libcrtx_%.so: LDLIBS+=$(foreach d,$(DEPS_$(patsubst $(libcrtx_dir)/libcrtx_%.so,%,$@)),$(LDLIBS_$d))
-$(libcrtx_dir)/libcrtx_%.so: %.o
+libcrtx_%.so: LDLIBS+=$(foreach d,$(DEPS_$(patsubst $(libcrtx_dir)/libcrtx_%.so,%,$@)),$(LDLIBS_$d))
+libcrtx_%.so: %.o
 	$(CC) -shared $(LDFLAGS) $< -o $@.$(SO_VERSION) $(LDLIBS) -L. -lcrtx -Wl,-soname,$(shell basename $@.$(SO_VERSION))
-	ln -sf $(shell basename $@.$(SO_VERSION)) $(libcrtx_dir)/$(shell basename $@)
-	
-	#[ ! -f ../$@ ] && ln -s layer2/$@ ../$@ || true
-# 	mv layer2/$@ ../$@
+	ln -sf $(shell basename $@.$(SO_VERSION)) $(shell basename $@)
 
 %.o: CFLAGS+=$(foreach d,$(DEPS_${@:.o=}),$(CFLAGS_$d))
 %.o: %.c
