@@ -55,4 +55,4 @@ valgrind_%: %
 install:
 	$(INSTALL) -m 755 -d $(DESTDIR)$(bindir)
 	
-	$(INSTALL) -m 755 $(EXAMPLES) $(DESTDIR)$(bindir)
+	if [ "$(EXAMPLES)" != "" ]; then $(INSTALL) -m 755 $(EXAMPLES) $(DESTDIR)$(bindir); fi
