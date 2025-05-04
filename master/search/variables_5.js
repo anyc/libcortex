@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['handle_0',['handle',['../structcrtx__lstnr__plugin.html#a86890e79280826c9717d14d2dea98918',1,'crtx_lstnr_plugin']]]
+  ['finish_0',['finish',['../structcrtx__lstnr__plugin.html#a59f4f41aa6bf21c71c34c582beb64da1',1,'crtx_lstnr_plugin']]]
 ];

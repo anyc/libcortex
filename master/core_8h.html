@@ -109,11 +109,13 @@ Data Structures</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">structure that represents a graph of tasks (<a class="el" href="structcrtx__task.html">crtx_task</a>) that will be traversed with every <a class="el" href="structcrtx__event.html">crtx_event</a>  <a href="structcrtx__graph.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcrtx__listener__repository.html">crtx_listener_repository</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">listener repository to create new listeners of a certain type  <a href="structcrtx__listener__repository.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcrtx__listener__base.html">crtx_listener_base</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">base structure of a listener  <a href="structcrtx__listener__base.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcrtx__module.html">crtx_module</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">represents generic modules  <a href="structcrtx__module.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcrtx__lstnr__plugin.html">crtx_lstnr_plugin</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">structure that represents a plugin  <a href="structcrtx__lstnr__plugin.html#details">More...</a><br /></td></tr>
@@ -121,6 +123,7 @@ Data Structures</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcrtx__handler__category__entry.html">crtx_handler_category_entry</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcrtx__handler__category.html">crtx_handler_category</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">a list of <a class="el" href="structcrtx__handler__category__entry.html">crtx_handler_category_entry</a> for a certain event type  <a href="structcrtx__handler__category.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcrtx__root.html">crtx_root</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">core structure of libcortex  <a href="structcrtx__root.html#details">More...</a><br /></td></tr>
@@ -130,30 +133,6 @@ Data Structures</h2></td></tr>
 Macros</h2></td></tr>
 <tr class="memitem:aea4a18c32ee8ee8987a24ce74ab0bcae" id="r_aea4a18c32ee8ee8987a24ce74ab0bcae"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="core_8h.html#aea4a18c32ee8ee8987a24ce74ab0bcae">CRTX_TEST_MAIN</a>(mainfct)</td></tr>
 <tr class="separator:aea4a18c32ee8ee8987a24ce74ab0bcae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a909e734845671b088d72b4eae8579a5a" id="r_a909e734845671b088d72b4eae8579a5a"><td class="memItemLeft" align="right" valign="top"><a id="a909e734845671b088d72b4eae8579a5a" name="a909e734845671b088d72b4eae8579a5a"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>CRTX_DECLARE_ALLOC_FUNCTION</b>(lstnr)&#160;&#160;&#160;	struct crtx_ ## lstnr ## _listener * crtx_alloc_ ## lstnr ## _listener();</td></tr>
-<tr class="separator:a909e734845671b088d72b4eae8579a5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aba1be61096623c845f81a8594fa252b7" id="r_aba1be61096623c845f81a8594fa252b7"><td class="memItemLeft" align="right" valign="top"><a id="aba1be61096623c845f81a8594fa252b7" name="aba1be61096623c845f81a8594fa252b7"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>CRTX_DECLARE_CALLOC_FUNCTION</b>(lstnr)&#160;&#160;&#160;	struct crtx_ ## lstnr ## _listener * crtx_ ## lstnr ## _calloc_listener(void);</td></tr>
-<tr class="separator:aba1be61096623c845f81a8594fa252b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acd01d57d29998573f38b6ce72e4bc453" id="r_acd01d57d29998573f38b6ce72e4bc453"><td class="memItemLeft" align="right" valign="top"><a id="acd01d57d29998573f38b6ce72e4bc453" name="acd01d57d29998573f38b6ce72e4bc453"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>CRTX_RET_GEZ</b>(r)&#160;&#160;&#160;{ if (r &lt; 0) {CRTX_ERROR(&quot;%s:%d: %d %s\n&quot;, __FILE__, __LINE__, r, strerror(-r)); return(r); } }</td></tr>
-<tr class="separator:acd01d57d29998573f38b6ce72e4bc453"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4d145bc5b44843e3e256d5f50e361aa0" id="r_a4d145bc5b44843e3e256d5f50e361aa0"><td class="memItemLeft" align="right" valign="top"><a id="a4d145bc5b44843e3e256d5f50e361aa0" name="a4d145bc5b44843e3e256d5f50e361aa0"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>CRTX_EVT_NOTIFICATION</b>&#160;&#160;&#160;&quot;cortexd.notification&quot;</td></tr>
-<tr class="separator:a4d145bc5b44843e3e256d5f50e361aa0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1946f2e32e82139588d11f1b76762529" id="r_a1946f2e32e82139588d11f1b76762529"><td class="memItemLeft" align="right" valign="top"><a id="a1946f2e32e82139588d11f1b76762529" name="a1946f2e32e82139588d11f1b76762529"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>CRTX_EVT_INBOX</b>&#160;&#160;&#160;&quot;cortexd.inbox&quot;</td></tr>
-<tr class="separator:a1946f2e32e82139588d11f1b76762529"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9d919903117d205412ec00326e844c1d" id="r_a9d919903117d205412ec00326e844c1d"><td class="memItemLeft" align="right" valign="top"><a id="a9d919903117d205412ec00326e844c1d" name="a9d919903117d205412ec00326e844c1d"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>CRTX_EVT_OUTBOX</b>&#160;&#160;&#160;&quot;cortexd.outbox&quot;</td></tr>
-<tr class="separator:a9d919903117d205412ec00326e844c1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa6b43deff0ae6e9c0920375af5feb770" id="r_aa6b43deff0ae6e9c0920375af5feb770"><td class="memItemLeft" align="right" valign="top"><a id="aa6b43deff0ae6e9c0920375af5feb770" name="aa6b43deff0ae6e9c0920375af5feb770"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>CRTX_EVT_SHUTDOWN</b>&#160;&#160;&#160;&quot;cortexd.control.shutdown&quot;</td></tr>
-<tr class="separator:aa6b43deff0ae6e9c0920375af5feb770"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a92d1e947e4d97428aef7aedb8cca1e4f" id="r_a92d1e947e4d97428aef7aedb8cca1e4f"><td class="memItemLeft" align="right" valign="top"><a id="a92d1e947e4d97428aef7aedb8cca1e4f" name="a92d1e947e4d97428aef7aedb8cca1e4f"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>CRTX_EVT_MOD_INIT</b>&#160;&#160;&#160;&quot;cortex.control.module_initialized&quot;</td></tr>
-<tr class="separator:a92d1e947e4d97428aef7aedb8cca1e4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa7e0faf1cee2fb9f4ee3355ff8e408e1" id="r_aa7e0faf1cee2fb9f4ee3355ff8e408e1"><td class="memItemLeft" align="right" valign="top"><a id="aa7e0faf1cee2fb9f4ee3355ff8e408e1" name="aa7e0faf1cee2fb9f4ee3355ff8e408e1"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>CRTX_EVENT_TYPE_VARTYPE</b>&#160;&#160;&#160;unsigned int</td></tr>
 <tr class="separator:aa7e0faf1cee2fb9f4ee3355ff8e408e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -211,9 +190,9 @@ void char *&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_stracpy</
 <tr class="memitem:ae1400b6f528d8d7732c6b1af8e393fed" id="r_ae1400b6f528d8d7732c6b1af8e393fed"><td class="memItemLeft" align="right" valign="top"><a id="ae1400b6f528d8d7732c6b1af8e393fed" name="ae1400b6f528d8d7732c6b1af8e393fed"></a>
 struct <a class="el" href="structcrtx__event.html">crtx_event</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>new_event</b> ()</td></tr>
 <tr class="separator:ae1400b6f528d8d7732c6b1af8e393fed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad944c201077241549967601b0b1e46d9" id="r_ad944c201077241549967601b0b1e46d9"><td class="memItemLeft" align="right" valign="top"><a id="ad944c201077241549967601b0b1e46d9" name="ad944c201077241549967601b0b1e46d9"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>free_event</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event)</td></tr>
-<tr class="separator:ad944c201077241549967601b0b1e46d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef8956c7e2932325da679999e973f5a3" id="r_aef8956c7e2932325da679999e973f5a3"><td class="memItemLeft" align="right" valign="top"><a id="aef8956c7e2932325da679999e973f5a3" name="aef8956c7e2932325da679999e973f5a3"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_free_event</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event)</td></tr>
+<tr class="separator:aef8956c7e2932325da679999e973f5a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab6abdf94a97fc273608ed8b250280869" id="r_ab6abdf94a97fc273608ed8b250280869"><td class="memItemLeft" align="right" valign="top"><a id="ab6abdf94a97fc273608ed8b250280869" name="ab6abdf94a97fc273608ed8b250280869"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_init</b> ()</td></tr>
 <tr class="separator:ab6abdf94a97fc273608ed8b250280869"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -222,6 +201,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_finish</b> ()</td
 <tr class="separator:a98f093ea847141628aafbc65d0d9517b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aff4ff2e29c009ac9a1669590f31f847d" id="r_aff4ff2e29c009ac9a1669590f31f847d"><td class="memItemLeft" align="right" valign="top"><a id="aff4ff2e29c009ac9a1669590f31f847d" name="aff4ff2e29c009ac9a1669590f31f847d"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_loop</b> ()</td></tr>
+<tr class="memdesc:aff4ff2e29c009ac9a1669590f31f847d"><td class="mdescLeft">&#160;</td><td class="mdescRight">start the main event loop <br /></td></tr>
 <tr class="separator:aff4ff2e29c009ac9a1669590f31f847d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a85230a4ec4cfe4dcaafb17350cd994b0" id="r_a85230a4ec4cfe4dcaafb17350cd994b0"><td class="memItemLeft" align="right" valign="top"><a id="a85230a4ec4cfe4dcaafb17350cd994b0" name="a85230a4ec4cfe4dcaafb17350cd994b0"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_loop_onetime</b> ()</td></tr>
@@ -246,6 +226,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>add_task</b> (struct 
 <tr class="separator:a0ab68d0b4922cfa01ad3ea6ce0a95b23"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aec747ead4bcf78bfe5f572bfc6d30030" id="r_aec747ead4bcf78bfe5f572bfc6d30030"><td class="memItemLeft" align="right" valign="top"><a id="aec747ead4bcf78bfe5f572bfc6d30030" name="aec747ead4bcf78bfe5f572bfc6d30030"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_add_task</b> (struct <a class="el" href="structcrtx__graph.html">crtx_graph</a> *graph, struct <a class="el" href="structcrtx__task.html">crtx_task</a> *task)</td></tr>
+<tr class="memdesc:aec747ead4bcf78bfe5f572bfc6d30030"><td class="mdescLeft">&#160;</td><td class="mdescRight">add task to graph <br /></td></tr>
 <tr class="separator:aec747ead4bcf78bfe5f572bfc6d30030"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae41d50e89a021fd63ac9029816a4a64d" id="r_ae41d50e89a021fd63ac9029816a4a64d"><td class="memItemLeft" align="right" valign="top"><a id="ae41d50e89a021fd63ac9029816a4a64d" name="ae41d50e89a021fd63ac9029816a4a64d"></a>
 struct <a class="el" href="structcrtx__task.html">crtx_task</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_graph_get_task</b> (struct <a class="el" href="structcrtx__graph.html">crtx_graph</a> *graph, const char *id, crtx_handle_task_t handler)</td></tr>
@@ -253,11 +234,12 @@ struct <a class="el" href="structcrtx__task.html">crtx_task</a> *&#160;</td><td 
 <tr class="memitem:a43b7cc4193862addbcc89c32de55b87d" id="r_a43b7cc4193862addbcc89c32de55b87d"><td class="memItemLeft" align="right" valign="top"><a id="a43b7cc4193862addbcc89c32de55b87d" name="a43b7cc4193862addbcc89c32de55b87d"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>add_event_type</b> (char *event_type)</td></tr>
 <tr class="separator:a43b7cc4193862addbcc89c32de55b87d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4c6815a96fbbb560c6105ecbc56b5303" id="r_a4c6815a96fbbb560c6105ecbc56b5303"><td class="memItemLeft" align="right" valign="top"><a id="a4c6815a96fbbb560c6105ecbc56b5303" name="a4c6815a96fbbb560c6105ecbc56b5303"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>add_raw_event</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event)</td></tr>
-<tr class="separator:a4c6815a96fbbb560c6105ecbc56b5303"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa213555129b442b746eb23dc9bfdb7f6" id="r_aa213555129b442b746eb23dc9bfdb7f6"><td class="memItemLeft" align="right" valign="top"><a id="aa213555129b442b746eb23dc9bfdb7f6" name="aa213555129b442b746eb23dc9bfdb7f6"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_find_graph_add_event</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event)</td></tr>
+<tr class="separator:aa213555129b442b746eb23dc9bfdb7f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae186e04836cc54addcf85d9ef7d1aa77" id="r_ae186e04836cc54addcf85d9ef7d1aa77"><td class="memItemLeft" align="right" valign="top"><a id="ae186e04836cc54addcf85d9ef7d1aa77" name="ae186e04836cc54addcf85d9ef7d1aa77"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_add_event</b> (struct <a class="el" href="structcrtx__graph.html">crtx_graph</a> *graph, struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event)</td></tr>
+<tr class="memdesc:ae186e04836cc54addcf85d9ef7d1aa77"><td class="mdescLeft">&#160;</td><td class="mdescRight">add a new event to a graph for processing <br /></td></tr>
 <tr class="separator:ae186e04836cc54addcf85d9ef7d1aa77"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7f3bc2a9d71289766829afabef67d807" id="r_a7f3bc2a9d71289766829afabef67d807"><td class="memItemLeft" align="right" valign="top"><a id="a7f3bc2a9d71289766829afabef67d807" name="a7f3bc2a9d71289766829afabef67d807"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>add_event_sync</b> (struct <a class="el" href="structcrtx__graph.html">crtx_graph</a> *graph, struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event)</td></tr>
@@ -268,9 +250,6 @@ struct <a class="el" href="structcrtx__graph.html">crtx_graph</a> *&#160;</td><t
 <tr class="memitem:ad9b7d772fdbc5e7ac5a8360b7753fd24" id="r_ad9b7d772fdbc5e7ac5a8360b7753fd24"><td class="memItemLeft" align="right" valign="top"><a id="ad9b7d772fdbc5e7ac5a8360b7753fd24" name="ad9b7d772fdbc5e7ac5a8360b7753fd24"></a>
 struct <a class="el" href="structcrtx__graph.html">crtx_graph</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_find_graph_for_event_type</b> (CRTX_EVENT_TYPE_VARTYPE event_type)</td></tr>
 <tr class="separator:ad9b7d772fdbc5e7ac5a8360b7753fd24"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aad54b6d3fc87d72ec44fd207cc7262c0" id="r_aad54b6d3fc87d72ec44fd207cc7262c0"><td class="memItemLeft" align="right" valign="top"><a id="aad54b6d3fc87d72ec44fd207cc7262c0" name="aad54b6d3fc87d72ec44fd207cc7262c0"></a>
-struct <a class="el" href="structcrtx__graph.html">crtx_graph</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>find_graph_by_name</b> (char *na6me)</td></tr>
-<tr class="separator:aad54b6d3fc87d72ec44fd207cc7262c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7c96194cf70c463d5fdf6853cb8eba27" id="r_a7c96194cf70c463d5fdf6853cb8eba27"><td class="memItemLeft" align="right" valign="top"><a id="a7c96194cf70c463d5fdf6853cb8eba27" name="a7c96194cf70c463d5fdf6853cb8eba27"></a>
 struct <a class="el" href="structcrtx__graph.html">crtx_graph</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_get_graph_for_event_description</b> (char *event_type, char **new_event_types)</td></tr>
 <tr class="separator:a7c96194cf70c463d5fdf6853cb8eba27"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -280,14 +259,15 @@ struct <a class="el" href="structcrtx__task.html">crtx_task</a> *&#160;</td><td 
 <tr class="memitem:ad9afa10c057db577901e4bd8e2236063" id="r_ad9afa10c057db577901e4bd8e2236063"><td class="memItemLeft" align="right" valign="top"><a id="ad9afa10c057db577901e4bd8e2236063" name="ad9afa10c057db577901e4bd8e2236063"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_free_task</b> (struct <a class="el" href="structcrtx__task.html">crtx_task</a> *task)</td></tr>
 <tr class="separator:ad9afa10c057db577901e4bd8e2236063"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a63aa6ed581d33c228c0996b5486385c4" id="r_a63aa6ed581d33c228c0996b5486385c4"><td class="memItemLeft" align="right" valign="top"><a id="a63aa6ed581d33c228c0996b5486385c4" name="a63aa6ed581d33c228c0996b5486385c4"></a>
-char&#160;</td><td class="memItemRight" valign="bottom"><b>wait_on_event</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event)</td></tr>
-<tr class="separator:a63aa6ed581d33c228c0996b5486385c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae7c4e8748c72c039a3b859bff9a92453" id="r_ae7c4e8748c72c039a3b859bff9a92453"><td class="memItemLeft" align="right" valign="top"><a id="ae7c4e8748c72c039a3b859bff9a92453" name="ae7c4e8748c72c039a3b859bff9a92453"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_wait_on_event</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event)</td></tr>
+<tr class="separator:ae7c4e8748c72c039a3b859bff9a92453"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8e0f41b504fdd974a44727e526270329" id="r_a8e0f41b504fdd974a44727e526270329"><td class="memItemLeft" align="right" valign="top"><a id="a8e0f41b504fdd974a44727e526270329" name="a8e0f41b504fdd974a44727e526270329"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_create_listener</b> (const char *id, void *options) __attribute__((deprecated))</td></tr>
 <tr class="separator:a8e0f41b504fdd974a44727e526270329"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa0af75ef94b267081739bc7164c4e3c7" id="r_aa0af75ef94b267081739bc7164c4e3c7"><td class="memItemLeft" align="right" valign="top"><a id="aa0af75ef94b267081739bc7164c4e3c7" name="aa0af75ef94b267081739bc7164c4e3c7"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_setup_listener</b> (const char *id, void *options)</td></tr>
+<tr class="memdesc:aa0af75ef94b267081739bc7164c4e3c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">look for a listener repo for the given id and iniitalize a listener of this type <br /></td></tr>
 <tr class="separator:aa0af75ef94b267081739bc7164c4e3c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a16d84d5a12cdbf588a703aff5ddd741f" id="r_a16d84d5a12cdbf588a703aff5ddd741f"><td class="memItemLeft" align="right" valign="top"><a id="a16d84d5a12cdbf588a703aff5ddd741f" name="a16d84d5a12cdbf588a703aff5ddd741f"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_init_listener_base</b> (struct <a class="el" href="structcrtx__listener__base.html">crtx_listener_base</a> *lstnr)</td></tr>
@@ -303,61 +283,56 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_listener_get_fd</
 <tr class="separator:aee3c12cd9d03eb483ed0cedeace73409"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1962254477dfe07c1efc26d0d7f03bb0" id="r_a1962254477dfe07c1efc26d0d7f03bb0"><td class="memItemLeft" align="right" valign="top"><a id="a1962254477dfe07c1efc26d0d7f03bb0" name="a1962254477dfe07c1efc26d0d7f03bb0"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_shutdown_listener</b> (struct <a class="el" href="structcrtx__listener__base.html">crtx_listener_base</a> *listener)</td></tr>
+<tr class="memdesc:a1962254477dfe07c1efc26d0d7f03bb0"><td class="mdescLeft">&#160;</td><td class="mdescRight">release this listener <br /></td></tr>
 <tr class="separator:a1962254477dfe07c1efc26d0d7f03bb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6c0861b72327cd372714b288cc14c60e" id="r_a6c0861b72327cd372714b288cc14c60e"><td class="memItemLeft" align="right" valign="top"><a id="a6c0861b72327cd372714b288cc14c60e" name="a6c0861b72327cd372714b288cc14c60e"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_create_event</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> **event)</td></tr>
 <tr class="separator:a6c0861b72327cd372714b288cc14c60e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a63a652669aada9816f432e3fac1332b0" id="r_a63a652669aada9816f432e3fac1332b0"><td class="memItemLeft" align="right" valign="top"><a id="a63a652669aada9816f432e3fac1332b0" name="a63a652669aada9816f432e3fac1332b0"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_push_new_event</b> (struct <a class="el" href="structcrtx__listener__base.html">crtx_listener_base</a> *lstnr, struct <a class="el" href="structcrtx__event.html">crtx_event</a> **event, CRTX_EVENT_TYPE_VARTYPE event_type, char *description, char data_type, char *data_key_or_sign,...)</td></tr>
+<tr class="memdesc:a63a652669aada9816f432e3fac1332b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">helper function to create and add an event with one call <br /></td></tr>
 <tr class="separator:a63a652669aada9816f432e3fac1332b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7e9e1b5903003876a1c186cf923bb9b4" id="r_a7e9e1b5903003876a1c186cf923bb9b4"><td class="memItemLeft" align="right" valign="top"><a id="a7e9e1b5903003876a1c186cf923bb9b4" name="a7e9e1b5903003876a1c186cf923bb9b4"></a>
 struct <a class="el" href="structcrtx__task.html">crtx_task</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_create_task</b> (struct <a class="el" href="structcrtx__graph.html">crtx_graph</a> *graph, unsigned char position, const char *id, crtx_handle_task_t handler, void *userdata)</td></tr>
 <tr class="separator:a7e9e1b5903003876a1c186cf923bb9b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2141f32e5283622a8ba28ecba31bec14" id="r_a2141f32e5283622a8ba28ecba31bec14"><td class="memItemLeft" align="right" valign="top"><a id="a2141f32e5283622a8ba28ecba31bec14" name="a2141f32e5283622a8ba28ecba31bec14"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_process_event</b> (struct <a class="el" href="structcrtx__graph.html">crtx_graph</a> *graph, struct crtx_dll *queue_entry)</td></tr>
-<tr class="separator:a2141f32e5283622a8ba28ecba31bec14"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9812ff338db519209762925ab632d53e" id="r_a9812ff338db519209762925ab632d53e"><td class="memItemLeft" align="right" valign="top"><a id="a9812ff338db519209762925ab632d53e" name="a9812ff338db519209762925ab632d53e"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_init_shutdown</b> ()</td></tr>
 <tr class="separator:a9812ff338db519209762925ab632d53e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2ac3c7bc02ccbd88e2e97fa952661198" id="r_a2ac3c7bc02ccbd88e2e97fa952661198"><td class="memItemLeft" align="right" valign="top"><a id="a2ac3c7bc02ccbd88e2e97fa952661198" name="a2ac3c7bc02ccbd88e2e97fa952661198"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_start_listener</b> (struct <a class="el" href="structcrtx__listener__base.html">crtx_listener_base</a> *listener)</td></tr>
+<tr class="memdesc:a2ac3c7bc02ccbd88e2e97fa952661198"><td class="mdescLeft">&#160;</td><td class="mdescRight">start or activate a listener <br /></td></tr>
 <tr class="separator:a2ac3c7bc02ccbd88e2e97fa952661198"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0586283126f71e704bff7af340ecaadd" id="r_a0586283126f71e704bff7af340ecaadd"><td class="memItemLeft" align="right" valign="top"><a id="a0586283126f71e704bff7af340ecaadd" name="a0586283126f71e704bff7af340ecaadd"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_update_listener</b> (struct <a class="el" href="structcrtx__listener__base.html">crtx_listener_base</a> *listener)</td></tr>
+<tr class="memdesc:a0586283126f71e704bff7af340ecaadd"><td class="mdescLeft">&#160;</td><td class="mdescRight">trigger a listener update, e.g., to apply changes to a running listener <br /></td></tr>
 <tr class="separator:a0586283126f71e704bff7af340ecaadd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a06906b809e5222d1ca3dec6d81881a9e" id="r_a06906b809e5222d1ca3dec6d81881a9e"><td class="memItemLeft" align="right" valign="top"><a id="a06906b809e5222d1ca3dec6d81881a9e" name="a06906b809e5222d1ca3dec6d81881a9e"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_stop_listener</b> (struct <a class="el" href="structcrtx__listener__base.html">crtx_listener_base</a> *listener)</td></tr>
+<tr class="memitem:a06906b809e5222d1ca3dec6d81881a9e" id="r_a06906b809e5222d1ca3dec6d81881a9e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="core_8h.html#a06906b809e5222d1ca3dec6d81881a9e">crtx_stop_listener</a> (struct <a class="el" href="structcrtx__listener__base.html">crtx_listener_base</a> *listener)</td></tr>
+<tr class="memdesc:a06906b809e5222d1ca3dec6d81881a9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">deactivate a listener  <br /></td></tr>
 <tr class="separator:a06906b809e5222d1ca3dec6d81881a9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abf9ae9f059fb3a0019e5e58a525a4f37" id="r_abf9ae9f059fb3a0019e5e58a525a4f37"><td class="memItemLeft" align="right" valign="top"><a id="abf9ae9f059fb3a0019e5e58a525a4f37" name="abf9ae9f059fb3a0019e5e58a525a4f37"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>print_tasks</b> (struct <a class="el" href="structcrtx__graph.html">crtx_graph</a> *graph)</td></tr>
-<tr class="separator:abf9ae9f059fb3a0019e5e58a525a4f37"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a80bbbd91304ed9e336fbb7f17563e220" id="r_a80bbbd91304ed9e336fbb7f17563e220"><td class="memItemLeft" align="right" valign="top"><a id="a80bbbd91304ed9e336fbb7f17563e220" name="a80bbbd91304ed9e336fbb7f17563e220"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>hexdump</b> (unsigned char *buffer, size_t index)</td></tr>
-<tr class="separator:a80bbbd91304ed9e336fbb7f17563e220"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad78681b8a2f19682aee3982dc631d9b2" id="r_ad78681b8a2f19682aee3982dc631d9b2"><td class="memItemLeft" align="right" valign="top"><a id="ad78681b8a2f19682aee3982dc631d9b2" name="ad78681b8a2f19682aee3982dc631d9b2"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_daemonize</b> ()</td></tr>
-<tr class="separator:ad78681b8a2f19682aee3982dc631d9b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12d451680037adc514d8267781e9684c" id="r_a12d451680037adc514d8267781e9684c"><td class="memItemLeft" align="right" valign="top"><a id="a12d451680037adc514d8267781e9684c" name="a12d451680037adc514d8267781e9684c"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_print_tasks</b> (struct <a class="el" href="structcrtx__graph.html">crtx_graph</a> *graph)</td></tr>
+<tr class="separator:a12d451680037adc514d8267781e9684c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa5631ef7955bb40dd3399d58c6c0c206" id="r_aa5631ef7955bb40dd3399d58c6c0c206"><td class="memItemLeft" align="right" valign="top"><a id="aa5631ef7955bb40dd3399d58c6c0c206" name="aa5631ef7955bb40dd3399d58c6c0c206"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_hexdump</b> (unsigned char *buffer, size_t index)</td></tr>
+<tr class="separator:aa5631ef7955bb40dd3399d58c6c0c206"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acd946a7b2d03bb0f43863fc91afbe7a0" id="r_acd946a7b2d03bb0f43863fc91afbe7a0"><td class="memItemLeft" align="right" valign="top"><a id="acd946a7b2d03bb0f43863fc91afbe7a0" name="acd946a7b2d03bb0f43863fc91afbe7a0"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_traverse_graph</b> (struct <a class="el" href="structcrtx__graph.html">crtx_graph</a> *graph, struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event)</td></tr>
 <tr class="separator:acd946a7b2d03bb0f43863fc91afbe7a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a77b39963703eb2a49a66582feedb7ef9" id="r_a77b39963703eb2a49a66582feedb7ef9"><td class="memItemLeft" align="right" valign="top"><a id="a77b39963703eb2a49a66582feedb7ef9" name="a77b39963703eb2a49a66582feedb7ef9"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>reference_event_response</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event)</td></tr>
-<tr class="separator:a77b39963703eb2a49a66582feedb7ef9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af4a8ad9bd32dacbfed48dcc19bdd491b" id="r_af4a8ad9bd32dacbfed48dcc19bdd491b"><td class="memItemLeft" align="right" valign="top"><a id="af4a8ad9bd32dacbfed48dcc19bdd491b" name="af4a8ad9bd32dacbfed48dcc19bdd491b"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>dereference_event_response</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event)</td></tr>
-<tr class="separator:af4a8ad9bd32dacbfed48dcc19bdd491b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4c1c579e97718a77ec1e2b03bea202ab" id="r_a4c1c579e97718a77ec1e2b03bea202ab"><td class="memItemLeft" align="right" valign="top"><a id="a4c1c579e97718a77ec1e2b03bea202ab" name="a4c1c579e97718a77ec1e2b03bea202ab"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>reference_event_release</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event)</td></tr>
-<tr class="separator:a4c1c579e97718a77ec1e2b03bea202ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa1bdece1f46e43b3959ac2a23badae0f" id="r_aa1bdece1f46e43b3959ac2a23badae0f"><td class="memItemLeft" align="right" valign="top"><a id="aa1bdece1f46e43b3959ac2a23badae0f" name="aa1bdece1f46e43b3959ac2a23badae0f"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>dereference_event_release</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event)</td></tr>
-<tr class="separator:aa1bdece1f46e43b3959ac2a23badae0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af9cdfa62674856ddf7b7b31f80af725c" id="r_af9cdfa62674856ddf7b7b31f80af725c"><td class="memItemLeft" align="right" valign="top"><a id="af9cdfa62674856ddf7b7b31f80af725c" name="af9cdfa62674856ddf7b7b31f80af725c"></a>
-char *&#160;</td><td class="memItemRight" valign="bottom"><b>get_username</b> ()</td></tr>
-<tr class="separator:af9cdfa62674856ddf7b7b31f80af725c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac3897c7a76ebe5bf55565d352de93522" id="r_ac3897c7a76ebe5bf55565d352de93522"><td class="memItemLeft" align="right" valign="top"><a id="ac3897c7a76ebe5bf55565d352de93522" name="ac3897c7a76ebe5bf55565d352de93522"></a>
-char&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_graph_has_task</b> (struct <a class="el" href="structcrtx__graph.html">crtx_graph</a> *graph)</td></tr>
-<tr class="separator:ac3897c7a76ebe5bf55565d352de93522"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae8c315b420f5ea48c9c20a97a3a857dc" id="r_ae8c315b420f5ea48c9c20a97a3a857dc"><td class="memItemLeft" align="right" valign="top"><a id="ae8c315b420f5ea48c9c20a97a3a857dc" name="ae8c315b420f5ea48c9c20a97a3a857dc"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_reference_event_response</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event)</td></tr>
+<tr class="separator:ae8c315b420f5ea48c9c20a97a3a857dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9ca1fd70f9e86e1d4627e247bd9d1183" id="r_a9ca1fd70f9e86e1d4627e247bd9d1183"><td class="memItemLeft" align="right" valign="top"><a id="a9ca1fd70f9e86e1d4627e247bd9d1183" name="a9ca1fd70f9e86e1d4627e247bd9d1183"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_dereference_event_response</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event)</td></tr>
+<tr class="separator:a9ca1fd70f9e86e1d4627e247bd9d1183"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a47271ec7ee35d1b9febf2275ff283b9b" id="r_a47271ec7ee35d1b9febf2275ff283b9b"><td class="memItemLeft" align="right" valign="top"><a id="a47271ec7ee35d1b9febf2275ff283b9b" name="a47271ec7ee35d1b9febf2275ff283b9b"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_reference_event_release</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event)</td></tr>
+<tr class="separator:a47271ec7ee35d1b9febf2275ff283b9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab866a611eba017db190919aa48ccd444" id="r_ab866a611eba017db190919aa48ccd444"><td class="memItemLeft" align="right" valign="top"><a id="ab866a611eba017db190919aa48ccd444" name="ab866a611eba017db190919aa48ccd444"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_dereference_event_release</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event)</td></tr>
+<tr class="separator:ab866a611eba017db190919aa48ccd444"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f7fb30bdd5a0246ad4650377e0cad78" id="r_a7f7fb30bdd5a0246ad4650377e0cad78"><td class="memItemLeft" align="right" valign="top"><a id="a7f7fb30bdd5a0246ad4650377e0cad78" name="a7f7fb30bdd5a0246ad4650377e0cad78"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_graph_has_task</b> (struct <a class="el" href="structcrtx__graph.html">crtx_graph</a> *graph)</td></tr>
+<tr class="separator:a7f7fb30bdd5a0246ad4650377e0cad78"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad002725e53e04360ef65b81f0520aa5f" id="r_ad002725e53e04360ef65b81f0520aa5f"><td class="memItemLeft" align="right" valign="top"><a id="ad002725e53e04360ef65b81f0520aa5f" name="ad002725e53e04360ef65b81f0520aa5f"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_is_graph_empty</b> (struct <a class="el" href="structcrtx__graph.html">crtx_graph</a> *graph)</td></tr>
 <tr class="separator:ad002725e53e04360ef65b81f0520aa5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -382,9 +357,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_event_set_raw_da
 <tr class="memitem:a424a08a5f3b993d1d9c420bf42ceebef" id="r_a424a08a5f3b993d1d9c420bf42ceebef"><td class="memItemLeft" align="right" valign="top"><a id="a424a08a5f3b993d1d9c420bf42ceebef" name="a424a08a5f3b993d1d9c420bf42ceebef"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_event_set_dict_data</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event, struct <a class="el" href="structcrtx__dict.html">crtx_dict</a> *data_dict, unsigned char n_additional_fields)</td></tr>
 <tr class="separator:a424a08a5f3b993d1d9c420bf42ceebef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9b51cfbeb2693732c478b8a05c208178" id="r_a9b51cfbeb2693732c478b8a05c208178"><td class="memItemLeft" align="right" valign="top"><a id="a9b51cfbeb2693732c478b8a05c208178" name="a9b51cfbeb2693732c478b8a05c208178"></a>
-char&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_event_raw2dict</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event, void *user_data)</td></tr>
-<tr class="separator:a9b51cfbeb2693732c478b8a05c208178"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a16567a23f2cda255226590f5a49c3705" id="r_a16567a23f2cda255226590f5a49c3705"><td class="memItemLeft" align="right" valign="top"><a id="a16567a23f2cda255226590f5a49c3705" name="a16567a23f2cda255226590f5a49c3705"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_event_raw2dict</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event, void *user_data)</td></tr>
+<tr class="separator:a16567a23f2cda255226590f5a49c3705"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6b9270711e61d636f5a5477f1e5dd7b6" id="r_a6b9270711e61d636f5a5477f1e5dd7b6"><td class="memItemLeft" align="right" valign="top"><a id="a6b9270711e61d636f5a5477f1e5dd7b6" name="a6b9270711e61d636f5a5477f1e5dd7b6"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_event_get_payload</b> (struct <a class="el" href="structcrtx__event.html">crtx_event</a> *event, char *id, void **raw_pointer, struct <a class="el" href="structcrtx__dict.html">crtx_dict</a> **dict)</td></tr>
 <tr class="separator:a6b9270711e61d636f5a5477f1e5dd7b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -475,15 +450,6 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_is_fd_valid</b> (
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
-<tr class="memitem:a40fe127343897b4d70bc3dbf130ed12d" id="r_a40fe127343897b4d70bc3dbf130ed12d"><td class="memItemLeft" align="right" valign="top"><a id="a40fe127343897b4d70bc3dbf130ed12d" name="a40fe127343897b4d70bc3dbf130ed12d"></a>
-char *&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_evt_notification</b> []</td></tr>
-<tr class="separator:a40fe127343897b4d70bc3dbf130ed12d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaa1fb802fd5cfa4a7b43ef75f9095c14" id="r_aaa1fb802fd5cfa4a7b43ef75f9095c14"><td class="memItemLeft" align="right" valign="top"><a id="aaa1fb802fd5cfa4a7b43ef75f9095c14" name="aaa1fb802fd5cfa4a7b43ef75f9095c14"></a>
-char *&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_evt_inbox</b> []</td></tr>
-<tr class="separator:aaa1fb802fd5cfa4a7b43ef75f9095c14"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab8fc901706f29ce69f76c5009f308b8d" id="r_ab8fc901706f29ce69f76c5009f308b8d"><td class="memItemLeft" align="right" valign="top"><a id="ab8fc901706f29ce69f76c5009f308b8d" name="ab8fc901706f29ce69f76c5009f308b8d"></a>
-char *&#160;</td><td class="memItemRight" valign="bottom"><b>crtx_evt_outbox</b> []</td></tr>
-<tr class="separator:ab8fc901706f29ce69f76c5009f308b8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a85dd0f06e49c905f12cdbd3088db5993" id="r_a85dd0f06e49c905f12cdbd3088db5993"><td class="memItemLeft" align="right" valign="top"><a id="a85dd0f06e49c905f12cdbd3088db5993" name="a85dd0f06e49c905f12cdbd3088db5993"></a>
 struct <a class="el" href="structcrtx__module.html">crtx_module</a>&#160;</td><td class="memItemRight" valign="bottom"><b>static_modules</b> []</td></tr>
 <tr class="separator:a85dd0f06e49c905f12cdbd3088db5993"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -546,6 +512,28 @@ struct <a class="el" href="structcrtx__root.html">crtx_root</a> *&#160;</td><td 
 <tr><td class="fieldname"><a id="a0015112563500d8ba6edc8b42b3c2009a268c3a0c68e92eee97b96e69b343ee5d" name="a0015112563500d8ba6edc8b42b3c2009a268c3a0c68e92eee97b96e69b343ee5d"></a>CRTX_NO_PROCESSING_MODE&#160;</td><td class="fielddoc"><p>the listener requires no processing, e.g., if it depends on other listeners </p>
 </td></tr>
 </table>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="a06906b809e5222d1ca3dec6d81881a9e" name="a06906b809e5222d1ca3dec6d81881a9e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a06906b809e5222d1ca3dec6d81881a9e">&#9670;&#160;</a></span>crtx_stop_listener()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int crtx_stop_listener </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structcrtx__listener__base.html">crtx_listener_base</a> *&#160;</td>
+          <td class="paramname"><em>listener</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>deactivate a listener </p>
+<p>refuse stop if our reverse dependencies are still running</p>
 
 </div>
 </div>

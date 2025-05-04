@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['evloop_5ffd_0',['evloop_fd',['../structcrtx__listener__base.html#ae5857acce13d706148beb82de92e80bc',1,'crtx_listener_base']]]
+  ['claimed_0',['claimed',['../structcrtx__event.html#a6381c1f3ca46c5e09e3c4e8cbb5c94c3',1,'crtx_event']]]
 ];
