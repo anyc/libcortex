@@ -42,6 +42,11 @@ crtx_layer2_tests: $(SHAREDLIB) crtx_layer2 $(local_mk)
 libcortex: $(local_mk)
 	$(MAKE) -C src local_mk=../$(local_mk)
 
+install:
+	$(MAKE) -C src local_mk=../$(local_mk) install
+	$(MAKE) -C examples local_mk=../$(local_mk) install
+	$(MAKE) -C layer2 local_mk=../$(local_mk) install
+
 tests: crtx_layer2_tests
 	$(MAKE) -C src tests
 	$(MAKE) -C tests local_mk=../$(local_mk)

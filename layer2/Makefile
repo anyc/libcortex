@@ -1,7 +1,14 @@
 
 libcrtx_dir=../src/
 
+prefix?=/usr
+libdir?=$(prefix)/lib
+plugindir?=$(libdir)
+includedir?=$(prefix)/include
+
+SHELL?=/bin/bash
 PKG_CONFIG?=pkg-config
+INSTALL?=install
 
 CFLAGS+=$(DEBUG_FLAGS) -I$(libcrtx_dir) -I$(libcrtx_dir)include -fPIC
 LDFLAGS+=-L$(libcrtx_dir)
@@ -51,3 +58,15 @@ tests: $(TESTS)
 %.test: LDFLAGS+=-Wl,-rpath,$(plugindir)
 %.test: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) $< -o $@ $(LDFLAGS) $(LDLIBS) -L. -lcrtx
+
+install: install-lib install-devel
+
+install-devel:
+	$(INSTALL) -m 755 -d $(DESTDIR)$(includedir)/cortex/layer2
+	
+	ls libcrtx_*.so.* 2>/dev/null && cp -P libcrtx_*.so $(DESTDIR)$(plugindir) || :
+	
+	$(INSTALL) -m 644 *.h $(DESTDIR)$(includedir)/cortex/layer2/
+
+install-lib:
+	ls libcrtx_*.so.* 2>/dev/null && $(INSTALL) -m 755 libcrtx_*.so.* $(DESTDIR)$(plugindir) || :

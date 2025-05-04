@@ -5,7 +5,7 @@
 
 local_mk_rules ?= Makefile.local_rules
 
-SHELL=/bin/bash
+SHELL?=/bin/bash
 PKG_CONFIG?=pkg-config
 INSTALL?=install
 
@@ -176,14 +176,12 @@ install-devel:
 	$(INSTALL) -m 755 -d $(DESTDIR)$(libdir)
 	$(INSTALL) -m 755 -d $(DESTDIR)$(plugindir)
 	$(INSTALL) -m 755 -d $(DESTDIR)$(includedir)/cortex/
-	$(INSTALL) -m 755 -d $(DESTDIR)$(includedir)/cortex/layer2/
 	
 	cp -P libcrtx.so $(DESTDIR)$(libdir)
 	ls libcrtx_*.so.* 2>/dev/null && cp -P libcrtx_*.so $(DESTDIR)$(plugindir) || :
 	
 	$(INSTALL) -m 644 *.h $(DESTDIR)$(includedir)/cortex/
 	ln -s cortex $(DESTDIR)$(includedir)/crtx
-	$(INSTALL) -m 644 layer2/*.h $(DESTDIR)$(includedir)/cortex/layer2/
 	
 	$(INSTALL) -m 644 llist.c $(DESTDIR)$(includedir)/cortex/
 
@@ -193,7 +191,6 @@ install-lib:
 	
 	$(INSTALL) -m 755 libcrtx.so.* $(DESTDIR)$(libdir)
 	ls libcrtx_*.so.* 2>/dev/null && $(INSTALL) -m 755 libcrtx_*.so.* $(DESTDIR)$(plugindir) || :
-	
 
 deb: deb-lib deb-devel
 	

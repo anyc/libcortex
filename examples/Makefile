@@ -1,6 +1,14 @@
 
 libcrtx_path?=../src
 
+prefix?=/usr
+exec_prefix?=/usr
+bindir?=$(exec_prefix)/bin
+
+SHELL?=/bin/bash
+PKG_CONFIG?=pkg-config
+INSTALL?=install
+
 CFLAGS+=-I$(libcrtx_path) -g
 LDFLAGS+=-L$(libcrtx_path) -Wl,-rpath "$(libcrtx_path)"
 
@@ -43,3 +51,8 @@ gdb_%: %
 
 valgrind_%: %
 	LD_LIBRARY_PATH=$(libcrtx_path) valgrind --leak-check=full ./$<
+
+install:
+	$(INSTALL) -m 755 -d $(DESTDIR)$(bindir)
+	
+	$(INSTALL) -m 755 $(EXAMPLES) $(DESTDIR)$(bindir)
