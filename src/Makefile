@@ -5,16 +5,6 @@
 
 local_mk_rules ?= Makefile.local_rules
 
-# we use bash-specific code
-SHELL=/bin/bash
-PKG_CONFIG?=pkg-config
-INSTALL?=install
-
-prefix?=/usr
-libdir?=$(prefix)/lib
-plugindir?=$(libdir)
-includedir?=$(prefix)/include
-
 APP=cortexd
 SHAREDLIB=libcrtx.so
 
