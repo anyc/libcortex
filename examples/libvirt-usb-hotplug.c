@@ -1,9 +1,9 @@
 /*
- * Mario Kicherer (dev@kicherer.org) 2016
- *
  * This application dynamically adds and removes USB devices to/from a
  * libvirt-managed virtual machine if the devices are plugged in or out or if
  * virtual machines are started.
+ *
+ * Mario Kicherer (dev@kicherer.org) 2016
  */
 
 #include <stdio.h>

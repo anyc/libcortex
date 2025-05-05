@@ -78,8 +78,11 @@ registered with this loop. Libcortex implements such a generic event loop but
 also provides a simple interface to start listening to some common event sources
 in a (Linux) operating system.
 
-Example
--------
+Examples
+--------
+
+* [udev](https://github.com/anyc/libcortex/blob/master/tests/udev.c) show information
+  about USB mass storage devices whenever udev detects that one was plugged in or out
 
 The following code will show information about a USB mass storage device whenever
 udev detects that one was plugged in:

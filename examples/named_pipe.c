@@ -1,3 +1,9 @@
+/*
+ * This example creates a named pipe/fifo under the path given as first commandline
+ * parameter and printfs the data another process writes into the pipe.
+ *
+ * Mario Kicherer (dev@kicherer.org) 2025
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,11 +16,6 @@
 #include <unistd.h>
 
 #include <core.h>
-
-/*
- * This example creates a named pipe/fifo under the path given as first commandline
- * parameter and printfs the data another process writes into the pipe.
- */
 
 static int fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char *pipe_path;

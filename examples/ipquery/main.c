@@ -1,3 +1,10 @@
+/*
+ * This example can either query all IPs or monitor for changing IPs on all
+ * network interfaces in a system and show a configurable amount of information
+ * about them.
+ *
+ * Mario Kicherer (dev@kicherer.org) 2025
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,6 +84,10 @@ int main(int argc, char **argv) {
 			exit(1);
 		}
 		
+		/*
+		 * convert custom format into libcortex-compatible format
+		 */
+		
 		while (1) {
 			rc = regexec(&regex, start, 1, &rmatch, 0);
 			if (!rc) {
@@ -116,11 +127,15 @@ int main(int argc, char **argv) {
 		format = default_format;
 	}
 	
+	// initialize the ipq library
 	ipq_init();
+	// let libcortex handle common signals
 	crtx_handle_std_signals();
 	
 	if (!strcmp(action, "get_ips")) {
+		// get the list of all IPs
 		rc = ipq_get_ips(&ips);
+		
 		for (iter = crtx_get_first_item(ips); iter; iter = crtx_get_next_item(ips, iter)) {
 			value = crtx_get_item(iter->dict, "value");
 			
@@ -131,36 +146,40 @@ int main(int argc, char **argv) {
 		int rc;
 		struct ipq_monitor *monitor;
 		
+		// setup the monitor
 		rc = ipq_ips_setup_monitor(&monitor);
 		if (rc) {
 			ipq_ips_finish_monitor(monitor);
 			return rc;
 		}
 		
+		// register the callback that is called on events
 		monitor->on_update = &ipq_on_update;
 		
+		// start monitoring
 		rc = ipq_ips_start_monitor(monitor);
 		if (rc) {
 			ipq_ips_finish_monitor(monitor);
 			return rc;
 		}
 		
-		// 	crtx_print_dict(((struct crtx_cache_task*) monitor->cache_task->userdata)->cache->entries);
-		
-// 		*ips = crtx_dict_create_copy(((struct crtx_cache_task*) monitor->cache_task->userdata)->cache->entries);
+		// start the event loop
 		ipq_loop();
 		
+		// stop the monitor
 		rc = ipq_ips_stop_monitor(monitor);
 		if (rc) {
 			ipq_ips_finish_monitor(monitor);
 			return rc;
 		}
 		
+		// release monitor memory
 		rc = ipq_ips_finish_monitor(monitor);
 		if (rc)
 			return rc;
 	}
 	
+	// release remaining memory
 	ipq_finish();
 	
 	return 0;

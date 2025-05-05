@@ -1,3 +1,10 @@
+/*
+ * This example shows information about a USB mass storage device whenever one
+ * is plugged in or out.
+ *
+ * Mario Kicherer (dev@kicherer.org) 2016
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

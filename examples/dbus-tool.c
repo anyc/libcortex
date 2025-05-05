@@ -1,3 +1,10 @@
+/*
+ * This example asynchronously requests information about a given DBus service,
+ * prints the information to stdout and exits.
+ *
+ * Mario Kicherer (dev@kicherer.org) 2025
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <poll.h>
