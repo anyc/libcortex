@@ -618,13 +618,14 @@ int crtx_process_one_event(struct crtx_graph *graph) {
 	if (graph->tasks) {
 		traverse_graph_r(graph, graph->tasks, queue_entry->event);
 	} else {
-		if (graph->descriptions && graph->n_descriptions > 0)
+		if (graph->descriptions && graph->n_descriptions > 0) {
 			CRTX_INFO("no task in graph type[0] = %s\n", graph->descriptions[0]);
-		else
-			if (graph->types && graph->types > 0)	
-				CRTX_INFO("no task in graph %d\n", graph->types[0]);
-		else
+		} else
+		if (graph->types && graph->types > 0) {
+			CRTX_INFO("no task in graph %d\n", graph->types[0]);
+		} else {
 			CRTX_INFO("no task in graph\n");
+		}
 	}
 	
 	crtx_dereference_event_response(queue_entry->event);
@@ -897,10 +898,10 @@ void crtx_reference_event_release(struct crtx_event *event) {
 void crtx_dereference_event_release(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
-	CRTX_VDBG("deref release of event %s (%p) (remaining %d)\n", event->description, event, event->refs_before_release);
-	
 	if (event->refs_before_release > 0)
 		event->refs_before_release--;
+	
+	CRTX_VDBG("deref release of event %s (%p) (remaining %d)\n", event->description, event, event->refs_before_release);
 	
 	if (event->refs_before_release == 0) {
 		pthread_mutex_unlock(&event->mutex);
@@ -925,10 +926,10 @@ void crtx_reference_event_response(struct crtx_event *event) {
 void crtx_dereference_event_response(struct crtx_event *event) {
 	pthread_mutex_lock(&event->mutex);
 	
-	CRTX_VDBG("ref response of event %s (%p) (remaining %d)\n", event->description, event, event->refs_before_response);
-	
 	if (event->refs_before_response > 0)
 		event->refs_before_response--;
+	
+	CRTX_VDBG("deref response of event %s (%p) (remaining %d)\n", event->description, event, event->refs_before_response);
 	
 	if (event->refs_before_response == 0)
 		pthread_cond_broadcast(&event->response_cond);
