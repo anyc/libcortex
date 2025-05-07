@@ -773,11 +773,6 @@ void crtx_wait_on_graph_empty(struct crtx_graph *graph) {
 
 /// add a new event to a graph for processing
 void crtx_add_event(struct crtx_graph *graph, struct crtx_event *event) {
-	if (event->origin) {
-		CRTX_ERROR("event %p already has associated listener: %s %p\n", event, event->origin->name, event->origin);
-		return;
-	}
-	
 	crtx_reference_event_release(event);
 	crtx_reference_event_response(event);
 	
