@@ -684,7 +684,7 @@ static void *process_graph_tmain(void *arg) {
 
 /// add task to graph
 void crtx_add_task(struct crtx_graph *graph, struct crtx_task *task) {
-	struct crtx_task *ti, *last;
+	struct crtx_task *ti, *previous;
 	
 	task->graph = graph;
 	
@@ -695,13 +695,13 @@ void crtx_add_task(struct crtx_graph *graph, struct crtx_task *task) {
 		return;
 	}
 	
-	last = 0;
+	previous = 0;
 	for (ti=graph->tasks;ti;ti=ti->next) {
 		if (task->position < ti->position) {
-			if (last) {
-				task->next = last->next;
-				last->next = task;
-				task->prev = last;
+			if (previous) {
+				task->next = previous->next;
+				previous->next = task;
+				task->prev = previous;
 				task->next->prev = task;
 			} else {
 				task->next = graph->tasks;
