@@ -316,6 +316,8 @@ static int fork_event_handler(struct crtx_event *event, void *userdata, void **s
 		CRTX_ERROR("unexpected event sent by fork listener %d\n", event->type);
 	}
 	
+	crtx_add_event(plstnr->base.graph, event);
+	
 	return 0;
 }
 
@@ -596,7 +598,7 @@ int popen_main(int argc, char **argv) {
 		return 0;
 	}
 	
-	crtx_create_task(plist.fork_lstnr.base.graph, 0, "popen_event", &popen_event_handler, 0);
+	crtx_create_task(plist.base.graph, 0, "popen_event", &popen_event_handler, 0);
 	
 	ret = crtx_start_listener(&plist.base);
 	if (ret) {
@@ -621,7 +623,7 @@ int popen_main(int argc, char **argv) {
 			return 0;
 		}
 		
-		crtx_create_task(plist2.fork_lstnr.base.graph, 0, "popen_event", &popen_event_handler, (void*) 1);
+		crtx_create_task(plist2.base.graph, 0, "popen_event", &popen_event_handler, (void*) 1);
 		
 		ret = crtx_start_listener(&plist2.base);
 		if (ret) {
