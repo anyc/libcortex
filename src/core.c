@@ -711,24 +711,23 @@ void crtx_add_task(struct crtx_graph *graph, struct crtx_task *task) {
 			
 			break;
 		}
-		last = ti;
+		previous = ti;
 	}
 	if (!ti) {
-		task->next = last->next;
-		last->next = task;
-		task->prev = last;
+		task->next = previous->next;
+		previous->next = task;
+		task->prev = previous;
 	}
 }
 
 struct crtx_task *crtx_create_task(struct crtx_graph *graph, unsigned char position, const char *id, crtx_handle_task_t handler, void *userdata) {
 	struct crtx_task * task;
 	
-	task = new_task();
+	task = crtx_new_task();
 	task->id = id;
 	task->handle = handler;
 	task->userdata = userdata;
-	if (position > 0)
-		task->position = position;
+	task->position = position;
 	crtx_add_task(graph, task);
 	
 	return task;
@@ -1154,9 +1153,8 @@ int crtx_free_graph(struct crtx_graph *egraph) {
 	return free_graph_intern(egraph, 0);
 }
 
-struct crtx_task *new_task() {
+struct crtx_task *crtx_new_task() {
 	struct crtx_task *etask = (struct crtx_task*) calloc(1, sizeof(struct crtx_task));
-	etask->position = 100;
 	
 	return etask;
 }

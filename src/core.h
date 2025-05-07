@@ -357,7 +357,7 @@ void add_event_sync(struct crtx_graph *graph, struct crtx_event *event);
 struct crtx_graph *crtx_find_graph_for_event_description(char *event_description);
 struct crtx_graph *crtx_find_graph_for_event_type(CRTX_EVENT_TYPE_VARTYPE event_type);
 struct crtx_graph *crtx_get_graph_for_event_description(char *event_type, char **new_event_types);
-struct crtx_task *new_task();
+struct crtx_task *crtx_new_task();
 void crtx_free_task(struct crtx_task *task);
 int crtx_wait_on_event(struct crtx_event *event);
 int crtx_create_listener(const char *id, void *options) __attribute__((deprecated));

@@ -519,7 +519,7 @@ struct crtx_task *create_cache_task(char *id, create_key_cb_t create_key) {
 	struct crtx_task *task;
 	int ret;
 	
-	task = new_task();
+	task = crtx_new_task();
 	
 	dc = (struct crtx_cache*) calloc(1, sizeof(struct crtx_cache));
 	

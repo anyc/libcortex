@@ -205,7 +205,7 @@ static int sd_bus_add_signal(sd_bus_message *m, void *userdata, sd_bus_error *re
 	event_types[1] = 0;
 	new_eventgraph(&args->graph, 0, event_types);
 	
-	struct crtx_task *etask = new_task();
+	struct crtx_task *etask = crtx_new_task();
 	etask->handle = &submit_signal;
 	etask->userdata = sign;
 	
