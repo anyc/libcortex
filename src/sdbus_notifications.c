@@ -236,6 +236,7 @@ void crtx_send_notification(char *icon, char *title, char *text, char **actions,
 	}
 }
 
+#if 0
 /// extract necessary information from the cortex dict to call send_notification
 static int notify_send_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char *title, *msg, *answer, *icon;
@@ -311,6 +312,7 @@ static int notify_send_handler(struct crtx_event *event, void *userdata, void **
 	
 	return 1;
 }
+#endif
 
 // struct crtx_listener_base *crtx_setup_sd_bus_notification_listener(void *options) {
 // 	struct crtx_sd_bus_notification_listener *slistener;
@@ -333,7 +335,10 @@ static int notify_send_handler(struct crtx_event *event, void *userdata, void **
 // }
 
 void crtx_sdbus_notifications_init() {
+	#if 0
+	// TODO unregister on shutdown
 	crtx_register_handler_for_event_type("cortex.user_notification", "dbus_notification", &notify_send_handler, 0);
+	#endif
 }
 
 void crtx_sdbus_notifications_finish() {

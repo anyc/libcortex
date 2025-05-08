@@ -58,6 +58,7 @@ void crtx_readline_show_notification(char *title, char *text, char **actions, ch
 	pthread_mutex_unlock(&stdout_mutex);
 }
 
+#if 0
 /// extract necessary information from the cortex dict to call send_notification
 static int rl_notify_send_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	char *title, *msg, *answer;
@@ -132,6 +133,7 @@ static int rl_notify_send_handler(struct crtx_event *event, void *userdata, void
 	
 	return 1;
 }
+#endif
 
 // struct crtx_listener_base *crtx_setup_readline_listener(void *options) {
 // 	struct crtx_readline_listener *slistener;
@@ -154,7 +156,10 @@ static int rl_notify_send_handler(struct crtx_event *event, void *userdata, void
 void crtx_readline_init() {
 	int ret;
 	
-	crtx_register_handler_for_event_type("cortex.user_notification", "readline_notify", &rl_notify_send_handler, 0);
+	#if 0
+	// TODO unregister on shutdown
+	// crtx_register_handler_for_event_type("cortex.user_notification", "readline_notify", &rl_notify_send_handler, 0);
+	#endif
 	
 	ret = pthread_mutex_init(&stdout_mutex, 0); CRTX_ASSERT(ret >= 0);
 }
