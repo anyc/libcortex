@@ -94,12 +94,15 @@ static int ipq_cache_on_add_cb(struct crtx_cache *cache, struct crtx_dict_item *
 
 static void ipq_free_monitor(struct ipq_monitor *monitor) {
 	crtx_shutdown_signal(monitor->initial_response);
+	free(monitor->initial_response);
 	
 	if (monitor->cache_task)
 		crtx_free_cache_task(monitor->cache_task);
 	
-	if (monitor->nlr_list)
+	if (monitor->nlr_list) {
 		crtx_shutdown_listener(&monitor->nlr_list->base);
+		free(monitor->nlr_list);
+	}
 	
 	free(monitor);
 }

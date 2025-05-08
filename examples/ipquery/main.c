@@ -42,6 +42,8 @@ static void ipq_on_update(struct crtx_dict *dict) {
 	
 	crtx_dict_snaprintf(&s, 0, 0, format, dict);
 	printf("%s", s);
+	
+	free(s);
 }
 
 int main(int argc, char **argv) {
@@ -141,6 +143,8 @@ int main(int argc, char **argv) {
 			
 			ipq_on_update(value->dict);
 		}
+		
+		crtx_dict_unref(ips);
 	} else
 	if (!strcmp(action, "monitor_ips")) {
 		int rc;
