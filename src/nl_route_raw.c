@@ -638,7 +638,7 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 				char *ptr;
 				crtx_create_event(&event);
 				
-// 				if (!nlr_list->raw2dict) {
+				if (!nlr_list->raw2dict) {
 					// we don't know the size of data, hence we cannot copy it
 					// and we have to wait until all tasks have finished
 					
@@ -656,8 +656,8 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 // 					wait_on_event(event);
 					
 // 					dereference_event_release(event);
-// 				} else {
-				if (nlr_list->raw2dict) {
+				} else {
+				// if (nlr_list->raw2dict) {
 					// we copy the data and we do not have to wait
 					
 					// 					event->data.type = 'D';
