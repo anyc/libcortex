@@ -12,7 +12,7 @@ OBJS+=core.o \
 	dict.o \
 	llist.o dllist.o evloop.o
 
-AVAILABLE_TESTS=avahi can curl epoll evdev evloop_qt fork libnl libvirt mqtt \
+AVAILABLE_TESTS=avahi can curl epoll evdev evloop_qt libvirt mqtt \
 	netlink_ge nl_route_raw popen pulseaudio sdbus sd_journal sip timer \
 	uevents v4l xcb_randr writequeue uio inotify fanotify
 

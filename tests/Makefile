@@ -6,9 +6,13 @@ LDFLAGS+=-L$(libcrtx_path) -Wl,-rpath "$(libcrtx_path)"
 LDLIBS+=-lcrtx
 
 -include $(local_mk)
+include ../Makefile.common
+include ../src/Makefile.modules
 
-TEST_SRCS=$(shell find $(SOURCEDIR) -name '*.c')
-TESTS=$(patsubst %.c,%.test,$(TEST_SRCS))
+AVAILABLE_TESTS=fork libnl udev
+
+# build tests for enabled modules
+TESTS+=$(foreach t,$(BUILTIN_MODULES) $(STATIC_MODULES) $(DYN_MODULES),$(if $(findstring $(t),$(AVAILABLE_TESTS)), $(t).test))
 
 all: $(TESTS)
 
