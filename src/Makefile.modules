@@ -64,8 +64,6 @@ LDLIBS_sdbus+=$(shell $(PKG_CONFIG) --libs libsystemd)
 CFLAGS_sd_journal+=$(shell $(PKG_CONFIG) --cflags libsystemd)
 LDLIBS_sd_journal+=$(shell $(PKG_CONFIG) --libs libsystemd)
 
-DEPS_sd_bus_notifications+=sdbus
-
 # OBJS_sip+=sip_eXosip_event2dict.c
 # libcrtx_sip.so: sip_eXosip_event2dict.o
 CFLAGS_sip+=-DENABLE_TRACE
