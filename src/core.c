@@ -489,7 +489,7 @@ void crtx_shutdown_listener(struct crtx_listener_base *listener) {
 	if (listener->state == CRTX_LSTNR_SHUTDOWN) {
 		if (listener->graph) {
 			LOCK(listener->graph->queue_mutex);
-			if (!listener->graph->equeue) {
+			if (!listener->graph->equeue && !listener->graph->claimed) {
 				shutdown_listener_intern(listener);
 				return;
 			}
@@ -545,7 +545,7 @@ void crtx_shutdown_listener(struct crtx_listener_base *listener) {
 	// another listener
 	if (listener->graph) {
 		LOCK(listener->graph->queue_mutex);
-		if (listener->graph->equeue) {
+		if (listener->graph->equeue || listener->graph->claimed) {
 			CRTX_DBG("delaying listener shutdown due to pending events\n");
 			UNLOCK(listener->graph->queue_mutex);
 			
@@ -595,20 +595,15 @@ void crtx_traverse_graph(struct crtx_graph *graph, struct crtx_event *event) {
 void crtx_claim_next_event_of_graph(struct crtx_graph *graph, struct crtx_dll **event) {
 	struct crtx_dll *eit;
 	
-	if (event && *event)
-		eit = *event;
-	else
-		eit = graph->equeue;
-	
 	LOCK(graph->queue_mutex);
-	for (; eit && (eit->event->claimed || eit->event->error); eit = eit->next) {}
-	if (eit && !eit->event->claimed && !eit->event->error) {
-		eit->event->claimed = 1;
+	for (eit = graph->equeue; eit && eit->event->error; eit = eit->next) {}
+	if (eit && !eit->event->error) {
+		crtx_dll_unlink(&graph->equeue, eit);
+		crtx_dll_append(&graph->claimed, eit);
+		if (event)
+			*event = eit;
 	}
 	UNLOCK(graph->queue_mutex);
-	
-	if (event)
-		*event = eit;
 }
 
 int crtx_process_one_event(struct crtx_graph *graph) {
@@ -633,25 +628,20 @@ int crtx_process_one_event(struct crtx_graph *graph) {
 	}
 	
 	crtx_dereference_event_response(queue_entry->event);
-	
 	crtx_dereference_event_release(queue_entry->event);
 	
 	LOCK(graph->queue_mutex);
-	if (queue_entry->prev)
-		queue_entry->prev->next = queue_entry->next;
-	else
-		graph->equeue = queue_entry->next;
-	if (queue_entry->next)
-		queue_entry->next->prev = queue_entry->prev;
 	
-	if (!graph->equeue)
+	crtx_dll_unlink(&graph->claimed, queue_entry);
+	
+	if (!graph->equeue && !graph->claimed)
 		pthread_cond_signal(&graph->queue_cond);
 	
 	free(queue_entry);
 	
 	if (graph->listener) {
 		LOCK(graph->listener->state_mutex);
-		if (!graph->equeue && graph->listener->state == CRTX_LSTNR_SHUTDOWN) {
+		if (!graph->equeue && !graph->claimed && graph->listener->state == CRTX_LSTNR_SHUTDOWN) {
 			shutdown_listener_intern(graph->listener);
 		} else {
 			UNLOCK(graph->listener->state_mutex);
@@ -759,13 +749,13 @@ void graph_consumer_stop(struct crtx_thread *t, void *data) {
 }
 
 int crtx_is_graph_empty(struct crtx_graph *graph) {
-	return (graph->equeue == 0);
+	return (graph->equeue == 0 && graph->claimed == 0);
 }
 
 void crtx_wait_on_graph_empty(struct crtx_graph *graph) {
 	LOCK(graph->queue_mutex);
 	
-	while (graph->equeue)
+	while (graph->equeue || graph->claimed)
 		pthread_cond_wait(&graph->queue_cond, &graph->queue_mutex);
 	
 	UNLOCK(graph->queue_mutex);
@@ -1123,6 +1113,11 @@ static int shutdown_graph_intern(struct crtx_graph *egraph, char crtx_shutdown) 
 		qe_next = qe->next;
 		free(qe);
 	}
+	for (qe = egraph->claimed; qe; qe=qe_next) {
+		crtx_free_event(qe->event);
+		qe_next = qe->next;
+		free(qe);
+	}
 	
 	for (t = egraph->tasks; t; t=tnext) {
 		tnext = t->next;
@@ -1195,6 +1190,16 @@ void crtx_flush_events() {
 			crtx_dereference_event_release(qe->event);
 			
 			crtx_dll_unlink(&crtx_root->graphs[i]->equeue, qe);
+		}
+		for (qe = crtx_root->graphs[i]->claimed; qe ; qe = qe_next) {
+			qe_next = qe->next;
+			
+			crtx_invalidate_event(qe->event);
+			
+			crtx_dereference_event_response(qe->event);
+			crtx_dereference_event_release(qe->event);
+			
+			crtx_dll_unlink(&crtx_root->graphs[i]->claimed, qe);
 		}
 		
 		UNLOCK(crtx_root->graphs[i]->queue_mutex);

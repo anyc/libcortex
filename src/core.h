@@ -65,8 +65,7 @@ struct crtx_event {
 	struct crtx_dict_item response;
 	char response_expected;
 	
-	char error;
-	char claimed; ///< true if this event is being processed
+	char error; ///< if set, event has been invalidated
 	char release_in_progress;
 	
 	unsigned char refs_before_response;
@@ -132,6 +131,7 @@ struct crtx_graph {
 	enum crtx_processing_mode mode; ///< processing mode (none, thread, eloop) of this graph
 	
 	struct crtx_dll *equeue; ///< event queue of this graph
+	struct crtx_dll *claimed; ///< list of events which are currently processed
 	pthread_mutex_t queue_mutex;
 	pthread_cond_t queue_cond;
 	
