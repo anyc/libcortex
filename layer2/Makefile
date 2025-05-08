@@ -32,7 +32,7 @@ DEPS_netconf=libnl
 all: $(LAYER2_LISTENER_LIST)
 
 clean:
-	rm -rf *.o $(TESTS) libcrtx_*.so
+	rm -rf *.o $(TESTS) libcrtx_*.so*
 
 libcrtx_%.so: LDLIBS+=$(foreach d,$(DEPS_$(patsubst $(libcrtx_dir)/libcrtx_%.so,%,$@)),$(LDLIBS_$d))
 libcrtx_%.so: %.o

@@ -165,7 +165,7 @@ int crtx_libnl_msg_end(struct nl_msg *msg, void *arg) {
 	return NL_OK;
 }
 
-struct crtx_libnl_callback libnl_callbacks[] = {
+static struct crtx_libnl_callback libnl_callbacks[] = {
 	{ NL_CB_VALID, NL_CB_CUSTOM, crtx_libnl_msg2dict, 0},
 	{ NL_CB_FINISH, NL_CB_CUSTOM, crtx_libnl_msg_end, 0},
 	{ 0 },
