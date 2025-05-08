@@ -25,6 +25,7 @@ jobs:
         make local
         make DEBUG=1
         make tests DEBUG=1
+        make DESTDIR= install
     - name: Run tests
       run: |
         make run_tests
