@@ -18,8 +18,6 @@
 char crtx_nl_route_send_req(struct crtx_nl_route_raw_listener *nlr_list, struct nlmsghdr *n) {
 	int ret;
 	
-// 	printf("send %d\n", nlr_list->nl_listener.sockfd);
-	
 	ret = send(nlr_list->nl_listener.fd, n, n->nlmsg_len, 0);
 	if (ret < 0) {
 		CRTX_ERROR("error while sending netlink request: %s\n", strerror(errno));
@@ -642,27 +640,10 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 					// we don't know the size of data, hence we cannot copy it
 					// and we have to wait until all tasks have finished
 					
-// 					event->data.pointer = malloc(4096);
 					ptr = malloc(4096);
 					memcpy(ptr, nlh, 4096);
-// 					event->data.type = 'p';
-// 					event->data.flags = CRTX_DIF_DONT_FREE_DATA;
 					crtx_event_set_raw_data(event, 'p', ptr, sizeof(ptr), 0);
-					
-// 					reference_event_release(event);
-					
-// 					crtx_add_event(nl_listener->base.graph, event);
-					
-// 					wait_on_event(event);
-					
-// 					dereference_event_release(event);
 				} else {
-				// if (nlr_list->raw2dict) {
-					// we copy the data and we do not have to wait
-					
-					// 					event->data.type = 'D';
-// 					event->data.dict = nlr_list->raw2dict(nlr_list, nlh);
-// 					crtx_event_set_data(event, event->data.pointer, nlr_list->raw2dict(nlr_list, nlh), 0);
 					crtx_event_set_dict_data(event, nlr_list->raw2dict(nlr_list, nlh), 0);
 					
 				}
@@ -680,15 +661,10 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 				event->description = "done";
 				crtx_add_event(nlr_list->base.graph, event);
 			}
-// 			crtx_send_signal(&nlr_list->msg_done, 0);
-// 			printf("DOOONEEEE\n");
 		}
-		
-// 		if (!nl_listener->stop)
-// 			len = recv(fd, nlh, 4096, MSG_DONTWAIT);
 	}
 	
-	if (len < 0) { //  && len != EAGAIN
+	if (len < 0) {
 		CRTX_ERROR("netlink_raw recv failed: %s\n", strerror(errno));
 		return -1;
 	}
@@ -733,8 +709,6 @@ static void shutdown_nl_route_listener(struct crtx_listener_base *lbase) {
 
 struct crtx_listener_base *crtx_setup_nl_route_raw_listener(void *options) {
 	struct crtx_nl_route_raw_listener *nlr_list;
-// 	struct sockaddr_nl addr;
-// 	struct crtx_listener_base *lbase;
 	int ret;
 	
 	nlr_list = (struct crtx_nl_route_raw_listener*) options;
@@ -757,34 +731,11 @@ struct crtx_listener_base *crtx_setup_nl_route_raw_listener(void *options) {
 		return 0;
 	}
 	
-	// 	crtx_create_task(lbase->graph, 0, "netlink_raw_test", netlink_raw_test_handler, 0);
-	
-// 	ret = crtx_start_listener(lbase);
-// 	if (!ret) {
-// 		CRTX_ERROR("starting netlink_raw listener failed\n");
-// 		return 0;
-// 	}
-	
-// 	new_eventgraph(&nlr_list->base.graph, 0, 0);
 	nlr_list->base.graph = nlr_list->nl_listener.base.graph;
-	
-// 	crtx_init_signal(&nlr_list->msg_done);
 	
 	nlr_list->base.shutdown = &shutdown_nl_route_listener;
 	nlr_list->base.start_listener = &nl_route_start_listener;
 	nlr_list->base.stop_listener = &nl_route_stop_listener;
-	
-// 	nl_listener->base.shutdown = &shutdown_netlink_raw_listener;
-	
-// 	nl_listener->base.thread = get_thread(netlink_raw_tmain, nl_listener, 0);
-// 	nl_listener->base.thread->do_stop = &stop_thread;
-	
-// 	nl_listener->base.evloop_fd.fd = nl_listener->sockfd;
-// 	nl_listener->base.evloop_fd.data = nl_listener;
-// 	nl_listener->base.evloop_fd.event_handler = &netlink_el_event_handler;
-// 	nl_listener->base.evloop_fd.event_handler_name = "netlink eventloop handler";
-	
-// crtx_reference_signal(&nl_listener->base.thread->finished);
 	
 	return &nlr_list->base;
 }
@@ -802,175 +753,3 @@ void crtx_nl_route_raw_init() {
 void crtx_nl_route_raw_finish() {
 }
 
-
-
-
-#ifdef CRTX_TEST
-
-#include <unistd.h>
-
-#include "cache.h"
-
-// static uint16_t nlmsg_types[] = {RTM_NEWLINK, RTM_DELLINK, RTM_NEWADDR, RTM_DELADDR, 0};
-
-struct {
-	struct nlmsghdr n;
-	struct ifaddrmsg r;
-} addr_req;
-
-struct {
-	struct nlmsghdr n;
-	struct ifinfomsg ifinfomsg;
-} if_req;
-
-struct crtx_signals msg_done;
-
-// static int netlink_raw_test_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
-// 	crtx_print_dict(event->data.dict);
-// 	
-// 	return 1;
-// }
-
-void msg_done_cb(void *data) {
-	crtx_send_signal(&msg_done, 0);
-}
-
-static uint16_t nlmsg_addr_types[] = {RTM_NEWADDR, RTM_DELADDR, 0};
-static int crtx_get_own_ip_addresses_keygen(struct crtx_cache *, struct crtx_dict_item *key, struct crtx_event *event) {
-	struct crtx_dict_item *di;
-	struct crtx_dict *dict;
-	
-// 	if (!event->data.dict)
-// 		event->data.to_dict(&event->data);
-	
-	crtx_event_get_payload(event, 0, 0, &dict);
-	
-// 	crtx_print_dict(dict);
-	
-	di = crtx_get_item(dict, "address");
-	
-	key->key = 0;
-	key->type = 's';
-	key->string = crtx_stracpy(di->string, 0);
-// 	if (!key->string)
-// 		return 1;
-	key->flags |= CRTX_DIF_ALLOCATED_KEY;
-	
-	return 0;
-}
-
-char crtx_get_own_ip_addresses() {
-	struct crtx_nl_route_raw_listener nlr_list;
-	int ret;
-	struct crtx_task *task;
-	struct crtx_cache *cache;
-	
-	
-// 	crtx_root->force_mode = CRTX_PREFER_THREAD;
-	
-	memset(&nlr_list, 0, sizeof(struct crtx_nl_route_raw_listener));
-	nlr_list.nl_listener.nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
-	nlr_list.nlmsg_types = nlmsg_addr_types;
-	
-	nlr_list.raw2dict = &crtx_nl_route_raw2dict_ifaddr;
-	nlr_list.all_fields = 1;
-	
-	nlr_list.msg_done_cb = msg_done_cb;
-	nlr_list.msg_done_cb_data = &nlr_list;
-	
-	ret = crtx_setup_listener("nl_route_raw", &nlr_list);
-	if (ret) {
-		CRTX_ERROR("create_listener(nl_route_raw) failed: %s\n", strerror(-ret));
-		exit(1);
-	}
-	
-// 	crtx_create_task(lbase->graph, 0, "netlink_raw_test", netlink_raw_test_handler, 0);
-	
-	{
-		ret = crtx_create_cache_task(&task, "ip_cache", crtx_get_own_ip_addresses_keygen);
-		if (ret) {
-			CRTX_ERROR("crtx_create_cache_task() failed: %d\n", ret);
-			return -1;
-		}
-		
-		cache = (struct crtx_cache *) task->userdata;
-		cache->on_hit = &crtx_cache_update_on_hit;
-// 		cache->on_add = &crtx_cache_no_add;
-		cache->on_miss = &crtx_cache_add_on_miss;
-		
-		crtx_add_task(nlr_list.base.graph, task);
-	}
-	
-	ret = crtx_start_listener(&nlr_list.base);
-	if (ret) {
-		CRTX_ERROR("starting nl_route_raw listener failed\n");
-		return -1;
-	}
-	
-	// request a list of addresses
-	memset(&addr_req, 0, sizeof(addr_req));
-	addr_req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
-	addr_req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP; // NLM_F_ATOMIC
-	addr_req.n.nlmsg_type = RTM_GETADDR;
-// 	addr_req.r.ifa_family = AF_INET; // e.g., AF_INET (IPv4-only) or AF_INET6 (IPv6-only)
-	
-	crtx_reset_signal(&msg_done);
-	
-	crtx_nl_route_send_req(&nlr_list, &addr_req.n);
-	
-	crtx_wait_on_signal(&msg_done, 0);
-	
-// 	sleep(5);
-// 	dls_loop();
-	
-	crtx_stop_listener(&nlr_list.base);
-	
-	crtx_wait_on_graph_empty(nlr_list.base.graph);
-	
-	crtx_print_dict(cache->entries);
-	
-	crtx_free_cache_task(task);
-	
-	crtx_shutdown_listener(&nlr_list.base);
-	
-	return 0;
-}
-
-int netlink_raw_main(int argc, char **argv) {
-	// 	struct crtx_netlink_raw_listener nl_listener;
-	// 	struct crtx_listener_base *lbase;
-	// 	char ret;
-	
-	// 	// setup a netlink_raw listener
-	// 	nl_listener.socket_protocol = NETLINK_ROUTE;
-	// 	nl_listener.nl_family = AF_NETLINK;
-	// 	// e.g., RTMGRP_LINK, RTMGRP_NEIGH, RTMGRP_IPV4_IFADDR, RTMGRP_IPV6_IFADDR
-	// 	nl_listener.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
-	// 	nl_listener.nlmsg_types = nlmsg_types;
-	// 	
-	// 	// request a list of addresses
-	// 	memset(&addr_req, 0, sizeof(addr_req));
-	// 	addr_req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
-	// 	addr_req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
-	// 	addr_req.n.nlmsg_type = RTM_GETADDR;
-	// // 	addr_req.r.ifa_family = AF_INET; // e.g., AF_INET (IPv4-only) or AF_INET6 (IPv6-only)
-	// 	
-	// 	// request a list of interfaces
-	// 	memset(&if_req, 0, sizeof(if_req));
-	// 	if_req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
-	// 	if_req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
-	// 	if_req.n.nlmsg_type = RTM_GETLINK;
-	// 	if_req.ifinfomsg.ifi_family = AF_UNSPEC;
-	// 
-	
-	crtx_init_signal(&msg_done);
-	
-	crtx_start_detached_event_loop();
-	
-	crtx_get_own_ip_addresses();
-	
-	return 0;
-}
-
-CRTX_TEST_MAIN(netlink_raw_main);
-#endif

@@ -9,7 +9,7 @@ LDLIBS+=-lcrtx
 include ../Makefile.common
 include ../src/Makefile.modules
 
-AVAILABLE_TESTS=fork libnl udev
+AVAILABLE_TESTS=fork libnl nl_route_raw udev
 
 # build tests for enabled modules
 TESTS+=$(foreach t,$(BUILTIN_MODULES) $(STATIC_MODULES) $(DYN_MODULES),$(if $(findstring $(t),$(AVAILABLE_TESTS)), $(t).test))
