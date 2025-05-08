@@ -33,20 +33,9 @@ all: $(local_mk) core_modules.h config.h plugins shared crtx_include_dir
 #
 
 include Makefile.modules
-
-# default module sets
-BUILTIN_MODULES=signals epoll
-STATIC_TOOLS+=cache dict_inout dict_inout_json threads sm
-STATIC_MODULES+=fanotify fork inotify netlink_raw nl_route_raw uevents \
-	timer writequeue pipe popen uio
-DYN_MODULES+=avahi can curl evdev libnl libvirt netlink_ge nf_queue \
-	pulseaudio readline sdbus sd_journal udev v4l \
-	sdbus_notifications mqtt
-
-DEFAULT_EVLOOP=epoll
+include ../Makefile.common
 
 -include $(local_mk)
-include ../Makefile.common
 
 CFLAGS+=-DDEFAULT_EVLOOP=\"$(DEFAULT_EVLOOP)\" -DSO_VERSION=\"$(SO_VERSION)\" -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -DREVISION=$(REVISION)
 

@@ -13,3 +13,14 @@ includedir?=$(prefix)/include
 SHELL=/bin/bash
 PKG_CONFIG?=pkg-config
 INSTALL?=install
+
+# default module sets
+BUILTIN_MODULES=signals epoll
+STATIC_TOOLS=cache dict_inout dict_inout_json threads sm
+STATIC_MODULES=fanotify fork inotify netlink_raw nl_route_raw uevents \
+	timer writequeue pipe popen uio
+DYN_MODULES=avahi can curl evdev libnl libvirt netlink_ge nf_queue \
+	pulseaudio readline sdbus sd_journal udev v4l \
+	sdbus_notifications mqtt
+
+DEFAULT_EVLOOP=epoll
