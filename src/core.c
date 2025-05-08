@@ -770,7 +770,7 @@ void crtx_add_event(struct crtx_graph *graph, struct crtx_event *event) {
 	pthread_mutex_lock(&graph->mutex);
 	
 	if (!graph->tasks) {
-		CRTX_INFO("dropping event %s (%p) as graph \"%s\" (%p) is empty\n", event->description, event, graph->name?graph->name:"", graph);
+		CRTX_DBG("dropping event %s (%p) as graph \"%s\" (%p) is empty\n", event->description, event, graph->name?graph->name:"", graph);
 		
 		crtx_dereference_event_response(event);
 		crtx_dereference_event_release(event);
