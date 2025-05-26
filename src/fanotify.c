@@ -47,7 +47,7 @@ void crtx_fanotify_get_path(int fd, char **path, size_t *length, char *format) {
 		*length = slen;
 }
 
-void process_fanotify(struct crtx_fanotify_listener *fal) {
+static void process_fanotify(struct crtx_fanotify_listener *fal) {
 	char buf[4096];
 	ssize_t buflen;
 	struct fanotify_event_metadata *metadata, *copy;
@@ -72,10 +72,10 @@ void process_fanotify(struct crtx_fanotify_listener *fal) {
 		if (fal->base.graph->descriptions)
 			event->description = fal->base.graph->descriptions[0];
 		
-		copy = (struct fanotify_event_metadata*) calloc(1, sizeof(struct fanotify_event_metadata));
-		memcpy(copy, metadata, sizeof(struct fanotify_event_metadata));
+		copy = (struct fanotify_event_metadata*) calloc(1, metadata->event_len);
+		memcpy(copy, metadata, metadata->event_len);
 		
-		crtx_event_set_raw_data(event, 'p', copy, sizeof(struct fanotify_event_metadata), 0);
+		crtx_event_set_raw_data(event, 'p', copy, metadata->event_len, 0);
 		
 		crtx_add_event(fal->base.graph, event);
 		
