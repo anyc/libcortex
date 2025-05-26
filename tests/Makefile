@@ -2,7 +2,7 @@
 libcrtx_path?=../src
 
 CFLAGS+=-I$(libcrtx_path) -g
-LDFLAGS+=-L$(libcrtx_path) -Wl,-rpath "$(libcrtx_path)"
+LDFLAGS+=-L$(libcrtx_path) -Wl,-rpath "$(shell realpath $(libcrtx_path))"
 LDLIBS+=-lcrtx
 
 -include $(local_mk)
@@ -17,7 +17,7 @@ TESTS+=$(foreach t,$(BUILTIN_MODULES) $(STATIC_MODULES) $(DYN_MODULES),$(if $(fi
 all: $(TESTS)
 
 %.test: CFLAGS+=-DCRTX_TEST -g -g3 -gdwarf-2 -DDEBUG -Wall $(CFLAGS_${@:.test=})
-%.test: LDLIBS+=$(LDLIBS_${@:.test=}) $(foreach d,${@:.test=} $(DEPS_${@:.test=}),$(if $(findstring $(d),$(DYN_MODULES)),-lcrtx_$(d))) -Wl,-rpath $(shell pwd)
+%.test: LDLIBS+=$(LDLIBS_${@:.test=}) $(foreach d,${@:.test=} $(DEPS_${@:.test=}),$(if $(findstring $(d),$(DYN_MODULES)),-lcrtx_$(d)))
 %.test: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) $< -o $@ -L. $(LDFLAGS) $(LDLIBS) -lcrtx
 
