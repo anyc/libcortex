@@ -14,7 +14,7 @@ OBJS+=core.o \
 
 AVAILABLE_TESTS=avahi can curl epoll evdev evloop_qt libvirt mqtt \
 	netlink_ge popen pulseaudio sdbus sd_journal sip timer \
-	uevents v4l xcb_randr writequeue uio inotify fanotify
+	uevents v4l xcb_randr writequeue uio inotify
 
 CFLAGS+=-D_FILE_OFFSET_BITS=64 -fPIC -DCRTX_PLUGIN_DIR=\"$(plugindir)\"
 CXXFLAGS+=

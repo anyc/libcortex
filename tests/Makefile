@@ -14,6 +14,10 @@ AVAILABLE_TESTS=fork libnl nl_route_raw udev
 # build tests for enabled modules
 TESTS+=$(foreach t,$(BUILTIN_MODULES) $(STATIC_MODULES) $(DYN_MODULES),$(if $(findstring $(t),$(AVAILABLE_TESTS)), $(t).test))
 
+ifneq ($(if $(findstring fanotify,$(BUILTIN_MODULES) $(STATIC_MODULES) $(DYN_MODULES)), "found")),)
+TESTS+=fanotify-req-perm.test
+endif
+
 all: $(TESTS)
 
 %.test: CFLAGS+=-DCRTX_TEST -g -g3 -gdwarf-2 -DDEBUG -Wall $(CFLAGS_${@:.test=})
