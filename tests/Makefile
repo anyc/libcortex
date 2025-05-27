@@ -15,7 +15,7 @@ AVAILABLE_TESTS=fork libnl nl_route_raw udev
 TESTS+=$(foreach t,$(BUILTIN_MODULES) $(STATIC_MODULES) $(DYN_MODULES),$(if $(findstring $(t),$(AVAILABLE_TESTS)), $(t).test))
 
 ifneq ($(if $(findstring fanotify,$(BUILTIN_MODULES) $(STATIC_MODULES) $(DYN_MODULES)), "found")),)
-TESTS+=fanotify-req-perm.test
+TESTS+=fanotify-req-perm.test fanotify-fs-error.test
 endif
 
 all: $(TESTS)
