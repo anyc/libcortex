@@ -17,6 +17,7 @@ jobs:
     
     - name: Install dependencies
       run: |
+        sudo apt-get update
         sudo apt-get install -y libavahi-core-dev libsystemd-dev libjson-c-dev \
             libcurl4-gnutls-dev libevdev-dev libnl-3-dev libvirt-dev libnl-genl-3-dev \
             libnetfilter-queue-dev libpulse-dev libreadline-dev libudev-dev libmosquitto-dev
