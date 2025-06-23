@@ -736,13 +736,14 @@ static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct cr
 
 static int fd_event_handler(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct crtx_sdbus_listener *sdlist;
-	int r;
+	int r, n_processed;
 	struct crtx_evloop_callback *el_cb;
 	
 	el_cb = (struct crtx_evloop_callback*) event->data.pointer;
 	
 	sdlist = (struct crtx_sdbus_listener *) userdata;
 	
+	n_processed = 0;
 	while (1) {
 		crtx_lock_listener_source(&sdlist->base);
 		r = sd_bus_process(sdlist->bus, NULL);
@@ -752,7 +753,12 @@ static int fd_event_handler(struct crtx_event *event, void *userdata, void **ses
 			CRTX_ERROR("sd_bus_process failed: %s\n", strerror(-r));
 			break;
 		}
-		if (r == 0)
+		if (r == 0) {
+			break;
+		}
+
+		n_processed += r;
+		if (sdlist->process_max_per_run && n_processed >= sdlist->process_max_per_run)
 			break;
 	}
 	

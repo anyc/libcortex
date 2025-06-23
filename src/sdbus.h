@@ -63,6 +63,7 @@ struct crtx_sdbus_listener {
 	void *connected_cb_data;
 	
 	char single_threaded;
+	unsigned int process_max_per_run; // break the sd_bus_process loop if number of processed events exceeds this value (0 means no limit)
 	
 	const char *unique_name;
 	
