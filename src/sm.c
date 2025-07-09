@@ -47,6 +47,9 @@ int crtx_change_state(struct crtx_sm *sm, struct crtx_sm_state *sms) {
 }
 
 int crtx_release_sm(struct crtx_sm *sm) {
+	if ((sm->flags & CRTX_SMF_RELEASE) != 0)
+		return 0;
+	
 	sm->flags |= CRTX_SMF_RELEASE;
 	
 	if (sm->n_schedules == 0)
