@@ -72,7 +72,7 @@ struct crtx_listener_base *crtx_setup_pipe_listener(void *options) {
 	}
 	
 	if (reinit) {
-		r = pipe2(lstnr->fds, crtx_root->global_fd_flags); // 0 read, 1 write
+		r = pipe2(lstnr->fds, crtx_root->global_fd_flags | lstnr->fd_flags); // 0 read, 1 write
 		if (r < 0) {
 			CRTX_ERROR("creating pipe failed: %s\n", strerror(errno));
 			return 0;
