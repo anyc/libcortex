@@ -36,6 +36,7 @@ clean:
 	$(MAKE) -C layer2 clean LAYER2_MODULES="$(LAYER2_MODULES)"
 	$(MAKE) -C examples clean
 	$(MAKE) -C src clean
+	$(MAKE) -C tests clean
 
 examples: libcortex $(local_mk)
 	$(MAKE) -C examples
