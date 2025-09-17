@@ -44,7 +44,7 @@ char *crtx_stracpy(const char *str, size_t *str_length) {
 	size_t length;
 	
 	if (!str) {
-		CRTX_INFO("trying to stracpy null pointer\n");
+		CRTX_DBG("trying to stracpy null pointer\n");
 		if (str_length)
 			*str_length = 0;
 		
