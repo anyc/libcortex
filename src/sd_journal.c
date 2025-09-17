@@ -185,7 +185,7 @@ static int sd_journal_fd_event_handler(struct crtx_event *event, void *userdata,
 		return 0;
 	}
 	
-	if (rv == SD_JOURNAL_APPEND || (rv == SD_JOURNAL_NOP && jlstnr->try_read)) {
+	if (rv == SD_JOURNAL_APPEND) {
 		if (jlstnr->event_cb)
 			jlstnr->event_cb(jlstnr, jlstnr->event_cb_data);
 	} else if (rv == SD_JOURNAL_INVALIDATE) {
@@ -261,7 +261,6 @@ static char start_listener(struct crtx_listener_base *listener) {
 			}
 		}
 		
-		jlstnr->try_read = 1;
 		crtx_trigger_event_processing(&jlstnr->base);
 	} else
 	if (jlstnr->seek > 0) {

@@ -32,7 +32,7 @@ extern "C" {
 		sd_journal *sd_journal;
 		int flags;
 		int seek; // positive: skip first x entries, negative: read last x entries
-		char try_read;
+		char try_read; // obsolete
 		char same_boot_filter;
 		
 		int (*event_cb)(struct crtx_sd_journal_listener *jlstnr, void *userdata);
