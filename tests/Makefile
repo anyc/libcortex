@@ -32,4 +32,4 @@ all: $(TESTS)
 udev.test: LDLIBS+=-lcrtx_udev
 
 clean:
-	rm *.test
+	rm -f *.test
