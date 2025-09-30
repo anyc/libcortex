@@ -383,6 +383,7 @@ int crtx_push_new_event(struct crtx_listener_base *lstnr, struct crtx_event **ev
 						char data_type, char *data_key_or_sign,
 						...);
 struct crtx_task *crtx_create_task(struct crtx_graph *graph, unsigned char position, const char *id, crtx_handle_task_t handler, void *userdata);
+struct crtx_task *crtx_create_task_unique(struct crtx_graph *graph, unsigned char position, const char *id, crtx_handle_task_t handler, void *userdata);
 void crtx_init_shutdown();
 
 int crtx_start_listener(struct crtx_listener_base *listener);
