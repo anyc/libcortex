@@ -1,9 +1,6 @@
-
-CFLAGS_avahi+=
-LDLIBS_avahi+=
-DEPS_avahi+=sdbus
-
-CFLAGS_core+=$(patsubst %,-DSTATIC_%,$(STATIC_MODULES))
+#
+# In this file, dependencies and required flags for the modules are defined.
+#
 
 ### Licenses of third-party libraries (NOTE this list might be incomplete or outdated!)
 #
@@ -24,59 +21,45 @@ CFLAGS_core+=$(patsubst %,-DSTATIC_%,$(STATIC_MODULES))
 # libosip2	LGPL-2
 # libxcb	MIT
 
+CFLAGS_core+=$(patsubst %,-DSTATIC_%,$(STATIC_MODULES))
+
+DEPS_avahi+=sdbus
+
 ifeq (CAN_NO_IF_SETUP,)
-CFLAGS_can+=$(shell $(PKG_CONFIG) --cflags libnl-3.0 libnl-route-3.0 libcap-ng)
-LDLIBS_can+=$(shell $(PKG_CONFIG) --libs libnl-3.0 libnl-route-3.0 libcap-ng)
+PKGCFG_can=libnl-3.0 libnl-route-3.0 libcap-ng
 else
 CFLAGS+=-DCRTX_CAN_NO_IF_SETUP
 endif
 
-CFLAGS_curl+=$(shell $(PKG_CONFIG) --cflags libcurl)
-LDLIBS_curl+=$(shell $(PKG_CONFIG) --libs libcurl)
-
-CFLAGS_dict_inout_json+=$(shell $(PKG_CONFIG) --cflags json-c)
-LDLIBS_dict_inout_json+=$(shell $(PKG_CONFIG) --libs json-c)
-
-CFLAGS_evdev+=$(shell $(PKG_CONFIG) --cflags libevdev)
-LDLIBS_evdev+=$(shell $(PKG_CONFIG) --libs libevdev)
-
-CFLAGS_libvirt+=$(shell $(PKG_CONFIG) --cflags libvirt)
-LDLIBS_libvirt+=$(shell $(PKG_CONFIG) --libs libvirt)
-
-CFLAGS_netlink_ge+=$(shell $(PKG_CONFIG) --cflags libnl-genl-3.0)
-LDLIBS_netlink_ge+=$(shell $(PKG_CONFIG) --libs libnl-genl-3.0)
-
-CFLAGS_nf_queue+=$(shell $(PKG_CONFIG) --cflags libnetfilter_queue)
-LDLIBS_nf_queue+=$(shell $(PKG_CONFIG) --libs libnetfilter_queue)
-
-CFLAGS_libnl+=$(shell $(PKG_CONFIG) --cflags libnl-3.0)
-LDLIBS_libnl+=$(shell $(PKG_CONFIG) --libs libnl-3.0)
-
-# CFLAGS_nl_route_libnl+=$(shell $(PKG_CONFIG) --cflags libnl-genl-3.0)
-# LDLIBS_nl_route_libnl+=$(shell $(PKG_CONFIG) --libs libnl-genl-3.0)
-
-CFLAGS_pulseaudio+=$(shell $(PKG_CONFIG) --cflags libpulse)
-LDLIBS_pulseaudio+=$(shell $(PKG_CONFIG) --libs libpulse)
-
-CFLAGS_sdbus+=$(shell $(PKG_CONFIG) --cflags libsystemd)
-LDLIBS_sdbus+=$(shell $(PKG_CONFIG) --libs libsystemd)
-
-CFLAGS_sd_journal+=$(shell $(PKG_CONFIG) --cflags libsystemd)
-LDLIBS_sd_journal+=$(shell $(PKG_CONFIG) --libs libsystemd)
+PKGCFG_curl=libcurl
+PKGCFG_dict_inout_json=json-c
+PKGCFG_evdev=libevdev
+PKGCFG_libvirt=libvirt
+PKGCFG_mqtt=libmosquitto
+PKGCFG_netlink_ge=libnl-genl-3.0
+PKGCFG_nf_queue=libnetfilter_queue
+PKGCFG_libnl=libnl-3.0
+PKGCFG_pulseaudio=libpulse
+PKGCFG_sdbus=libsystemd
+PKGCFG_sd_journal=libsystemd
+PKGCFG_udev=libudev
+PKGCFG_xcb_randr=xcb xcb-randr
 
 # OBJS_sip+=sip_eXosip_event2dict.c
 # libcrtx_sip.so: sip_eXosip_event2dict.o
 CFLAGS_sip+=-DENABLE_TRACE
 LDLIBS_sip+=-leXosip2 -losipparser2
 
-CFLAGS_udev+=$(shell $(PKG_CONFIG) --cflags libudev)
-LDLIBS_udev+=$(shell $(PKG_CONFIG) --libs libudev)
+PKGCFG_evloop_qt=Qt5Core
+CXXFLAGS_evloop_qt+=-fPIC -std=c++11
 
-CFLAGS_xcb_randr+=$(shell $(PKG_CONFIG) --cflags xcb xcb-randr)
-LDLIBS_xcb_randr+=$(shell $(PKG_CONFIG) --libs xcb xcb-randr)
+# function to set CFLAGS and LDLIBS based on the pkgconfig output
+define setup_flags =
+CFLAGS_$(1)+=$$(shell $$(PKG_CONFIG) --cflags $$(PKGCFG_$(1)))
+LDLIBS_$(1)+=$$(shell $$(PKG_CONFIG) --libs $$(PKGCFG_$(1)))
+endef
 
-CXXFLAGS_evloop_qt+=$(shell $(PKG_CONFIG) --cflags Qt5Core) -fPIC -std=c++11
-LDLIBS_evloop_qt+=$(shell $(PKG_CONFIG) --libs Qt5Core)
-
-CFLAGS_mqtt+=$(shell $(PKG_CONFIG) --cflags libmosquitto)
-LDLIBS_mqtt+=$(shell $(PKG_CONFIG) --libs libmosquitto)
+# call setup_flags for each module
+$(foreach mod, \
+	avahi can curl dict_inout_json evdev evloop_qt libvirt mqtt netlink_ge nf_queue libnl pulseaudio sdbus sd_journal sip udev xcb_randr,\
+	$(eval $(call setup_flags,$(mod))))

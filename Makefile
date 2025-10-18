@@ -21,8 +21,29 @@ endif
 
 all: libcortex layer2 examples
 
+include Makefile.common
+include src/Makefile.modules
+
+define check_mods
+	$(foreach o,$(1), \
+		test -z "$(PKGCFG_$(o))" && echo -n "$(o) " || { \
+			echo -n "checking $(o)" >&2; \
+			$(PKG_CONFIG) --cflags "$(PKGCFG_$(o))" >/dev/null 2>&1 && \
+				{ echo -n "$(o) "; echo " YES">&2; } \
+				|| echo "">&2; \
+			}; \
+		)
+endef
+
+POSSIBLE_DYN=$(call check_mods,$(DYN_MODULES))
+POSSIBLE_STATIC=$(call check_mods,$(STATIC_MODULES))
+
 $(local_mk):
-	cp Makefile.local.skel $(local_mk)
+	POSSIBLE_DYN=`$(POSSIBLE_DYN)`; \
+	POSSIBLE_STATIC=`$(POSSIBLE_STATIC)`; \
+	echo -e "DYN_MODULES=$$POSSIBLE_DYN \n\
+STATIC_MODULES=$$POSSIBLE_STATIC \n\
+" > $@
 
 local: $(local_mk)
 	echo "prefix=\"$(shell pwd)/local\"" >> $(local_mk)

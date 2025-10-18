@@ -193,8 +193,9 @@ apt install libavahi-core-dev libsystemd-dev libjson-c-dev libcurl4-gnutls-dev \
 ```
 
 To configure the build, libcortex uses a simple include file for `make`, called
-`Makefile.local`. This file is automatically created from `Makefile.local.skel`
-if it does not exist.
+`Makefile.local`. This file is automatically created if it does not exist based
+on the available libraries on the host. See `Makefile.local.skel` for a selection
+of common options.
 
 If you want to test libcortex in your home directory, simply call `make local`
 to generate a `Makefile.local` and call `make install_local` to create binaries
