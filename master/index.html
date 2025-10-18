@@ -216,8 +216,9 @@ Setup</h1>
 <div class="fragment"><div class="line">apt install libavahi-core-dev libsystemd-dev libjson-c-dev libcurl4-gnutls-dev \</div>
 <div class="line">    libevdev-dev libnl-3-dev libvirt-dev libnl-genl-3-dev libnetfilter-queue-dev \</div>
 <div class="line">    libpulse-dev libreadline-dev libudev-dev libmosquitto-dev</div>
-</div><!-- fragment --><p>To configure the build, libcortex uses a simple include file for <code>make</code>, called <code>Makefile.local</code>. This file is automatically created from <code>Makefile.local.skel</code> if it does not exist.</p>
+</div><!-- fragment --><p>To configure the build, libcortex uses a simple include file for <code>make</code>, called <code>Makefile.local</code>. This file is automatically created if it does not exist based on the available libraries on the host. See <code>Makefile.local.skel</code> for a selection of common options.</p>
 <p>If you want to test libcortex in your home directory, simply call <code>make local</code> to generate a <code>Makefile.local</code> and call <code>make install_local</code> to create binaries in the <code>local</code> subdirectory that can be executed from the local directory without installing them in the system.</p>
+<p>The makefiles follow common build guidelines and use variables like CFLAGS and LDFLAGS so even cross-compilation should just work, e.g., with a Yocto SDK.</p>
 <h1><a class="anchor" id="autotoc_md3"></a>
 Documentation</h1>
 <p>Initial documentation based on Doxygen comments is available here:</p>
