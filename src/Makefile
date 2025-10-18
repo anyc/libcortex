@@ -5,10 +5,9 @@
 
 local_mk_rules ?= Makefile.local_rules
 
-APP=cortexd
 SHAREDLIB=libcrtx.so
 
-OBJS+=core.o \
+MAIN_OBJS+=core.o \
 	dict.o \
 	llist.o dllist.o evloop.o
 
@@ -37,14 +36,14 @@ include ../Makefile.common
 
 -include $(local_mk)
 
-CFLAGS+=-DDEFAULT_EVLOOP=\"$(DEFAULT_EVLOOP)\" -DSO_VERSION=\"$(SO_VERSION)\" -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -DREVISION=$(REVISION)
+CFLAGS+=-DDEFAULT_EVLOOP=\"$(DEFAULT_EVLOOP)\" -DSO_VERSION=\"$(SO_VERSION)\" \
+	-DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -DREVISION=$(REVISION)
 
 # build tests for enabled modules
 TESTS+=$(foreach t,$(BUILTIN_MODULES) $(STATIC_MODULES) $(DYN_MODULES),$(if $(findstring $(t),$(AVAILABLE_TESTS)), $(t).test))
 
-OBJS+=$(patsubst %,%.o,$(BUILTIN_MODULES)) $(patsubst %,%.o,$(STATIC_MODULES)) $(patsubst %,%.o,$(STATIC_TOOLS))
-
-DYN_MODULES_LIST=$(patsubst %,libcrtx_%.so, $(DYN_MODULES))
+# gather further object files from enabled modules for the main library
+MAIN_OBJS+=$(patsubst %,%.o,$(BUILTIN_MODULES)) $(patsubst %,%.o,$(STATIC_MODULES)) $(patsubst %,%.o,$(STATIC_TOOLS))
 
 # determine missing module dependencies
 ACTIVE_MODULES=$(STATIC_TOOLS) $(STATIC_MODULES) $(DYN_MODULES)
@@ -53,36 +52,30 @@ ifneq ($(MISSING_DEPS),)
 $(error error missing dep(s) for module(s) $(MISSING_DEPS): $(foreach m,$(MISSING_DEPS),$(foreach d,$(DEPS_$(m)), $(if $(findstring $(d),$(STATIC_TOOLS) $(STATIC_MODULES) $(DYN_MODULES)),,$(d)) )))
 endif
 
-# #
-# # make rules
-# #
-# 
-# .PHONY: clean
-# 
-# all: $(local_mk) core_modules.h plugins shared layer2 crtx_include_dir
-
-$(APP): $(OBJS)
+#
+# make rules
+#
 
 shared: $(SHAREDLIB)
 
 clean:
-	rm -f *.o $(APP) core_modules.h config.h $(TESTS) $(SHAREDLIB) libcrtx*.so* libcortex*.deb
+	rm -f *.o core_modules.h config.h $(TESTS) $(SHAREDLIB) libcrtx*.so* libcortex*.deb
 	rm -rf ../include
 
 debug:
 	$(MAKE) $(MAKEFILE) DEBUG=1 $(DEBUGARGS)
 
+# prepare a directory with all headers
 crtx_include_dir:
 	mkdir -p ../include/cortex ../include/cortex/layer2/
 	[ -e ../include/crtx ] || ln -s cortex ../include/crtx
 	for h in *.h; do [ -e ../include/cortex/$$h ] || ln -s ../../src/$$h ../include/cortex/; done
 	for h in ../layer2/*.h; do [ -e ../include/cortex/layer2/$(shell basename \"$$h\") ] || ln -s ../../../src/$$h ../include/cortex/layer2/; done
 
+# create a header file with data of all enabled modules
 core_modules.h: $(local_mk)
 	echo -n "" > $@
 	for m in $(BUILTIN_MODULES); do echo -e "#include \"$${m}.h\"" >> $@; done
-# 	for m in $(STATIC_TOOLS); do echo -e "#ifdef STATIC_$${m}\n#include \"$${m}.h\"\n#endif" >> $@; done
-# 	for m in $(STATIC_MODULES); do echo -e "#ifdef STATIC_$${m}\n#include \"$${m}.h\"\n#endif" >> $@; done
 	for m in $(STATIC_TOOLS); do echo -e "#include \"$${m}.h\"" >> $@; done
 	for m in $(STATIC_MODULES); do echo -e "#include \"$${m}.h\"" >> $@; done
 	
@@ -90,8 +83,6 @@ core_modules.h: $(local_mk)
 	echo "struct crtx_module static_modules[] = {" >> $@
 	m=threads; echo -e "\t{\"$${m}\", &crtx_$${m}_init, &crtx_$${m}_finish}," >> $@
 	for m in $(BUILTIN_MODULES); do echo -e "\t{\"$${m}\", &crtx_$${m}_init, &crtx_$${m}_finish}," >> $@; done
-# 	for m in $(STATIC_MODULES); do echo -e "#ifdef STATIC_$${m}\n\t{\"$${m}\", &crtx_$${m}_init, &crtx_$${m}_finish},\n#endif" >> $@; done
-# 	for m in $(STATIC_TOOLS); do echo -e "#ifdef STATIC_$${m}\n\t{\"$${m}\", &crtx_$${m}_init, &crtx_$${m}_finish},\n#endif" >> $@; done
 	for m in $(STATIC_MODULES); do echo -e "\t{\"$${m}\", &crtx_$${m}_init, &crtx_$${m}_finish}," >> $@; done
 	echo -e "\t{0, 0, 0}," >> $@
 	echo "};" >> $@
@@ -99,7 +90,6 @@ core_modules.h: $(local_mk)
 	echo "" >> $@
 	echo "struct crtx_listener_repository static_listener_repository[] = {" >> $@
 	for m in $(BUILTIN_MODULES); do echo -e "\t{\"$${m}\", &crtx_setup_$${m}_listener}," >> $@; done
-# 	for m in $(STATIC_MODULES); do echo -e "#ifdef STATIC_$${m}\n\t{\"$${m}\", &crtx_new_$${m}_listener},\n#endif" >> $@; done
 	for m in $(STATIC_MODULES); do echo -e "\t{\"$${m}\", &crtx_setup_$${m}_listener}," >> $@; done
 	echo -e "\t{0, 0}," >> $@
 	echo "};" >> $@
@@ -108,6 +98,7 @@ config.h: $(local_mk)
 	echo "" > $@
 	for m in $(STATIC_MODULES); do echo -e "#define CRTX_HAVE_MOD_$$(echo $${m} | tr a-z A-Z) 1" >> $@; done
 
+# dynamically create functions for double linked lists
 dllist.o: CFLAGS+=-DCRTX_DLL
 dllist.o: llist.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
@@ -124,17 +115,16 @@ dllist.o: llist.c
 core.o: core.c core_modules.h config.h
 
 $(SHAREDLIB): LDLIBS+=$(foreach o,$(STATIC_TOOLS) $(STATIC_MODULES), $(LDLIBS_$(o)) )
-$(SHAREDLIB): $(OBJS)
-	$(CC) -shared -o $@.$(SO_VERSION) $(OBJS) $(LDFLAGS) $(LDLIBS) -Wl,-soname,$@.$(SO_VERSION)
+$(SHAREDLIB): $(MAIN_OBJS)
+	$(CC) -shared -o $@.$(SO_VERSION) $(MAIN_OBJS) $(LDFLAGS) $(LDLIBS) -Wl,-soname,$@.$(SO_VERSION)
 	ln -sf $@.$(SO_VERSION) $@
 
-# libcrtx_%.so: $(OBJS_$(patsubst libcrtx_%.so,%,$@))
 libcrtx_%.so: LDLIBS+=$(LDLIBS_$(patsubst libcrtx_%.so,%,$@)) $(foreach d,$(DEPS_$(patsubst libcrtx_%.so,%,$@)),$(if $(findstring $(d),$(DYN_MODULES)),$(LDLIBS_$(d))) )
 libcrtx_%.so: %.o $(SHAREDLIB)
 	$(CC) -shared $(LDFLAGS) $< -o $@.$(SO_VERSION) -L. $(LDLIBS) -lcrtx -Wl,-soname,$@.$(SO_VERSION)
 	ln -sf $@.$(SO_VERSION) $@
 
-plugins: $(SHAREDLIB) $(DYN_MODULES_LIST)
+plugins: $(SHAREDLIB) $(patsubst %,libcrtx_%.so, $(DYN_MODULES))
 
 
 
