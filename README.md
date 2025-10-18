@@ -202,6 +202,9 @@ to generate a `Makefile.local` and call `make install_local` to create binaries
 in the `local` subdirectory that can be executed from the local directory without
 installing them in the system.
 
+The makefiles follow common build guidelines and use variables like CFLAGS and
+LDFLAGS so even cross-compilation should just work, e.g., with a Yocto SDK.
+
 Documentation
 -------------
 
