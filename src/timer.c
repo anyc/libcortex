@@ -53,6 +53,14 @@ static int timer_fd_event_handler(struct crtx_event *event, void *userdata, void
 		crtx_add_event(tlist->base.graph, event);
 	}
 	
+	if (
+		tlist->newtimer.it_interval.tv_sec == 0
+		&& tlist->newtimer.it_interval.tv_nsec == 0
+		)
+	{
+		crtx_stop_listener(&tlist->base);
+	}
+	
 	return 1;
 }
 
