@@ -349,6 +349,7 @@ int crtx_free_graph(struct crtx_graph *egraph);
 // void get_eventgraph(struct crtx_graph **crtx_graph, char **event_types, unsigned int n_event_types);
 void add_task(struct crtx_graph *graph, struct crtx_task *task);
 void crtx_add_task(struct crtx_graph *graph, struct crtx_task *task);
+int crtx_create_listener_task(struct crtx_listener_base *lstnr, crtx_handle_task_t handler, void *userdata);
 struct crtx_task * crtx_graph_get_task(struct crtx_graph *graph, const char *id, crtx_handle_task_t handler);
 void add_event_type(char *event_type);
 int crtx_find_graph_add_event(struct crtx_event *event);

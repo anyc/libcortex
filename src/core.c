@@ -734,6 +734,16 @@ struct crtx_task *crtx_create_task_unique(struct crtx_graph *graph, unsigned cha
 		return titer;
 }
 
+int crtx_create_listener_task(struct crtx_listener_base *lstnr, crtx_handle_task_t handler, void *userdata) {
+	struct crtx_task *t;
+	
+	t = crtx_create_task_unique(lstnr->graph, 0, 0, handler, userdata);
+	if (!t)
+		return -1;
+	
+	return 0;
+}
+
 struct crtx_task * crtx_graph_get_task(struct crtx_graph *graph, const char *id, crtx_handle_task_t handler) {
 	struct crtx_task *titer;
 	
