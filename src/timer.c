@@ -223,7 +223,37 @@ int crtx_timer_get_listener(struct crtx_timer_listener *tlist,
 	r = crtx_setup_listener("timer", tlist);
 	if (r) {
 		CRTX_ERROR("create_listener(timer) failed: %s\n", strerror(-r));
-		return 0;
+		return r;
+	}
+	
+	return 0;
+}
+
+int crtx_timer_rearm(struct crtx_timer_listener *tlist,
+					 time_t offset_sec,
+					 long offset_nsec,
+					 time_t int_sec,
+					 long int_nsec)
+{
+	int r;
+	
+	
+	tlist->newtimer.it_value.tv_sec = offset_sec;
+	tlist->newtimer.it_value.tv_nsec = offset_nsec;
+	
+	tlist->newtimer.it_interval.tv_sec = int_sec;
+	tlist->newtimer.it_interval.tv_nsec = int_nsec;
+	
+	r = crtx_setup_listener("timer", tlist);
+	if (r) {
+		CRTX_ERROR("create_listener(timer) failed: %s\n", strerror(-r));
+		return r;
+	}
+	
+	r = crtx_start_listener(&tlist->base);
+	if (r) {
+		CRTX_ERROR("start_listener(timer) failed: %s\n", strerror(-r));
+		return r;
 	}
 	
 	return 0;

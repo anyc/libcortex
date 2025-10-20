@@ -53,6 +53,11 @@ int crtx_timer_get_listener(struct crtx_timer_listener *tlist,
 							long int_nsec
 						);
 
+int crtx_timer_rearm(struct crtx_timer_listener *tlist,
+					 time_t offset_sec,
+					 long offset_nsec,
+					 time_t int_sec,
+					 long int_nsec);
 int crtx_timer_oneshot(time_t offset_sec,
 					   long offset_nsec,
 					   int clockid,
