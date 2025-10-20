@@ -113,8 +113,6 @@ struct crtx_listener_base *crtx_setup_timer_listener(void *options) {
 		tlist->base.start_listener = &update_listener;
 		tlist->base.update_listener = &update_listener;
 		tlist->base.shutdown = &shutdown_listener;
-	} else {
-		update_listener(&tlist->base);
 	}
 	
 	return &tlist->base;
