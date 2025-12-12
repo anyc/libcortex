@@ -3,7 +3,7 @@ local_mk ?= $(shell pwd)/Makefile.local
 export local_mk
 
 ifeq ($(DEBUG),1)
-ifneq ($(SANITIZER), 0)
+ifneq ($(SANITIZER),0)
 SANITIZER_FLAGS=-fsanitize=address -fsanitize=undefined
 endif
 DEBUG_FLAGS+=-g -g3 -gdwarf-2 -DDEBUG -Wall -Werror $(SANITIZER_FLAGS)
