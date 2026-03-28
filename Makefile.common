@@ -7,8 +7,10 @@ prefix?=/usr
 exec_prefix?=/usr
 bindir?=$(exec_prefix)/bin
 libdir?=$(exec_prefix)/lib
+libexecdir?=$(exec_prefix)/libexec
 plugindir?=$(libdir)
 includedir?=$(prefix)/include
+sysconfdir?=$(prefix)/etc
 
 SHELL=/bin/bash
 PKG_CONFIG?=pkg-config
