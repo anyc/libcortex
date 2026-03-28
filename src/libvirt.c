@@ -523,11 +523,16 @@ static const char *eventDetailToString(int event, int detail) {
 				ret = "Restored";
 				break;
 			case VIR_DOMAIN_EVENT_STARTED_FROM_SNAPSHOT:
-				ret = "Snapshot";
+				ret = "From snapshot";
 				break;
 			case VIR_DOMAIN_EVENT_STARTED_WAKEUP:
-				ret = "Event wakeup";
+				ret = "Wakeup";
 				break;
+#if LIBVIR_CHECK_VERSION(11,0,0)
+			case VIR_DOMAIN_EVENT_STARTED_RECREATED:
+				ret = "Recreated";
+				break;
+#endif
 			}
 			break;
 		case VIR_DOMAIN_EVENT_SUSPENDED:
@@ -559,6 +564,11 @@ static const char *eventDetailToString(int event, int detail) {
 				break;
 			case VIR_DOMAIN_EVENT_SUSPENDED_POSTCOPY_FAILED:
 				ret = "Suspended postcopy failed";
+				break;
+#endif
+#if LIBVIR_CHECK_VERSION(11,0,0)
+			case VIR_DOMAIN_EVENT_SUSPENDED_GUEST_SHUTDOWN:
+				ret = "Guest shutdown";
 				break;
 #endif
 			}
@@ -607,8 +617,13 @@ static const char *eventDetailToString(int event, int detail) {
 				ret = "Failed";
 				break;
 			case VIR_DOMAIN_EVENT_STOPPED_FROM_SNAPSHOT:
-				ret = "Snapshot";
+				ret = "From snapshot";
 				break;
+#if LIBVIR_CHECK_VERSION(11,0,0)
+			case VIR_DOMAIN_EVENT_STOPPED_RECREATED:
+				ret = "Recreated";
+				break;
+#endif
 			}
 			break;
 		case VIR_DOMAIN_EVENT_SHUTDOWN:
