@@ -1489,6 +1489,8 @@ static void load_plugins(char * directory) {
 			
 			
 			fpath = (char*) malloc(strlen(directory)+strlen(dent->d_name)+2);
+			if (!fpath)
+				continue;
 			sprintf(fpath, "%s/%s", directory, dent->d_name);
 			
 			result = lstat(fpath, &buf);
