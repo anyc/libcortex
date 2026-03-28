@@ -42,6 +42,8 @@ CRTX_DECLARE_ALLOC_FUNCTION(netconf)
 void crtx_netconf_init();
 void crtx_netconf_finish();
 
+CRTX_DECLARE_ALLOC_FUNCTION(netconf)
+
 #ifdef __cplusplus
 }
 #endif
