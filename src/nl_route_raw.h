@@ -26,7 +26,7 @@ struct crtx_nl_route_raw_listener {
 	char all_fields;
 	
 // 	struct crtx_signals msg_done;
-	void (*msg_done_cb)();
+	void (*msg_done_cb)(void *data);
 	void *msg_done_cb_data;
 };
 

@@ -18,7 +18,7 @@ struct crtx_dynamic_evdev_listener {
 	
 	struct crtx_dll *evdev_listeners;
 	struct crtx_udev_listener udev_lstnr;
-	struct crtx_dll *(*alloc_new)();
+	struct crtx_dll *(*alloc_new)(struct udev_device *dev);
 	void (*on_free)(struct crtx_dll *dll);
 	
 	// this task will be added to each device-specific evdev listener
