@@ -1,6 +1,7 @@
 
 libcrtx_dir?=../src
 
+include $(libcrtx_dir)/Makefile.modules
 include ../Makefile.common
 
 CFLAGS+=-I$(libcrtx_dir) -I../include -g
@@ -8,7 +9,7 @@ LDFLAGS+=-L$(libcrtx_dir)
 
 LDLIBS+=-lcrtx
 
-EXAMPLES?=libvirt-usb-hotplug named_pipe dbus-tool ipquery
+EXAMPLES?=libvirt-usb-hotplug named_pipe dbus-tool ipquery usdev
 L_EXAMPLES=$(filter-out ipquery,$(EXAMPLES))
 
 -include $(local_mk)
@@ -21,7 +22,7 @@ libvirt-usb-hotplug: CFLAGS+=$(shell pkg-config --cflags libvirt) $(shell xml2-c
 libvirt-usb-hotplug: LDLIBS+=$(shell pkg-config --libs libvirt) $(shell xml2-config --libs) -lcrtx_udev
 libvirt-usb-hotplug: libvirt-usb-hotplug.c
 	$(CC) -o $@ $< $(CFLAGS) $(LDFLAGS) $(LDLIBS)
-	
+
 libcrtx_ctrl_%.so: control_%.c
 	$(CC) -shared -o $@ -fPIC $< $(LDFLAGS) $(CFLAGS) -I. $(LDLIBS)
 
@@ -34,6 +35,9 @@ pfw: control_pfw.c
 	$(CC) -o $@ $< $(CFLAGS) $(LDFLAGS) $(LDLIBS)
 
 dbus-tool: LDLIBS+=-lcrtx_sdbus -lsystemd
+
+usdev: CFLAGS+=-I../layer2/ $(CFLAGS_libnl) -DLIBEXECDIR="\"$(libexecdir)\"" -DSYSCONFDIR="\"$(sysconfdir)\""
+usdev: LDLIBS+=$(LDLIBS_libnl) -L../layer2 -lcrtx_netconf
 
 clean:
 	rm -f *.o $(L_EXAMPLES)
