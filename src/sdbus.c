@@ -472,6 +472,8 @@ int crtx_sdbus_get_objects(struct crtx_sdbus_listener *lstnr, const char *servic
 	
 	*objects = ditem;
 	
+	sd_bus_message_unref(reply);
+	
 	return 0;
 }
 
