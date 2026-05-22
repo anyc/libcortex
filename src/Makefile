@@ -70,7 +70,7 @@ crtx_include_dir:
 	mkdir -p ../include/cortex ../include/cortex/layer2/
 	[ -e ../include/crtx ] || ln -s cortex ../include/crtx
 	for h in *.h; do [ -e ../include/cortex/$$h ] || ln -s ../../src/$$h ../include/cortex/; done
-	for h in ../layer2/*.h; do [ -e ../include/cortex/layer2/$(shell basename \"$$h\") ] || ln -s ../../../src/$$h ../include/cortex/layer2/; done
+	for h in ../layer2/*.h; do [ -e ../include/cortex/layer2/$$( basename "$$h") ] || ln -s ../../../src/$$h ../include/cortex/layer2/; done
 
 # create a header file with data of all enabled modules
 core_modules.h: $(local_mk)
