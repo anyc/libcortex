@@ -71,6 +71,7 @@ crtx_include_dir:
 	[ -e ../include/crtx ] || ln -s cortex ../include/crtx
 	for h in *.h; do [ -e ../include/cortex/$$h ] || ln -s ../../src/$$h ../include/cortex/; done
 	for h in ../layer2/*.h; do [ -e ../include/cortex/layer2/$$( basename "$$h") ] || ln -s ../../../src/$$h ../include/cortex/layer2/; done
+	[ -e ../include/crtx/llist.c ] || ln -s ../../src/llist.c ../include/crtx/
 
 # create a header file with data of all enabled modules
 core_modules.h: $(local_mk)
@@ -149,10 +150,8 @@ install-devel:
 	cp -P libcrtx.so $(DESTDIR)$(libdir)
 	ls libcrtx_*.so.* 2>/dev/null && cp -P libcrtx_*.so $(DESTDIR)$(plugindir) || :
 	
-	$(INSTALL) -m 644 ../include/cortex/*.h $(DESTDIR)$(includedir)/cortex/
+	$(INSTALL) -m 644 ../include/cortex/*.[ch] $(DESTDIR)$(includedir)/cortex/
 	[ -L $(DESTDIR)$(includedir)/crtx ] || ln -s cortex $(DESTDIR)$(includedir)/crtx
-	
-	$(INSTALL) -m 644 llist.c $(DESTDIR)$(includedir)/cortex/
 
 install-lib:
 	$(INSTALL) -m 755 -d $(DESTDIR)$(libdir)
