@@ -170,7 +170,7 @@ static int evdev_test_handler(struct crtx_event *event, void *userdata, void **s
 
 int evdev_main(int argc, char **argv) {
 	struct crtx_evdev_listener el;
-	char ret;
+	int ret;
 	
 	
 	if (argc < 2) {

@@ -91,7 +91,7 @@ int crtx_avahi_resolve_service(struct crtx_avahi_service *service) {
 	return 0;
 }
 
-char crtx_avahi_publish_service(struct crtx_avahi_service *service) {
+int crtx_avahi_publish_service(struct crtx_avahi_service *service) {
 	int r;
 	sd_bus_error error = SD_BUS_ERROR_NULL;
 	sd_bus_message *m = NULL, *reply = NULL;
@@ -176,7 +176,7 @@ char crtx_avahi_publish_service(struct crtx_avahi_service *service) {
 	return 0;
 }
 
-char crtx_avahi_remove_service(struct crtx_avahi_service *service) {
+int crtx_avahi_remove_service(struct crtx_avahi_service *service) {
 	int r;
 	sd_bus_error error = SD_BUS_ERROR_NULL;
 	sd_bus_message *m = NULL, *reply = NULL;
@@ -205,7 +205,7 @@ char crtx_avahi_remove_service(struct crtx_avahi_service *service) {
 	return 0;
 }
 
-char crtx_avahi_service(struct crtx_event *event) {
+int crtx_avahi_service(struct crtx_event *event) {
 	if (event->data.type == 'p') {
 		struct crtx_avahi_service *s = event->data.pointer;
 		
@@ -338,7 +338,7 @@ static int sdbus_to_avahi_handler(struct crtx_event *event, void *userdata, void
 	return 0;
 }
 
-static char init_service_browser(struct crtx_avahi_listener *alist) {
+static int init_service_browser(struct crtx_avahi_listener *alist) {
 	int r;
 	sd_bus_error error = SD_BUS_ERROR_NULL;
 	sd_bus_message *m = NULL, *reply = NULL;

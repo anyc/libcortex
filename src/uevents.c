@@ -121,7 +121,7 @@ static void shutdown_uevents_listener(struct crtx_listener_base *lbase) {
 }
 
 
-static char start_listener(struct crtx_listener_base *listener) {
+static int start_listener(struct crtx_listener_base *listener) {
 	struct crtx_uevents_listener *ulist;
 	int ret;
 	

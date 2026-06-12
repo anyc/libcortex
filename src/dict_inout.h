@@ -21,7 +21,7 @@ void crtx_write_dict(write_fct write, void *conn_id, struct crtx_dict *ds);
 int crtx_wrapper_read(void *conn_id, void *data, size_t data_size);
 int crtx_wrapper_write(void *conn_id, void *data, size_t data_size);
 
-char crtx_read(read_fct recv, void *conn_id, void *buffer, size_t read_bytes);
+int crtx_read(read_fct recv, void *conn_id, void *buffer, size_t read_bytes);
 char *crtx_readfile(char *path);
 
 #endif

@@ -64,7 +64,7 @@ static int timer_fd_event_handler(struct crtx_event *event, void *userdata, void
 	return 1;
 }
 
-static char update_listener(struct crtx_listener_base *base) {
+static int update_listener(struct crtx_listener_base *base) {
 	struct crtx_timer_listener *tlist;
 	int ret;
 	

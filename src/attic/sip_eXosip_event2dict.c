@@ -8,7 +8,7 @@
 
 #include "dict.h"
 
-char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_ptr)
+int crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_ptr)
 {
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di;
@@ -2972,6 +2972,5 @@ char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_pt
 	
 	return 0;
 }
-
 
 

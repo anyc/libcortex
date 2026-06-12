@@ -383,7 +383,7 @@ static void on_error_cb(struct crtx_evloop_callback *el_cb, void *data) {
 	crtx_stop_listener(&clist->base);
 }
 
-static char start_listener(struct crtx_listener_base *lstnr) {
+static int start_listener(struct crtx_listener_base *lstnr) {
 	struct crtx_can_listener *clist;
 	int r;
 	

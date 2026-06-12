@@ -157,7 +157,7 @@ static int in_create_key_cb(struct crtx_event *event, struct crtx_dict_item *key
 // 	return key;
 }
 
-static char out_create_key_cb(struct crtx_event *event, struct crtx_dict_item *key) {
+static int out_create_key_cb(struct crtx_event *event, struct crtx_dict_item *key) {
 	char *skey;
 	
 	skey = (char*) malloc(sizeof(uint64_t)*2+1);

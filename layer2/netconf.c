@@ -171,7 +171,7 @@ static struct crtx_libnl_callback libnl_callbacks[] = {
 	{ 0 },
 };
 
-static char netconf_start_listener(struct crtx_listener_base *listener) {
+static int netconf_start_listener(struct crtx_listener_base *listener) {
 	struct crtx_netconf_listener *netconf_lstnr;
 	int ret;
 	
@@ -189,7 +189,7 @@ static char netconf_start_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
-static char netconf_stop_listener(struct crtx_listener_base *listener) {
+static int netconf_stop_listener(struct crtx_listener_base *listener) {
 	struct crtx_netconf_listener *netconf_lstnr;
 	
 	netconf_lstnr = (struct crtx_netconf_listener*) listener;

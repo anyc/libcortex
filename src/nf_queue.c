@@ -35,7 +35,7 @@
 // char *nfq_packet_msg_etype[] = { NFQ_PACKET_MSG_ETYPE, 0 };
 
 
-char crtx_nfq_print_packet(struct crtx_dict *ds) {
+int crtx_nfq_print_packet(struct crtx_dict *ds) {
 	struct crtx_dict *pds;
 // 	char src_local, dst_local;
 	

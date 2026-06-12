@@ -52,7 +52,7 @@ static int fd_event_handler(struct crtx_event *event, void *userdata, void **ses
 	return 0;
 }
 
-static char start_listener(struct crtx_listener_base *base_lstnr) {
+static int start_listener(struct crtx_listener_base *base_lstnr) {
 	struct crtx_uio_listener *lstnr;
 	char buf[PATH_MAX];
 	int fd;

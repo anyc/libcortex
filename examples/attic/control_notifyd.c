@@ -47,7 +47,7 @@ char *get_username() {
 	return 0;
 }
 
-char init() {
+int init() {
 	int r;
 	
 	

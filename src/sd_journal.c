@@ -204,7 +204,7 @@ static int sd_journal_fd_event_handler(struct crtx_event *event, void *userdata,
 	return 0;
 }
 
-static char start_listener(struct crtx_listener_base *listener) {
+static int start_listener(struct crtx_listener_base *listener) {
 	int rv, fd, i;
 	struct crtx_sd_journal_listener *jlstnr;
 	
@@ -276,7 +276,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
-static char stop_listener(struct crtx_listener_base *listener) {
+static int stop_listener(struct crtx_listener_base *listener) {
 	struct crtx_sd_journal_listener *jlstnr;
 	
 	jlstnr = (struct crtx_sd_journal_listener *) listener;

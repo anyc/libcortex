@@ -38,7 +38,7 @@ static void reinit_cb(void *reinit_cb_data) {
 	}
 }
 
-static char start_listener(struct crtx_listener_base *listener) {
+static int start_listener(struct crtx_listener_base *listener) {
 	struct crtx_forked_curl_listener *fc_lstnr;
 	int rv;
 	

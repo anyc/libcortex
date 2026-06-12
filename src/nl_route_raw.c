@@ -15,7 +15,7 @@
 #include "intern.h"
 #include "nl_route_raw.h"
 
-char crtx_nl_route_send_req(struct crtx_nl_route_raw_listener *nlr_list, struct nlmsghdr *n) {
+int crtx_nl_route_send_req(struct crtx_nl_route_raw_listener *nlr_list, struct nlmsghdr *n) {
 	int ret;
 	
 	ret = send(nlr_list->nl_listener.fd, n, n->nlmsg_len, 0);
@@ -672,7 +672,7 @@ static int nl_route_read_cb(struct crtx_netlink_raw_listener *nl_listener, int f
 	return 0;
 }
 
-static char nl_route_start_listener(struct crtx_listener_base *listener) {
+static int nl_route_start_listener(struct crtx_listener_base *listener) {
 	struct crtx_nl_route_raw_listener *nlr_list;
 	int ret;
 	
@@ -687,7 +687,7 @@ static char nl_route_start_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
-static char nl_route_stop_listener(struct crtx_listener_base *listener) {
+static int nl_route_stop_listener(struct crtx_listener_base *listener) {
 	struct crtx_nl_route_raw_listener *nlr_list;
 	
 	nlr_list = (struct crtx_nl_route_raw_listener*) listener;
@@ -752,4 +752,3 @@ void crtx_nl_route_raw_init() {
 
 void crtx_nl_route_raw_finish() {
 }
-

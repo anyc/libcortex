@@ -856,7 +856,7 @@ int crtx_push_new_event(struct crtx_listener_base *lstnr, struct crtx_event **ev
 					   )
 {
 	va_list va;
-	char rv;
+	int rv;
 	struct crtx_event *levent;
 	struct crtx_dict *dict;
 	
@@ -2214,6 +2214,5 @@ int crtx_is_shutting_down() {
 int crtx_is_fd_valid(int fd) {
 	return fcntl(fd, F_GETFD) != -1 || errno != EBADF;
 }
-
 
 

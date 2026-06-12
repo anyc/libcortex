@@ -136,7 +136,7 @@ static int fanotify_event_handler(struct crtx_event *event, void *userdata, void
 	return 1;
 }
 
-char init() {
+int init() {
 	char *fanotify_path;
 	int r;
 	

@@ -4,7 +4,7 @@
 
 #include "dict.h"
 
-char crtx_pa_sink_input_info2dict(struct pa_sink_input_info *ptr, struct crtx_dict **dict_ptr)
+int crtx_pa_sink_input_info2dict(struct pa_sink_input_info *ptr, struct crtx_dict **dict_ptr)
 {
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di;
@@ -201,7 +201,7 @@ char crtx_pa_sink_input_info2dict(struct pa_sink_input_info *ptr, struct crtx_di
 	return 0;
 }
 
-char crtx_pa_card_info2dict(struct pa_card_info *ptr, struct crtx_dict **dict_ptr)
+int crtx_pa_card_info2dict(struct pa_card_info *ptr, struct crtx_dict **dict_ptr)
 {
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di;
@@ -311,7 +311,6 @@ char crtx_pa_card_info2dict(struct pa_card_info *ptr, struct crtx_dict **dict_pt
 	
 	return 0;
 }
-
 
 
 

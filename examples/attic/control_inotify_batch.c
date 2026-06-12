@@ -57,7 +57,7 @@ static int exec_script_handler(struct crtx_event *event, void *userdata, void **
 	return 1;
 }
 
-char init() {
+int init() {
 	struct crtx_dict *config, *monitors, *monitor, *mask, *actions;
 	struct crtx_dict *transforms;
 	struct crtx_inotify_listener *listener;

@@ -85,7 +85,7 @@ static int inotify_event_handler(struct crtx_event *event, void *userdata, void 
 	return 1;
 }
 
-char init() {
+int init() {
 	char *path;
 	int r;
 	

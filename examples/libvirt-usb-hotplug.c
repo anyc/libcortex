@@ -59,7 +59,7 @@ static char template[] = " \n\
 
 
 // check if given USB device is already attached to the given virtual machine
-char is_dev_attached(virDomainPtr dom, char *check_vendor, char *check_product) {
+int is_dev_attached(virDomainPtr dom, char *check_vendor, char *check_product) {
 	xmlDoc *document;
 	xmlNode *root, *node, *node2, *node3, *node4;
 	char *xml;

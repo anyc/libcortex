@@ -47,7 +47,7 @@ static void on_free_evdev_listener_data(struct crtx_listener_base *data, void *u
 
 int add_evdev_listener(struct crtx_dynamic_evdev_listener *dyn_evdev, struct udev_device *dev) {
 	struct crtx_evdev_listener *el;
-	char ret;
+	int ret;
 	struct crtx_dll *dll;
 	const char *devpath;
 	
@@ -133,9 +133,9 @@ static int udev_test_handler(struct crtx_event *event, void *userdata, void **se
 	return 0;
 }
 
-static char start_listener(struct crtx_listener_base *listener) {
+static int start_listener(struct crtx_listener_base *listener) {
 	struct crtx_dynamic_evdev_listener *dyn_evdev;
-	char ret;
+	int ret;
 	
 	dyn_evdev = (struct crtx_dynamic_evdev_listener *) listener;
 	
@@ -426,7 +426,7 @@ void on_free_device(struct crtx_dll *dll) {
 // 	crtx_dict_unref(counter->device);
 }
 
-char timer_tick(struct crtx_event *event, void *userdata, void **sessiondata) {
+int timer_tick(struct crtx_event *event, void *userdata, void **sessiondata) {
 	return dyn_evdev_test_handler(0, userdata, 0);
 }
 
@@ -468,7 +468,7 @@ static int dyn_evdev_test_handler(struct crtx_event *event, void *userdata, void
 int dynamic_evdev_main(int argc, char **argv) {
 // 	struct crtx_listener_base *lbase;
 	struct crtx_dynamic_evdev_listener dyn_evdev;
-	char ret;
+	int ret;
 	
 	
 	memset(&dyn_evdev, 0, sizeof(struct crtx_dynamic_evdev_listener));

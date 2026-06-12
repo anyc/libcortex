@@ -129,7 +129,7 @@ void crtx_write_dict(write_fct write, void *conn_id, struct crtx_dict *ds) {
 }
 
 
-char crtx_read(read_fct read, void *conn_id, void *buffer, size_t read_bytes) {
+int crtx_read(read_fct read, void *conn_id, void *buffer, size_t read_bytes) {
 	int n;
 	
 	n = read(conn_id, buffer, read_bytes);
@@ -151,7 +151,7 @@ struct crtx_dict *crtx_read_dict(read_fct read, void *conn_id) {
 	struct serialized_dict sdict;
 	struct serialized_dict_item sdi;
 	char *s;
-	char ret;
+	int ret;
 	uint8_t i;
 	
 	

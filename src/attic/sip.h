@@ -30,7 +30,7 @@ struct crtx_sip_listener {
 	int rid;
 };
 
-char crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_ptr);
+int crtx_eXosip_event2dict(struct eXosip_event *ptr, struct crtx_dict **dict_ptr);
 
 struct crtx_listener_base *crtx_setup_sip_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(sip)

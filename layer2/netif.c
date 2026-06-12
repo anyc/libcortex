@@ -84,7 +84,7 @@ static struct crtx_libnl_callback libnl_callbacks[] = {
 	{ 0 },
 };
 
-static char netif_start_listener(struct crtx_listener_base *listener) {
+static int netif_start_listener(struct crtx_listener_base *listener) {
 	struct crtx_netif_listener *netif_lstnr;
 	int ret;
 	
@@ -102,7 +102,7 @@ static char netif_start_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
-static char netif_stop_listener(struct crtx_listener_base *listener) {
+static int netif_stop_listener(struct crtx_listener_base *listener) {
 	struct crtx_netif_listener *netif_lstnr;
 	
 	netif_lstnr = (struct crtx_netif_listener*) listener;

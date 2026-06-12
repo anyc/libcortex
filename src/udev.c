@@ -188,7 +188,7 @@ static void crtx_shutdown_udev_listener(struct crtx_listener_base *data) {
 	udev_unref(ulist->udev);
 }
 
-static char start_listener(struct crtx_listener_base *listener) {
+static int start_listener(struct crtx_listener_base *listener) {
 	struct crtx_udev_listener *ulist;
 	
 	ulist = (struct crtx_udev_listener *) listener;

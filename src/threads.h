@@ -88,7 +88,7 @@ void crtx_shutdown_signal(struct crtx_signals *s);
 void crtx_reset_signal(struct crtx_signals *signal);
 void crtx_reference_signal(struct crtx_signals *s);
 void crtx_dereference_signal(struct crtx_signals *s);
-char crtx_signal_is_active(struct crtx_signals *s);
+int crtx_signal_is_active(struct crtx_signals *s);
 
 struct crtx_thread *crtx_thread_assign_job(struct crtx_thread_job_description *job);
 void crtx_thread_start_job(struct crtx_thread *t);

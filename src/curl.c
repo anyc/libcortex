@@ -104,7 +104,7 @@ size_t crtx_curl_header_callback(char *buffer, size_t size, size_t nitems, void 
 	return nitems * size;
 }
 
-static char stop_listener(struct crtx_listener_base *data) {
+static int stop_listener(struct crtx_listener_base *data) {
 	struct crtx_curl_listener *clist;
 	
 	clist = (struct crtx_curl_listener*) data;
@@ -121,7 +121,7 @@ static char stop_listener(struct crtx_listener_base *data) {
 	return 1;
 }
 
-static char start_listener(struct crtx_listener_base *base) {
+static int start_listener(struct crtx_listener_base *base) {
 	struct crtx_curl_listener *clist;
 	CURLMcode curlr;
 	

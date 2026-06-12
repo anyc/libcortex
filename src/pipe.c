@@ -28,7 +28,7 @@ static void on_error_cb(struct crtx_evloop_callback *el_cb, void *data) {
 	crtx_stop_listener(&lstnr->base);
 }
 
-static char start_listener(struct crtx_listener_base *lbase) {
+static int start_listener(struct crtx_listener_base *lbase) {
 	// check if fds are still open
 	crtx_setup_pipe_listener(lbase);
 	

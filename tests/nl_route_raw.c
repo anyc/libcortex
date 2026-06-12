@@ -50,7 +50,7 @@ static int crtx_get_own_ip_addresses_keygen(struct crtx_cache *, struct crtx_dic
 	return 0;
 }
 
-char crtx_get_own_ip_addresses() {
+int crtx_get_own_ip_addresses() {
 	struct crtx_nl_route_raw_listener nlr_list;
 	int ret;
 	struct crtx_task *task;

@@ -15,7 +15,7 @@
 #include "dict.h"
 
 
-char crtx_fill_data_item_va2(struct crtx_dict_item *di, unsigned char type, char *key, va_list *va) {
+int crtx_fill_data_item_va2(struct crtx_dict_item *di, unsigned char type, char *key, va_list *va) {
 // 	if (ds) {
 // 		size_t idx;
 // 		
@@ -117,7 +117,7 @@ char crtx_fill_data_item_va2(struct crtx_dict_item *di, unsigned char type, char
 	return 0;
 }
 
-char crtx_fill_data_item_va(struct crtx_dict_item *di, unsigned char type, va_list *va) {
+int crtx_fill_data_item_va(struct crtx_dict_item *di, unsigned char type, va_list *va) {
 	di->type = type;
 	di->key = va_arg(*va, char*);
 	
@@ -196,9 +196,9 @@ char crtx_fill_data_item_va(struct crtx_dict_item *di, unsigned char type, va_li
 	return 0;
 }
 
-char crtx_fill_data_item(struct crtx_dict_item *di, unsigned char type, char *key, ...) {
+int crtx_fill_data_item(struct crtx_dict_item *di, unsigned char type, char *key, ...) {
 	va_list va;
-	char ret;
+	int ret;
 	
 	va_start(va, key);
 	
@@ -209,9 +209,9 @@ char crtx_fill_data_item(struct crtx_dict_item *di, unsigned char type, char *ke
 	return ret;
 }
 
-char crtx_dict_new_item(struct crtx_dict *dict, unsigned char type, char *key, ...) {
+int crtx_dict_new_item(struct crtx_dict *dict, unsigned char type, char *key, ...) {
 	va_list va;
-	char ret;
+	int ret;
 	struct crtx_dict_item *di;
 	
 	va_start(va, key);
@@ -224,7 +224,7 @@ char crtx_dict_new_item(struct crtx_dict *dict, unsigned char type, char *key, .
 	return ret;
 }
 
-char crtx_resize_dict(struct crtx_dict *dict, size_t n_items) {
+int crtx_resize_dict(struct crtx_dict *dict, size_t n_items) {
 	if (n_items < dict->signature_length) {
 		CRTX_ERROR("shrinking dicts not yet supported\n");
 		return 1;
@@ -622,7 +622,7 @@ void crtx_print_dict(struct crtx_dict *ds) {
 	crtx_print_dict_rec(ds, 1);
 }
 
-char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size) {
+int crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size) {
 	switch (di->type) {
 		case 'u':
 		case 'i':
@@ -712,7 +712,7 @@ struct crtx_dict_item * crtx_get_item_by_idx(struct crtx_dict *ds, size_t idx) {
 	return &ds->items[idx];
 }
 
-char crtx_conv_value(char dtype,  void *dbuffer, size_t dbuffer_size, char stype,  void *sbuffer, size_t sbuffer_size) {
+int crtx_conv_value(char dtype,  void *dbuffer, size_t dbuffer_size, char stype,  void *sbuffer, size_t sbuffer_size) {
 	int ret;
 	
 	CRTX_VDBG("convert %c to %c\n", stype, dtype);
@@ -865,7 +865,7 @@ char crtx_conv_value(char dtype,  void *dbuffer, size_t dbuffer_size, char stype
 	return 0;
 }
 
-char crtx_get_item_value(struct crtx_dict_item *di, char type,  void *buffer, size_t buffer_size) {
+int crtx_get_item_value(struct crtx_dict_item *di, char type,  void *buffer, size_t buffer_size) {
 	if (di->type == type) {
 		return crtx_copy_value(di, buffer, buffer_size);
 	}
@@ -885,7 +885,7 @@ char crtx_get_item_value(struct crtx_dict_item *di, char type,  void *buffer, si
 	}
 }
 
-char crtx_get_value(struct crtx_dict *ds, const char *key, char type, void *buffer, size_t buffer_size) {
+int crtx_get_value(struct crtx_dict *ds, const char *key, char type, void *buffer, size_t buffer_size) {
 	struct crtx_dict_item *di;
 	
 	di = crtx_get_item(ds, key);
@@ -904,7 +904,7 @@ char crtx_get_value(struct crtx_dict *ds, const char *key, char type, void *buff
 
 struct crtx_dict *crtx_get_dict(struct crtx_dict *ds, const char *key) {
 	struct crtx_dict *dict;
-	char ret;
+	int ret;
 	
 	ret = crtx_get_value(ds, key, 'D', &dict, sizeof(struct crtx_dict *));
 	return ret?dict:0;
@@ -912,7 +912,7 @@ struct crtx_dict *crtx_get_dict(struct crtx_dict *ds, const char *key) {
 
 char *crtx_get_string(struct crtx_dict *ds, const char *key) {
 	char *s;
-	char ret;
+	int ret;
 	
 	ret = crtx_get_value(ds, key, 's', &s, sizeof(char *));
 	return ret?s:0;
@@ -927,7 +927,7 @@ char *crtx_dict_get_string(struct crtx_dict *ds, const char *key) {
  * %[key]item_type %[key](format string for sub-dictionary)
  * E.g.: "Event \"%[my_array](%[* ]s)\" for file \"%[name]s\""
  */
-static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_t *rlen, size_t *alloc) {
+static int dict_printf(struct crtx_dict *ds, char *format, char **result, size_t *rlen, size_t *alloc) {
 	char *f, *e;
 	char *key;
 	char *s;
@@ -995,7 +995,7 @@ static char dict_printf(struct crtx_dict *ds, char *format, char **result, size_
 				strncpy(fmt, fmt_start+1, min);
 				fmt[min] = 0;
 				
-				char ret;
+				int ret;
 				ret = dict_printf(di->dict, fmt, result, rlen, alloc);
 				
 				free(fmt);
@@ -1214,7 +1214,7 @@ struct crtx_task *crtx_create_transform_task(struct crtx_graph *in_graph, char *
 }
 
 #define MY_CMP(a, b) ( (a) < (b) ? -1 : (a) > (b) ? 1 : 0 )
-char crtx_cmp_item(struct crtx_dict_item *a, struct crtx_dict_item *b) {
+int crtx_cmp_item(struct crtx_dict_item *a, struct crtx_dict_item *b) {
 	int res;
 	struct crtx_dict_item *ia, *ib;
 	
@@ -1260,10 +1260,10 @@ char crtx_cmp_item(struct crtx_dict_item *a, struct crtx_dict_item *b) {
 	}
 }
 
-char crtx_dict_calc_payload_size(struct crtx_dict *orig, size_t *size) {
+int crtx_dict_calc_payload_size(struct crtx_dict *orig, size_t *size) {
 	struct crtx_dict_item *di;
 	size_t lsize;
-	char ret, result;
+	int ret, result;
 	
 	di = crtx_get_first_item(orig);
 	
@@ -1518,9 +1518,9 @@ struct crtx_dict_item * crtx_dict_locate(struct crtx_dict *dict, const char *pat
 	return di;
 }
 
-char crtx_dict_locate_value(struct crtx_dict *dict, const char *path, char type, void *buffer, size_t buffer_size) {
+int crtx_dict_locate_value(struct crtx_dict *dict, const char *path, char type, void *buffer, size_t buffer_size) {
 	struct crtx_dict_item * di;
-	char r;
+	int r;
 	
 	di = crtx_dict_locate(dict, path);
 	if (!di) {
@@ -1547,7 +1547,7 @@ char *crtx_dict_locate_string(struct crtx_dict *dict, const char *path) {
 	return di->string;
 }
 
-char crtx_is_string_in_dict(struct crtx_dict *dict, char *str) {
+int crtx_is_string_in_dict(struct crtx_dict *dict, char *str) {
 	struct crtx_dict_item *di;
 	
 	di = crtx_get_first_item(dict);

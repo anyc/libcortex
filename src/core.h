@@ -209,9 +209,9 @@ struct crtx_listener_base {
 	struct crtx_thread *eloop_thread;
 	void (*thread_stop)(struct crtx_thread *thread, void *data);
 	
-	char (*start_listener)(struct crtx_listener_base *listener);
-	char (*stop_listener)(struct crtx_listener_base *listener);
-	char (*update_listener)(struct crtx_listener_base *listener);
+	int (*start_listener)(struct crtx_listener_base *listener);
+	int (*stop_listener)(struct crtx_listener_base *listener);
+	int (*update_listener)(struct crtx_listener_base *listener);
 	
 	void (*shutdown)(struct crtx_listener_base *base);
 	void (*free_cb)(struct crtx_listener_base *base, void *userdata);
@@ -248,7 +248,7 @@ struct crtx_lstnr_plugin {
 	void *handle; ///< library handle
 	
 	char initialized;
-	char (*init)(); ///< callback that initializes this plugin
+	int (*init)(); ///< callback that initializes this plugin
 	void (*finish)(); ///< callback that finishes this plugin
 	/// callback that registers the listeners the plugin provides
 	void (*get_listener_repository)(struct crtx_listener_repository **listener_repository, unsigned int *listener_repository_length);

@@ -351,7 +351,7 @@ static int update_signals(struct crtx_signals_listener *signal_lstnr) {
 	return 0;
 }
 
-static char start_sub_listener(struct crtx_listener_base *listener) {
+static int start_sub_listener(struct crtx_listener_base *listener) {
 	int i;
 	struct crtx_signals_listener *signal_lstnr;
 	struct crtx_signal *sig;
@@ -419,7 +419,7 @@ static char start_sub_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
-static char stop_sub_listener(struct crtx_listener_base *listener) {
+static int stop_sub_listener(struct crtx_listener_base *listener) {
 	struct crtx_signals_listener *signal_lstnr;
 	int i;
 	char changed;
@@ -457,7 +457,7 @@ static void free_sub_listener(struct crtx_listener_base *listener, void *userdat
 	free(listener);
 }
 
-static char start_main_listener(struct crtx_listener_base *listener) {
+static int start_main_listener(struct crtx_listener_base *listener) {
 	struct crtx_signals_listener *slistener;
 	int r;
 	
@@ -744,4 +744,3 @@ void crtx_signals_finish() {
 // 		default_signal_lstnr.base.graph->descriptions = 0;
 // 	}
 }
-

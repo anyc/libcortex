@@ -33,7 +33,7 @@ struct generic_pa_callback_helper {
 
 
 // convert proplist to dict by iterating through all keys in the list
-char crtx_pa_proplist2dict(pa_proplist *props, struct crtx_dict **dict_ptr) {
+int crtx_pa_proplist2dict(pa_proplist *props, struct crtx_dict **dict_ptr) {
 	const char *key, *value;
 	void *iter;
 	struct crtx_dict_item *di;
@@ -306,7 +306,7 @@ static int pa_test_handler(struct crtx_event *event, void *userdata, void **sess
 
 int pa_main(int argc, char **argv) {
 	struct crtx_pa_listener palist;
-	char ret;
+	int ret;
 	
 // 	crtx_root->no_threads = 1;
 	

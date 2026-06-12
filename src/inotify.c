@@ -231,7 +231,7 @@ static int inotify_fd_event_handler(struct crtx_event *event, void *userdata, vo
 	return 0;
 }
 
-static char stop_inotify_listener(struct crtx_listener_base *listener) {
+static int stop_inotify_listener(struct crtx_listener_base *listener) {
 	struct crtx_inotify_listener *inlist;
 	
 	inlist = (struct crtx_inotify_listener*) listener;
@@ -267,7 +267,7 @@ static void stop_thread(struct crtx_thread *thread, void *data) {
 		close(inotify_fd);
 }
 
-static char start_listener(struct crtx_listener_base *listener) {
+static int start_listener(struct crtx_listener_base *listener) {
 	struct crtx_inotify_listener *inlist;
 	
 	

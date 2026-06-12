@@ -539,7 +539,7 @@ static void shutdown_epoll_listener(struct crtx_listener_base *lbase) {
 	}
 }
 
-static char stop_epoll_listener(struct crtx_listener_base *lbase) {
+static int stop_epoll_listener(struct crtx_listener_base *lbase) {
 	struct crtx_epoll_listener *epl;
 	
 	epl = (struct crtx_epoll_listener*) lbase;
@@ -719,7 +719,7 @@ void start_timer() {
 }
 
 int epoll_main(int argc, char **argv) {
-	char ret;
+	int ret;
 	struct crtx_evloop_fd evloop_fd;
 	struct crtx_evloop_callback default_el_cb;
 	

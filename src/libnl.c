@@ -29,7 +29,7 @@ static int libnl_fd_event_handler(struct crtx_event *event, void *userdata, void
 	return 0;
 }
 
-static char start_listener(struct crtx_listener_base *listener) {
+static int start_listener(struct crtx_listener_base *listener) {
 	struct crtx_libnl_listener *libnl_lstnr;
 	int ret;
 	

@@ -73,7 +73,7 @@ static int sip_fd_event_handler(struct crtx_event *event, void *userdata, void *
 	return 0;
 }
 
-static char start_listener(struct crtx_listener_base *listener) {
+static int start_listener(struct crtx_listener_base *listener) {
 	struct crtx_sip_listener *slist;
 	int r;
 	osip_message_t *reg;
@@ -119,7 +119,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
-static char stop_listener(struct crtx_listener_base *listener) {
+static int stop_listener(struct crtx_listener_base *listener) {
 	osip_message_t *reg = NULL;
 	int r;
 	struct crtx_sip_listener *slist;

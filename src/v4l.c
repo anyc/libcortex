@@ -18,7 +18,7 @@
 #include "v4l.h"
 #include "epoll.h"
 
-char crtx_v4l2_event_ctrl2dict(struct v4l2_event_ctrl *ptr, struct crtx_dict **dict_ptr) {
+int crtx_v4l2_event_ctrl2dict(struct v4l2_event_ctrl *ptr, struct crtx_dict **dict_ptr) {
         struct crtx_dict *dict;
 
         if (! *dict_ptr)
@@ -48,7 +48,7 @@ char crtx_v4l2_event_ctrl2dict(struct v4l2_event_ctrl *ptr, struct crtx_dict **d
         return 0;
 }
 
-char crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr, struct crtx_dict *controls) {
+int crtx_v4l2_event2dict(struct v4l2_event *ptr, struct crtx_dict **dict_ptr, struct crtx_dict *controls) {
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di, *di2;
 	
@@ -220,7 +220,7 @@ static void shutdown_listener(struct crtx_listener_base *data) {
 		close(clist->fd);
 }
 
-static char start_listener(struct crtx_listener_base *listener) {
+static int start_listener(struct crtx_listener_base *listener) {
 	struct crtx_v4l_listener *lstnr;
 	unsigned int i;
 	int r;

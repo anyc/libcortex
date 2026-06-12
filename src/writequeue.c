@@ -221,7 +221,7 @@ static int wq_write(struct crtx_writequeue_listener *wqueue, void *userdata) {
 
 int writequeue_main(int argc, char **argv) {
 	struct crtx_writequeue_listener wqueue;
-	char ret;
+	int ret;
 	
 	
 	memset(&wqueue, 0, sizeof(struct crtx_writequeue_listener));

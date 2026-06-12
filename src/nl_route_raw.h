@@ -33,7 +33,7 @@ struct crtx_nl_route_raw_listener {
 struct crtx_dict *crtx_nl_route_raw2dict_ifaddr(struct crtx_nl_route_raw_listener *nlr_list, struct nlmsghdr *nlh);
 struct crtx_dict *crtx_nl_route_raw2dict_ifaddr2(struct nlmsghdr *nlh, int all_fields);
 struct crtx_dict *crtx_nl_route_raw2dict_interface(struct nlmsghdr *nlh, char all_fields);
-char crtx_nl_route_send_req(struct crtx_nl_route_raw_listener *nl_listener, struct nlmsghdr *n);
+int crtx_nl_route_send_req(struct crtx_nl_route_raw_listener *nl_listener, struct nlmsghdr *n);
 
 struct crtx_listener_base *crtx_setup_nl_route_raw_listener(void *options);
 CRTX_DECLARE_ALLOC_FUNCTION(nl_route_raw)

@@ -333,7 +333,7 @@ static void fd_error_handler(struct crtx_evloop_callback *el_cb, void *userdata)
 	CRTX_ERROR("error from ping socket fd\n");
 }
 
-static char ping_start_listener(struct crtx_listener_base *listener) {
+static int ping_start_listener(struct crtx_listener_base *listener) {
 	struct crtx_ping_listener *ping_lstnr;
 	int ret;
 	
@@ -348,7 +348,7 @@ static char ping_start_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
-static char ping_stop_listener(struct crtx_listener_base *listener) {
+static int ping_stop_listener(struct crtx_listener_base *listener) {
 	struct crtx_ping_listener *ping_lstnr;
 	
 	ping_lstnr = (struct crtx_ping_listener*) listener;

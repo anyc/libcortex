@@ -206,7 +206,7 @@ static void fork_sigchld_cb(pid_t pid, int status, void *userdata) {
 	}
 }
 
-static char start_listener(struct crtx_listener_base *lstnr) {
+static int start_listener(struct crtx_listener_base *lstnr) {
 	struct crtx_fork_listener *flstnr;
 // 	int ret;
 	
@@ -235,7 +235,7 @@ static char start_listener(struct crtx_listener_base *lstnr) {
 	return 0;
 }
 
-static char stop_listener(struct crtx_listener_base *listener) {
+static int stop_listener(struct crtx_listener_base *listener) {
 	int r;
 	struct crtx_fork_listener *flstnr;
 	

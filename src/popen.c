@@ -182,7 +182,7 @@ static int pipe_event_handler(struct crtx_event *event, void *userdata, void **s
 	return 0;
 }
 
-static char start_listener(struct crtx_listener_base *listener) {
+static int start_listener(struct crtx_listener_base *listener) {
 	struct crtx_popen_listener *plstnr;
 	int rv;
 	
@@ -247,7 +247,7 @@ static char start_listener(struct crtx_listener_base *listener) {
 	return 0;
 }
 
-static char stop_listener(struct crtx_listener_base *listener) {
+static int stop_listener(struct crtx_listener_base *listener) {
 	struct crtx_popen_listener *plstnr;
 	
 	

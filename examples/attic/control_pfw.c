@@ -133,7 +133,7 @@ static void pfw_update_ip_entry(struct crtx_cache *cache, struct crtx_dict_item 
 }
 
 /// check if $ip is in the list of local IPs
-static char pfw_is_ip_local(char *ip) {
+static int pfw_is_ip_local(char *ip) {
 	struct pfw_ip_ll *iit;
 	
 	for (iit=local_ips; iit; iit=iit->next) {
@@ -297,7 +297,7 @@ static int pfw_print_packet(struct crtx_event *event, void *userdata, void **ses
 	return 1;
 }
 
-char pfw_start(unsigned int queue_num, unsigned int default_mark) {
+int pfw_start(unsigned int queue_num, unsigned int default_mark) {
 	struct ifaddrs *addrs, *tmp;
 	struct pfw_ip_ll *iit;
 	char *s;
@@ -431,7 +431,7 @@ char pfw_start(unsigned int queue_num, unsigned int default_mark) {
 	return 1;
 }
 
-char init() {
+int init() {
 	unsigned int queue_num, default_mark;
 	char *s;
 	

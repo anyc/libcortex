@@ -135,7 +135,7 @@ void crtx_dict_parse_json(struct crtx_dict *dict, char *string) {
 	json_object_put(jobj);
 }
 
-char crtx_dict_json_from_file(struct crtx_dict **dict, char *dictdb_path, char *id) {
+int crtx_dict_json_from_file(struct crtx_dict **dict, char *dictdb_path, char *id) {
 	char *s;
 	char file_path[PATH_MAX];
 	char *path;

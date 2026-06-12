@@ -789,7 +789,7 @@ static void conn_evt_cb(virConnectPtr conn, int reason, void *opaque) {
 	crtx_stop_listener(&lvlist->base);
 }
 
-static char stop_listener(struct crtx_listener_base *base) {
+static int stop_listener(struct crtx_listener_base *base) {
 	struct crtx_libvirt_listener *lvlist;
 	
 	lvlist = (struct crtx_libvirt_listener *) base;
@@ -815,7 +815,7 @@ virConnectPtr crtx_libvirt_get_conn(struct crtx_listener_base *base) {
 	return lvlist->conn;
 }
 
-static char start_listener(struct crtx_listener_base *base) {
+static int start_listener(struct crtx_listener_base *base) {
 	struct crtx_libvirt_listener *lvlist;
 	int ret;
 	
@@ -955,7 +955,7 @@ static int libvirt_test_handler(struct crtx_event *event, void *userdata, void *
 // }
 
 int libvirt_main(int argc, char **argv) {
-	char ret;
+	int ret;
 	
 	
 	memset(&lvlist, 0, sizeof(struct crtx_libvirt_listener));

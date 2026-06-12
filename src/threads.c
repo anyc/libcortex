@@ -190,7 +190,7 @@ void crtx_shutdown_signal(struct crtx_signals *s) {
 	pthread_cond_destroy(&s->cond);
 }
 
-char crtx_signal_is_active(struct crtx_signals *s) {
+int crtx_signal_is_active(struct crtx_signals *s) {
 	if (s->bitflag_idx == -1) {
 		return *s->condition;
 	} else {

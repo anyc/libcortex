@@ -97,12 +97,12 @@ struct crtx_dict_item * crtx_dict_get_item(struct crtx_dict *ds, const char *key
 struct crtx_dict * crtx_init_dict(char *signature, uint32_t sign_length, size_t payload_size);
 struct crtx_dict * crtx_create_dict_va(char *signature, va_list *va);
 struct crtx_dict * crtx_create_dict(char *signature, ...);
-char  crtx_fill_data_item(struct crtx_dict_item *di, unsigned char type, char *key, ...);
-char crtx_fill_data_item_va2(struct crtx_dict_item *di, unsigned char type, char *key, va_list *va);
-char crtx_fill_data_item_va(struct crtx_dict_item *di, unsigned char type, va_list *va);
+int  crtx_fill_data_item(struct crtx_dict_item *di, unsigned char type, char *key, ...);
+int crtx_fill_data_item_va2(struct crtx_dict_item *di, unsigned char type, char *key, va_list *va);
+int crtx_fill_data_item_va(struct crtx_dict_item *di, unsigned char type, va_list *va);
 // void crtx_free_dict(struct crtx_dict *ds);
-char crtx_get_value(struct crtx_dict *ds, const char *key, char type, void *buffer, size_t buffer_size);
-char crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size);
+int crtx_get_value(struct crtx_dict *ds, const char *key, char type, void *buffer, size_t buffer_size);
+int crtx_copy_value(struct crtx_dict_item *di, void *buffer, size_t buffer_size);
 void crtx_print_dict(struct crtx_dict *ds);
 struct crtx_dict_item *crtx_get_first_item(struct crtx_dict *ds);
 struct crtx_dict_item *crtx_get_next_item(struct crtx_dict *ds, struct crtx_dict_item *di);
@@ -116,26 +116,26 @@ struct crtx_task *crtx_create_transform_task(struct crtx_graph *in_graph, char *
 
 struct crtx_dict_item * crtx_get_item_by_idx(struct crtx_dict *ds, size_t idx);
 
-char crtx_cmp_item(struct crtx_dict_item *a, struct crtx_dict_item *b);
+int crtx_cmp_item(struct crtx_dict_item *a, struct crtx_dict_item *b);
 void crtx_print_dict_item(struct crtx_dict_item *di, unsigned char level);
 void crtx_free_dict_item_data(struct crtx_dict_item *di);
 struct crtx_dict *crtx_dict_copy(struct crtx_dict *orig);
 void crtx_dict_copy_item(struct crtx_dict_item *dst, struct crtx_dict_item *src, char data_only);
-char crtx_get_item_value(struct crtx_dict_item *di, char type,  void *buffer, size_t buffer_size);
+int crtx_get_item_value(struct crtx_dict_item *di, char type,  void *buffer, size_t buffer_size);
 
-char crtx_resize_dict(struct crtx_dict *dict, size_t n_items);
+int crtx_resize_dict(struct crtx_dict *dict, size_t n_items);
 int crx_append_to_dict(struct crtx_dict **dictionary, char *signature, ...);
 
 void crtx_dict_ref(struct crtx_dict *dict);
 void crtx_dict_unref(struct crtx_dict *dict);
 struct crtx_dict_item * crtx_dict_locate(struct crtx_dict *dict, const char *path);
-char crtx_dict_locate_value(struct crtx_dict *dict, const char *path, char type, void *buffer, size_t buffer_size);
+int crtx_dict_locate_value(struct crtx_dict *dict, const char *path, char type, void *buffer, size_t buffer_size);
 char *crtx_dict_locate_string(struct crtx_dict *dict, const char *path);
 void crtx_dict_remove_item(struct crtx_dict *dict, char *key);
-char crtx_dict_new_item(struct crtx_dict *dict, unsigned char type, char *key, ...);
+int crtx_dict_new_item(struct crtx_dict *dict, unsigned char type, char *key, ...);
 struct crtx_dict *crtx_dict_create_copy(struct crtx_dict *orig);
 
-char crtx_is_string_in_dict(struct crtx_dict *dict, char *str);
+int crtx_is_string_in_dict(struct crtx_dict *dict, char *str);
 
 void crtx_dict_item_print(struct crtx_dict_item *di, unsigned char level, FILE *f);
 void crtx_dict_print(struct crtx_dict *ds, FILE *f);

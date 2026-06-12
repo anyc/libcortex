@@ -685,7 +685,7 @@ void poll_flags2str(unsigned int flags) {
 }
 #endif
 
-static char update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct crtx_evloop_callback *el_cb) {
+static int update_evloop_settings(struct crtx_sdbus_listener *sdlist, struct crtx_evloop_callback *el_cb) {
 	int new_flags, r;
 	uint64_t timeout_us;
 	
@@ -805,7 +805,7 @@ static void shutdown_listener(struct crtx_listener_base *data) {
 	sd_bus_unref(sdlist->bus);
 }
 
-char crtx_sdbus_open_bus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name) {
+int crtx_sdbus_open_bus(sd_bus **bus, enum crtx_sdbus_type bus_type, char *name) {
 	int r;
 	
 	switch (bus_type) {

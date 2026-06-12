@@ -23,7 +23,7 @@ struct edid_monitor_descriptor {
 	uint8_t  data[13];
 };
 
-char crtx_xcb_randr_get_edid(struct crtx_xcb_randr_listener *xrlist, xcb_randr_output_t output, unsigned char **edid, int *length, void **to_free) {
+int crtx_xcb_randr_get_edid(struct crtx_xcb_randr_listener *xrlist, xcb_randr_output_t output, unsigned char **edid, int *length, void **to_free) {
 	xcb_generic_error_t* error;
 	xcb_randr_get_output_property_reply_t *out_prop;
 	
@@ -90,7 +90,7 @@ char crtx_xcb_randr_get_edid(struct crtx_xcb_randr_listener *xrlist, xcb_randr_o
 	return 0;
 }
 
-char crtx_xcb_randr_crtc_change_t2dict(struct xcb_randr_crtc_change_t *ptr, struct crtx_dict **dict_ptr) {
+int crtx_xcb_randr_crtc_change_t2dict(struct xcb_randr_crtc_change_t *ptr, struct crtx_dict **dict_ptr) {
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di;
 	
@@ -144,7 +144,7 @@ char crtx_xcb_randr_crtc_change_t2dict(struct xcb_randr_crtc_change_t *ptr, stru
 	return 0;
 }
 
-char crtx_xcb_randr_output_change_t2dict(struct xcb_randr_output_change_t *ptr, struct crtx_dict **dict_ptr)
+int crtx_xcb_randr_output_change_t2dict(struct xcb_randr_output_change_t *ptr, struct crtx_dict **dict_ptr)
 {
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di;
@@ -189,7 +189,7 @@ char crtx_xcb_randr_output_change_t2dict(struct xcb_randr_output_change_t *ptr, 
 	return 0;
 }
 
-char crtx_xcb_randr_get_output_info_reply_t2dict(struct xcb_randr_get_output_info_reply_t *ptr, struct crtx_dict **dict_ptr)
+int crtx_xcb_randr_get_output_info_reply_t2dict(struct xcb_randr_get_output_info_reply_t *ptr, struct crtx_dict **dict_ptr)
 {
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di;
@@ -389,7 +389,7 @@ struct crtx_dict * crtx_output_change2dict(struct crtx_xcb_randr_listener *xrlis
 	return dict;
 }
 
-char crtx_xcb_randr_output_property_t2dict(struct crtx_xcb_randr_listener *xrlist, struct xcb_randr_output_property_t *ptr, struct crtx_dict **dict_ptr)
+int crtx_xcb_randr_output_property_t2dict(struct crtx_xcb_randr_listener *xrlist, struct xcb_randr_output_property_t *ptr, struct crtx_dict **dict_ptr)
 {
 	struct crtx_dict *dict;
 	struct crtx_dict_item *di;
@@ -567,7 +567,7 @@ static void crtx_free_xcb_randr_listener(struct crtx_listener_base *listener, vo
 	xcb_disconnect(xrlist->conn);
 }
 
-static char start_listener(struct crtx_listener_base *listener) {
+static int start_listener(struct crtx_listener_base *listener) {
 	struct crtx_xcb_randr_listener *xrlist;
 	
 	xrlist = (struct crtx_xcb_randr_listener*) listener;

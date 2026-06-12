@@ -144,7 +144,7 @@ struct sd_bus_signal {
 struct sd_bus_signal *signals = 0;
 unsigned int n_signals = 0;
 
-char submit_signal(struct crtx_event *event, void *userdata, void **sessiondata) {
+int submit_signal(struct crtx_event *event, void *userdata, void **sessiondata) {
 	struct sd_bus_signal *args;
 	
 	args = (struct sd_bus_signal*) userdata;
@@ -276,4 +276,3 @@ finish:
 	
 	return 0;
 }
-

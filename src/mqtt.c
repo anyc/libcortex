@@ -201,7 +201,7 @@ static int mqtt_fd_event_handler(struct crtx_event *event, void *userdata, void 
 	return 0;
 }
 
-static char start_listener(struct crtx_listener_base *listener) {
+static int start_listener(struct crtx_listener_base *listener) {
 	int rv, evtypes;
 	struct crtx_mqtt_listener *mlstnr;
 	
