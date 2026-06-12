@@ -6,6 +6,12 @@
 local_mk_rules ?= Makefile.local_rules
 
 SHAREDLIB=libcrtx.so
+PKGCONFIG_FILE=libcortex.pc
+PLUGIN_PKGCONFIG_FILES=$(patsubst %,libcortex-%.pc,$(DYN_MODULES))
+PKGCONFIG_FILES=$(PKGCONFIG_FILE) $(PLUGIN_PKGCONFIG_FILES)
+PROJECT_VERSION=$(SO_VERSION)
+PC_REQUIRES_PRIVATE=$(strip $(sort $(foreach m,$(BUILTIN_MODULES) $(STATIC_TOOLS) $(STATIC_MODULES),$(PKGCFG_$(m)))))
+PC_LIBS_PRIVATE=$(strip $(foreach m,$(BUILTIN_MODULES) $(STATIC_TOOLS) $(STATIC_MODULES),$(filter -l% -L% -pthread,$(LDLIBS_$(m)))))
 
 MAIN_OBJS+=core.o \
 	dict.o \
@@ -25,7 +31,7 @@ LDLIBS+=-lpthread -ldl
 
 .PHONY: clean
 
-all: $(local_mk) core_modules.h config.h plugins shared crtx_include_dir
+all: $(local_mk) core_modules.h config.h plugins shared crtx_include_dir $(PKGCONFIG_FILES)
 
 #
 # module-specific flags
@@ -59,7 +65,7 @@ endif
 shared: $(SHAREDLIB)
 
 clean:
-	rm -f *.o core_modules.h config.h $(TESTS) $(SHAREDLIB) libcrtx*.so* libcortex*.deb
+	rm -f *.o core_modules.h config.h $(TESTS) $(SHAREDLIB) libcrtx*.so* libcortex*.deb $(PKGCONFIG_FILES)
 	rm -rf ../include
 
 debug:
@@ -99,6 +105,48 @@ config.h: $(local_mk)
 	echo "" > $@
 	for m in $(STATIC_MODULES); do echo -e "#define CRTX_HAVE_MOD_$$(echo $${m} | tr a-z A-Z) 1" >> $@; done
 
+$(PKGCONFIG_FILE): $(local_mk) ../Makefile.common Makefile.modules
+	{ \
+		printf 'prefix=%s\n' '$(prefix)'; \
+		printf 'exec_prefix=%s\n' '$(exec_prefix)'; \
+		printf 'libdir=%s\n' '$(libdir)'; \
+		printf 'includedir=%s\n' '$(includedir)'; \
+		printf '\n'; \
+		printf 'Name: libcortex\n'; \
+		printf 'Description: Event loop and event-source plugin library\n'; \
+		printf 'URL: https://anyc.github.io/libcortex/\n'; \
+		printf 'Version: %s\n' '$(PROJECT_VERSION)'; \
+		printf 'Cflags: -I$${includedir}\n'; \
+		printf 'Libs: -L$${libdir} -lcrtx\n'; \
+		if [ -n "$(PC_REQUIRES_PRIVATE)" ]; then printf 'Requires.private: %s\n' '$(PC_REQUIRES_PRIVATE)'; fi; \
+		if [ -n "$(PC_LIBS_PRIVATE)" ]; then printf 'Libs.private: %s\n' '$(PC_LIBS_PRIVATE)'; fi; \
+	} > $@
+
+libcortex-%.pc: $(local_mk) ../Makefile.common Makefile.modules
+	@reqs='libcortex'; \
+	for dep in $(DEPS_$*); do \
+		case ' $(DYN_MODULES) ' in \
+			*' '"$$dep"' '*) reqs="$$reqs libcortex-$$dep" ;; \
+		esac; \
+	done; \
+	{ \
+		printf 'prefix=%s\n' '$(prefix)'; \
+		printf 'exec_prefix=%s\n' '$(exec_prefix)'; \
+		printf 'libdir=%s\n' '$(libdir)'; \
+		printf 'plugindir=%s\n' '$(plugindir)'; \
+		printf 'includedir=%s\n' '$(includedir)'; \
+		printf '\n'; \
+		printf 'Name: libcortex-%s\n' '$*'; \
+		printf 'Description: libcortex plugin %s\n' '$*'; \
+		printf 'URL: https://anyc.github.io/libcortex/\n'; \
+		printf 'Version: %s\n' '$(PROJECT_VERSION)'; \
+		printf 'Cflags: -I$${includedir}\n'; \
+		printf 'Libs: -L$${plugindir} -lcrtx_$*\n'; \
+		printf 'Requires: %s\n' "$${reqs// /, }"; \
+		if [ -n "$(PKGCFG_$*)" ]; then printf 'Requires.private: %s\n' '$(PKGCFG_$*)'; fi; \
+		if [ -n "$(filter -l% -L% -pthread,$(LDLIBS_$*))" ]; then printf 'Libs.private: %s\n' '$(filter -l% -L% -pthread,$(LDLIBS_$*))'; fi; \
+	} > $@
+
 # dynamically create functions for double linked lists
 dllist.o: CFLAGS+=-DCRTX_DLL
 dllist.o: llist.c
@@ -127,6 +175,8 @@ libcrtx_%.so: %.o $(SHAREDLIB)
 
 plugins: $(SHAREDLIB) $(patsubst %,libcrtx_%.so, $(DYN_MODULES))
 
+pkgconfig: $(PKGCONFIG_FILES)
+
 
 
 tests: $(TESTS)
@@ -142,13 +192,15 @@ tests: $(TESTS)
 
 install: install-lib install-devel
 
-install-devel:
+install-devel: crtx_include_dir $(PKGCONFIG_FILES)
 	$(INSTALL) -m 755 -d $(DESTDIR)$(libdir)
 	$(INSTALL) -m 755 -d $(DESTDIR)$(plugindir)
+	$(INSTALL) -m 755 -d $(DESTDIR)$(libdir)/pkgconfig
 	$(INSTALL) -m 755 -d $(DESTDIR)$(includedir)/cortex/
 	
 	cp -P libcrtx.so $(DESTDIR)$(libdir)
 	ls libcrtx_*.so.* 2>/dev/null && cp -P libcrtx_*.so $(DESTDIR)$(plugindir) || :
+	$(INSTALL) -m 644 $(PKGCONFIG_FILES) $(DESTDIR)$(libdir)/pkgconfig/
 	
 	$(INSTALL) -m 644 ../include/cortex/*.[ch] $(DESTDIR)$(includedir)/cortex/
 	[ -L $(DESTDIR)$(includedir)/crtx ] || ln -s cortex $(DESTDIR)$(includedir)/crtx
