@@ -29,6 +29,11 @@ DEPS_netconf=libnl
 
 .PHONY: clean
 
+$(foreach t,$(LAYER2_MODULES),$(eval $(t).test: libcrtx_$(t).so $(foreach d,$(DEPS_$(t)),../src/libcrtx_$(d).so)))
+
+../src/libcrtx_%.so:
+	$(MAKE) -C ../src libcrtx_$*.so
+
 all: $(LAYER2_LISTENER_LIST)
 
 clean:
@@ -45,9 +50,9 @@ libcrtx_%.so: %.o
 
 tests: $(TESTS)
 
-%.test: CFLAGS+=-DCRTX_TEST -g -g3 -gdwarf-2 -DDEBUG -Wall $(CFLAGS_${@:.test=}) $(foreach d,$(DEPS_${@:.test=}),$(CFLAGS_$d))
-%.test: LDLIBS+=$(LDLIBS_${@:.test=}) $(foreach d,${@:.test=} $(DEPS_${@:.test=}),-lcrtx_$(d) $(LDLIBS_$(d)) )
-%.test: LDFLAGS+=-Wl,-rpath,$(plugindir)
+%.test: private CFLAGS+=-DCRTX_TEST -g -g3 -gdwarf-2 -DDEBUG -Wall $(CFLAGS_${@:.test=}) $(foreach d,$(DEPS_${@:.test=}),$(CFLAGS_$d))
+%.test: private LDLIBS+=$(LDLIBS_${@:.test=}) $(foreach d,${@:.test=} $(DEPS_${@:.test=}),-lcrtx_$(d) $(LDLIBS_$(d)) )
+%.test: private LDFLAGS+=-Wl,-rpath,$(plugindir)
 %.test: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) $< -o $@ $(LDFLAGS) $(LDLIBS) -L. -lcrtx
 
