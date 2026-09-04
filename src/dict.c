@@ -1481,7 +1481,8 @@ void crtx_dict_unref(struct crtx_dict *dict) {
 
 struct crtx_dict_item * crtx_dict_locate(struct crtx_dict *dict, const char *path) {
 	const char *p;
-	char *sep, *buf;
+	const char *sep;
+	char *buf;
 	struct crtx_dict_item *di;
 	size_t buflen;
 	
