@@ -93,7 +93,8 @@ int crtx_sd_journal_print_event(struct crtx_sd_journal_listener *jlstnr, void *u
 
 int crtx_sd_journal_gen_event_dict(struct crtx_sd_journal_listener *jlstnr, void *userdata) {
 	int rv;
-	char *data, *sep;
+	char *data;
+	const char *sep;
 	const void *tuple;
 	size_t tuple_length, data_length;
 	uint64_t usec;

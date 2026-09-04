@@ -25,12 +25,13 @@ CFLAGS_core+=$(patsubst %,-DSTATIC_%,$(STATIC_MODULES))
 
 DEPS_avahi+=sdbus
 
-ifeq (CAN_NO_IF_SETUP,)
+ifeq ($(CAN_NO_IF_SETUP),)
 PKGCFG_can=libnl-3.0 libnl-route-3.0 libcap-ng
 else
 CFLAGS+=-DCRTX_CAN_NO_IF_SETUP
 endif
 
+PKGCFG_avahi=avahi-common
 PKGCFG_curl=libcurl
 PKGCFG_dict_inout_json=json-c
 PKGCFG_evdev=libevdev
@@ -42,6 +43,7 @@ PKGCFG_libnl=libnl-3.0
 PKGCFG_pulseaudio=libpulse
 PKGCFG_sdbus=libsystemd
 PKGCFG_sd_journal=libsystemd
+PKGCFG_sip=eXosip2
 PKGCFG_udev=libudev
 PKGCFG_xcb_randr=xcb xcb-randr
 
