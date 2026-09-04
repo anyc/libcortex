@@ -116,7 +116,7 @@ void free_genl_listener(struct crtx_listener_base *lbase, void *userdata) {
 	nl_socket_free(genlist->sock);
 }
 
-struct crtx_listener_base *crtx_setup_genl_listener(void *options) {
+struct crtx_listener_base *crtx_setup_netlink_ge_listener(void *options) {
 	struct crtx_genl_listener *genlist;
 	struct crtx_genl_group *g;
 	struct crtx_genl_callback *cb;
@@ -263,9 +263,9 @@ int netlink_main(int argc, char **argv) {
 							"struct", 0, sizeof(struct acpi_genl_event), CRTX_DIF_DONT_FREE_DATA
 						  );
 	
-	r = crtx_setup_listener("genl", &genl);
+	r = crtx_setup_listener("netlink_ge", &genl);
 	if (r) {
-		CRTX_ERROR("create_listener(genl) failed\n");
+		CRTX_ERROR("create_listener(netlink_ge) failed\n");
 		exit(1);
 	}
 	
