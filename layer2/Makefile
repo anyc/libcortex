@@ -25,6 +25,8 @@ DEPS_netif=libnl
 
 DEPS_netconf=libnl
 
+DEPS_wifi=netlink_ge
+
 -include $(local_mk)
 
 .PHONY: clean
