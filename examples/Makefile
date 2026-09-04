@@ -52,7 +52,7 @@ gdb_%: %
 valgrind_%: %
 	LD_LIBRARY_PATH=$(libcrtx_dir) valgrind --leak-check=full ./$<
 
-install:
+install: all
 	[ "$(EXAMPLES)" == "" ] || $(INSTALL) -m 755 -d $(DESTDIR)$(bindir)
 	
 	if [ "$(L_EXAMPLES)" != "" ]; then $(INSTALL) -m 755 $(L_EXAMPLES) $(DESTDIR)$(bindir); fi
