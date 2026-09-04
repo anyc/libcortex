@@ -36,8 +36,14 @@ pfw: control_pfw.c
 
 dbus-tool: LDLIBS+=-lcrtx_sdbus -lsystemd
 
+usdev: ../layer2/libcrtx_netconf.so
 usdev: CFLAGS+=-I../layer2/ $(CFLAGS_libnl) -DLIBEXECDIR="\"$(libexecdir)\"" -DSYSCONFDIR="\"$(sysconfdir)\""
 usdev: LDLIBS+=$(LDLIBS_libnl) -L../layer2 -lcrtx_netconf
+usdev: usdev.c
+	$(CC) -o $@ $< $(CFLAGS) $(LDFLAGS) $(LDLIBS)
+
+../layer2/libcrtx_netconf.so:
+	$(MAKE) -C ../layer2 libcrtx_netconf.so LAYER2_MODULES="$(LAYER2_MODULES)"
 
 clean:
 	rm -f *.o $(L_EXAMPLES)
