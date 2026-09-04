@@ -71,5 +71,6 @@ var searchData=
   ['crtx_5fuevents_5flistener_68',['crtx_uevents_listener',['../structcrtx__uevents__listener.html',1,'']]],
   ['crtx_5fuio_5flistener_69',['crtx_uio_listener',['../structcrtx__uio__listener.html',1,'']]],
   ['crtx_5fv4l_5flistener_70',['crtx_v4l_listener',['../structcrtx__v4l__listener.html',1,'']]],
-  ['crtx_5fwritequeue_5flistener_71',['crtx_writequeue_listener',['../structcrtx__writequeue__listener.html',1,'']]]
+  ['crtx_5fwifi_5flistener_71',['crtx_wifi_listener',['../structcrtx__wifi__listener.html',1,'']]],
+  ['crtx_5fwritequeue_5flistener_72',['crtx_writequeue_listener',['../structcrtx__writequeue__listener.html',1,'']]]
 ];
