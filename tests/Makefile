@@ -5,8 +5,8 @@ CFLAGS+=-I$(libcrtx_path) -g
 LDFLAGS+=-L$(libcrtx_path) -Wl,-rpath "$(shell realpath $(libcrtx_path))"
 LDLIBS+=-lcrtx
 
--include $(local_mk)
 include ../Makefile.common
+-include $(local_mk)
 include ../src/Makefile.modules
 
 AVAILABLE_TESTS=fork libnl nl_route_raw popen udev sd_journal
