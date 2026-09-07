@@ -1,0 +1,43 @@
+FROM debian:bookworm
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        pkg-config \
+        libavahi-client-dev \
+        libavahi-common-dev \
+        libcap-ng-dev \
+        libcurl4-openssl-dev \
+        libevdev-dev \
+        libjson-c-dev \
+        libmosquitto-dev \
+        libnetfilter-queue-dev \
+        libnl-3-dev \
+        libnl-genl-3-dev \
+        libnl-route-3-dev \
+        libpulse-dev \
+        libreadline-dev \
+        libsystemd-dev \
+        libudev-dev \
+        libvirt-dev \
+        libxml2-dev \
+        libv4l-dev \
+        libxcb1-dev \
+        libxcb-randr0-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /usr/src/libcortex
+COPY . .
+RUN printf '%s\n' 'prefix=/usr' > Makefile.local
+
+# Build and install using the container-specific module and path configuration,
+# then build and execute the repository tests.
+RUN make clean \
+    && make -j"$(nproc)" all \
+    && make install \
+    && make tests \
+    && make run_tests
+
+CMD ["/bin/bash"]
