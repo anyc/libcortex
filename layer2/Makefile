@@ -30,6 +30,7 @@ DEPS_wifi=netlink_ge
 -include $(local_mk)
 
 .PHONY: clean
+.DEFAULT_GOAL := all
 
 $(foreach t,$(LAYER2_MODULES),$(eval $(t).test: libcrtx_$(t).so $(foreach d,$(DEPS_$(t)),../src/libcrtx_$(d).so)))
 
