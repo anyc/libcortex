@@ -1,0 +1,22 @@
+option('build_tests', type: 'boolean', value: true, description: 'Build libcortex test programs')
+option('modules', type: 'array', value: [
+  'sdbus', 'avahi', 'can', 'curl', 'evdev', 'libnl', 'libvirt',
+  'netlink_ge', 'pulseaudio', 'readline', 'sd_journal', 'udev', 'v4l', 'mqtt',
+], description: 'Dynamic modules to build')
+option('static_modules', type: 'array', value: [
+  'fanotify', 'fork', 'inotify', 'netlink_raw', 'nl_route_raw', 'uevents',
+  'timer', 'writequeue', 'pipe', 'popen', 'uio',
+], description: 'Static modules to include in libcrtx')
+option('layer2_modules', type: 'array', value: [
+  'dynamic_evdev', 'forked_curl', 'netif', 'netconf', 'ping',
+], description: 'Layer2 listeners to build')
+option('tools', type: 'array', value: [
+  'cache', 'dict_inout', 'dict_inout_json', 'threads', 'sm',
+], description: 'Static tools to include in libcrtx')
+option('examples', type: 'array', value: [
+  'libvirt-usb-hotplug', 'named_pipe', 'dbus-tool', 'ipquery', 'usdev',
+], description: 'Example programs to build')
+option('tests', type: 'array', value: [
+  'fork', 'libnl', 'nl_route_raw', 'popen', 'sd_journal', 'udev',
+  'fanotify-req-perm', 'fanotify-fs-error',
+], description: 'Test programs to build')

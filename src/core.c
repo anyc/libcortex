@@ -33,7 +33,11 @@
 struct crtx_root crtx_global_root = { 0 };
 struct crtx_root *crtx_root = &crtx_global_root;
 
+#ifdef CRTX_MESON_BUILD
+#include "meson_core_modules.h"
+#else
 #include "core_modules.h"
+#endif
 
 char crtx_verbosity = CRTX_VLEVEL_INFO;
 char crtx_pid_prefix = 0;
@@ -2214,5 +2218,4 @@ int crtx_is_shutting_down() {
 int crtx_is_fd_valid(int fd) {
 	return fcntl(fd, F_GETFD) != -1 || errno != EBADF;
 }
-
 

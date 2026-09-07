@@ -1,0 +1,41 @@
+FROM debian:bookworm
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        meson \
+        ninja-build \
+        pkg-config \
+        libavahi-client-dev \
+        libavahi-common-dev \
+        libcap-ng-dev \
+        libcurl4-openssl-dev \
+        libevdev-dev \
+        libjson-c-dev \
+        libmosquitto-dev \
+        libnetfilter-queue-dev \
+        libnl-3-dev \
+        libnl-genl-3-dev \
+        libnl-route-3-dev \
+        libpulse-dev \
+        libreadline-dev \
+        libsystemd-dev \
+        libudev-dev \
+        libvirt-dev \
+        libxml2-dev \
+        libv4l-dev \
+        libxcb1-dev \
+        libxcb-randr0-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /usr/src/libcortex
+COPY . .
+
+RUN meson setup build --prefix=/usr --libdir=lib -Dbuild_tests=true \
+    && meson compile -C build \
+    && meson install -C build \
+    && meson test -C build
+
+CMD ["/bin/bash"]

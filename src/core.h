@@ -17,7 +17,11 @@ extern "C" {
 #include <stdint.h>
 #include <regex.h>
 
+#ifdef CRTX_MESON_BUILD
+#include "meson_config.h"
+#else
 #include "config.h"
+#endif
 #include "threads.h"
 #include "dict.h"
 #include "linkedlist.h"

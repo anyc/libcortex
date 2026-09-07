@@ -1,0 +1,35 @@
+#!/bin/sh
+set -eu
+
+repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+build_dir="$repo_dir/.meson-local"
+install_dir="$repo_dir/local/meson"
+
+if [ "${1:-}" = clean ]; then
+	rm -rf "$build_dir" "$install_dir"
+	echo "Removed $build_dir and $install_dir"
+	exit 0
+fi
+
+if [ -d "$build_dir" ]; then
+	meson setup "$build_dir" "$repo_dir" --reconfigure \
+		--prefix="$install_dir" --libdir=lib -Dbuild_tests=true
+else
+	meson setup "$build_dir" "$repo_dir" \
+		--prefix="$install_dir" --libdir=lib -Dbuild_tests=true
+fi
+
+meson compile -C "$build_dir"
+meson install -C "$build_dir"
+
+cat <<EOF
+
+Local installation complete.
+Run installed executables with:
+
+  LD_LIBRARY_PATH="$install_dir/lib\${LD_LIBRARY_PATH:+:\$LD_LIBRARY_PATH}" <executable>
+
+For example:
+
+  LD_LIBRARY_PATH="$install_dir/lib\${LD_LIBRARY_PATH:+:\$LD_LIBRARY_PATH}" "$install_dir/bin/named_pipe"
+EOF

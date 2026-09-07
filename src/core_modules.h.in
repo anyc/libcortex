@@ -1,0 +1,11 @@
+@STATIC_INCLUDES@
+
+struct crtx_module static_modules[] = {
+@STATIC_MODULE_ENTRIES@
+  {0, 0, 0},
+};
+
+struct crtx_listener_repository static_listener_repository[] = {
+@STATIC_LISTENER_ENTRIES@
+  {0, 0},
+};

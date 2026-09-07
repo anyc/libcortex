@@ -1,0 +1,6 @@
+#ifndef CRTX_CONFIG_H
+#define CRTX_CONFIG_H
+
+@STATIC_MODULE_DEFINES@
+
+#endif

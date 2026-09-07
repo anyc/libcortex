@@ -208,6 +208,31 @@ installing them in the system.
 The makefiles follow common build guidelines and use variables like CFLAGS and
 LDFLAGS so even cross-compilation should just work, e.g., with a Yocto SDK.
 
+Meson is also supported:
+
+```shell
+meson setup build
+meson compile -C build
+meson test -C build
+meson install -C build
+```
+
+Use `-Dbuild_tests=false` when test programs are not needed. Meson enables the
+standard module and layer2 listener set; unavailable optional libraries, such as
+libnetfilter-queue, are omitted during configuration.
+
+The target groups can be selected at configure time, for example:
+
+```shell
+meson setup build \
+  -Dmodules=readline,libnl \
+  -Dstatic_modules=fanotify,fork,inotify,netlink_raw \
+  -Dlayer2_modules=netconf,ping \
+  -Dtools=cache,threads \
+  -Dexamples=named_pipe \
+  -Dtests=fork,libnl
+```
+
 Documentation
 -------------
 
