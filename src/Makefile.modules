@@ -41,6 +41,7 @@ PKGCFG_netlink_ge=libnl-genl-3.0
 PKGCFG_nf_queue=libnetfilter_queue
 PKGCFG_libnl=libnl-3.0
 PKGCFG_pulseaudio=libpulse
+PKGCFG_readline=readline
 PKGCFG_sdbus=libsystemd
 PKGCFG_sd_journal=libsystemd
 PKGCFG_sip=eXosip2
