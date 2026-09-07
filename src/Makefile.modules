@@ -45,6 +45,7 @@ PKGCFG_readline=readline
 PKGCFG_sdbus=libsystemd
 PKGCFG_sd_journal=libsystemd
 PKGCFG_sip=eXosip2
+PKGCFG_recorder=librecorder
 PKGCFG_udev=libudev
 PKGCFG_xcb_randr=xcb xcb-randr
 
@@ -64,5 +65,5 @@ endef
 
 # call setup_flags for each module
 $(foreach mod, \
-	avahi can curl dict_inout_json evdev evloop_qt libvirt mqtt netlink_ge nf_queue libnl pulseaudio sdbus sd_journal sip udev xcb_randr,\
+	avahi can curl dict_inout_json evdev evloop_qt libvirt mqtt netlink_ge nf_queue libnl pulseaudio readline recorder sdbus sd_journal sip udev xcb_randr,\
 	$(eval $(call setup_flags,$(mod))))

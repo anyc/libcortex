@@ -17,17 +17,20 @@ Please note, not all plugins are actively used and many are not yet feature-comp
 Hence, check the corresponding source files if your use-case is already supported.
 
 Actively used:
+
  * curl
  * fork
  * libnl
  * pipe
  * popen
+ * [recorder](https://github.com/anyc/recorder)
  * sdbus
  * signals
  * udev
  * writequeue
 
 Other modules:
+
  * avahi
  * can
  * evdev

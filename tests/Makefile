@@ -9,7 +9,7 @@ include ../Makefile.common
 -include $(local_mk)
 include ../src/Makefile.modules
 
-AVAILABLE_TESTS=fork libnl nl_route_raw popen udev sd_journal
+AVAILABLE_TESTS=fork libnl nl_route_raw popen recorder udev sd_journal
 
 # build tests for enabled modules
 TESTS+=$(foreach t,$(BUILTIN_MODULES) $(STATIC_MODULES) $(DYN_MODULES),$(if $(findstring $(t),$(AVAILABLE_TESTS)), $(t).test))
