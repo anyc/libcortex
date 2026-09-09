@@ -206,7 +206,12 @@ static int start_listener(struct crtx_listener_base *base)
 							  0, &recorder_fd_event_handler,
 							  listener, 0, 0);
 
-	if (listener->seek > 0) {
+	if (listener->seek_realtime_usec != 0) {
+		rv = rec_player_seek_realtime_usec(reader,
+						   listener->seek_realtime_usec);
+		if (rv)
+			return rv;
+	} else if (listener->seek > 0) {
 		rv = rec_player_seek_head(reader);
 		if (rv)
 			return rv;

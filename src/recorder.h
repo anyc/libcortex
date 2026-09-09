@@ -20,6 +20,8 @@ struct crtx_recorder_listener {
 	const char *path;
 	const char *private_key;
 	RecorderPlayer *reader;
+	/* Position before the first entry at or after this realtime timestamp. */
+	uint64_t seek_realtime_usec;
 	int seek;
 
 	int (*event_cb)(struct crtx_recorder_listener *listener, void *userdata);
