@@ -296,19 +296,18 @@ int crtx_sdbus_get_property_async(sd_bus *bus, const char *service, const char *
 	rv = sd_bus_message_append_basic(m, 's', interface); CRTX_RET_GEZ(rv)
 	rv = sd_bus_message_append_basic(m, 's', name); CRTX_RET_GEZ(rv)
 	
-	sd_bus_call_async(bus, 0,
+	rv = sd_bus_call_async(bus, 0,
 		m,
 		callback,
 		userdata,
 		usec
 		);
+	sd_bus_message_unref(m);
 	if (rv < 0) {
 		fprintf(stderr, "DBus get_property (%s %s %s %s) failed: %s\n",
 				service, object_path, interface, name, strerror(-rv));
 		return rv;
 	}
-	
-	sd_bus_message_unref(m);
 	
 	return 0;
 }
@@ -412,19 +411,18 @@ int crtx_sdbus_get_objects_msg_async(struct crtx_sdbus_listener *lstnr, const ch
 	// rv = sd_bus_message_append_basic(m, 's', interface); CRTX_RET_GEZ(rv)
 	// rv = sd_bus_message_append_basic(m, 's', name); CRTX_RET_GEZ(rv)
 	
-	sd_bus_call_async(lstnr->bus, 0 /* slot */,
+	rv = sd_bus_call_async(lstnr->bus, 0 /* slot */,
 		m,
 		callback,
 		userdata,
 		timeout_us
 		);
+	sd_bus_message_unref(m);
 	if (rv < 0) {
 		fprintf(stderr, "DBus get_property (%s %s %s %s) failed: %s\n",
 				service, "/", CRTX_DBUS_OBJECT_MANAGER_INTERFACE, "GetManagedObjects", strerror(-rv));
 		return rv;
 	}
-	
-	sd_bus_message_unref(m);
 	
 	return 0;
 }
@@ -444,10 +442,15 @@ int crtx_sdbus_get_objects(struct crtx_sdbus_listener *lstnr, const char *servic
 	sd_bus_message *reply;
 	const sd_bus_error *error;
 	struct crtx_dict_item *ditem;
+	int rv;
 	
 	
 	reply = 0;
-	crtx_sdbus_get_objects_msg_async(lstnr, service, &sync_cb, &reply, 0);
+	rv = crtx_sdbus_get_objects_msg_async(lstnr, service, &sync_cb, &reply, 0);
+	if (rv < 0) {
+		*objects = 0;
+		return rv;
+	}
 	
 	while (reply == 0 && !crtx_is_shutting_down()) {
 		crtx_loop_onetime();
